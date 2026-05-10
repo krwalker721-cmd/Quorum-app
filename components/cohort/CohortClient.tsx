@@ -6,6 +6,7 @@ import StagePill from "@/components/cohort/StagePill";
 import FounderAgreements from "@/components/cohort/FounderAgreements";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/stage";
+import { usePresence } from "@/components/PresenceProvider";
 
 export type Member = {
   id: string;
@@ -29,7 +30,7 @@ export default function CohortClient({
   currentUserId: string;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(members[0]?.id ?? null);
-  const [online, setOnline] = useState<Set<string>>(new Set([currentUserId]));
+  const online = usePresence();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -37,23 +38,6 @@ export default function CohortClient({
 
   const supabase = useMemo(() => createClient(), []);
   const selected = members.find((m) => m.id === selectedId) ?? null;
-
-  // presence
-  useEffect(() => {
-    const channel = supabase.channel("presence:cohort", {
-      config: { presence: { key: currentUserId } },
-    });
-    channel
-      .on("presence", { event: "sync" }, () => {
-        setOnline(new Set(Object.keys(channel.presenceState())));
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") await channel.track({ at: Date.now() });
-      });
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, currentUserId]);
 
   // load thread + subscribe
   useEffect(() => {

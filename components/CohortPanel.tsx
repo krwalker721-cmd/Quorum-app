@@ -1,41 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
-import { createClient } from "@/lib/supabase/client";
+import { usePresence } from "@/components/PresenceProvider";
 
 type Member = { id: string; full_name: string | null; stage: string | null };
 
 export default function CohortPanel({
   members,
-  currentUserId,
+  currentUserId: _currentUserId,
 }: {
   members: Member[];
   currentUserId: string;
 }) {
-  const [online, setOnline] = useState<Set<string>>(new Set([currentUserId]));
-
-  useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase.channel("presence:cohort", {
-      config: { presence: { key: currentUserId } },
-    });
-
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        setOnline(new Set(Object.keys(state)));
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channel.track({ at: Date.now() });
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUserId]);
+  const online = usePresence();
 
   return (
     <div className="px-3 py-4 border-t" style={{ borderColor: "var(--border)" }}>

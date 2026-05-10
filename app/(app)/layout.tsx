@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
+import { PresenceProvider } from "@/components/PresenceProvider";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +29,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const cohort = cohortRaw ?? [];
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
-      <Sidebar cohort={cohort} currentUserId={user.id} />
-      <div style={{ marginLeft: 192 }}>{children}</div>
-    </div>
+    <PresenceProvider currentUserId={user.id}>
+      <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+        <Sidebar cohort={cohort} currentUserId={user.id} />
+        <div style={{ marginLeft: 192 }}>{children}</div>
+      </div>
+    </PresenceProvider>
   );
 }

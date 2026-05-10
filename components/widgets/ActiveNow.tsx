@@ -1,31 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/Avatar";
+import { usePresence } from "@/components/PresenceProvider";
 
 type Member = { id: string; full_name: string | null; stage: string | null };
 
 const ZONES = ["cohort", "pulse", "vault"];
 
-export default function ActiveNow({ members, currentUserId }: { members: Member[]; currentUserId: string }) {
-  const [online, setOnline] = useState<Set<string>>(new Set([currentUserId]));
-
-  useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase.channel("presence:cohort", {
-      config: { presence: { key: currentUserId } },
-    });
-    channel
-      .on("presence", { event: "sync" }, () => {
-        setOnline(new Set(Object.keys(channel.presenceState())));
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUserId]);
-
+export default function ActiveNow({
+  members,
+  currentUserId: _currentUserId,
+}: {
+  members: Member[];
+  currentUserId: string;
+}) {
+  const online = usePresence();
   const onlineMembers = members.filter((m) => online.has(m.id));
 
   return (
