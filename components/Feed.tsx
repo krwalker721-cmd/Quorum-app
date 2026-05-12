@@ -19,7 +19,7 @@ export default function Feed({ initial }: { initial: PostWithAuthor[] }) {
           // Hydrate author info
           const { data: author } = await supabase
             .from("profiles")
-            .select("full_name, stage")
+            .select("full_name, stage, username")
             .eq("id", row.author_id)
             .single();
           setPosts((prev) => [{ ...row, author }, ...prev]);

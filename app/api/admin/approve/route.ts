@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { isAdminUnlocked } from "@/app/admin/session";
 
 export async function POST(req: Request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!isAdminUnlocked()) return NextResponse.json({ error: "admin locked" }, { status: 403 });
 
   const { id } = await req.json().catch(() => ({}));
   if (!id || typeof id !== "string") {

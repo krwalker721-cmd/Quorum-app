@@ -3,15 +3,48 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import LogoMark from "@/components/LogoMark";
 import SignOutButton from "@/components/SignOutButton";
 import ApproveButton from "./ApproveButton";
+import { unlockAdmin, lockAdmin } from "./actions";
+import { isAdminUnlocked } from "./session";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: { searchParams: { error?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Use service role to read all pending profiles regardless of RLS.
+  if (!isAdminUnlocked()) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6">
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center mb-8">
+            <LogoMark size={44} />
+            <h1 className="font-mono lowercase text-text-primary text-lg mt-4 tracking-wide">quorum / admin</h1>
+            <p className="font-mono lowercase text-text-faint text-xs mt-1">enter access code</p>
+          </div>
+
+          <form action={unlockAdmin} className="bg-card border border-border p-6 space-y-4">
+            <div>
+              <label>access code</label>
+              <input type="password" name="code" required autoFocus autoComplete="off" />
+            </div>
+
+            {searchParams.error && (
+              <p className="font-mono text-xs text-red-400 lowercase">invalid code.</p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full font-mono lowercase text-xs py-2.5 bg-amber text-bg hover:opacity-90"
+            >
+              unlock
+            </button>
+          </form>
+        </div>
+      </main>
+    );
+  }
+
   const admin = createAdminClient();
   const { data: pending, error } = await admin
     .from("profiles")
@@ -27,7 +60,18 @@ export default async function AdminPage() {
             <LogoMark size={24} />
             <span className="font-mono lowercase text-text-primary text-sm tracking-wide">quorum / admin</span>
           </div>
-          <SignOutButton />
+          <div className="flex items-center gap-2">
+            <form action={lockAdmin}>
+              <button
+                type="submit"
+                className="font-mono lowercase text-[0.65rem] px-2.5 py-1.5 border text-text-muted hover:text-text-primary"
+                style={{ borderColor: "var(--border)" }}
+              >
+                lock
+              </button>
+            </form>
+            <SignOutButton />
+          </div>
         </div>
       </nav>
 
@@ -35,9 +79,7 @@ export default async function AdminPage() {
         <p className="font-mono lowercase text-xs text-text-faint">waitlist</p>
         <h1 className="font-sans text-2xl text-text-primary mt-2 lowercase">pending users</h1>
 
-        {error && (
-          <p className="font-mono text-xs text-red-400 lowercase mt-6">{error.message}</p>
-        )}
+        {error && <p className="font-mono text-xs text-red-400 lowercase mt-6">{error.message}</p>}
 
         <div className="mt-8 space-y-3">
           {pending && pending.length > 0 ? (

@@ -3,7 +3,7 @@
 import Avatar from "@/components/Avatar";
 import { usePresence } from "@/components/PresenceProvider";
 
-type Member = { id: string; full_name: string | null; stage: string | null };
+type Member = { id: string; full_name: string | null; stage: string | null; username: string | null };
 
 export default function CohortPanel({
   members,
@@ -26,7 +26,7 @@ export default function CohortPanel({
           return (
             <div key={m.id} className="flex items-center gap-2 px-1 py-1">
               <div className="relative">
-                <Avatar name={m.full_name} stage={m.stage} size={22} />
+                <Avatar name={m.full_name} stage={m.stage} username={m.username} size={22} />
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${isOnline ? "dot-online" : "dot-offline"}`}
                   style={{ border: "1.5px solid var(--card)" }}

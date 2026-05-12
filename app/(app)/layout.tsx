@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: cohortRaw } = await supabase
     .from("profiles")
-    .select("id, full_name, stage")
+    .select("id, full_name, stage, username")
     .eq("status", "approved")
     .order("created_at", { ascending: true })
     .limit(20);

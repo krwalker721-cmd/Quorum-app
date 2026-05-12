@@ -3,7 +3,7 @@
 import Avatar from "@/components/Avatar";
 import { usePresence } from "@/components/PresenceProvider";
 
-type Member = { id: string; full_name: string | null; stage: string | null };
+type Member = { id: string; full_name: string | null; stage: string | null; username: string | null };
 
 const ZONES = ["cohort", "pulse", "vault"];
 
@@ -32,7 +32,7 @@ export default function ActiveNow({
           onlineMembers.map((m, i) => (
             <div key={m.id} className="flex items-center gap-2.5">
               <div className="relative">
-                <Avatar name={m.full_name} stage={m.stage} size={20} />
+                <Avatar name={m.full_name} stage={m.stage} username={m.username} size={20} />
                 <span
                   className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full dot-online"
                   style={{ border: "1.5px solid var(--card-elev)" }}

@@ -51,6 +51,11 @@ export default function SignupPage() {
       return;
     }
 
+    const username =
+      fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") +
+      "-" +
+      userId.slice(0, 4);
+
     const { error: profileError } = await supabase.from("profiles").insert({
       id: userId,
       full_name: fullName,
@@ -58,6 +63,7 @@ export default function SignupPage() {
       what_they_are_building: building,
       stage,
       status: WAITLIST_ENABLED ? "pending" : "approved",
+      username,
     });
 
     if (profileError) {

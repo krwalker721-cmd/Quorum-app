@@ -12,6 +12,7 @@ export type Member = {
   id: string;
   full_name: string | null;
   stage: string | null;
+  username: string | null;
 };
 
 type Message = {
@@ -106,7 +107,7 @@ export default function CohortClient({
   }
 
   return (
-    <div className="flex" style={{ height: "calc(100vh - 56px)" }}>
+    <div className="flex" style={{ height: "calc(100vh - 96px)" }}>
       {/* LEFT PANEL */}
       <div
         className="flex flex-col border-r"
@@ -133,7 +134,7 @@ export default function CohortClient({
                 }}
               >
                 <div className="relative">
-                  <Avatar name={m.full_name} stage={m.stage} size={28} />
+                  <Avatar name={m.full_name} stage={m.stage} username={m.username} size={28} />
                   <span
                     className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${isOnline ? "dot-online" : "dot-offline"}`}
                     style={{ border: "1.5px solid var(--card)" }}
@@ -163,7 +164,7 @@ export default function CohortClient({
               style={{ borderColor: "var(--border)" }}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <Avatar name={selected.full_name} stage={selected.stage} size={32} />
+                <Avatar name={selected.full_name} stage={selected.stage} username={selected.username} size={32} />
                 <div className="min-w-0">
                   <p className="font-mono lowercase text-sm text-text-primary truncate">
                     {selected.full_name?.toLowerCase() ?? "—"}

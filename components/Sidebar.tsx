@@ -18,7 +18,7 @@ export default function Sidebar({
   cohort,
   currentUserId,
 }: {
-  cohort: { id: string; full_name: string | null; stage: string | null }[];
+  cohort: { id: string; full_name: string | null; stage: string | null; username: string | null }[];
   currentUserId: string;
 }) {
   const pathname = usePathname();

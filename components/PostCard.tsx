@@ -9,7 +9,7 @@ export type PostWithAuthor = {
   post_type: string;
   reply_count: number;
   created_at: string;
-  author?: { full_name: string | null; stage: string | null } | null;
+  author?: { full_name: string | null; stage: string | null; username: string | null } | null;
 };
 
 export default function PostCard({ post }: { post: PostWithAuthor }) {
@@ -34,7 +34,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
             ??
           </div>
         ) : (
-          <Avatar name={post.author?.full_name} stage={post.author?.stage} size={32} />
+          <Avatar name={post.author?.full_name} stage={post.author?.stage} username={post.author?.username} size={32} />
         )}
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-xs text-text-primary truncate">

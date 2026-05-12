@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import LogoMark from "@/components/LogoMark";
@@ -9,6 +9,9 @@ import { WAITLIST_ENABLED } from "@/lib/flags";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +31,7 @@ export default function LoginPage() {
     }
 
     if (!WAITLIST_ENABLED) {
-      router.push("/home");
+      router.push(safeNext ?? "/home");
       router.refresh();
       return;
     }
@@ -39,7 +42,8 @@ export default function LoginPage() {
       .eq("id", data.user!.id)
       .single();
 
-    router.push(profile?.status === "approved" ? "/home" : "/pending");
+    const approved = profile?.status === "approved";
+    router.push(approved ? (safeNext ?? "/home") : "/pending");
     router.refresh();
   }
 

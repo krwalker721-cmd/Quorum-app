@@ -1,16 +1,19 @@
+import Link from "next/link";
 import { STAGE_COLOR, initials } from "@/lib/stage";
 
 export default function Avatar({
   name,
   stage,
   size = 32,
+  username,
 }: {
   name?: string | null;
   stage?: string | null;
   size?: number;
+  username?: string | null;
 }) {
   const ring = stage ? STAGE_COLOR[stage] ?? "#707070" : "#707070";
-  return (
+  const inner = (
     <div
       className="flex items-center justify-center font-mono lowercase font-medium"
       style={{
@@ -26,5 +29,12 @@ export default function Avatar({
     >
       {initials(name)}
     </div>
+  );
+
+  if (!username) return inner;
+  return (
+    <Link href={`/profile/${username}`} aria-label={`view ${name ?? "profile"}`} className="inline-block">
+      {inner}
+    </Link>
   );
 }

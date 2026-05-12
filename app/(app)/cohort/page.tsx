@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import CohortClient from "@/components/cohort/CohortClient";
+import CohortNav from "@/components/cohort/CohortNav";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function CohortPage() {
 
   const { data: members } = await supabase
     .from("profiles")
-    .select("id, full_name, stage")
+    .select("id, full_name, stage, username")
     .eq("status", "approved")
     .neq("id", user.id)
     .order("created_at", { ascending: true });
@@ -25,6 +26,7 @@ export default async function CohortPage() {
   return (
     <>
       <TopBar title="cohort" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <CohortNav />
       <CohortClient members={members ?? []} currentUserId={user.id} />
     </>
   );

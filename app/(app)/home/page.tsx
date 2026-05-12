@@ -28,7 +28,7 @@ export default async function HomePage() {
 
   const { data: members } = await supabase
     .from("profiles")
-    .select("id, full_name, stage")
+    .select("id, full_name, stage, username")
     .eq("status", "approved")
     .order("created_at", { ascending: true });
 
@@ -54,6 +54,12 @@ export default async function HomePage() {
     .select("id", { count: "exact", head: true })
     .gte("created_at", sevenDaysAgo);
 
+  const { data: recentPostTimes } = await supabase
+    .from("posts")
+    .select("created_at")
+    .gte("created_at", sevenDaysAgo);
+  const heatmapTimestamps = (recentPostTimes ?? []).map((r) => r.created_at);
+
   // stage counts
   const stageCounts: Record<string, number> = { idea: 0, "pre-seed": 0, seed: 0, series_a: 0 };
   memberList.forEach((m) => {
@@ -78,7 +84,7 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
             <CohortNetwork members={memberList.filter((m) => m.id !== user.id)} />
-            <ActivityHeatmap posts7d={posts7d ?? 0} />
+            <ActivityHeatmap posts7d={posts7d ?? 0} timestamps={heatmapTimestamps} />
             <StageBreakdown counts={stageCounts} />
           </div>
         </div>
