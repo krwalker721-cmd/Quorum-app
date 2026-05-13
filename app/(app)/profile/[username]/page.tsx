@@ -7,6 +7,7 @@ import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import TierPill from "@/components/TierPill";
 import PostCard from "@/components/PostCard";
+import HandshakeButton from "@/components/HandshakeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +105,42 @@ export default async function ProfilePage({
     author: { full_name: profile.full_name, stage: profile.stage, username: profile.username },
   }));
 
+  // Handshakes — owner sees all involving them; viewers see only mutual (involving both)
+  const { data: handshakesRaw } = isOwner
+    ? await supabase
+        .from("handshakes")
+        .select("id, initiator_id, recipient_id, agreement, date, created_at")
+        .or(`initiator_id.eq.${profile.id},recipient_id.eq.${profile.id}`)
+        .order("date", { ascending: false })
+        .limit(100)
+    : await supabase
+        .from("handshakes")
+        .select("id, initiator_id, recipient_id, agreement, date, created_at")
+        .or(
+          `and(initiator_id.eq.${user.id},recipient_id.eq.${profile.id}),and(initiator_id.eq.${profile.id},recipient_id.eq.${user.id})`
+        )
+        .order("date", { ascending: false })
+        .limit(100);
+
+  const handshakes = handshakesRaw ?? [];
+  const otherIds = Array.from(
+    new Set(
+      handshakes.map((h: any) =>
+        h.initiator_id === profile.id ? h.recipient_id : h.initiator_id
+      )
+    )
+  ).filter(Boolean);
+
+  const { data: otherProfiles } =
+    otherIds.length > 0
+      ? await supabase
+          .from("profiles")
+          .select("id, full_name, stage, username")
+          .in("id", otherIds)
+      : { data: [] as any[] };
+
+  const otherById = new Map((otherProfiles ?? []).map((p: any) => [p.id, p]));
+
   return (
     <>
       <TopBar title="profile" tier={myTier.toUpperCase()} userId={user.id} />
@@ -129,13 +166,20 @@ export default async function ProfilePage({
                 </div>
               </div>
               {!isOwner && (
-                <Link
-                  href={`/cohort?dm=${profile.id}`}
-                  className="font-mono lowercase text-[0.7rem] px-3 py-2 bg-amber text-bg hover:opacity-90 whitespace-nowrap"
-                  style={{ background: "#f59e0b", color: "#000" }}
-                >
-                  + message
-                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  <HandshakeButton
+                    currentUserId={user.id}
+                    recipientId={profile.id}
+                    recipientName={profile.full_name}
+                  />
+                  <Link
+                    href={`/messages?to=${profile.id}`}
+                    className="font-mono lowercase text-[0.7rem] px-3 py-2 hover:opacity-90 whitespace-nowrap"
+                    style={{ background: "#f59e0b", color: "#000" }}
+                  >
+                    + message
+                  </Link>
+                </div>
               )}
             </div>
           </div>
@@ -234,6 +278,64 @@ export default async function ProfilePage({
                       {s.toLowerCase()}
                     </span>
                   ))}
+                </div>
+              )}
+            </div>
+
+            {/* Handshakes */}
+            <div className="bg-card border border-border p-5 mt-6">
+              <p className="font-mono lowercase text-[0.65rem] text-text-faint">
+                handshakes
+              </p>
+              {handshakes.length === 0 ? (
+                <p className="font-mono lowercase text-xs text-text-faint mt-3">
+                  no handshakes yet.
+                </p>
+              ) : (
+                <div className="space-y-3 mt-3">
+                  {handshakes.map((h: any) => {
+                    const otherId =
+                      h.initiator_id === profile.id
+                        ? h.recipient_id
+                        : h.initiator_id;
+                    const other = otherById.get(otherId) as any;
+                    return (
+                      <div
+                        key={h.id}
+                        className="p-3 border flex items-start gap-3"
+                        style={{
+                          borderColor: "rgba(245,158,11,0.25)",
+                          background: "var(--card-elev)",
+                        }}
+                      >
+                        <Avatar
+                          name={other?.full_name}
+                          stage={other?.stage}
+                          username={other?.username}
+                          size={32}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="font-mono lowercase text-[0.8rem]"
+                              style={{ color: "#f59e0b" }}
+                            >
+                              ◈
+                            </span>
+                            <p className="font-mono lowercase text-[0.75rem] text-text-primary truncate">
+                              {other?.full_name?.toLowerCase() ?? "—"}
+                            </p>
+                            <span className="font-mono lowercase text-[0.6rem] text-text-faint ml-auto shrink-0">
+                              {formatDate(h.date)}
+                            </span>
+                          </div>
+                          <p className="text-text-secondary text-[0.85rem] mt-2 leading-snug whitespace-pre-wrap">
+                            {h.agreement}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

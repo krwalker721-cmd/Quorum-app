@@ -8,6 +8,7 @@ import CohortPanel from "@/components/CohortPanel";
 const NAV = [
   { href: "/home", label: "home" },
   { href: "/cohort", label: "cohort" },
+  { href: "/messages", label: "messages" },
   { href: "/pulse", label: "pulse" },
   { href: "/vault", label: "vault" },
   { href: "/collab_board", label: "collab_board" },

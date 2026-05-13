@@ -404,6 +404,48 @@ create policy "projects_write_owner"
   using (auth.uid() = owner_id)
   with check (auth.uid() = owner_id);
 
+-- ============================================================================
+-- posts.room_type — structured cohort-room post types
+-- ============================================================================
+alter table public.posts add column if not exists room_type text;
+do $$ begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'posts_room_type_check'
+  ) then
+    alter table public.posts
+      add constraint posts_room_type_check
+      check (room_type is null or room_type in ('question','update','decision','win','blocker'));
+  end if;
+end $$;
+
+-- ============================================================================
+-- handshakes
+-- ============================================================================
+create table if not exists public.handshakes (
+  id uuid primary key default gen_random_uuid(),
+  initiator_id uuid references public.profiles(id) on delete cascade,
+  recipient_id uuid references public.profiles(id) on delete cascade,
+  agreement text,
+  date date default current_date,
+  created_at timestamp default now()
+);
+
+create index if not exists handshakes_initiator_idx on public.handshakes (initiator_id, created_at desc);
+create index if not exists handshakes_recipient_idx on public.handshakes (recipient_id, created_at desc);
+
+alter table public.handshakes enable row level security;
+
+drop policy if exists "handshakes_read_party" on public.handshakes;
+drop policy if exists "handshakes_insert_initiator" on public.handshakes;
+
+create policy "handshakes_read_party"
+  on public.handshakes for select
+  using (auth.role() = 'authenticated');
+
+create policy "handshakes_insert_initiator"
+  on public.handshakes for insert
+  with check (auth.uid() = initiator_id);
+
 create table if not exists public.project_members (
   id uuid primary key default gen_random_uuid(),
   project_id uuid references public.projects(id) on delete cascade,
