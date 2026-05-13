@@ -1,5 +1,6 @@
 import Avatar from "@/components/Avatar";
 import { TAG_COLOR, timeAgo } from "@/lib/stage";
+import { is2amPost } from "@/lib/recognition";
 
 export type PostWithAuthor = {
   id: string;
@@ -9,20 +10,35 @@ export type PostWithAuthor = {
   post_type: string;
   reply_count: number;
   created_at: string;
-  author?: { full_name: string | null; stage: string | null; username: string | null } | null;
+  local_hour?: number | null;
+  author?: {
+    full_name: string | null;
+    stage: string | null;
+    username: string | null;
+    created_at?: string | null;
+  } | null;
+  // Quiet flags hydrated by the page that loaded the post.
+  movedTheRoom?: boolean;
+  authorDepthRing?: boolean;
+  authorAnniversary?: boolean;
 };
 
 export default function PostCard({ post }: { post: PostWithAuthor }) {
   const anon = post.is_anonymous;
   const tagColor = post.tag ? TAG_COLOR[post.tag] ?? "#707070" : "#707070";
+  const lateNight = is2amPost(post);
+  const moved = !!post.movedTheRoom;
 
   return (
     <article
-      className="p-4 border"
+      className={`p-4 border${moved ? " moved-room-pulse" : ""}`}
       style={{
         background: "var(--card-elev)",
         borderColor: "var(--border-amber)",
         borderLeft: anon ? "3px solid #3a3a3a" : `1px solid var(--border-amber)`,
+        boxShadow: lateNight
+          ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
+          : undefined,
       }}
     >
       <header className="flex items-center gap-3 mb-2">
@@ -34,7 +50,14 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
             ??
           </div>
         ) : (
-          <Avatar name={post.author?.full_name} stage={post.author?.stage} username={post.author?.username} size={32} />
+          <Avatar
+            name={post.author?.full_name}
+            stage={post.author?.stage}
+            username={post.author?.username}
+            size={32}
+            depthRing={!!post.authorDepthRing}
+            anniversary={!!post.authorAnniversary}
+          />
         )}
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-xs text-text-primary truncate">

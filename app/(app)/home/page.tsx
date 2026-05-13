@@ -9,6 +9,8 @@ import CohortNetwork from "@/components/viz/CohortNetwork";
 import ActivityHeatmap from "@/components/viz/ActivityHeatmap";
 import StageBreakdown from "@/components/viz/StageBreakdown";
 import { PostWithAuthor } from "@/components/PostCard";
+import RecognitionNotices from "@/components/RecognitionNotices";
+import { hasDepthRing, isAnniversary, postsMovedTheRoomBatch } from "@/lib/recognition";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,7 @@ export default async function HomePage() {
 
   const { data: members } = await supabase
     .from("profiles")
-    .select("id, full_name, stage, username")
+    .select("id, full_name, stage, username, created_at")
     .eq("status", "approved")
     .order("created_at", { ascending: true });
 
@@ -37,15 +39,46 @@ export default async function HomePage() {
   // Posts with author hydrated
   const { data: postsRaw } = await supabase
     .from("posts")
-    .select("id, content, tag, is_anonymous, post_type, reply_count, created_at, author_id")
+    .select("id, content, tag, is_anonymous, post_type, reply_count, created_at, author_id, local_hour")
     .order("created_at", { ascending: false })
     .limit(40);
 
   const authorMap = new Map(memberList.map((m) => [m.id, m]));
-  const initialPosts: PostWithAuthor[] = (postsRaw ?? []).map((p) => ({
-    ...p,
-    author: authorMap.get(p.author_id ?? "") ?? null,
-  }));
+
+  // Recognition hydration — figure out which posts "moved the room" and which
+  // authors have a depth ring / anniversary today. Depth ring is per-author so
+  // we batch by distinct author across the visible feed.
+  const visibleAuthorIds = Array.from(
+    new Set((postsRaw ?? []).map((p) => p.author_id).filter(Boolean) as string[]),
+  );
+  const depthEntries = await Promise.all(
+    visibleAuthorIds.map(async (id) => [id, await hasDepthRing(supabase, id)] as const),
+  );
+  const depthMap = new Map(depthEntries);
+  const movedSet = await postsMovedTheRoomBatch(
+    supabase,
+    (postsRaw ?? []).map((p) => ({ id: p.id, created_at: p.created_at })),
+  );
+
+  const initialPosts: PostWithAuthor[] = (postsRaw ?? []).map((p) => {
+    const author = authorMap.get(p.author_id ?? "") ?? null;
+    return {
+      ...p,
+      author,
+      movedTheRoom: movedSet.has(p.id),
+      authorDepthRing: p.author_id ? depthMap.get(p.author_id) ?? false : false,
+      authorAnniversary: isAnniversary(author?.created_at ?? null),
+    };
+  });
+
+  // Unseen one-time recognition notices (first honest, connector)
+  const { data: notices } = await supabase
+    .from("recognition_notices")
+    .select("id, kind, payload")
+    .eq("user_id", user.id)
+    .is("seen_at", null)
+    .order("created_at", { ascending: true })
+    .limit(3);
 
   // posts in the last 7 days
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
@@ -69,6 +102,7 @@ export default async function HomePage() {
   return (
     <>
       <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <RecognitionNotices notices={(notices ?? []) as any} />
       <StatStrip
         members={memberList.length}
         activeNow={1}

@@ -109,7 +109,13 @@ export default function CohortClient({
       // rollback
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setDraft(content);
+      return;
     }
+    fetch("/api/recognition/dm-sent", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ recipient_id: selectedId }),
+    }).catch(() => {});
   }
 
   return (

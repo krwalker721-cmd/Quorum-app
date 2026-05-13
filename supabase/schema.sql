@@ -473,3 +473,147 @@ create policy "project_members_insert_self_or_owner"
     auth.uid() = user_id
     or exists (select 1 from public.projects p where p.id = project_members.project_id and p.owner_id = auth.uid())
   );
+
+-- ============================================================================
+-- recognition system
+-- ============================================================================
+
+-- one-time flag for first honest (anonymous) post notice
+alter table public.profiles add column if not exists has_seen_first_honest_message boolean default false;
+
+-- capture poster's local hour so we can quietly render a glow on 00:00-04:00 posts
+alter table public.posts add column if not exists local_hour smallint;
+
+-- post replies (threaded responses). minimal table; powers "moved the room",
+-- "question responder" indicator, and "response rate mirror".
+create table if not exists public.post_replies (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references public.posts(id) on delete cascade,
+  author_id uuid references public.profiles(id) on delete cascade,
+  content text not null,
+  created_at timestamp default now()
+);
+
+create index if not exists post_replies_post_idx on public.post_replies (post_id, created_at);
+create index if not exists post_replies_author_idx on public.post_replies (author_id, created_at desc);
+
+alter table public.post_replies enable row level security;
+
+drop policy if exists "post_replies_read_all" on public.post_replies;
+drop policy if exists "post_replies_insert_own" on public.post_replies;
+
+create policy "post_replies_read_all"
+  on public.post_replies for select
+  using (auth.role() = 'authenticated');
+
+create policy "post_replies_insert_own"
+  on public.post_replies for insert
+  with check (auth.uid() = author_id);
+
+do $$ begin
+  alter publication supabase_realtime add table public.post_replies;
+exception when duplicate_object then null;
+end $$;
+
+-- keep posts.reply_count in sync
+create or replace function public.post_replies_bump_count()
+returns trigger language plpgsql security definer as $$
+begin
+  update public.posts set reply_count = coalesce(reply_count, 0) + 1 where id = new.post_id;
+  return new;
+end; $$;
+
+drop trigger if exists post_replies_bump_trigger on public.post_replies;
+create trigger post_replies_bump_trigger
+  after insert on public.post_replies
+  for each row execute function public.post_replies_bump_count();
+
+-- vouches: one founder vouching for another
+create table if not exists public.vouches (
+  id uuid primary key default gen_random_uuid(),
+  voucher_id uuid references public.profiles(id) on delete cascade,
+  vouched_for_id uuid references public.profiles(id) on delete cascade,
+  note text,
+  created_at timestamp default now(),
+  unique (voucher_id, vouched_for_id),
+  check (voucher_id <> vouched_for_id)
+);
+
+create index if not exists vouches_vouched_for_idx on public.vouches (vouched_for_id, created_at desc);
+create index if not exists vouches_voucher_idx on public.vouches (voucher_id, created_at desc);
+
+alter table public.vouches enable row level security;
+
+drop policy if exists "vouches_read_all" on public.vouches;
+drop policy if exists "vouches_insert_own" on public.vouches;
+drop policy if exists "vouches_delete_own" on public.vouches;
+
+create policy "vouches_read_all"
+  on public.vouches for select
+  using (auth.role() = 'authenticated');
+
+create policy "vouches_insert_own"
+  on public.vouches for insert
+  with check (auth.uid() = voucher_id);
+
+create policy "vouches_delete_own"
+  on public.vouches for delete
+  using (auth.uid() = voucher_id);
+
+-- one-time recognition notices delivered on home screen
+-- kinds: 'first_honest', 'connector'
+create table if not exists public.recognition_notices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  kind text not null check (kind in ('first_honest','connector')),
+  payload jsonb default '{}'::jsonb,
+  seen_at timestamp,
+  created_at timestamp default now()
+);
+
+create index if not exists recognition_notices_user_unseen_idx
+  on public.recognition_notices (user_id) where seen_at is null;
+
+alter table public.recognition_notices enable row level security;
+
+drop policy if exists "recognition_notices_read_own" on public.recognition_notices;
+drop policy if exists "recognition_notices_update_own" on public.recognition_notices;
+
+create policy "recognition_notices_read_own"
+  on public.recognition_notices for select
+  using (auth.uid() = user_id);
+
+create policy "recognition_notices_update_own"
+  on public.recognition_notices for update
+  using (auth.uid() = user_id);
+
+-- introductions logged for the "connector" award. inserted by introducer when
+-- they bring two founders together (e.g. mention both in a post or via an intro
+-- action). awarded flips true when both people DM each other for the first time.
+create table if not exists public.introductions (
+  id uuid primary key default gen_random_uuid(),
+  introducer_id uuid references public.profiles(id) on delete cascade,
+  person_a_id uuid references public.profiles(id) on delete cascade,
+  person_b_id uuid references public.profiles(id) on delete cascade,
+  awarded boolean default false,
+  created_at timestamp default now(),
+  check (person_a_id <> person_b_id and introducer_id not in (person_a_id, person_b_id))
+);
+
+create index if not exists introductions_introducer_idx on public.introductions (introducer_id);
+create index if not exists introductions_pair_idx on public.introductions (person_a_id, person_b_id);
+
+alter table public.introductions enable row level security;
+
+drop policy if exists "introductions_read_party" on public.introductions;
+drop policy if exists "introductions_insert_own" on public.introductions;
+
+create policy "introductions_read_party"
+  on public.introductions for select
+  using (
+    auth.uid() in (introducer_id, person_a_id, person_b_id)
+  );
+
+create policy "introductions_insert_own"
+  on public.introductions for insert
+  with check (auth.uid() = introducer_id);
