@@ -26,11 +26,17 @@ type Message = {
 export default function CohortClient({
   members,
   currentUserId,
+  initialSelectedId,
 }: {
   members: Member[];
   currentUserId: string;
+  initialSelectedId?: string | null;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(members[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    (initialSelectedId && members.some((m) => m.id === initialSelectedId)
+      ? initialSelectedId
+      : null) ?? members[0]?.id ?? null
+  );
   const online = usePresence();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");

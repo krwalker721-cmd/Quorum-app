@@ -348,3 +348,86 @@ drop trigger if exists trust_message_trigger on public.messages;
 create trigger trust_message_trigger
   after insert on public.messages
   for each row execute function public.trust_on_message_insert();
+
+-- ============================================================================
+-- user_skills (collab board profile data)
+-- ============================================================================
+create table if not exists public.user_skills (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  skill text not null,
+  created_at timestamp default now(),
+  unique (user_id, skill)
+);
+
+create index if not exists user_skills_user_idx on public.user_skills (user_id);
+
+alter table public.user_skills enable row level security;
+
+drop policy if exists "user_skills_read_all" on public.user_skills;
+drop policy if exists "user_skills_write_own" on public.user_skills;
+
+create policy "user_skills_read_all"
+  on public.user_skills for select
+  using (auth.role() = 'authenticated');
+
+create policy "user_skills_write_own"
+  on public.user_skills for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- ============================================================================
+-- projects (collab board)
+-- ============================================================================
+create table if not exists public.projects (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references public.profiles(id) on delete cascade,
+  name text not null,
+  description text,
+  status text default 'active' check (status in ('active','completed')),
+  created_at timestamp default now()
+);
+
+create index if not exists projects_owner_idx on public.projects (owner_id);
+
+alter table public.projects enable row level security;
+
+drop policy if exists "projects_read_all" on public.projects;
+drop policy if exists "projects_write_owner" on public.projects;
+
+create policy "projects_read_all"
+  on public.projects for select
+  using (auth.role() = 'authenticated');
+
+create policy "projects_write_owner"
+  on public.projects for all
+  using (auth.uid() = owner_id)
+  with check (auth.uid() = owner_id);
+
+create table if not exists public.project_members (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references public.projects(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete cascade,
+  role text,
+  joined_at timestamp default now(),
+  unique (project_id, user_id)
+);
+
+create index if not exists project_members_user_idx on public.project_members (user_id);
+create index if not exists project_members_project_idx on public.project_members (project_id);
+
+alter table public.project_members enable row level security;
+
+drop policy if exists "project_members_read_all" on public.project_members;
+drop policy if exists "project_members_insert_self_or_owner" on public.project_members;
+
+create policy "project_members_read_all"
+  on public.project_members for select
+  using (auth.role() = 'authenticated');
+
+create policy "project_members_insert_self_or_owner"
+  on public.project_members for insert
+  with check (
+    auth.uid() = user_id
+    or exists (select 1 from public.projects p where p.id = project_members.project_id and p.owner_id = auth.uid())
+  );
