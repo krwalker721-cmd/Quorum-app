@@ -78,8 +78,11 @@ create policy "authenticated_insert_posts"
   on public.posts for insert
   with check (auth.uid() = author_id);
 
--- Enable realtime on posts
-alter publication supabase_realtime add table public.posts;
+-- Enable realtime on posts (idempotent)
+do $$ begin
+  alter publication supabase_realtime add table public.posts;
+exception when duplicate_object then null;
+end $$;
 
 -- ============================================================================
 -- cohort_members
@@ -147,7 +150,10 @@ create policy "messages_update_recipient"
   on public.messages for update
   using (auth.uid() = recipient_id);
 
-alter publication supabase_realtime add table public.messages;
+do $$ begin
+  alter publication supabase_realtime add table public.messages;
+exception when duplicate_object then null;
+end $$;
 
 -- ============================================================================
 -- check_ins (weekly)
