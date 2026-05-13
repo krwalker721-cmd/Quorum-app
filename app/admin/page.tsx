@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import LogoMark from "@/components/LogoMark";
 import SignOutButton from "@/components/SignOutButton";
 import ApproveButton from "./ApproveButton";
+import TierSelect from "./TierSelect";
 import { unlockAdmin, lockAdmin } from "./actions";
 import { isAdminUnlocked } from "./session";
 
@@ -52,6 +53,12 @@ export default async function AdminPage({ searchParams }: { searchParams: { erro
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
+  const { data: approved } = await admin
+    .from("profiles")
+    .select("id, full_name, email, username, tier, created_at")
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
   return (
     <main className="min-h-screen">
       <nav className="border-b border-border">
@@ -100,6 +107,35 @@ export default async function AdminPage({ searchParams }: { searchParams: { erro
           ) : (
             <p className="font-mono lowercase text-xs text-text-faint">no pending users.</p>
           )}
+        </div>
+
+        <div className="mt-16">
+          <p className="font-mono lowercase text-xs text-text-faint">tier_management</p>
+          <h2 className="font-sans text-2xl text-text-primary mt-2 lowercase">approved users</h2>
+
+          <div className="mt-8 space-y-3">
+            {approved && approved.length > 0 ? (
+              approved.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-card border border-border p-5 flex items-start justify-between gap-6"
+                >
+                  <div className="min-w-0">
+                    <p className="text-text-primary text-sm">{p.full_name ?? "—"}</p>
+                    <p className="font-mono text-xs text-text-faint mt-1 lowercase">{p.email}</p>
+                    {p.username && (
+                      <p className="font-mono text-[0.65rem] text-text-faint mt-1 lowercase">
+                        @{p.username}
+                      </p>
+                    )}
+                  </div>
+                  <TierSelect id={p.id} currentTier={p.tier ?? "free"} />
+                </div>
+              ))
+            ) : (
+              <p className="font-mono lowercase text-xs text-text-faint">no approved users.</p>
+            )}
+          </div>
         </div>
       </section>
     </main>

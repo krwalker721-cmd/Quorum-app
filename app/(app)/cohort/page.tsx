@@ -5,7 +5,11 @@ import CohortNav from "@/components/cohort/CohortNav";
 
 export const dynamic = "force-dynamic";
 
-export default async function CohortPage() {
+export default async function CohortPage({
+  searchParams,
+}: {
+  searchParams: { dm?: string };
+}) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -27,7 +31,11 @@ export default async function CohortPage() {
     <>
       <TopBar title="cohort" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <CohortNav />
-      <CohortClient members={members ?? []} currentUserId={user.id} />
+      <CohortClient
+        members={members ?? []}
+        currentUserId={user.id}
+        initialSelectedId={searchParams.dm ?? null}
+      />
     </>
   );
 }
