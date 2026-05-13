@@ -9,6 +9,7 @@ import { timeAgo } from "@/lib/stage";
 import RoomPostModal from "@/components/cohort/RoomPostModal";
 import InviteModal from "@/components/cohort/InviteModal";
 import Link from "next/link";
+import { isAnniversary, type RosterFlags } from "@/lib/recognition";
 
 type Member = {
   id: string;
@@ -16,6 +17,7 @@ type Member = {
   stage: string | null;
   username: string | null;
   trust_score: number | null;
+  created_at?: string | null;
 };
 
 type CheckIn = {
@@ -36,7 +38,9 @@ type Post = {
   post_type: string;
   reply_count: number;
   created_at: string;
+  local_hour?: number | null;
   author: Member | null;
+  movedTheRoom?: boolean;
 };
 
 const TYPE_STYLE: Record<
@@ -62,6 +66,7 @@ export default function CohortRoomClient({
   posts: initialPosts,
   roomName,
   myCohorts,
+  rosterFlags,
 }: {
   currentUserId: string;
   members: Member[];
@@ -69,6 +74,7 @@ export default function CohortRoomClient({
   posts: Post[];
   roomName: string;
   myCohorts: { id: string; name: string }[];
+  rosterFlags: Record<string, RosterFlags>;
 }) {
   const online = usePresence();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
@@ -116,38 +122,69 @@ export default function CohortRoomClient({
             </p>
           </div>
           <div className="flex-1 overflow-y-auto scroll-thin px-2 py-2">
-            {members.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center gap-2 px-2 py-2"
-              >
-                <div className="relative">
-                  <Avatar
-                    name={m.full_name}
-                    stage={m.stage}
-                    username={m.username}
-                    size={28}
-                  />
-                  <span
-                    className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${
-                      online.has(m.id) ? "dot-online" : "dot-offline"
-                    }`}
-                    style={{ border: "1.5px solid var(--card)" }}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                    {m.full_name?.toLowerCase() ?? "—"}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <StagePill stage={m.stage} />
-                    <span className="font-mono lowercase text-[0.55rem] text-amber">
-                      +{m.trust_score ?? 0}
-                    </span>
+            {members.map((m) => {
+              const f = rosterFlags[m.id];
+              const annivToday = f?.anniversary ?? isAnniversary(m.created_at ?? null);
+              return (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-2 px-2 py-2"
+                >
+                  <div className="relative">
+                    <Avatar
+                      name={m.full_name}
+                      stage={m.stage}
+                      username={m.username}
+                      size={28}
+                      depthRing={!!f?.depthRing}
+                      anniversary={annivToday}
+                    />
+                    <span
+                      className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${
+                        online.has(m.id) ? "dot-online" : "dot-offline"
+                      }`}
+                      style={{ border: "1.5px solid var(--card)" }}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p
+                        className={`font-mono lowercase text-[0.7rem] truncate ${
+                          f?.consistencyGhost ? "consistency-ghost" : "text-text-primary"
+                        }`}
+                      >
+                        {m.full_name?.toLowerCase() ?? "—"}
+                      </p>
+                      {f?.questionResponder && (
+                        <span
+                          aria-hidden
+                          className="shrink-0 rounded-full"
+                          style={{
+                            width: 5,
+                            height: 5,
+                            background: "#38bdf8",
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <StagePill stage={m.stage} />
+                      <span className="font-mono lowercase text-[0.55rem] text-amber">
+                        +{m.trust_score ?? 0}
+                      </span>
+                      {typeof f?.tenureDays === "number" && (
+                        <span
+                          className="font-mono lowercase text-[0.55rem]"
+                          style={{ color: "#707070" }}
+                        >
+                          in cohort {f.tenureDays} days
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div
             className="border-t px-3 py-3 space-y-2"
@@ -185,6 +222,7 @@ export default function CohortRoomClient({
               {members.map((m) => {
                 const c = checkins[m.id];
                 const hasCheckin = !!c;
+                const f = rosterFlags[m.id];
                 return (
                   <div
                     key={m.id}
@@ -204,6 +242,8 @@ export default function CohortRoomClient({
                           stage={m.stage}
                           username={m.username}
                           size={32}
+                          depthRing={!!f?.depthRing}
+                          anniversary={f?.anniversary ?? isAnniversary(m.created_at ?? null)}
                         />
                         <span
                           className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${
@@ -275,14 +315,21 @@ export default function CohortRoomClient({
               {posts.map((p) => {
                 const ts = p.room_type ? TYPE_STYLE[p.room_type] : null;
                 const borderLeft = ts ? `3px solid ${ts.color}` : undefined;
+                const authorFlags = p.author_id ? rosterFlags[p.author_id] : null;
+                const hour =
+                  p.local_hour ?? new Date(p.created_at).getUTCHours();
+                const lateNight = hour >= 0 && hour < 4;
                 return (
                   <article
                     key={p.id}
-                    className="p-4 border"
+                    className={`p-4 border${p.movedTheRoom ? " moved-room-pulse" : ""}`}
                     style={{
                       background: ts?.bg ?? "var(--card-elev)",
                       borderColor: "var(--border)",
                       borderLeft,
+                      boxShadow: lateNight
+                        ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
+                        : undefined,
                     }}
                   >
                     <header className="flex items-center gap-3 mb-2">
@@ -303,6 +350,11 @@ export default function CohortRoomClient({
                           stage={p.author?.stage}
                           username={p.author?.username}
                           size={32}
+                          depthRing={!!authorFlags?.depthRing}
+                          anniversary={
+                            authorFlags?.anniversary ??
+                            isAnniversary(p.author?.created_at ?? null)
+                          }
                         />
                       )}
                       <div className="flex-1 min-w-0">

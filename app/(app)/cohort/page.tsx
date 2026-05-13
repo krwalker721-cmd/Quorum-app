@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import CohortNav from "@/components/cohort/CohortNav";
 import CohortRoomClient from "@/components/cohort/CohortRoomClient";
+import {
+  loadRosterFlags,
+  postsMovedTheRoomBatch,
+  type RosterFlags,
+} from "@/lib/recognition";
 
 export const dynamic = "force-dynamic";
 
@@ -29,13 +34,13 @@ export default async function CohortPage() {
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("id, full_name, stage, username, trust_score")
+    .select("id, full_name, stage, username, trust_score, created_at")
     .eq("id", user.id)
     .single();
 
   const { data: membersRaw } = await supabase
     .from("profiles")
-    .select("id, full_name, stage, username, trust_score")
+    .select("id, full_name, stage, username, trust_score, created_at")
     .eq("status", "approved")
     .neq("id", user.id)
     .order("created_at", { ascending: true });
@@ -46,6 +51,7 @@ export default async function CohortPage() {
     stage: string | null;
     username: string | null;
     trust_score: number | null;
+    created_at: string | null;
   }[];
 
   // weekly check-ins
@@ -65,16 +71,21 @@ export default async function CohortPage() {
   const { data: postsRaw } = await supabase
     .from("posts")
     .select(
-      "id, author_id, content, room_type, tag, is_anonymous, post_type, reply_count, created_at"
+      "id, author_id, content, room_type, tag, is_anonymous, post_type, reply_count, created_at, local_hour"
     )
     .eq("post_type", "cohort")
     .order("created_at", { ascending: false })
     .limit(80);
 
   const authorMap = new Map(members.map((m) => [m.id, m]));
+  const movedSet = await postsMovedTheRoomBatch(
+    supabase,
+    (postsRaw ?? []).map((p) => ({ id: p.id, created_at: p.created_at })),
+  );
   const posts = (postsRaw ?? []).map((p) => ({
     ...p,
     author: authorMap.get(p.author_id ?? "") ?? null,
+    movedTheRoom: movedSet.has(p.id),
   }));
 
   // user's cohorts (for the invite button)
@@ -89,6 +100,17 @@ export default async function CohortPage() {
       .filter((c): c is { id: string; name: string } => Boolean(c)) ?? [];
 
   const roomName = myCohorts[0]?.name ?? "the cohort";
+  const cohortId = myCohorts[0]?.id ?? null;
+
+  // Load roster recognition flags in parallel (depth ring, question responder,
+  // tenure days, consistency ghost shimmer, vouched dot).
+  const flagsList = await Promise.all(
+    members.map((m) => loadRosterFlags(supabase, m, cohortId)),
+  );
+  const rosterFlags: Record<string, RosterFlags> = {};
+  members.forEach((m, i) => {
+    rosterFlags[m.id] = flagsList[i];
+  });
 
   return (
     <>
@@ -105,6 +127,7 @@ export default async function CohortPage() {
         posts={posts as any}
         roomName={roomName}
         myCohorts={myCohorts}
+        rosterFlags={rosterFlags}
       />
     </>
   );

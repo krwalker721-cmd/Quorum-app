@@ -155,6 +155,12 @@ export default function MessagesClient({
       setDraft(content);
       return;
     }
+    // fire-and-forget: maybe award the "connector" to whoever introduced us
+    fetch("/api/recognition/dm-sent", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ recipient_id: selectedId }),
+    }).catch(() => {});
     // bump preview
     setConversations((prev) => {
       const copy = [...prev];

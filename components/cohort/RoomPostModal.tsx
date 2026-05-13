@@ -39,11 +39,15 @@ export default function RoomPostModal({
       post_type: "cohort",
       room_type: type,
       is_anonymous: anon,
+      local_hour: new Date().getHours(),
     });
     setBusy(false);
     if (error) {
       setErr(error.message.toLowerCase());
       return;
+    }
+    if (anon) {
+      fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
     onClose();
     router.refresh();

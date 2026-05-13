@@ -27,11 +27,15 @@ export default function NewPostButton({ userId }: { userId: string }) {
       tag,
       post_type: postType,
       is_anonymous: anon,
+      local_hour: new Date().getHours(),
     });
     setBusy(false);
     if (error) {
       setErr(error.message.toLowerCase());
       return;
+    }
+    if (anon) {
+      fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
     setContent("");
     setAnon(false);

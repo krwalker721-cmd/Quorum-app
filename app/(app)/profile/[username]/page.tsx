@@ -8,6 +8,21 @@ import StagePill from "@/components/cohort/StagePill";
 import TierPill from "@/components/TierPill";
 import PostCard from "@/components/PostCard";
 import HandshakeButton from "@/components/HandshakeButton";
+import CohortFingerprint from "@/components/CohortFingerprint";
+import VouchedBadge from "@/components/VouchedBadge";
+import VouchButton from "@/components/VouchButton";
+import {
+  getCohortFingerprint,
+  getFavoriteTag,
+  getHandshakeCount,
+  getLongestStreak,
+  getMostActiveTime,
+  getResponseRateMirror,
+  getVouchers,
+  hasDepthRing,
+  isAnniversary,
+  postsMovedTheRoomBatch,
+} from "@/lib/recognition";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +60,39 @@ export default async function ProfilePage({
   const isAdmin = isAdminUnlocked();
   const canSeeTier = isOwner || isAdmin;
   const tab = searchParams.tab === "posts" ? "posts" : "about";
+
+  // Recognition flags for this profile
+  const [
+    depthRing,
+    handshakeCount,
+    vouchers,
+    fingerprint,
+    myVouchExists,
+  ] = await Promise.all([
+    hasDepthRing(supabase, profile.id),
+    getHandshakeCount(supabase, profile.id),
+    getVouchers(supabase, profile.id),
+    getCohortFingerprint(supabase, profile.id),
+    isOwner
+      ? Promise.resolve(false)
+      : supabase
+          .from("vouches")
+          .select("id", { count: "exact", head: true })
+          .eq("voucher_id", user.id)
+          .eq("vouched_for_id", profile.id)
+          .then((r) => (r.count ?? 0) > 0),
+  ]);
+  const anniversary = isAnniversary(profile.created_at);
+
+  // Private mirror metrics (owner only)
+  const [responseMirror, mostActive, longestStreak, favoriteTag] = isOwner
+    ? await Promise.all([
+        getResponseRateMirror(supabase, profile.id),
+        getMostActiveTime(supabase, profile.id),
+        getLongestStreak(supabase, profile.id),
+        getFavoriteTag(supabase, profile.id),
+      ])
+    : [null, null, 0, null];
 
   // Cohort memberships
   const { data: memberships } = await supabase
@@ -93,16 +141,34 @@ export default async function ProfilePage({
     tab === "posts"
       ? await supabase
           .from("posts")
-          .select("id, content, tag, is_anonymous, post_type, reply_count, created_at")
+          .select(
+            "id, content, tag, is_anonymous, post_type, reply_count, created_at, local_hour",
+          )
           .eq("author_id", profile.id)
           .eq("is_anonymous", false)
           .order("created_at", { ascending: false })
           .limit(100)
       : { data: null as any };
 
+  const movedSetProfile =
+    tab === "posts" && postsRows?.length
+      ? await postsMovedTheRoomBatch(
+          supabase,
+          postsRows.map((p: any) => ({ id: p.id, created_at: p.created_at })),
+        )
+      : new Set<string>();
+
   const posts = (postsRows ?? []).map((p: any) => ({
     ...p,
-    author: { full_name: profile.full_name, stage: profile.stage, username: profile.username },
+    author: {
+      full_name: profile.full_name,
+      stage: profile.stage,
+      username: profile.username,
+      created_at: profile.created_at,
+    },
+    movedTheRoom: movedSetProfile.has(p.id),
+    authorDepthRing: depthRing,
+    authorAnniversary: anniversary,
   }));
 
   // Handshakes — owner sees all involving them; viewers see only mutual (involving both)
@@ -150,7 +216,13 @@ export default async function ProfilePage({
           className="p-6 border flex items-start gap-5"
           style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
         >
-          <Avatar name={profile.full_name} stage={profile.stage} size={72} />
+          <Avatar
+            name={profile.full_name}
+            stage={profile.stage}
+            size={72}
+            depthRing={depthRing}
+            anniversary={anniversary}
+          />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -160,13 +232,29 @@ export default async function ProfilePage({
                 <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-1">
                   @{profile.username}
                 </p>
-                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="mt-3 flex items-center gap-3 flex-wrap">
                   <StagePill stage={profile.stage} />
                   {canSeeTier && <TierPill tier={profile.tier} />}
+                  {handshakeCount > 0 && (
+                    <span
+                      className="font-mono text-[0.8rem]"
+                      style={{ color: "#f59e0b" }}
+                      aria-label={`${handshakeCount} handshakes`}
+                    >
+                      ◈ {handshakeCount}
+                    </span>
+                  )}
+                  {vouchers.length > 0 && (
+                    <VouchedBadge vouchers={vouchers} />
+                  )}
                 </div>
               </div>
               {!isOwner && (
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  <VouchButton
+                    vouchedForId={profile.id}
+                    alreadyVouched={!!myVouchExists}
+                  />
                   <HandshakeButton
                     currentUserId={user.id}
                     recipientId={profile.id}
@@ -232,6 +320,62 @@ export default async function ProfilePage({
                 </p>
               </div>
             </div>
+
+            {/* Cohort fingerprint — abstract shape from post type distribution */}
+            <div className="bg-card border border-border p-5 mt-6 flex items-center gap-6">
+              <div className="shrink-0">
+                <CohortFingerprint fp={fingerprint} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-mono lowercase text-[0.65rem] text-text-faint">
+                  {isOwner ? "your cohort fingerprint" : "cohort fingerprint"}
+                </p>
+                <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2 leading-relaxed">
+                  a shape from how they show up in the room.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#38bdf8" }}>question</span>
+                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#707070" }}>update</span>
+                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#f59e0b" }}>decision</span>
+                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#22c55e" }}>win</span>
+                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#a78bfa" }}>blocker</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Private mirror — owner only */}
+            {isOwner && (
+              <div className="bg-card border border-border p-5 mt-6 space-y-2.5">
+                <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2">
+                  mirror
+                </p>
+                {responseMirror && responseMirror.total > 0 && (
+                  <p className="font-mono lowercase text-[0.75rem] text-text-muted">
+                    {responseMirror.returned} of the last {responseMirror.total} people you helped came back to update you.
+                  </p>
+                )}
+                {mostActive && (
+                  <p className="font-mono lowercase text-[0.75rem] text-text-muted">
+                    {mostActive}
+                  </p>
+                )}
+                {longestStreak > 0 && (
+                  <p className="font-mono lowercase text-[0.75rem] text-text-muted">
+                    your longest streak was {longestStreak} {longestStreak === 1 ? "week" : "weeks"}.
+                  </p>
+                )}
+                {favoriteTag && (
+                  <p className="font-mono lowercase text-[0.75rem]" style={{ color: "#f59e0b" }}>
+                    you keep coming back to {favoriteTag}.
+                  </p>
+                )}
+                {!responseMirror && !mostActive && longestStreak === 0 && !favoriteTag && (
+                  <p className="font-mono lowercase text-[0.7rem] text-text-faint">
+                    more will appear as you post and check in.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Cohorts */}
             <div className="bg-card border border-border p-5 mt-6">

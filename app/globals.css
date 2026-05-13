@@ -87,6 +87,55 @@ label {
   background: #3a3a3a;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Recognition system — quiet, almost-invisible signals.
+   Nothing here should announce itself; tune toward "barely noticeable".
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* "moved the room" — slow, very subtle border pulse on posts that pulled
+   replies from 3+ distinct cohort members within 48h. */
+@keyframes moved-room-pulse {
+  0%, 100% { border-color: var(--border-amber); }
+  50%      { border-color: rgba(245, 158, 11, 0.36); }
+}
+.moved-room-pulse {
+  animation: moved-room-pulse 6.5s ease-in-out infinite;
+}
+
+/* "consistency ghost" — extremely subtle shimmer across roster names after
+   8 consecutive weekly check-ins. Reads as a light effect, not a badge. */
+@keyframes consistency-ghost-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.consistency-ghost {
+  background: linear-gradient(
+    90deg,
+    var(--text-primary) 0%,
+    var(--text-primary) 40%,
+    rgba(245, 158, 11, 0.55) 50%,
+    var(--text-primary) 60%,
+    var(--text-primary) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: consistency-ghost-shimmer 9s linear infinite;
+}
+
+/* Quiet notice strip (first honest post, connector). Subtle amber left border. */
+.quiet-notice {
+  border-left: 2px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moved-room-pulse,
+  .consistency-ghost { animation: none; }
+}
+
 /* Scrollbars */
 .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
 .scroll-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
