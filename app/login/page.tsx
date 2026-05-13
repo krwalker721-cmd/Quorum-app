@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import LogoMark from "@/components/LogoMark";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
@@ -48,6 +48,31 @@ export default function LoginPage() {
   }
 
   return (
+    <form onSubmit={handleSubmit} className="bg-card border border-border p-6 space-y-4">
+      <div>
+        <label>email</label>
+        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      <div>
+        <label>password</label>
+        <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+      </div>
+
+      {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full font-mono lowercase text-xs py-2.5 bg-amber text-bg hover:opacity-90 disabled:opacity-50 transition-opacity"
+      >
+        {loading ? "..." : "log in"}
+      </button>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-10">
@@ -56,26 +81,9 @@ export default function LoginPage() {
           <p className="font-mono lowercase text-text-faint text-xs mt-1">log in</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-card border border-border p-6 space-y-4">
-          <div>
-            <label>email</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <label>password</label>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-
-          {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full font-mono lowercase text-xs py-2.5 bg-amber text-bg hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {loading ? "..." : "log in"}
-          </button>
-        </form>
+        <Suspense fallback={<div className="bg-card border border-border p-6 h-48" />}>
+          <LoginForm />
+        </Suspense>
 
         <p className="font-mono text-xs text-text-faint lowercase text-center mt-6">
           no account?{" "}
