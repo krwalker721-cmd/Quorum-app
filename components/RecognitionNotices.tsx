@@ -4,14 +4,32 @@ import { useState } from "react";
 
 type Notice = {
   id: string;
-  kind: "first_honest" | "connector";
+  kind: "first_honest" | "connector" | "stage_advance";
   payload?: Record<string, any> | null;
 };
 
-const TEXT: Record<Notice["kind"], string> = {
+const STATIC_TEXT: Record<"first_honest" | "connector", string> = {
   first_honest: "it takes courage to be honest in a room. that matters here.",
   connector: "something you started is still going.",
 };
+
+const STAGE_ADVANCE_TEXT: Record<string, string> = {
+  "pre-seed": "pre-seed. the idea is real enough to bet on. keep going.",
+  seed: "seed stage. someone else believes in this now too.",
+  series_a: "series_a. you built something worth scaling.",
+};
+
+function textFor(n: Notice): string {
+  if (n.kind === "stage_advance") {
+    const to = (n.payload?.to as string) ?? "";
+    return (
+      (n.payload?.copy as string) ??
+      STAGE_ADVANCE_TEXT[to] ??
+      "stage advanced."
+    );
+  }
+  return STATIC_TEXT[n.kind];
+}
 
 export default function RecognitionNotices({ notices }: { notices: Notice[] }) {
   const [visible, setVisible] = useState<Notice[]>(notices);
@@ -36,7 +54,7 @@ export default function RecognitionNotices({ notices }: { notices: Notice[] }) {
           className="quiet-notice w-full text-left px-4 py-3 transition-opacity hover:opacity-80"
         >
           <p className="font-mono lowercase text-[0.75rem] text-text-muted">
-            {TEXT[n.kind]}
+            {textFor(n)}
           </p>
         </button>
       ))}
