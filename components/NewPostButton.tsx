@@ -6,12 +6,18 @@ import { useRouter } from "next/navigation";
 
 const TAGS = ["decision", "mindset", "hiring", "growth", "real_talk", "ops", "fundraising"];
 
-export default function NewPostButton({ userId }: { userId: string }) {
+export default function NewPostButton({
+  userId,
+  defaultPostType = "cohort",
+}: {
+  userId: string;
+  defaultPostType?: "cohort" | "pulse";
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
   const [tag, setTag] = useState("decision");
-  const [postType, setPostType] = useState<"cohort" | "pulse">("cohort");
+  const [postType, setPostType] = useState<"cohort" | "pulse">(defaultPostType);
   const [anon, setAnon] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);

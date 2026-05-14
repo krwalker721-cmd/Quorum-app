@@ -6,10 +6,12 @@ export default function TopBar({
   title,
   tier,
   userId,
+  defaultPostType,
 }: {
   title: string;
   tier: string;
   userId: string;
+  defaultPostType?: "cohort" | "pulse";
 }) {
   return (
     <div
@@ -28,7 +30,7 @@ export default function TopBar({
         >
           {tier}
         </span>
-        <NewPostButton userId={userId} />
+        <NewPostButton userId={userId} defaultPostType={defaultPostType} />
         <SignOutButton />
       </div>
     </div>
