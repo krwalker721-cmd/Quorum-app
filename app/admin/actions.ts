@@ -19,13 +19,13 @@ export async function unlockAdmin(formData: FormData) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * SESSION_HOURS,
-    path: "/admin",
+    path: "/",
   });
 
   redirect("/admin");
 }
 
 export async function lockAdmin() {
-  cookies().delete(COOKIE_NAME);
+  cookies().delete({ name: COOKIE_NAME, path: "/" });
   redirect("/admin");
 }
