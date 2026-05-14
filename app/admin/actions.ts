@@ -14,6 +14,15 @@ export async function unlockAdmin(formData: FormData) {
     redirect("/admin?error=1");
   }
 
+  // Clear any legacy cookie pinned to /admin (left over from before the path fix)
+  // so the browser doesn't keep sending two values.
+  cookies().set({
+    name: COOKIE_NAME,
+    value: "",
+    path: "/admin",
+    maxAge: 0,
+  });
+
   cookies().set(COOKIE_NAME, "1", {
     httpOnly: true,
     sameSite: "lax",
@@ -26,6 +35,7 @@ export async function unlockAdmin(formData: FormData) {
 }
 
 export async function lockAdmin() {
-  cookies().delete({ name: COOKIE_NAME, path: "/" });
+  cookies().set({ name: COOKIE_NAME, value: "", path: "/admin", maxAge: 0 });
+  cookies().set({ name: COOKIE_NAME, value: "", path: "/", maxAge: 0 });
   redirect("/admin");
 }
