@@ -9,10 +9,13 @@ export const STAGE_COLOR: Record<string, string> = {
 
 export const TAG_COLOR: Record<string, string> = {
   decision: "#f59e0b",
-  mindset: "#22c55e",
+  mindset: "#a78bfa",
   hiring: "#38bdf8",
   real_talk: "#f59e0b",
-  growth: "#22c55e",
+  growth: "#f59e0b",
+  ops: "#707070",
+  fundraising: "#f59e0b",
+  "co-founder": "#22c55e",
 };
 
 export function initials(name: string | null | undefined) {

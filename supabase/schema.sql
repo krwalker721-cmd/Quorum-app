@@ -625,3 +625,66 @@ create policy "introductions_read_party"
 create policy "introductions_insert_own"
   on public.introductions for insert
   with check (auth.uid() = introducer_id);
+
+-- ============================================================================
+-- vault_posts
+-- ============================================================================
+create table if not exists public.vault_posts (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid references public.profiles(id) on delete set null,
+  title text not null,
+  content text not null,
+  credential text,
+  tag text check (tag in ('fundraising','hiring','co-founder','growth','ops','mindset')),
+  read_time_minutes integer,
+  created_at timestamp default now()
+);
+
+create index if not exists vault_posts_created_at_idx on public.vault_posts (created_at desc);
+create index if not exists vault_posts_tag_idx on public.vault_posts (tag);
+create index if not exists vault_posts_author_idx on public.vault_posts (author_id);
+
+alter table public.vault_posts enable row level security;
+
+drop policy if exists "vault_posts_read_all" on public.vault_posts;
+drop policy if exists "vault_posts_insert_own" on public.vault_posts;
+
+-- Readable by all authenticated users — tier gating is handled in the UI.
+create policy "vault_posts_read_all"
+  on public.vault_posts for select
+  using (auth.role() = 'authenticated');
+
+create policy "vault_posts_insert_own"
+  on public.vault_posts for insert
+  with check (auth.uid() = author_id);
+
+-- Seed three example posts (idempotent — only inserts if the table is empty).
+do $$
+declare
+  seed_author uuid;
+begin
+  if not exists (select 1 from public.vault_posts limit 1) then
+    select id into seed_author from public.profiles order by created_at asc limit 1;
+    if seed_author is not null then
+      insert into public.vault_posts (author_id, title, credential, tag, read_time_minutes, content) values
+      (seed_author,
+        'the cap-table mistake i made at $1.2m arr',
+        'exited_2022',
+        'fundraising',
+        7,
+        E'# the cap-table mistake i made at $1.2m arr\n\nwhen we closed our seed round we gave one angel a 2x participating liquidation preference because he was the first check. it felt fair at the time.\n\n## what actually happened\n\nat acquisition, that single clause cost the founding team ~$1.8m. participating prefs compound badly when you stack later rounds on top.\n\n## what i would do again\n\n- 1x non-participating, full stop\n- no side letters for early money\n- if an angel asks for special terms, the answer is "we love you but no"\n\nthe lesson: terms outlive the relationship.'),
+      (seed_author,
+        'what 90 cold outbound emails actually got me',
+        'series_a',
+        'growth',
+        5,
+        E'# what 90 cold outbound emails actually got me\n\ni ran a tight test: 90 cold emails over 3 weeks, all hand-written, all to ICP-fit prospects.\n\n## the numbers\n\n- 90 sent\n- 31 opens (34%)\n- 11 replies (12%)\n- 4 calls booked\n- 1 paying customer at $2k/mo\n\n## the pattern\n\nthe four people who took a call all had one thing in common: i had referenced something specific they had shipped in the last 14 days. nobody else replied.\n\n## takeaway\n\nrecency beats personalization. if you''re not reading their changelog the morning you email them, don''t bother.'),
+      (seed_author,
+        'firing my co-founder, and the six months after',
+        'pre-seed',
+        'co-founder',
+        9,
+        E'# firing my co-founder, and the six months after\n\nthe hardest decision i''ve made. writing this down honestly because i wish someone had written it for me.\n\n## why it had to happen\n\nwe had different definitions of "done." mine was shipped to a paying customer; his was technically working in staging. for 14 months i told myself this was complementary. it wasn''t — it was a constant tax on momentum.\n\n## the conversation\n\ni rehearsed it for two weeks. it still took 90 minutes and we both cried. we agreed on a 12-month vesting acceleration and a clean cap-table split.\n\n## what the next six months looked like\n\n- month 1: i shipped more than the previous quarter\n- month 2: i hated being alone\n- month 3: hired a senior engineer who became the real second voice\n- month 4-6: pipeline 3x''d\n\n## the honest part\n\ni am still friends with him. it was the right call and we both know it now. the fear of the conversation is always bigger than the conversation.');
+    end if;
+  end if;
+end $$;
