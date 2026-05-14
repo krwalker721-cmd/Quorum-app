@@ -11,6 +11,7 @@ import HandshakeButton from "@/components/HandshakeButton";
 import CohortFingerprint from "@/components/CohortFingerprint";
 import VouchedBadge from "@/components/VouchedBadge";
 import VouchButton from "@/components/VouchButton";
+import AdvanceStageButton from "@/components/AdvanceStageButton";
 import {
   getCohortFingerprint,
   getFavoriteTag,
@@ -234,6 +235,7 @@ export default async function ProfilePage({
                 </p>
                 <div className="mt-3 flex items-center gap-3 flex-wrap">
                   <StagePill stage={profile.stage} />
+                  {isOwner && <AdvanceStageButton currentStage={profile.stage} />}
                   {canSeeTier && <TierPill tier={profile.tier} />}
                   {handshakeCount > 0 && (
                     <span

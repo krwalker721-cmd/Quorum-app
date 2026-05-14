@@ -565,11 +565,19 @@ create policy "vouches_delete_own"
 create table if not exists public.recognition_notices (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete cascade,
-  kind text not null check (kind in ('first_honest','connector')),
+  kind text not null check (kind in ('first_honest','connector','stage_advance')),
   payload jsonb default '{}'::jsonb,
   seen_at timestamp,
   created_at timestamp default now()
 );
+
+-- widen the kind check for existing installs that ran the earlier version
+do $$ begin
+  alter table public.recognition_notices drop constraint if exists recognition_notices_kind_check;
+  alter table public.recognition_notices
+    add constraint recognition_notices_kind_check
+    check (kind in ('first_honest','connector','stage_advance'));
+end $$;
 
 create index if not exists recognition_notices_user_unseen_idx
   on public.recognition_notices (user_id) where seen_at is null;
