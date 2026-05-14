@@ -8,14 +8,16 @@ export default function HandshakeButton({
   currentUserId,
   recipientId,
   recipientName,
+  defaultAgreement = "",
 }: {
   currentUserId: string;
   recipientId: string;
   recipientName: string | null;
+  defaultAgreement?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [agreement, setAgreement] = useState("");
+  const [agreement, setAgreement] = useState(defaultAgreement);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);

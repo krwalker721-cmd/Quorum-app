@@ -688,3 +688,298 @@ begin
     end if;
   end if;
 end $$;
+
+-- ============================================================================
+-- collab board: extend projects + new tables
+-- ============================================================================
+
+-- extend existing projects table for the collab board (additive — keeps name/owner_id/active|completed working for the profile page)
+alter table public.projects add column if not exists title text;
+alter table public.projects add column if not exists category text;
+alter table public.projects add column if not exists looking_for text;
+alter table public.projects add column if not exists post_type text default 'project';
+
+-- widen the status check to also allow 'open' / 'closed' used by the collab board
+do $$ begin
+  alter table public.projects drop constraint if exists projects_status_check;
+  alter table public.projects
+    add constraint projects_status_check
+    check (status in ('active','completed','open','closed'));
+end $$;
+
+do $$ begin
+  alter table public.projects drop constraint if exists projects_post_type_check;
+  alter table public.projects
+    add constraint projects_post_type_check
+    check (post_type in ('project','need'));
+end $$;
+
+-- backfill title from name so listings work for any legacy rows
+update public.projects set title = name where title is null and name is not null;
+
+-- name is currently NOT NULL — make sure new collab inserts that omit name still succeed by mirroring it from title via trigger
+create or replace function public.projects_sync_name_title()
+returns trigger language plpgsql as $$
+begin
+  if new.title is null and new.name is not null then new.title := new.name; end if;
+  if new.name is null and new.title is not null then new.name := new.title; end if;
+  return new;
+end; $$;
+
+drop trigger if exists projects_sync_name_title_trigger on public.projects;
+create trigger projects_sync_name_title_trigger
+  before insert or update on public.projects
+  for each row execute function public.projects_sync_name_title();
+
+-- ============================================================================
+-- project_interests — who tapped "respond →" on a project
+-- ============================================================================
+create table if not exists public.project_interests (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references public.projects(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete cascade,
+  note text,
+  created_at timestamp default now(),
+  unique (project_id, user_id)
+);
+
+create index if not exists project_interests_project_idx on public.project_interests (project_id);
+
+alter table public.project_interests enable row level security;
+
+drop policy if exists "project_interests_read_all" on public.project_interests;
+drop policy if exists "project_interests_insert_own" on public.project_interests;
+
+create policy "project_interests_read_all"
+  on public.project_interests for select
+  using (auth.role() = 'authenticated');
+
+create policy "project_interests_insert_own"
+  on public.project_interests for insert
+  with check (auth.uid() = user_id);
+
+-- ============================================================================
+-- project_messages — thread inside a project room
+-- ============================================================================
+create table if not exists public.project_messages (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references public.projects(id) on delete cascade,
+  sender_id uuid references public.profiles(id) on delete cascade,
+  content text not null,
+  is_system boolean default false,
+  created_at timestamp default now()
+);
+
+create index if not exists project_messages_project_idx on public.project_messages (project_id, created_at);
+
+alter table public.project_messages enable row level security;
+
+drop policy if exists "project_messages_read_members" on public.project_messages;
+drop policy if exists "project_messages_insert_members" on public.project_messages;
+
+create policy "project_messages_read_members"
+  on public.project_messages for select
+  using (
+    exists (
+      select 1 from public.project_members pm
+      where pm.project_id = project_messages.project_id and pm.user_id = auth.uid()
+    )
+  );
+
+create policy "project_messages_insert_members"
+  on public.project_messages for insert
+  with check (
+    auth.uid() = sender_id
+    and exists (
+      select 1 from public.project_members pm
+      where pm.project_id = project_messages.project_id and pm.user_id = auth.uid()
+    )
+  );
+
+do $$ begin
+  alter publication supabase_realtime add table public.project_messages;
+exception when duplicate_object then null;
+end $$;
+
+-- ============================================================================
+-- shared_docs — doc metadata entries inside a project room
+-- ============================================================================
+create table if not exists public.shared_docs (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references public.projects(id) on delete cascade,
+  added_by uuid references public.profiles(id) on delete set null,
+  title text not null,
+  description text,
+  created_at timestamp default now()
+);
+
+create index if not exists shared_docs_project_idx on public.shared_docs (project_id, created_at desc);
+
+alter table public.shared_docs enable row level security;
+
+drop policy if exists "shared_docs_read_members" on public.shared_docs;
+drop policy if exists "shared_docs_insert_members" on public.shared_docs;
+
+create policy "shared_docs_read_members"
+  on public.shared_docs for select
+  using (
+    exists (
+      select 1 from public.project_members pm
+      where pm.project_id = shared_docs.project_id and pm.user_id = auth.uid()
+    )
+  );
+
+create policy "shared_docs_insert_members"
+  on public.shared_docs for insert
+  with check (
+    auth.uid() = added_by
+    and exists (
+      select 1 from public.project_members pm
+      where pm.project_id = shared_docs.project_id and pm.user_id = auth.uid()
+    )
+  );
+
+-- when a doc is added, drop a system message into the thread
+create or replace function public.shared_docs_system_message()
+returns trigger language plpgsql security definer as $$
+declare
+  uname text;
+begin
+  select coalesce(username, lower(full_name)) into uname from public.profiles where id = new.added_by;
+  insert into public.project_messages (project_id, sender_id, content, is_system)
+  values (new.project_id, new.added_by, coalesce(uname, 'someone') || ' added ' || new.title, true);
+  return new;
+end; $$;
+
+drop trigger if exists shared_docs_system_message_trigger on public.shared_docs;
+create trigger shared_docs_system_message_trigger
+  after insert on public.shared_docs
+  for each row execute function public.shared_docs_system_message();
+
+-- ============================================================================
+-- decisions — votes inside a project room
+-- ============================================================================
+create table if not exists public.decisions (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references public.projects(id) on delete cascade,
+  created_by uuid references public.profiles(id) on delete set null,
+  title text not null,
+  description text,
+  options jsonb not null default '[]'::jsonb,
+  status text default 'open' check (status in ('open','decided')),
+  winning_option text,
+  created_at timestamp default now()
+);
+
+create index if not exists decisions_project_idx on public.decisions (project_id, created_at desc);
+
+alter table public.decisions enable row level security;
+
+drop policy if exists "decisions_read_members" on public.decisions;
+drop policy if exists "decisions_insert_members" on public.decisions;
+drop policy if exists "decisions_update_members" on public.decisions;
+
+create policy "decisions_read_members"
+  on public.decisions for select
+  using (
+    exists (
+      select 1 from public.project_members pm
+      where pm.project_id = decisions.project_id and pm.user_id = auth.uid()
+    )
+  );
+
+create policy "decisions_insert_members"
+  on public.decisions for insert
+  with check (
+    exists (
+      select 1 from public.project_members pm
+      where pm.project_id = decisions.project_id and pm.user_id = auth.uid()
+    )
+  );
+
+create policy "decisions_update_members"
+  on public.decisions for update
+  using (
+    exists (
+      select 1 from public.project_members pm
+      where pm.project_id = decisions.project_id and pm.user_id = auth.uid()
+    )
+  );
+
+create table if not exists public.decision_votes (
+  id uuid primary key default gen_random_uuid(),
+  decision_id uuid references public.decisions(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete cascade,
+  option_chosen text not null,
+  created_at timestamp default now(),
+  unique (decision_id, user_id)
+);
+
+create index if not exists decision_votes_decision_idx on public.decision_votes (decision_id);
+
+alter table public.decision_votes enable row level security;
+
+drop policy if exists "decision_votes_read_members" on public.decision_votes;
+drop policy if exists "decision_votes_insert_members" on public.decision_votes;
+
+create policy "decision_votes_read_members"
+  on public.decision_votes for select
+  using (
+    exists (
+      select 1 from public.decisions d
+      join public.project_members pm on pm.project_id = d.project_id
+      where d.id = decision_votes.decision_id and pm.user_id = auth.uid()
+    )
+  );
+
+create policy "decision_votes_insert_members"
+  on public.decision_votes for insert
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.decisions d
+      join public.project_members pm on pm.project_id = d.project_id
+      where d.id = decision_votes.decision_id and pm.user_id = auth.uid()
+    )
+  );
+
+-- when a decision is created, drop a system message
+create or replace function public.decisions_system_message()
+returns trigger language plpgsql security definer as $$
+declare uname text;
+begin
+  select coalesce(username, lower(full_name)) into uname from public.profiles where id = new.created_by;
+  insert into public.project_messages (project_id, sender_id, content, is_system)
+  values (new.project_id, new.created_by, coalesce(uname, 'someone') || ' opened a decision: ' || new.title, true);
+  return new;
+end; $$;
+
+drop trigger if exists decisions_system_message_trigger on public.decisions;
+create trigger decisions_system_message_trigger
+  after insert on public.decisions
+  for each row execute function public.decisions_system_message();
+
+-- auto-add project author/owner as the first member
+create or replace function public.projects_add_owner_as_member()
+returns trigger language plpgsql security definer as $$
+begin
+  if new.owner_id is not null then
+    insert into public.project_members (project_id, user_id, role)
+    values (new.id, new.owner_id, 'owner')
+    on conflict do nothing;
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists projects_add_owner_member_trigger on public.projects;
+create trigger projects_add_owner_member_trigger
+  after insert on public.projects
+  for each row execute function public.projects_add_owner_as_member();
+
+        'pre-seed',
+        'co-founder',
+        9,
+        E'# firing my co-founder, and the six months after\n\nthe hardest decision i''ve made. writing this down honestly because i wish someone had written it for me.\n\n## why it had to happen\n\nwe had different definitions of "done." mine was shipped to a paying customer; his was technically working in staging. for 14 months i told myself this was complementary. it wasn''t — it was a constant tax on momentum.\n\n## the conversation\n\ni rehearsed it for two weeks. it still took 90 minutes and we both cried. we agreed on a 12-month vesting acceleration and a clean cap-table split.\n\n## what the next six months looked like\n\n- month 1: i shipped more than the previous quarter\n- month 2: i hated being alone\n- month 3: hired a senior engineer who became the real second voice\n- month 4-6: pipeline 3x''d\n\n## the honest part\n\ni am still friends with him. it was the right call and we both know it now. the fear of the conversation is always bigger than the conversation.');
+    end if;
+  end if;
+end $$;
