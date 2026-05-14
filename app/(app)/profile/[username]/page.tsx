@@ -12,6 +12,7 @@ import CohortFingerprint from "@/components/CohortFingerprint";
 import VouchedBadge from "@/components/VouchedBadge";
 import VouchButton from "@/components/VouchButton";
 import AdvanceStageButton from "@/components/AdvanceStageButton";
+import SkillsEditor from "@/components/collab/SkillsEditor";
 import {
   getCohortFingerprint,
   getFavoriteTag,
@@ -405,7 +406,9 @@ export default async function ProfilePage({
             {/* Skills */}
             <div className="bg-card border border-border p-5 mt-6">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint">skills</p>
-              {skills.length === 0 ? (
+              {isOwner ? (
+                <SkillsEditor userId={profile.id} skills={skills} />
+              ) : skills.length === 0 ? (
                 <p className="font-mono lowercase text-xs text-text-faint mt-3">
                   no skills listed.
                 </p>

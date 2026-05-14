@@ -11,7 +11,7 @@ const NAV = [
   { href: "/messages", label: "messages" },
   { href: "/pulse", label: "pulse" },
   { href: "/vault", label: "vault" },
-  { href: "/collab_board", label: "collab_board" },
+  { href: "/collab", label: "collab_board" },
   { href: "/referrals", label: "referrals" },
 ];
 
