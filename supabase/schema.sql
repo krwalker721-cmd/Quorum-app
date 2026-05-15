@@ -1058,3 +1058,26 @@ drop trigger if exists projects_add_owner_member_trigger on public.projects;
 create trigger projects_add_owner_member_trigger
   after insert on public.projects
   for each row execute function public.projects_add_owner_as_member();
+
+-- ============================================================================
+-- collab pulse — realtime publication adds for activity feed
+-- ============================================================================
+do $$ begin
+  alter publication supabase_realtime add table public.projects;
+exception when duplicate_object then null;
+end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.shared_docs;
+exception when duplicate_object then null;
+end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.decisions;
+exception when duplicate_object then null;
+end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.handshakes;
+exception when duplicate_object then null;
+end $$;

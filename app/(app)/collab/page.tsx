@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import CollabBoardClient from "@/components/collab/CollabBoardClient";
 import LockedCollabBoard from "@/components/collab/LockedCollabBoard";
+import type { WorkspaceProject, WorkspaceMember } from "@/components/collab/YourWorkspace";
+import type { PulseEvent } from "@/components/collab/PulseBar";
 
 export const dynamic = "force-dynamic";
 
@@ -137,6 +139,257 @@ export default async function CollabPage({
     .map(([skill, members]) => ({ skill, members }))
     .sort((a, b) => b.members.length - a.members.length);
 
+  // ─── your_workspace ────────────────────────────────────────────────────────
+  const { data: myMemberships } = await supabase
+    .from("project_members")
+    .select("project_id, projects!inner(id, title, name, category, status, post_type)")
+    .eq("user_id", user.id);
+
+  const myProjectIds = (myMemberships ?? [])
+    .map((r: any) => r.projects?.id)
+    .filter(Boolean) as string[];
+
+  const workspaceProjects: WorkspaceProject[] = [];
+  if (myProjectIds.length > 0) {
+    const [allMembersRes, msgCountsRes, docCountsRes, decisionsRes, votesRes, lastMsgRes, lastDocRes, lastDecRes] =
+      await Promise.all([
+        supabase
+          .from("project_members")
+          .select("project_id, profiles!inner(id, full_name, stage, username)")
+          .in("project_id", myProjectIds),
+        supabase
+          .from("project_messages")
+          .select("project_id, is_system")
+          .in("project_id", myProjectIds),
+        supabase
+          .from("shared_docs")
+          .select("project_id")
+          .in("project_id", myProjectIds),
+        supabase
+          .from("decisions")
+          .select("id, project_id, status, created_at")
+          .in("project_id", myProjectIds),
+        supabase
+          .from("decision_votes")
+          .select("decision_id, user_id")
+          .eq("user_id", user.id),
+        supabase
+          .from("project_messages")
+          .select("project_id, created_at")
+          .in("project_id", myProjectIds)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabase
+          .from("shared_docs")
+          .select("project_id, created_at")
+          .in("project_id", myProjectIds)
+          .order("created_at", { ascending: false })
+          .limit(100),
+        supabase
+          .from("decisions")
+          .select("project_id, created_at")
+          .in("project_id", myProjectIds)
+          .order("created_at", { ascending: false })
+          .limit(100),
+      ]);
+
+    const membersByProject = new Map<string, WorkspaceMember[]>();
+    for (const row of (allMembersRes.data ?? []) as any[]) {
+      const list = membersByProject.get(row.project_id) ?? [];
+      const p = row.profiles;
+      if (p && !list.find((x) => x.id === p.id)) {
+        list.push({ id: p.id, full_name: p.full_name, stage: p.stage, username: p.username });
+      }
+      membersByProject.set(row.project_id, list);
+    }
+
+    const msgCount = new Map<string, number>();
+    for (const r of (msgCountsRes.data ?? []) as any[]) {
+      if (r.is_system) continue;
+      msgCount.set(r.project_id, (msgCount.get(r.project_id) ?? 0) + 1);
+    }
+    const docCount = new Map<string, number>();
+    for (const r of (docCountsRes.data ?? []) as any[]) {
+      docCount.set(r.project_id, (docCount.get(r.project_id) ?? 0) + 1);
+    }
+    const decCount = new Map<string, number>();
+    const openDecisionsByProject = new Map<string, string[]>();
+    for (const d of (decisionsRes.data ?? []) as any[]) {
+      decCount.set(d.project_id, (decCount.get(d.project_id) ?? 0) + 1);
+      if (d.status === "open") {
+        const arr = openDecisionsByProject.get(d.project_id) ?? [];
+        arr.push(d.id);
+        openDecisionsByProject.set(d.project_id, arr);
+      }
+    }
+    const myVotedDecisions = new Set(
+      ((votesRes.data ?? []) as any[]).map((v) => v.decision_id)
+    );
+
+    const lastByProject = new Map<string, { ts: string; label: string }>();
+    function consider(projId: string, ts: string | null, label: string) {
+      if (!ts) return;
+      const cur = lastByProject.get(projId);
+      if (!cur || new Date(ts).getTime() > new Date(cur.ts).getTime()) {
+        lastByProject.set(projId, { ts, label });
+      }
+    }
+    for (const r of (lastMsgRes.data ?? []) as any[]) consider(r.project_id, r.created_at, "thread updated");
+    for (const r of (lastDocRes.data ?? []) as any[]) consider(r.project_id, r.created_at, "doc added");
+    for (const r of (lastDecRes.data ?? []) as any[]) consider(r.project_id, r.created_at, "decision added");
+
+    for (const row of (myMemberships ?? []) as any[]) {
+      const proj = row.projects;
+      if (!proj) continue;
+      const openIds = openDecisionsByProject.get(proj.id) ?? [];
+      const needsVote = openIds.some((id) => !myVotedDecisions.has(id));
+      const last = lastByProject.get(proj.id);
+      workspaceProjects.push({
+        id: proj.id,
+        title: proj.title ?? proj.name ?? "untitled",
+        category: proj.category,
+        members: membersByProject.get(proj.id) ?? [],
+        last_activity_at: last?.ts ?? null,
+        last_activity_label: last?.label ?? "no activity yet",
+        doc_count: docCount.get(proj.id) ?? 0,
+        decision_count: decCount.get(proj.id) ?? 0,
+        message_count: msgCount.get(proj.id) ?? 0,
+        needs_vote: needsVote,
+      });
+    }
+
+    workspaceProjects.sort((a, b) => {
+      const at = a.last_activity_at ? new Date(a.last_activity_at).getTime() : 0;
+      const bt = b.last_activity_at ? new Date(b.last_activity_at).getTime() : 0;
+      return bt - at;
+    });
+  }
+
+  // ─── seed pulse events (last 10 minutes) ───────────────────────────────────
+  const sinceIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const [recentProjsRes, recentMsgsRes, recentDocsRes, recentDecsRes, recentHsRes] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, owner_id, post_type, created_at")
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("project_messages")
+      .select("id, sender_id, project_id, is_system, created_at")
+      .eq("is_system", false)
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("shared_docs")
+      .select("id, added_by, project_id, created_at")
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("decisions")
+      .select("id, created_by, project_id, created_at")
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("handshakes")
+      .select("id, initiator_id, created_at")
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  const pulseUserIds = new Set<string>();
+  const pulseProjectIds = new Set<string>();
+  for (const r of (recentProjsRes.data ?? []) as any[]) if (r.owner_id) pulseUserIds.add(r.owner_id);
+  for (const r of (recentMsgsRes.data ?? []) as any[]) {
+    if (r.sender_id) pulseUserIds.add(r.sender_id);
+    if (r.project_id) pulseProjectIds.add(r.project_id);
+  }
+  for (const r of (recentDocsRes.data ?? []) as any[]) {
+    if (r.added_by) pulseUserIds.add(r.added_by);
+    if (r.project_id) pulseProjectIds.add(r.project_id);
+  }
+  for (const r of (recentDecsRes.data ?? []) as any[]) {
+    if (r.created_by) pulseUserIds.add(r.created_by);
+    if (r.project_id) pulseProjectIds.add(r.project_id);
+  }
+  for (const r of (recentHsRes.data ?? []) as any[]) if (r.initiator_id) pulseUserIds.add(r.initiator_id);
+
+  const pulseUserMap = new Map<string, { username: string | null; full_name: string | null }>();
+  if (pulseUserIds.size > 0) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, username, full_name")
+      .in("id", Array.from(pulseUserIds));
+    for (const p of (data ?? []) as any[]) {
+      pulseUserMap.set(p.id, { username: p.username, full_name: p.full_name });
+    }
+  }
+  const pulseProjectMap = new Map<string, string>();
+  if (pulseProjectIds.size > 0) {
+    const { data } = await supabase
+      .from("projects")
+      .select("id, title, name")
+      .in("id", Array.from(pulseProjectIds));
+    for (const p of (data ?? []) as any[]) {
+      pulseProjectMap.set(p.id, (p.title ?? p.name ?? "a project").toLowerCase());
+    }
+  }
+  const uname = (id: string | null) => {
+    if (!id) return "someone";
+    const p = pulseUserMap.get(id);
+    return ((p?.username ?? p?.full_name ?? "someone") || "someone").toLowerCase();
+  };
+
+  const initialPulseEvents: PulseEvent[] = [];
+  for (const r of (recentProjsRes.data ?? []) as any[]) {
+    initialPulseEvents.push({
+      id: `proj-${r.id}`,
+      ts: r.created_at,
+      username: uname(r.owner_id),
+      text: r.post_type === "need" ? "posted a new need" : "posted a new project",
+    });
+  }
+  for (const r of (recentMsgsRes.data ?? []) as any[]) {
+    initialPulseEvents.push({
+      id: `msg-${r.id}`,
+      ts: r.created_at,
+      username: uname(r.sender_id),
+      text: "replied in",
+      projectName: pulseProjectMap.get(r.project_id) ?? "a project",
+    });
+  }
+  for (const r of (recentDocsRes.data ?? []) as any[]) {
+    initialPulseEvents.push({
+      id: `doc-${r.id}`,
+      ts: r.created_at,
+      username: uname(r.added_by),
+      text: "added a doc to",
+      projectName: pulseProjectMap.get(r.project_id) ?? "a project",
+    });
+  }
+  for (const r of (recentDecsRes.data ?? []) as any[]) {
+    initialPulseEvents.push({
+      id: `dec-${r.id}`,
+      ts: r.created_at,
+      username: uname(r.created_by),
+      text: "posted a decision in",
+      projectName: pulseProjectMap.get(r.project_id) ?? "a project",
+    });
+  }
+  for (const r of (recentHsRes.data ?? []) as any[]) {
+    initialPulseEvents.push({
+      id: `hs-${r.id}`,
+      ts: r.created_at,
+      username: uname(r.initiator_id),
+      text: "logged a handshake",
+    });
+  }
+  initialPulseEvents.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+
   return (
     <>
       <TopBar title="collab_board" tier={tierLabel} userId={user.id} />
@@ -146,6 +399,8 @@ export default async function CollabPage({
         projects={projects}
         needs={needs}
         skillIndex={skillIndex}
+        workspaceProjects={workspaceProjects}
+        initialPulseEvents={initialPulseEvents.slice(0, 30)}
       />
     </>
   );
