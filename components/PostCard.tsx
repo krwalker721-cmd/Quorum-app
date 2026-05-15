@@ -1,5 +1,5 @@
 import Avatar from "@/components/Avatar";
-import { TAG_COLOR, timeAgo } from "@/lib/stage";
+import { TAG_COLOR, ROOM_TYPE_COLOR, timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
 import BookmarkButton from "@/components/BookmarkButton";
 import PostMenu from "@/components/PostMenu";
@@ -8,11 +8,14 @@ export type PostWithAuthor = {
   id: string;
   content: string;
   tag: string | null;
+  room_type?: string | null;
   is_anonymous: boolean;
   post_type: string;
   reply_count: number;
   created_at: string;
   local_hour?: number | null;
+  // Server-decorated: post has had a reply in the last 2 hours.
+  isActive?: boolean;
   author?: {
     full_name: string | null;
     stage: string | null;
@@ -34,22 +37,85 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   const isPulse = post.post_type === "pulse";
   const savedType: "pulse_post" | "cohort_post" = isPulse ? "pulse_post" : "cohort_post";
 
+  const roomType = post.room_type ?? null;
+  const isDecision = roomType === "decision";
+  const isBlocker = roomType === "blocker";
+  const isWin = roomType === "win";
+  const isQuestion = roomType === "question";
+  const isActive = !!post.isActive;
+
+  // Left-border treatment — chosen by type, then anonymity, then default.
+  let leftBorder = `1px solid var(--border-amber)`;
+  if (anon) {
+    leftBorder = "2px solid #3a3a3a";
+  } else if (isDecision || isBlocker) {
+    leftBorder = "3px solid rgba(245, 158, 11, 0.75)";
+  } else if (isWin) {
+    leftBorder = "3px solid rgba(34, 197, 94, 0.75)";
+  } else if (isQuestion) {
+    leftBorder = "3px solid rgba(56, 189, 248, 0.75)";
+  }
+  // If active, the left border is overridden by the green pulse class.
+  if (isActive && !anon) {
+    leftBorder = "3px solid rgba(34, 197, 94, 0.6)";
+  }
+
+  const decisionBoost = isDecision ? "py-6" : "p-4";
+  const winTint = isWin ? "rgba(34, 197, 94, 0.025)" : "var(--card-elev)";
+
+  const borderColor = isDecision || isBlocker
+    ? "rgba(245, 158, 11, 0.4)"
+    : "var(--border-amber)";
+
+  const classes = [
+    "group relative border",
+    isDecision ? "px-4 py-6" : "p-4",
+    moved ? "moved-room-pulse" : "",
+    isActive && !anon ? "pulse-active-breathe" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <article
-      className={`group relative p-4 border${moved ? " moved-room-pulse" : ""}`}
+      className={classes}
       style={{
-        background: "var(--card-elev)",
-        borderColor: "var(--border-amber)",
-        borderLeft: anon ? "3px solid #3a3a3a" : `1px solid var(--border-amber)`,
+        background: winTint,
+        borderColor,
+        borderLeft: leftBorder,
         boxShadow: lateNight
           ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
           : undefined,
       }}
     >
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Top-right indicators — always visible */}
+      <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
+        {(isDecision || isBlocker) && (
+          <span
+            aria-hidden
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(245,158,11,0.7)" }}
+          />
+        )}
+        {isActive && !anon && (
+          <span
+            className="font-mono lowercase tracking-wider"
+            style={{ color: "#22c55e", fontSize: "8px" }}
+          >
+            active
+          </span>
+        )}
+      </div>
+
+      {/* Hover-only actions — sit to the left of indicators */}
+      <div
+        className="absolute top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ right: 56 }}
+      >
         <BookmarkButton itemType={savedType} itemId={post.id} variant="inline" />
         {isPulse && <PostMenu postId={post.id} />}
       </div>
+
       <header className="flex items-center gap-3 mb-2">
         {anon ? (
           <div
@@ -74,6 +140,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
             {timeAgo(post.created_at)} ago
+            {anon && <span className="ml-2" style={{ fontSize: "9px" }}>· posted anonymously</span>}
           </p>
         </div>
       </header>
@@ -83,21 +150,53 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
       </p>
 
       <footer className="flex items-center justify-between mt-3">
-        <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-          ↳ {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
-        </span>
-        {post.tag && (
-          <span
-            className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-            style={{
-              border: `1px solid ${tagColor}`,
-              color: tagColor,
-              background: "transparent",
-            }}
-          >
-            {post.tag}
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono lowercase text-[0.65rem] text-text-faint">
+            ↳ {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
           </span>
-        )}
+          {(isDecision || isBlocker) && (
+            <span
+              className="font-mono lowercase tracking-wider"
+              style={{ color: "#f59e0b", fontSize: "9px" }}
+            >
+              needs input
+            </span>
+          )}
+          {isQuestion && (
+            <span
+              className="font-mono lowercase tracking-wider"
+              style={{ color: "#38bdf8", fontSize: "9px" }}
+            >
+              needs input
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {roomType && (
+            <span
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+              style={{
+                border: `1px solid ${ROOM_TYPE_COLOR[roomType] ?? "#707070"}`,
+                color: ROOM_TYPE_COLOR[roomType] ?? "#707070",
+                background: "transparent",
+              }}
+            >
+              {roomType}
+            </span>
+          )}
+          {post.tag && (
+            <span
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+              style={{
+                border: `1px solid ${tagColor}`,
+                color: tagColor,
+                background: "transparent",
+              }}
+            >
+              {post.tag}
+            </span>
+          )}
+        </div>
       </footer>
     </article>
   );

@@ -161,12 +161,47 @@ label {
 }
 .vault-prompt-cycle { animation: vault-prompt-fade 8s ease-in-out infinite; }
 
+/* Pulse — active post: slow green border breathe (3s loop, 0.4 -> 1.0) */
+@keyframes pulse-active-breathe {
+  0%, 100% { border-left-color: rgba(34, 197, 94, 0.4); }
+  50%      { border-left-color: rgba(34, 197, 94, 1.0); }
+}
+.pulse-active-breathe {
+  animation: pulse-active-breathe 3s ease-in-out infinite;
+}
+
+/* Pulse — header card 1: subtle amber glow behind founders-in-the-room */
+.pulse-card-amber-glow {
+  box-shadow: 0 0 28px 2px rgba(245, 158, 11, 0.10), inset 0 0 0 1px rgba(245, 158, 11, 0.10);
+}
+
+/* Pulse — activity ticker line: fade in/out */
+@keyframes pulse-ticker-fade {
+  0%, 100% { opacity: 0; }
+  15%, 85% { opacity: 1; }
+}
+.pulse-ticker-line { animation: pulse-ticker-fade 4s ease-in-out infinite; }
+
+/* Pulse — amber online/active dot (slow pulse, for ticker) */
+@keyframes pulse-amber-dot {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+.pulse-amber-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+  animation: pulse-amber-dot 2.5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .moved-room-pulse,
   .consistency-ghost,
   .vault-breathe,
   .vault-ambient-card,
-  .vault-prompt-cycle { animation: none; }
+  .vault-prompt-cycle,
+  .pulse-active-breathe,
+  .pulse-ticker-line,
+  .pulse-amber-dot { animation: none; }
 }
 
 /* Scrollbars */

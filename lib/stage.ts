@@ -7,6 +7,24 @@ export const STAGE_COLOR: Record<string, string> = {
   series_a: "#a78bfa",
 };
 
+// Pulse room_type → color + label. Used for post-card borders, type pills,
+// trending widgets, and the post-creation type selector.
+export const ROOM_TYPE_COLOR: Record<string, string> = {
+  question: "#38bdf8",
+  update: "#707070",
+  decision: "#f59e0b",
+  win: "#22c55e",
+  blocker: "#f59e0b",
+};
+
+export const ROOM_TYPE_LABEL: Record<string, string> = {
+  question: "ask the room something real",
+  update: "share where you're at",
+  decision: "thinking something through out loud",
+  win: "something worked — share it",
+  blocker: "stuck on something — the room can help",
+};
+
 export const TAG_COLOR: Record<string, string> = {
   decision: "#f59e0b",
   mindset: "#a78bfa",
