@@ -4,7 +4,6 @@ import StatStrip from "@/components/StatStrip";
 import Feed from "@/components/Feed";
 import WeeklyCheckin from "@/components/widgets/WeeklyCheckin";
 import ActiveNow from "@/components/widgets/ActiveNow";
-import VaultPreview from "@/components/widgets/VaultPreview";
 import CohortNetwork from "@/components/viz/CohortNetwork";
 import ActivityHeatmap from "@/components/viz/ActivityHeatmap";
 import StageBreakdown from "@/components/viz/StageBreakdown";
@@ -126,7 +125,6 @@ export default async function HomePage() {
         <aside className="space-y-4">
           <WeeklyCheckin userId={user.id} />
           <ActiveNow members={memberList.filter((m) => m.id !== user.id)} currentUserId={user.id} />
-          <VaultPreview />
         </aside>
       </div>
     </>

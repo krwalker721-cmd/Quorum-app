@@ -131,9 +131,42 @@ label {
   background: rgba(245, 158, 11, 0.04);
 }
 
+/* Vault — slow amber breathing behind the "+ new note" button */
+@keyframes vault-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.0); }
+  50%      { box-shadow: 0 0 24px 4px rgba(245, 158, 11, 0.18); }
+}
+.vault-breathe { animation: vault-breathe 5.5s ease-in-out infinite; }
+
+/* Vault — ambient activity feed slow scroll */
+@keyframes vault-ambient-drift {
+  0%   { transform: translateY(100%); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(-200%); opacity: 0; }
+}
+.vault-ambient-card { animation: vault-ambient-drift 22s linear infinite; }
+
+/* Vault — toast slide in */
+@keyframes vault-toast-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+.vault-toast { animation: vault-toast-in 220ms ease-out; }
+
+/* Vault — prompt fade */
+@keyframes vault-prompt-fade {
+  0%, 100% { opacity: 0; }
+  10%, 90% { opacity: 1; }
+}
+.vault-prompt-cycle { animation: vault-prompt-fade 8s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .moved-room-pulse,
-  .consistency-ghost { animation: none; }
+  .consistency-ghost,
+  .vault-breathe,
+  .vault-ambient-card,
+  .vault-prompt-cycle { animation: none; }
 }
 
 /* Scrollbars */

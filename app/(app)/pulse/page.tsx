@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import PulseFeed from "@/components/PulseFeed";
 import ActiveNow from "@/components/widgets/ActiveNow";
-import VaultPreview from "@/components/widgets/VaultPreview";
 import TrendingTags from "@/components/widgets/TrendingTags";
 import { PostWithAuthor } from "@/components/PostCard";
 import { hasDepthRing, isAnniversary, postsMovedTheRoomBatch } from "@/lib/recognition";
@@ -87,7 +86,6 @@ export default async function PulsePage() {
             currentUserId={user.id}
           />
           <TrendingTags />
-          <VaultPreview />
         </aside>
       </div>
     </>

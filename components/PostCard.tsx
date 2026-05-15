@@ -1,6 +1,8 @@
 import Avatar from "@/components/Avatar";
 import { TAG_COLOR, timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
+import BookmarkButton from "@/components/BookmarkButton";
+import PostMenu from "@/components/PostMenu";
 
 export type PostWithAuthor = {
   id: string;
@@ -29,9 +31,12 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   const lateNight = is2amPost(post);
   const moved = !!post.movedTheRoom;
 
+  const isPulse = post.post_type === "pulse";
+  const savedType: "pulse_post" | "cohort_post" = isPulse ? "pulse_post" : "cohort_post";
+
   return (
     <article
-      className={`p-4 border${moved ? " moved-room-pulse" : ""}`}
+      className={`group relative p-4 border${moved ? " moved-room-pulse" : ""}`}
       style={{
         background: "var(--card-elev)",
         borderColor: "var(--border-amber)",
@@ -41,6 +46,10 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           : undefined,
       }}
     >
+      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <BookmarkButton itemType={savedType} itemId={post.id} variant="inline" />
+        {isPulse && <PostMenu postId={post.id} />}
+      </div>
       <header className="flex items-center gap-3 mb-2">
         {anon ? (
           <div
