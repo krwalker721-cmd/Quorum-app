@@ -9,6 +9,8 @@ import NewProjectModal from "./NewProjectModal";
 import RespondModal from "./RespondModal";
 import SkillModal from "./SkillModal";
 import BookmarkButton from "@/components/BookmarkButton";
+import PulseBar, { type PulseEvent } from "./PulseBar";
+import YourWorkspace, { type WorkspaceProject } from "./YourWorkspace";
 
 type Author = { id: string; full_name: string | null; stage: string | null; username: string | null };
 
@@ -49,12 +51,16 @@ export default function CollabBoardClient({
   projects,
   needs,
   skillIndex,
+  workspaceProjects,
+  initialPulseEvents,
 }: {
   currentUserId: string;
   initialTab: Tab;
   projects: ProjectRow[];
   needs: ProjectRow[];
   skillIndex: SkillEntry[];
+  workspaceProjects: WorkspaceProject[];
+  initialPulseEvents: PulseEvent[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -70,6 +76,7 @@ export default function CollabBoardClient({
 
   return (
     <>
+      <PulseBar initialEvents={initialPulseEvents} />
       {/* Tabs row */}
       <div
         className="flex items-center justify-between px-6 pt-4 border-b"
@@ -107,11 +114,14 @@ export default function CollabBoardClient({
 
       <div className="px-6 py-6">
         {tab === "projects" && (
-          <ProjectsList
-            rows={projects}
-            currentUserId={currentUserId}
-            onRespond={setRespondFor}
-          />
+          <>
+            <YourWorkspace projects={workspaceProjects} />
+            <ProjectsList
+              rows={projects}
+              currentUserId={currentUserId}
+              onRespond={setRespondFor}
+            />
+          </>
         )}
         {tab === "needs" && <NeedsList rows={needs} currentUserId={currentUserId} />}
         {tab === "skills" && <SkillsIndex entries={skillIndex} onOpen={setSkillFor} />}
