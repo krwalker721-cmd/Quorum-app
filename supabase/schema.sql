@@ -627,66 +627,149 @@ create policy "introductions_insert_own"
   with check (auth.uid() = introducer_id);
 
 -- ============================================================================
--- vault_posts
+-- vault rebuild — saved_items, notes, note_collections, nominations, wisdom
+-- The old vault_posts table is fully replaced by this system.
 -- ============================================================================
-create table if not exists public.vault_posts (
+drop table if exists public.vault_posts cascade;
+
+-- saved_items: anything a user bookmarks from anywhere on Quorum
+create table if not exists public.saved_items (
   id uuid primary key default gen_random_uuid(),
-  author_id uuid references public.profiles(id) on delete set null,
-  title text not null,
-  content text not null,
-  credential text,
-  tag text check (tag in ('fundraising','hiring','co-founder','growth','ops','mindset')),
-  read_time_minutes integer,
+  user_id uuid references public.profiles(id) on delete cascade,
+  item_type text not null check (item_type in ('pulse_post','cohort_post','project')),
+  item_id uuid not null,
+  personal_note text,
+  created_at timestamp default now(),
+  unique (user_id, item_type, item_id)
+);
+
+create index if not exists saved_items_user_idx on public.saved_items (user_id, created_at desc);
+create index if not exists saved_items_lookup_idx on public.saved_items (item_type, item_id);
+
+alter table public.saved_items enable row level security;
+
+drop policy if exists "saved_items_read_own" on public.saved_items;
+drop policy if exists "saved_items_write_own" on public.saved_items;
+drop policy if exists "saved_items_update_own" on public.saved_items;
+drop policy if exists "saved_items_delete_own" on public.saved_items;
+
+create policy "saved_items_read_own"
+  on public.saved_items for select
+  using (auth.uid() = user_id);
+
+create policy "saved_items_write_own"
+  on public.saved_items for insert
+  with check (auth.uid() = user_id);
+
+create policy "saved_items_update_own"
+  on public.saved_items for update
+  using (auth.uid() = user_id);
+
+create policy "saved_items_delete_own"
+  on public.saved_items for delete
+  using (auth.uid() = user_id);
+
+do $$ begin
+  alter publication supabase_realtime add table public.saved_items;
+exception when duplicate_object then null;
+end $$;
+
+-- note_collections: user-defined folders for notes
+create table if not exists public.note_collections (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  name text not null,
   created_at timestamp default now()
 );
 
-create index if not exists vault_posts_created_at_idx on public.vault_posts (created_at desc);
-create index if not exists vault_posts_tag_idx on public.vault_posts (tag);
-create index if not exists vault_posts_author_idx on public.vault_posts (author_id);
+create index if not exists note_collections_user_idx on public.note_collections (user_id, created_at);
 
-alter table public.vault_posts enable row level security;
+alter table public.note_collections enable row level security;
 
-drop policy if exists "vault_posts_read_all" on public.vault_posts;
-drop policy if exists "vault_posts_insert_own" on public.vault_posts;
+drop policy if exists "note_collections_all_own" on public.note_collections;
+create policy "note_collections_all_own"
+  on public.note_collections for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
--- Readable by all authenticated users — tier gating is handled in the UI.
-create policy "vault_posts_read_all"
-  on public.vault_posts for select
+-- notes: private block-based personal notes
+create table if not exists public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  title text default '',
+  content jsonb default '[]'::jsonb,
+  collection_id uuid references public.note_collections(id) on delete set null,
+  tags text[] default '{}',
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+create index if not exists notes_user_idx on public.notes (user_id, updated_at desc);
+
+alter table public.notes enable row level security;
+
+drop policy if exists "notes_all_own" on public.notes;
+create policy "notes_all_own"
+  on public.notes for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+do $$ begin
+  alter publication supabase_realtime add table public.notes;
+exception when duplicate_object then null;
+end $$;
+
+-- vault_nominations: pulse posts proposed for community_wisdom
+create table if not exists public.vault_nominations (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references public.posts(id) on delete cascade,
+  nominated_by uuid references public.profiles(id) on delete cascade,
+  reason text,
+  status text default 'pending' check (status in ('pending','approved','declined')),
+  created_at timestamp default now(),
+  unique (post_id, nominated_by)
+);
+
+create index if not exists vault_nominations_status_idx on public.vault_nominations (status, created_at desc);
+
+alter table public.vault_nominations enable row level security;
+
+drop policy if exists "vault_nominations_insert_auth" on public.vault_nominations;
+drop policy if exists "vault_nominations_read_own" on public.vault_nominations;
+
+create policy "vault_nominations_insert_auth"
+  on public.vault_nominations for insert
+  with check (auth.uid() = nominated_by);
+
+-- Nominators can read their own; admin reads via service role.
+create policy "vault_nominations_read_own"
+  on public.vault_nominations for select
+  using (auth.uid() = nominated_by);
+
+-- community_wisdom: approved nominations, visible to all authenticated users
+create table if not exists public.community_wisdom (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references public.posts(id) on delete cascade,
+  nominated_by uuid references public.profiles(id) on delete set null,
+  nomination_reason text,
+  approved_at timestamp default now(),
+  created_at timestamp default now(),
+  unique (post_id)
+);
+
+create index if not exists community_wisdom_created_idx on public.community_wisdom (created_at desc);
+
+alter table public.community_wisdom enable row level security;
+
+drop policy if exists "community_wisdom_read_all" on public.community_wisdom;
+
+create policy "community_wisdom_read_all"
+  on public.community_wisdom for select
   using (auth.role() = 'authenticated');
 
-create policy "vault_posts_insert_own"
-  on public.vault_posts for insert
-  with check (auth.uid() = author_id);
-
--- Seed three example posts (idempotent — only inserts if the table is empty).
-do $$
-declare
-  seed_author uuid;
-begin
-  if not exists (select 1 from public.vault_posts limit 1) then
-    select id into seed_author from public.profiles order by created_at asc limit 1;
-    if seed_author is not null then
-      insert into public.vault_posts (author_id, title, credential, tag, read_time_minutes, content) values
-      (seed_author,
-        'the cap-table mistake i made at $1.2m arr',
-        'exited_2022',
-        'fundraising',
-        7,
-        E'# the cap-table mistake i made at $1.2m arr\n\nwhen we closed our seed round we gave one angel a 2x participating liquidation preference because he was the first check. it felt fair at the time.\n\n## what actually happened\n\nat acquisition, that single clause cost the founding team ~$1.8m. participating prefs compound badly when you stack later rounds on top.\n\n## what i would do again\n\n- 1x non-participating, full stop\n- no side letters for early money\n- if an angel asks for special terms, the answer is "we love you but no"\n\nthe lesson: terms outlive the relationship.'),
-      (seed_author,
-        'what 90 cold outbound emails actually got me',
-        'series_a',
-        'growth',
-        5,
-        E'# what 90 cold outbound emails actually got me\n\ni ran a tight test: 90 cold emails over 3 weeks, all hand-written, all to ICP-fit prospects.\n\n## the numbers\n\n- 90 sent\n- 31 opens (34%)\n- 11 replies (12%)\n- 4 calls booked\n- 1 paying customer at $2k/mo\n\n## the pattern\n\nthe four people who took a call all had one thing in common: i had referenced something specific they had shipped in the last 14 days. nobody else replied.\n\n## takeaway\n\nrecency beats personalization. if you''re not reading their changelog the morning you email them, don''t bother.'),
-      (seed_author,
-        'firing my co-founder, and the six months after',
-        'pre-seed',
-        'co-founder',
-        9,
-        E'# firing my co-founder, and the six months after\n\nthe hardest decision i''ve made. writing this down honestly because i wish someone had written it for me.\n\n## why it had to happen\n\nwe had different definitions of "done." mine was shipped to a paying customer; his was technically working in staging. for 14 months i told myself this was complementary. it wasn''t — it was a constant tax on momentum.\n\n## the conversation\n\ni rehearsed it for two weeks. it still took 90 minutes and we both cried. we agreed on a 12-month vesting acceleration and a clean cap-table split.\n\n## what the next six months looked like\n\n- month 1: i shipped more than the previous quarter\n- month 2: i hated being alone\n- month 3: hired a senior engineer who became the real second voice\n- month 4-6: pipeline 3x''d\n\n## the honest part\n\ni am still friends with him. it was the right call and we both know it now. the fear of the conversation is always bigger than the conversation.');
-    end if;
-  end if;
+do $$ begin
+  alter publication supabase_realtime add table public.community_wisdom;
+exception when duplicate_object then null;
 end $$;
 
 -- ============================================================================
@@ -975,11 +1058,3 @@ drop trigger if exists projects_add_owner_member_trigger on public.projects;
 create trigger projects_add_owner_member_trigger
   after insert on public.projects
   for each row execute function public.projects_add_owner_as_member();
-
-        'pre-seed',
-        'co-founder',
-        9,
-        E'# firing my co-founder, and the six months after\n\nthe hardest decision i''ve made. writing this down honestly because i wish someone had written it for me.\n\n## why it had to happen\n\nwe had different definitions of "done." mine was shipped to a paying customer; his was technically working in staging. for 14 months i told myself this was complementary. it wasn''t — it was a constant tax on momentum.\n\n## the conversation\n\ni rehearsed it for two weeks. it still took 90 minutes and we both cried. we agreed on a 12-month vesting acceleration and a clean cap-table split.\n\n## what the next six months looked like\n\n- month 1: i shipped more than the previous quarter\n- month 2: i hated being alone\n- month 3: hired a senior engineer who became the real second voice\n- month 4-6: pipeline 3x''d\n\n## the honest part\n\ni am still friends with him. it was the right call and we both know it now. the fear of the conversation is always bigger than the conversation.');
-    end if;
-  end if;
-end $$;

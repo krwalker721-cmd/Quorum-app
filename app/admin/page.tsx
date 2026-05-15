@@ -4,6 +4,7 @@ import LogoMark from "@/components/LogoMark";
 import SignOutButton from "@/components/SignOutButton";
 import ApproveButton from "./ApproveButton";
 import TierSelect from "./TierSelect";
+import VaultNominationActions from "./VaultNominationActions";
 import { unlockAdmin, lockAdmin } from "./actions";
 import { isAdminUnlocked } from "./session";
 
@@ -58,6 +59,35 @@ export default async function AdminPage({ searchParams }: { searchParams: { erro
     .select("id, full_name, email, username, tier, created_at")
     .eq("status", "approved")
     .order("created_at", { ascending: false });
+
+  const { data: vaultNoms } = await admin
+    .from("vault_nominations")
+    .select("id, post_id, nominated_by, reason, status, created_at")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  const nomPostIds = (vaultNoms ?? []).map((n) => n.post_id);
+  const nomUserIds = (vaultNoms ?? []).map((n) => n.nominated_by).filter(Boolean) as string[];
+  const { data: nomPosts } = nomPostIds.length
+    ? await admin
+        .from("posts")
+        .select("id, content, tag, author_id, is_anonymous, created_at")
+        .in("id", nomPostIds)
+    : { data: [] as any[] };
+  const nomAuthorIds = Array.from(
+    new Set([
+      ...((nomPosts ?? []).map((p: any) => p.author_id).filter(Boolean) as string[]),
+      ...nomUserIds,
+    ]),
+  );
+  const { data: nomProfiles } = nomAuthorIds.length
+    ? await admin
+        .from("profiles")
+        .select("id, full_name, username")
+        .in("id", nomAuthorIds)
+    : { data: [] as any[] };
+  const nomPostMap = new Map((nomPosts ?? []).map((p: any) => [p.id, p]));
+  const nomProfileMap = new Map((nomProfiles ?? []).map((p: any) => [p.id, p]));
 
   return (
     <main className="min-h-screen">
@@ -134,6 +164,48 @@ export default async function AdminPage({ searchParams }: { searchParams: { erro
               ))
             ) : (
               <p className="font-mono lowercase text-xs text-text-faint">no approved users.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-16">
+          <p className="font-mono lowercase text-xs text-text-faint">vault_nominations</p>
+          <h2 className="font-sans text-2xl text-text-primary mt-2 lowercase">pending nominations</h2>
+
+          <div className="mt-8 space-y-3">
+            {vaultNoms && vaultNoms.length > 0 ? (
+              vaultNoms.map((n) => {
+                const post: any = nomPostMap.get(n.post_id);
+                const nominator: any = n.nominated_by ? nomProfileMap.get(n.nominated_by) : null;
+                const author: any = post?.author_id ? nomProfileMap.get(post.author_id) : null;
+                return (
+                  <div
+                    key={n.id}
+                    className="bg-card border border-border p-5 flex items-start justify-between gap-6"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2">
+                        original post · {post?.is_anonymous
+                          ? "anonymous"
+                          : author?.full_name?.toLowerCase() ?? "—"}
+                        {post?.tag ? ` · ${post.tag}` : ""}
+                      </p>
+                      <p className="text-text-secondary text-sm whitespace-pre-wrap">
+                        {post?.content ?? "(post deleted)"}
+                      </p>
+                      <p className="font-mono lowercase text-[0.65rem] text-text-faint mt-4">
+                        nominated by {nominator?.full_name?.toLowerCase() ?? "—"}
+                      </p>
+                      <p className="text-text-muted text-[0.85rem] mt-1 italic">
+                        “{n.reason ?? ""}”
+                      </p>
+                    </div>
+                    <VaultNominationActions id={n.id} />
+                  </div>
+                );
+              })
+            ) : (
+              <p className="font-mono lowercase text-xs text-text-faint">no pending nominations.</p>
             )}
           </div>
         </div>

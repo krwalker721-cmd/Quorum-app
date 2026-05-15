@@ -8,6 +8,7 @@ import { timeAgo } from "@/lib/stage";
 import NewProjectModal from "./NewProjectModal";
 import RespondModal from "./RespondModal";
 import SkillModal from "./SkillModal";
+import BookmarkButton from "@/components/BookmarkButton";
 
 type Author = { id: string; full_name: string | null; stage: string | null; username: string | null };
 
@@ -178,13 +179,14 @@ function ProjectCard({
 
   const inner = (
     <article
-      className="p-4 border block"
+      className="group relative p-4 border block"
       style={{
         background: "var(--card-elev)",
         borderColor: "var(--border-amber)",
         cursor: isMember ? "pointer" : "default",
       }}
     >
+      <BookmarkButton itemType="project" itemId={project.id} />
       <header className="flex items-center gap-3 mb-3">
         <Avatar
           name={project.author?.full_name}
@@ -314,9 +316,10 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
         return (
           <article
             key={n.id}
-            className="p-4 border"
+            className="group relative p-4 border"
             style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)" }}
           >
+            <BookmarkButton itemType="project" itemId={n.id} />
             <header className="flex items-center gap-3 mb-3">
               <Avatar
                 name={n.author?.full_name}
