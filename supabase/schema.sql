@@ -1081,3 +1081,188 @@ do $$ begin
   alter publication supabase_realtime add table public.handshakes;
 exception when duplicate_object then null;
 end $$;
+
+-- ============================================================================
+-- admin: extend profiles (suspended status, welcome flag), add report/feedback/settings tables
+-- ============================================================================
+
+-- Widen profiles.status to include 'suspended'. (Existing rows keep their value.)
+do $$ begin
+  alter table public.profiles drop constraint if exists profiles_status_check;
+  alter table public.profiles
+    add constraint profiles_status_check
+    check (status in ('pending','approved','suspended'));
+end $$;
+
+-- one-time welcome flag for new approved users
+alter table public.profiles add column if not exists has_seen_welcome boolean default false;
+
+-- in-app notifications (used to notify a user their post was removed, etc.)
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  kind text not null,
+  message text not null,
+  payload jsonb default '{}'::jsonb,
+  seen_at timestamp,
+  created_at timestamp default now()
+);
+
+create index if not exists notifications_user_unseen_idx
+  on public.notifications (user_id, created_at desc) where seen_at is null;
+
+alter table public.notifications enable row level security;
+
+drop policy if exists "notifications_read_own" on public.notifications;
+drop policy if exists "notifications_update_own" on public.notifications;
+
+create policy "notifications_read_own"
+  on public.notifications for select
+  using (auth.uid() = user_id);
+
+create policy "notifications_update_own"
+  on public.notifications for update
+  using (auth.uid() = user_id);
+
+-- reports: user-flagged posts
+create table if not exists public.reports (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references public.posts(id) on delete cascade,
+  reported_by uuid references public.profiles(id) on delete set null,
+  reason text,
+  note text,
+  status text default 'pending' check (status in ('pending','dismissed','actioned')),
+  created_at timestamp default now(),
+  unique (post_id, reported_by)
+);
+
+create index if not exists reports_status_idx on public.reports (status, created_at desc);
+
+alter table public.reports enable row level security;
+
+drop policy if exists "reports_insert_auth" on public.reports;
+drop policy if exists "reports_read_own" on public.reports;
+
+create policy "reports_insert_auth"
+  on public.reports for insert
+  with check (auth.uid() = reported_by);
+
+create policy "reports_read_own"
+  on public.reports for select
+  using (auth.uid() = reported_by);
+
+do $$ begin
+  alter publication supabase_realtime add table public.reports;
+exception when duplicate_object then null;
+end $$;
+
+-- feedback_questions: admin posts internal survey questions
+create table if not exists public.feedback_questions (
+  id uuid primary key default gen_random_uuid(),
+  question text not null,
+  question_type text not null check (question_type in ('open_text','multiple_choice','rating')),
+  options jsonb default '[]'::jsonb,
+  target_audience text default 'all_users' check (target_audience in ('all_users','tier_1_only','tier_2_only','free_only')),
+  status text default 'active' check (status in ('active','closed')),
+  created_at timestamp default now()
+);
+
+create index if not exists feedback_questions_status_idx on public.feedback_questions (status, created_at desc);
+
+alter table public.feedback_questions enable row level security;
+
+drop policy if exists "feedback_questions_read_all" on public.feedback_questions;
+
+-- All authenticated users can read active questions (so home widget can show them).
+create policy "feedback_questions_read_all"
+  on public.feedback_questions for select
+  using (auth.role() = 'authenticated');
+
+create table if not exists public.feedback_responses (
+  id uuid primary key default gen_random_uuid(),
+  question_id uuid references public.feedback_questions(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete cascade,
+  response text,
+  created_at timestamp default now(),
+  unique (question_id, user_id)
+);
+
+create index if not exists feedback_responses_question_idx on public.feedback_responses (question_id, created_at desc);
+
+alter table public.feedback_responses enable row level security;
+
+drop policy if exists "feedback_responses_insert_own" on public.feedback_responses;
+drop policy if exists "feedback_responses_read_own" on public.feedback_responses;
+
+create policy "feedback_responses_insert_own"
+  on public.feedback_responses for insert
+  with check (auth.uid() = user_id);
+
+create policy "feedback_responses_read_own"
+  on public.feedback_responses for select
+  using (auth.uid() = user_id);
+
+-- feedback_dismissals: per-user dismissals so a dismissed question doesn't reappear
+create table if not exists public.feedback_dismissals (
+  id uuid primary key default gen_random_uuid(),
+  question_id uuid references public.feedback_questions(id) on delete cascade,
+  user_id uuid references public.profiles(id) on delete cascade,
+  created_at timestamp default now(),
+  unique (question_id, user_id)
+);
+
+alter table public.feedback_dismissals enable row level security;
+
+drop policy if exists "feedback_dismissals_all_own" on public.feedback_dismissals;
+create policy "feedback_dismissals_all_own"
+  on public.feedback_dismissals for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- platform_settings: simple key/value config (admin code, welcome message, maintenance, etc.)
+create table if not exists public.platform_settings (
+  id uuid primary key default gen_random_uuid(),
+  key text unique not null,
+  value text,
+  updated_at timestamp default now()
+);
+
+alter table public.platform_settings enable row level security;
+
+drop policy if exists "platform_settings_read_safe" on public.platform_settings;
+
+-- Authenticated users can read non-secret keys (admin_code is filtered out at the API layer).
+-- Reading rows is fine; admin_code never leaves the server.
+create policy "platform_settings_read_safe"
+  on public.platform_settings for select
+  using (auth.role() = 'authenticated' and key <> 'admin_code');
+
+-- Seed defaults
+insert into public.platform_settings (key, value) values
+  ('platform_status', 'waitlist'),
+  ('welcome_message', 'welcome to quorum. you''re in the room now.'),
+  ('maintenance_mode', 'false')
+on conflict (key) do nothing;
+
+-- sessions: lightweight activity log (used for "active_this_week" metric).
+-- If a sessions table already exists in your environment it will be left alone.
+create table if not exists public.sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  created_at timestamp default now()
+);
+
+create index if not exists sessions_user_created_idx on public.sessions (user_id, created_at desc);
+
+alter table public.sessions enable row level security;
+
+drop policy if exists "sessions_insert_own" on public.sessions;
+drop policy if exists "sessions_read_own" on public.sessions;
+
+create policy "sessions_insert_own"
+  on public.sessions for insert
+  with check (auth.uid() = user_id);
+
+create policy "sessions_read_own"
+  on public.sessions for select
+  using (auth.uid() = user_id);
