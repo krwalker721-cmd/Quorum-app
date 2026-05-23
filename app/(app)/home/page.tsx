@@ -10,6 +10,8 @@ import StageBreakdown from "@/components/viz/StageBreakdown";
 import { PostWithAuthor } from "@/components/PostCard";
 import RecognitionNotices from "@/components/RecognitionNotices";
 import { hasDepthRing, isAnniversary, postsMovedTheRoomBatch } from "@/lib/recognition";
+import WeeklySummaryCard from "@/components/WeeklySummaryCard";
+import { buildWeeklySummary } from "@/lib/weeklySummary";
 
 export const dynamic = "force-dynamic";
 
@@ -98,9 +100,17 @@ export default async function HomePage() {
     if (m.stage && stageCounts[m.stage] !== undefined) stageCounts[m.stage] += 1;
   });
 
+  const weeklySummary = await buildWeeklySummary(supabase, {
+    userId: user.id,
+    fullName: profile?.full_name ?? null,
+    cohortMemberIds: memberList.map((m) => m.id),
+    authorMap,
+  });
+
   return (
     <>
       <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      {weeklySummary && <WeeklySummaryCard data={weeklySummary} />}
       <RecognitionNotices notices={(notices ?? []) as any} />
       <StatStrip
         members={memberList.length}
