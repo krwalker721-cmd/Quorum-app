@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { isAdminUnlocked } from "@/app/admin/session";
+import { verifyAdminRequest } from "@/lib/admin/auth";
 
 export async function POST(req: Request) {
-  if (!isAdminUnlocked()) {
+  if (!(await verifyAdminRequest(req))) {
     return NextResponse.json({ error: "locked" }, { status: 401 });
   }
   const { nomination_id, action } = await req.json().catch(() => ({}));

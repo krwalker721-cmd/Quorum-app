@@ -30,17 +30,23 @@ function LoginForm() {
       return;
     }
 
-    if (!WAITLIST_ENABLED) {
-      router.push(safeNext ?? "/home");
-      router.refresh();
-      return;
-    }
-
     const { data: profile } = await supabase
       .from("profiles")
       .select("status")
       .eq("id", data.user!.id)
       .single();
+
+    if (profile?.status === "suspended") {
+      router.push("/suspended");
+      router.refresh();
+      return;
+    }
+
+    if (!WAITLIST_ENABLED) {
+      router.push(safeNext ?? "/home");
+      router.refresh();
+      return;
+    }
 
     const approved = profile?.status === "approved";
     router.push(approved ? (safeNext ?? "/home") : "/pending");
