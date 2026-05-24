@@ -1,4 +1,4 @@
-function SegmentedBar({ filled, total = 12 }: { filled: number; total?: number }) {
+﻿function SegmentedBar({ filled, total = 12 }: { filled: number; total?: number }) {
   return (
     <div className="flex gap-0.5">
       {Array.from({ length: total }).map((_, i) => (
@@ -8,7 +8,7 @@ function SegmentedBar({ filled, total = 12 }: { filled: number; total?: number }
             display: "inline-block",
             width: 6,
             height: 8,
-            background: i < filled ? "#f59e0b" : "var(--border)",
+            background: i < filled ? "#dc6414" : "var(--border)",
             opacity: i < filled ? 1 : 0.6,
           }}
         />

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -103,9 +103,9 @@ export default function NewProjectModal({
                   onClick={() => setCategory(c)}
                   className="font-mono lowercase text-[0.65rem] px-2 py-1"
                   style={{
-                    border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
-                    color: active ? "#f59e0b" : "var(--text-muted)",
-                    background: active ? "rgba(245,158,11,0.08)" : "transparent",
+                    border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
+                    color: active ? "#dc6414" : "var(--text-muted)",
+                    background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
                   }}
                 >
                   {c}
@@ -140,9 +140,9 @@ export default function NewProjectModal({
             onClick={submit}
             disabled={busy || !title.trim()}
             className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
-            style={{ background: "#f59e0b", color: "#000" }}
+            style={{ background: "#dc6414", color: "#000" }}
           >
-            {busy ? "..." : "post →"}
+            {busy ? "..." : "post â†’"}
           </button>
         </div>
       </div>

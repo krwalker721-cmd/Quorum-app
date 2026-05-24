@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -105,7 +105,7 @@ export default function NewPostButton({
               rows={5}
               placeholder={
                 isPulse
-                  ? "say something real…"
+                  ? "say something realâ€¦"
                   : "what's on your mind?"
               }
               value={content}
@@ -119,7 +119,7 @@ export default function NewPostButton({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                   {ROOM_TYPES.map((t) => {
                     const active = roomType === t;
-                    const color = ROOM_TYPE_COLOR[t] ?? "#f59e0b";
+                    const color = ROOM_TYPE_COLOR[t] ?? "#dc6414";
                     return (
                       <button
                         key={t}
@@ -163,9 +163,9 @@ export default function NewPostButton({
                         onClick={() => setTag(t)}
                         className="font-mono lowercase text-[0.65rem] px-2 py-1 transition-colors"
                         style={{
-                          border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
-                          color: active ? "#f59e0b" : "var(--text-muted)",
-                          background: active ? "rgba(245,158,11,0.08)" : "transparent",
+                          border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
+                          color: active ? "#dc6414" : "var(--text-muted)",
+                          background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
                         }}
                       >
                         {t}
@@ -176,7 +176,7 @@ export default function NewPostButton({
               </div>
             )}
 
-            {/* Destination selector — hidden when locked to pulse */}
+            {/* Destination selector â€” hidden when locked to pulse */}
             {!isPulse && (
               <div>
                 <label>destination</label>
@@ -190,9 +190,9 @@ export default function NewPostButton({
                         onClick={() => setPostType(d)}
                         className="font-mono lowercase text-[0.7rem] px-3 py-1.5 flex-1 transition-colors"
                         style={{
-                          border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
-                          color: active ? "#f59e0b" : "var(--text-muted)",
-                          background: active ? "rgba(245,158,11,0.08)" : "transparent",
+                          border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
+                          color: active ? "#dc6414" : "var(--text-muted)",
+                          background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
                         }}
                       >
                         {d === "cohort" ? "cohort_feed" : "pulse"}
@@ -213,7 +213,7 @@ export default function NewPostButton({
                   width: 34,
                   height: 18,
                   borderRadius: 9999,
-                  background: anon ? "#f59e0b" : "var(--border)",
+                  background: anon ? "#dc6414" : "var(--border)",
                   transition: "background 150ms ease",
                 }}
               >
@@ -248,7 +248,7 @@ export default function NewPostButton({
                 disabled={busy || !content.trim()}
                 className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
-                {busy ? "..." : isPulse ? "post to the room →" : "post →"}
+                {busy ? "..." : isPulse ? "post to the room â†’" : "post â†’"}
               </button>
             </div>
           </div>

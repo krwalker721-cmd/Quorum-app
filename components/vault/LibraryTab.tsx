@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -46,9 +46,9 @@ export default function LibraryTab({
               onClick={() => setFilter(f)}
               className="font-mono lowercase text-[0.65rem] px-3 py-1.5 border transition-colors"
               style={{
-                borderColor: active ? "#f59e0b" : "var(--border)",
-                color: active ? "#f59e0b" : "var(--text-faint)",
-                background: active ? "rgba(245,158,11,0.06)" : "transparent",
+                borderColor: active ? "#dc6414" : "var(--border)",
+                color: active ? "#dc6414" : "var(--text-faint)",
+                background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
               }}
             >
               {FILTER_LABEL[f]}
@@ -127,10 +127,10 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
           <p className="font-mono lowercase text-xs text-text-primary truncate">
             {origin?.is_anonymous
               ? "anonymous"
-              : origin?.author?.full_name?.toLowerCase() ?? "—"}
+              : origin?.author?.full_name?.toLowerCase() ?? "â€”"}
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            posted {origin ? shortTimeAgo(origin.created_at) : "—"} ago
+            posted {origin ? shortTimeAgo(origin.created_at) : "â€”"} ago
           </p>
         </div>
         <span
@@ -146,7 +146,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
       )}
       <p className="text-text-secondary text-[0.92rem] leading-relaxed whitespace-pre-wrap">
         {preview}
-        {fullPreviewHidden && "…"}
+        {fullPreviewHidden && "â€¦"}
       </p>
 
       <div className="mt-3">
@@ -179,7 +179,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
           href={viewHref}
           className="font-mono lowercase text-[0.7rem] text-amber hover:opacity-80"
         >
-          view original →
+          view original â†’
         </Link>
       </footer>
     </article>
@@ -241,7 +241,7 @@ function AmbientSaveFeed() {
           }}
         >
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            a founder saved something from {s.type} · {shortTimeAgo(new Date(s.at).toISOString())} ago
+            a founder saved something from {s.type} Â· {shortTimeAgo(new Date(s.at).toISOString())} ago
           </p>
         </div>
       ))}

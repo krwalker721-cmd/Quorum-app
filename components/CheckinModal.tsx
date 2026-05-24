@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -111,7 +111,7 @@ export default function CheckinModal({
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: i <= step ? "#f59e0b" : "var(--border)",
+                  background: i <= step ? "#dc6414" : "var(--border)",
                   transition: "background 150ms",
                 }}
               />
@@ -125,7 +125,7 @@ export default function CheckinModal({
         {done ? (
           <div className="space-y-4">
             <div>
-              <p className="font-mono lowercase text-[0.7rem] text-amber">checkin_logged ✓</p>
+              <p className="font-mono lowercase text-[0.7rem] text-amber">checkin_logged âœ“</p>
               <p className="text-text-secondary text-sm mt-2 leading-relaxed">
                 here&apos;s what two of your cohort members shared this week:
               </p>
@@ -139,7 +139,7 @@ export default function CheckinModal({
                 >
                   <div className="flex items-center justify-between">
                     <p className="font-mono lowercase text-[0.7rem] text-text-secondary">
-                      {c.name} · {c.stage}
+                      {c.name} Â· {c.stage}
                     </p>
                     <span className="font-mono lowercase text-[0.6rem] text-amber">{c.rating}</span>
                   </div>
@@ -179,7 +179,7 @@ export default function CheckinModal({
                       width: 34,
                       height: 18,
                       borderRadius: 9999,
-                      background: anon ? "#f59e0b" : "var(--border)",
+                      background: anon ? "#dc6414" : "var(--border)",
                     }}
                   >
                     <span
@@ -214,9 +214,9 @@ export default function CheckinModal({
                         onClick={() => setRating(r)}
                         className="font-mono lowercase text-xs py-3 transition-colors"
                         style={{
-                          border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
-                          color: active ? "#f59e0b" : "var(--text-muted)",
-                          background: active ? "rgba(245,158,11,0.08)" : "transparent",
+                          border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
+                          color: active ? "#dc6414" : "var(--text-muted)",
+                          background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
                         }}
                       >
                         {r}
@@ -262,7 +262,7 @@ export default function CheckinModal({
                 className="font-mono lowercase text-xs px-3 py-2 border disabled:opacity-30"
                 style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
               >
-                ← back
+                â† back
               </button>
               {step < TOTAL - 1 ? (
                 <button
@@ -274,7 +274,7 @@ export default function CheckinModal({
                   }
                   className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
                 >
-                  continue →
+                  continue â†’
                 </button>
               ) : (
                 <button
@@ -282,7 +282,7 @@ export default function CheckinModal({
                   disabled={!win.trim() || busy}
                   className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
                 >
-                  {busy ? "..." : "submit →"}
+                  {busy ? "..." : "submit â†’"}
                 </button>
               )}
             </div>

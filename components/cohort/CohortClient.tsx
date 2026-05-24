@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
@@ -141,8 +141,8 @@ export default function CohortClient({
                 onClick={() => setSelectedId(m.id)}
                 className="w-full flex items-center gap-2 px-2 py-2 text-left transition-colors"
                 style={{
-                  background: active ? "rgba(245,158,11,0.06)" : "transparent",
-                  borderRight: active ? "2px solid #f59e0b" : "2px solid transparent",
+                  background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
+                  borderRight: active ? "2px solid #dc6414" : "2px solid transparent",
                 }}
               >
                 <div className="relative">
@@ -154,7 +154,7 @@ export default function CohortClient({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                    {m.full_name?.toLowerCase() ?? "—"}
+                    {m.full_name?.toLowerCase() ?? "â€”"}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <StagePill stage={m.stage} />
@@ -179,7 +179,7 @@ export default function CohortClient({
                 <Avatar name={selected.full_name} stage={selected.stage} username={selected.username} size={32} />
                 <div className="min-w-0">
                   <p className="font-mono lowercase text-sm text-text-primary truncate">
-                    {selected.full_name?.toLowerCase() ?? "—"}
+                    {selected.full_name?.toLowerCase() ?? "â€”"}
                   </p>
                   <div className="mt-0.5"><StagePill stage={selected.stage} /></div>
                 </div>
@@ -193,7 +193,7 @@ export default function CohortClient({
                 </button>
                 <button
                   className="font-mono lowercase text-[0.65rem] px-2.5 py-1.5"
-                  style={{ background: "#f59e0b", color: "#000" }}
+                  style={{ background: "#dc6414", color: "#000" }}
                 >
                   + handshake
                 </button>
@@ -214,8 +214,8 @@ export default function CohortClient({
                       <div
                         className="px-3 py-2"
                         style={{
-                          background: mine ? "rgba(245,158,11,0.12)" : "var(--card-elev)",
-                          border: `1px solid ${mine ? "rgba(245,158,11,0.35)" : "var(--border)"}`,
+                          background: mine ? "rgba(220, 100, 20,0.12)" : "var(--card-elev)",
+                          border: `1px solid ${mine ? "rgba(220, 100, 20,0.35)" : "var(--border)"}`,
                           color: "var(--text-primary)",
                         }}
                       >

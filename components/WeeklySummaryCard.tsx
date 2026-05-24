@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -6,7 +6,7 @@ export type WeeklySummaryData = {
   firstName: string;
   weekStart: string; // ISO date
   weekEnd: string; // ISO date
-  weekKey: string; // YYYY-MM-DD of the Monday — used to namespace dismissal
+  weekKey: string; // YYYY-MM-DD of the Monday â€” used to namespace dismissal
   stats: {
     posts_this_week: number;
     replies_given: number;
@@ -102,7 +102,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
       style={{
         background: "var(--card-elev)",
         borderRadius: 8,
-        borderLeft: "3px solid #f59e0b",
+        borderLeft: "3px solid #dc6414",
         padding: "20px 24px",
         boxShadow: "0 0 32px var(--glow-soft), 0 0 64px var(--glow-soft)",
       }}
@@ -187,7 +187,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
                 >
                   <div
                     className="font-mono uppercase tracking-wider"
-                    style={{ fontSize: 9, color: "#f59e0b", marginBottom: 4 }}
+                    style={{ fontSize: 9, color: "#dc6414", marginBottom: 4 }}
                   >
                     {h.label}
                   </div>
@@ -212,7 +212,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
           className="font-sans lowercase"
           style={{ fontSize: 10, color: "var(--text-faint)" }}
         >
-          week of {formatDate(data.weekStart)} — {formatDate(data.weekEnd)}
+          week of {formatDate(data.weekStart)} â€” {formatDate(data.weekEnd)}
         </span>
         <button
           onClick={handleDismiss}
@@ -220,7 +220,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
           style={{ fontSize: 10, color: "var(--text-faint)" }}
           aria-label="dismiss weekly summary"
         >
-          dismiss ✕
+          dismiss âœ•
         </button>
       </div>
     </div>

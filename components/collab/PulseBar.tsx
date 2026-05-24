@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -221,7 +221,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
       style={{
         height: 36,
         background: "var(--card-elev)",
-        borderLeft: "2px solid #f59e0b",
+        borderLeft: "2px solid #dc6414",
         borderBottom: "1px solid var(--border)",
       }}
       aria-live="polite"
@@ -232,7 +232,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
         style={{
           width: 6,
           height: 6,
-          background: "#f59e0b",
+          background: "#dc6414",
           animation: "pulseDot 2s ease-in-out infinite",
         }}
       />
@@ -247,7 +247,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
       >
         {current && !stale ? (
           <>
-            <span style={{ color: "#f59e0b" }}>{current.username}</span>{" "}
+            <span style={{ color: "#dc6414" }}>{current.username}</span>{" "}
             {current.text}
             {current.projectName ? (
               <>
@@ -258,7 +258,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
           </>
         ) : (
           <span style={{ color: "var(--text-faint)" }}>
-            nothing happening right now — start something.
+            nothing happening right now â€” start something.
           </span>
         )}
       </p>

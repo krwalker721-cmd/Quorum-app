@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -62,7 +62,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
             width: 34,
             height: 18,
             borderRadius: 9999,
-            background: isOpen ? "#f59e0b" : "var(--border)",
+            background: isOpen ? "#dc6414" : "var(--border)",
           }}
         >
           <span
@@ -80,7 +80,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
         </button>
         <div className="text-[0.7rem] leading-snug">
           <p className="font-mono lowercase text-text-secondary">
-            {isOpen ? "open · anyone can request to join" : "invite-only · join by invite link"}
+            {isOpen ? "open Â· anyone can request to join" : "invite-only Â· join by invite link"}
           </p>
         </div>
       </div>
@@ -93,7 +93,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
           disabled={busy || !name.trim()}
           className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
         >
-          {busy ? "..." : "create →"}
+          {busy ? "..." : "create â†’"}
         </button>
       </div>
     </form>

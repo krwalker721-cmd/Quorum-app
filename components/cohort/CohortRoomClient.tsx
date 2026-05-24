@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Avatar from "@/components/Avatar";
@@ -50,13 +50,13 @@ const TYPE_STYLE: Record<
   question: { color: "#38bdf8", label: "question", needsReply: true },
   update: { color: "#707070", label: "update" },
   decision: {
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.06)",
+    color: "#dc6414",
+    bg: "rgba(220, 100, 20,0.06)",
     label: "decision",
     needsReply: true,
   },
   win: { color: "#22c55e", label: "win" },
-  blocker: { color: "#f59e0b", label: "blocker" },
+  blocker: { color: "#dc6414", label: "blocker" },
 };
 
 export default function CohortRoomClient({
@@ -110,7 +110,7 @@ export default function CohortRoomClient({
   return (
     <>
       <div className="flex" style={{ minHeight: "calc(100vh - 96px)" }}>
-        {/* LEFT — roster */}
+        {/* LEFT â€” roster */}
         <aside
           className="border-r flex flex-col"
           style={{ width: 260, background: "var(--card)", borderColor: "var(--border)" }}
@@ -153,7 +153,7 @@ export default function CohortRoomClient({
                           f?.consistencyGhost ? "consistency-ghost" : "text-text-primary"
                         }`}
                       >
-                        {m.full_name?.toLowerCase() ?? "—"}
+                        {m.full_name?.toLowerCase() ?? "â€”"}
                       </p>
                       {f?.questionResponder && (
                         <span
@@ -201,21 +201,21 @@ export default function CohortRoomClient({
               className="block w-full text-center font-mono lowercase text-[0.65rem] px-3 py-1.5 border hover:border-amber transition-colors"
               style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
             >
-              find a cohort →
+              find a cohort â†’
             </Link>
           </div>
         </aside>
 
         {/* MAIN */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* ZONE 1 — Status board */}
+          {/* ZONE 1 â€” Status board */}
           <section
             className="border-b px-6 py-4"
             style={{ background: "var(--card)", borderColor: "var(--border)" }}
           >
             <div className="flex items-center justify-between mb-3">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">
-                status_board · this week
+                status_board Â· this week
               </p>
             </div>
             <div className="flex gap-3 overflow-x-auto scroll-thin pb-1">
@@ -231,7 +231,7 @@ export default function CohortRoomClient({
                       width: 240,
                       background: "var(--card-elev)",
                       borderColor: hasCheckin
-                        ? "rgba(245,158,11,0.35)"
+                        ? "rgba(220, 100, 20,0.35)"
                         : "var(--border)",
                     }}
                   >
@@ -254,7 +254,7 @@ export default function CohortRoomClient({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                          {m.full_name?.toLowerCase() ?? "—"}
+                          {m.full_name?.toLowerCase() ?? "â€”"}
                         </p>
                         <StagePill stage={m.stage} />
                       </div>
@@ -292,7 +292,7 @@ export default function CohortRoomClient({
             </div>
           </section>
 
-          {/* ZONE 2 — Discussion floor */}
+          {/* ZONE 2 â€” Discussion floor */}
           <section className="flex-1 px-6 py-5">
             <div className="flex items-center justify-between mb-4">
               <p className="font-mono lowercase text-[0.7rem] text-text-faint tracking-wider">
@@ -328,7 +328,7 @@ export default function CohortRoomClient({
                       borderColor: "var(--border)",
                       borderLeft,
                       boxShadow: lateNight
-                        ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
+                        ? "0 0 22px 1px rgba(220, 100, 20, 0.10), 0 0 4px rgba(220, 100, 20, 0.06)"
                         : undefined,
                     }}
                   >
@@ -361,7 +361,7 @@ export default function CohortRoomClient({
                         <p className="font-mono lowercase text-xs text-text-primary truncate">
                           {p.is_anonymous
                             ? "anonymous"
-                            : p.author?.full_name?.toLowerCase() ?? "—"}
+                            : p.author?.full_name?.toLowerCase() ?? "â€”"}
                         </p>
                         <p className="font-mono lowercase text-[0.6rem] text-text-faint">
                           {timeAgo(p.created_at)} ago
@@ -387,7 +387,7 @@ export default function CohortRoomClient({
                         className="font-mono lowercase text-[0.65rem] mt-3"
                         style={{ color: ts.color }}
                       >
-                        respond →
+                        respond â†’
                       </p>
                     )}
                   </article>

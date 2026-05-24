@@ -19,7 +19,7 @@ const config: Config = {
           muted: "var(--text-muted)",
           faint: "var(--text-faint)",
         },
-        amber: "#f59e0b",
+        amber: "#dc6414",
         green: "#22c55e",
         blue: "#38bdf8",
         purple: "#a78bfa",

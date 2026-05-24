@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { adminFetch } from "../lib/api";
@@ -42,8 +42,8 @@ export default function ContentSection({
               tab === t ? "text-text-primary" : "text-text-muted"
             }`}
             style={{
-              borderColor: tab === t ? "#f59e0b" : "var(--border)",
-              background: tab === t ? "rgba(245,158,11,0.06)" : "transparent",
+              borderColor: tab === t ? "#dc6414" : "var(--border)",
+              background: tab === t ? "rgba(220, 100, 20,0.06)" : "transparent",
             }}
           >
             {t}
@@ -89,7 +89,7 @@ function ReportedPosts({ onCount }: { onCount?: (n: number) => void }) {
     if (res.ok) load();
   }
 
-  if (loading) return <p className="font-mono text-xs text-text-faint">loading…</p>;
+  if (loading) return <p className="font-mono text-xs text-text-faint">loadingâ€¦</p>;
   if (reports.length === 0) {
     return <p className="font-mono text-xs text-text-faint">no pending reports</p>;
   }
@@ -106,13 +106,13 @@ function ReportedPosts({ onCount }: { onCount?: (n: number) => void }) {
               {r.reason}
             </span>
             <span className="font-mono text-[0.6rem] text-text-faint">
-              reported by {r.reporter?.full_name?.toLowerCase() ?? r.reporter?.username ?? "—"} ·{" "}
+              reported by {r.reporter?.full_name?.toLowerCase() ?? r.reporter?.username ?? "â€”"} Â·{" "}
               {timeAgo(r.created_at)}
             </span>
           </div>
           <p className="font-mono text-[0.6rem] text-text-faint mb-2">
-            original post · {r.post_author?.full_name?.toLowerCase() ?? "—"}
-            {r.post?.tag ? ` · ${r.post.tag}` : ""}
+            original post Â· {r.post_author?.full_name?.toLowerCase() ?? "â€”"}
+            {r.post?.tag ? ` Â· ${r.post.tag}` : ""}
           </p>
           <p className="text-text-secondary text-sm whitespace-pre-wrap mb-3">
             {r.post?.content ?? "(post deleted)"}
@@ -209,7 +209,7 @@ function AllPosts() {
         </button>
       </div>
       {loading && posts.length === 0 ? (
-        <p className="font-mono text-xs text-text-faint">loading…</p>
+        <p className="font-mono text-xs text-text-faint">loadingâ€¦</p>
       ) : posts.length === 0 ? (
         <p className="font-mono text-xs text-text-faint">no posts</p>
       ) : (
@@ -230,11 +230,11 @@ function AllPosts() {
               {posts.map((p) => (
                 <tr key={p.id} className="border-t" style={{ borderColor: "var(--border)" }}>
                   <td className="px-3 py-2 text-text-secondary">
-                    {p.is_anonymous ? "anonymous" : p.author?.full_name ?? "—"}
+                    {p.is_anonymous ? "anonymous" : p.author?.full_name ?? "â€”"}
                   </td>
                   <td className="px-3 py-2 text-text-muted max-w-md truncate">{p.content}</td>
                   <td className="px-3 py-2 font-mono text-[0.6rem] text-text-muted lowercase">{p.post_type}</td>
-                  <td className="px-3 py-2 font-mono text-[0.6rem] text-text-muted lowercase">{p.tag ?? "—"}</td>
+                  <td className="px-3 py-2 font-mono text-[0.6rem] text-text-muted lowercase">{p.tag ?? "â€”"}</td>
                   <td className="px-3 py-2 font-mono text-[0.7rem] text-text-faint">{p.reply_count}</td>
                   <td className="px-3 py-2 font-mono text-[0.6rem] text-text-faint">{p.created_at.slice(0, 10)}</td>
                   <td className="px-3 py-2">

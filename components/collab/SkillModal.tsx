@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
@@ -47,7 +47,7 @@ export default function SkillModal({
               <Avatar name={m.full_name} stage={m.stage} username={m.username} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="font-mono lowercase text-xs text-text-primary truncate">
-                  {m.full_name?.toLowerCase() ?? "—"}
+                  {m.full_name?.toLowerCase() ?? "â€”"}
                 </p>
                 {m.stage && (
                   <p className="font-mono lowercase text-[0.6rem] text-text-faint">{m.stage}</p>
@@ -56,7 +56,7 @@ export default function SkillModal({
               <Link
                 href={`/messages?to=${m.id}`}
                 className="font-mono lowercase text-[0.65rem] px-3 py-1 hover:opacity-90"
-                style={{ background: "#f59e0b", color: "#000" }}
+                style={{ background: "#dc6414", color: "#000" }}
               >
                 dm
               </Link>

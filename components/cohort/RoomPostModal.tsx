@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -9,9 +9,9 @@ type RoomType = "question" | "update" | "decision" | "win" | "blocker";
 const TYPES: { value: RoomType; color: string; desc: string }[] = [
   { value: "question", color: "#38bdf8", desc: "needs input from the room" },
   { value: "update", color: "#707070", desc: "here's where i'm at" },
-  { value: "decision", color: "#f59e0b", desc: "deciding something, thoughts welcome" },
+  { value: "decision", color: "#dc6414", desc: "deciding something, thoughts welcome" },
   { value: "win", color: "#22c55e", desc: "something worked" },
-  { value: "blocker", color: "#f59e0b", desc: "stuck on something specific" },
+  { value: "blocker", color: "#dc6414", desc: "stuck on something specific" },
 ];
 
 export default function RoomPostModal({
@@ -126,7 +126,7 @@ export default function RoomPostModal({
               width: 34,
               height: 18,
               borderRadius: 9999,
-              background: anon ? "#f59e0b" : "var(--border)",
+              background: anon ? "#dc6414" : "var(--border)",
               transition: "background 150ms ease",
             }}
           >
@@ -161,7 +161,7 @@ export default function RoomPostModal({
             disabled={busy || !content.trim()}
             className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
           >
-            {busy ? "..." : "post to room →"}
+            {busy ? "..." : "post to room â†’"}
           </button>
         </div>
       </div>

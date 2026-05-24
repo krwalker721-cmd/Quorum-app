@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
@@ -175,7 +175,7 @@ export default function MessagesClient({
 
   return (
     <div className="flex" style={{ height: "calc(100vh - 56px)" }}>
-      {/* LEFT — inbox */}
+      {/* LEFT â€” inbox */}
       <div
         className="flex flex-col border-r"
         style={{ width: 320, background: "var(--card)", borderColor: "var(--border)" }}
@@ -189,7 +189,7 @@ export default function MessagesClient({
           {conversations.length === 0 && (
             <div className="px-4 py-6">
               <p className="font-mono lowercase text-[0.7rem] text-text-faint leading-relaxed">
-                no messages yet — start a conversation from someone&apos;s profile.
+                no messages yet â€” start a conversation from someone&apos;s profile.
               </p>
             </div>
           )}
@@ -201,8 +201,8 @@ export default function MessagesClient({
                 onClick={() => setSelectedId(c.partner.id)}
                 className="w-full flex items-start gap-3 px-3 py-3 text-left transition-colors border-b"
                 style={{
-                  background: active ? "rgba(245,158,11,0.06)" : "transparent",
-                  borderRight: active ? "2px solid #f59e0b" : "2px solid transparent",
+                  background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
+                  borderRight: active ? "2px solid #dc6414" : "2px solid transparent",
                   borderColor: "var(--border)",
                 }}
               >
@@ -214,7 +214,7 @@ export default function MessagesClient({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 justify-between">
                     <p className="font-mono lowercase text-[0.75rem] text-text-primary truncate">
-                      {c.partner.full_name?.toLowerCase() ?? "—"}
+                      {c.partner.full_name?.toLowerCase() ?? "â€”"}
                     </p>
                     {c.lastAt && (
                       <span className="font-mono lowercase text-[0.55rem] text-text-faint shrink-0">
@@ -227,7 +227,7 @@ export default function MessagesClient({
                     {c.unread && (
                       <span
                         className="ml-auto w-2 h-2 rounded-full"
-                        style={{ background: "#f59e0b" }}
+                        style={{ background: "#dc6414" }}
                       />
                     )}
                   </div>
@@ -243,7 +243,7 @@ export default function MessagesClient({
         </div>
       </div>
 
-      {/* RIGHT — thread */}
+      {/* RIGHT â€” thread */}
       <div className="flex-1 flex flex-col min-w-0">
         {selected ? (
           <>
@@ -260,7 +260,7 @@ export default function MessagesClient({
                 />
                 <div className="min-w-0">
                   <p className="font-mono lowercase text-sm text-text-primary truncate">
-                    {selected.full_name?.toLowerCase() ?? "—"}
+                    {selected.full_name?.toLowerCase() ?? "â€”"}
                   </p>
                   <div className="mt-0.5">
                     <StagePill stage={selected.stage} />
@@ -290,10 +290,10 @@ export default function MessagesClient({
                         className="px-3 py-2"
                         style={{
                           background: mine
-                            ? "rgba(245,158,11,0.12)"
+                            ? "rgba(220, 100, 20,0.12)"
                             : "var(--card-elev)",
                           border: `1px solid ${
-                            mine ? "rgba(245,158,11,0.35)" : "var(--border)"
+                            mine ? "rgba(220, 100, 20,0.35)" : "var(--border)"
                           }`,
                           color: "var(--text-primary)",
                         }}
@@ -342,7 +342,7 @@ export default function MessagesClient({
         ) : (
           <div className="flex-1 flex items-center justify-center px-6">
             <p className="font-mono lowercase text-xs text-text-faint text-center">
-              no messages yet — start a conversation from someone&apos;s profile.
+              no messages yet â€” start a conversation from someone&apos;s profile.
             </p>
           </div>
         )}

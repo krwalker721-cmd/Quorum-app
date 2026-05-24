@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { adminFetch, loadSession } from "../lib/api";
@@ -75,7 +75,7 @@ export default function FeedbackSection() {
                   onClick={() => setSelected(q)}
                   className="w-full text-left border p-3"
                   style={{
-                    borderColor: selected?.id === q.id ? "#f59e0b" : "var(--border)",
+                    borderColor: selected?.id === q.id ? "#dc6414" : "var(--border)",
                     background: "var(--card)",
                   }}
                 >
@@ -95,7 +95,7 @@ export default function FeedbackSection() {
                   </div>
                   <p className="text-text-secondary text-sm">{q.question}</p>
                   <p className="font-mono text-[0.55rem] text-text-faint lowercase mt-1">
-                    {q.question_type} · {q.target_audience}
+                    {q.question_type} Â· {q.target_audience}
                   </p>
                 </button>
               ))
@@ -108,7 +108,7 @@ export default function FeedbackSection() {
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-              responses · {selected.question}
+              responses Â· {selected.question}
             </p>
             <div className="flex gap-2">
               <a
@@ -157,9 +157,9 @@ export default function FeedbackSection() {
                 {responses.map((r) => (
                   <div key={r.id} className="px-4 py-2.5 flex items-start gap-3 text-[0.78rem]">
                     <div className="w-32 shrink-0">
-                      <p className="text-text-secondary text-[0.78rem]">{r.user?.full_name ?? "—"}</p>
+                      <p className="text-text-secondary text-[0.78rem]">{r.user?.full_name ?? "â€”"}</p>
                       <p className="font-mono text-[0.55rem] text-text-faint lowercase">
-                        @{r.user?.username ?? "—"}
+                        @{r.user?.username ?? "â€”"}
                       </p>
                     </div>
                     <p className="text-text-secondary flex-1 whitespace-pre-wrap">{r.response}</p>
@@ -259,9 +259,9 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
           type="submit"
           disabled={busy || !question}
           className="w-full font-mono lowercase text-xs py-2.5 disabled:opacity-50"
-          style={{ background: "#f59e0b", color: "#000" }}
+          style={{ background: "#dc6414", color: "#000" }}
         >
-          {busy ? "posting…" : "post question →"}
+          {busy ? "postingâ€¦" : "post question â†’"}
         </button>
       </div>
     </form>
@@ -291,7 +291,7 @@ function RatingSummary({ responses }: { responses: Response[] }) {
                 style={{
                   width: `${(d.n / max) * 100}%`,
                   height: "100%",
-                  background: "#f59e0b",
+                  background: "#dc6414",
                 }}
               />
             </div>

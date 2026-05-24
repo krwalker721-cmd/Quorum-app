@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUnlocked } from "@/app/admin/session";
@@ -115,7 +115,7 @@ export default async function ProfilePage({
     .order("created_at", { ascending: true });
   const skills = (skillsRows ?? []).map((s: any) => s.skill as string);
 
-  // Projects — owned + joined
+  // Projects â€” owned + joined
   const { data: ownedProjects } = await supabase
     .from("projects")
     .select("id, name, description, status, created_at")
@@ -173,7 +173,7 @@ export default async function ProfilePage({
     authorAnniversary: anniversary,
   }));
 
-  // Handshakes — owner sees all involving them; viewers see only mutual (involving both)
+  // Handshakes â€” owner sees all involving them; viewers see only mutual (involving both)
   const { data: handshakesRaw } = isOwner
     ? await supabase
         .from("handshakes")
@@ -229,7 +229,7 @@ export default async function ProfilePage({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h1 className="font-sans lowercase text-text-primary text-2xl">
-                  {profile.full_name?.toLowerCase() ?? "—"}
+                  {profile.full_name?.toLowerCase() ?? "â€”"}
                 </h1>
                 <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-1">
                   @{profile.username}
@@ -241,10 +241,10 @@ export default async function ProfilePage({
                   {handshakeCount > 0 && (
                     <span
                       className="font-mono text-[0.8rem]"
-                      style={{ color: "#f59e0b" }}
+                      style={{ color: "#dc6414" }}
                       aria-label={`${handshakeCount} handshakes`}
                     >
-                      ◈ {handshakeCount}
+                      â—ˆ {handshakeCount}
                     </span>
                   )}
                   {vouchers.length > 0 && (
@@ -266,7 +266,7 @@ export default async function ProfilePage({
                   <Link
                     href={`/messages?to=${profile.id}`}
                     className="font-mono lowercase text-[0.7rem] px-3 py-2 hover:opacity-90 whitespace-nowrap"
-                    style={{ background: "#f59e0b", color: "#000" }}
+                    style={{ background: "#dc6414", color: "#000" }}
                   >
                     + message
                   </Link>
@@ -285,8 +285,8 @@ export default async function ProfilePage({
             href={`/profile/${profile.username}`}
             className="font-mono lowercase text-[0.7rem] px-3 py-2"
             style={{
-              color: tab === "about" ? "#f59e0b" : "var(--text-muted)",
-              borderBottom: tab === "about" ? "2px solid #f59e0b" : "2px solid transparent",
+              color: tab === "about" ? "#dc6414" : "var(--text-muted)",
+              borderBottom: tab === "about" ? "2px solid #dc6414" : "2px solid transparent",
             }}
           >
             about
@@ -295,8 +295,8 @@ export default async function ProfilePage({
             href={`/profile/${profile.username}?tab=posts`}
             className="font-mono lowercase text-[0.7rem] px-3 py-2"
             style={{
-              color: tab === "posts" ? "#f59e0b" : "var(--text-muted)",
-              borderBottom: tab === "posts" ? "2px solid #f59e0b" : "2px solid transparent",
+              color: tab === "posts" ? "#dc6414" : "var(--text-muted)",
+              borderBottom: tab === "posts" ? "2px solid #dc6414" : "2px solid transparent",
             }}
           >
             posts
@@ -309,7 +309,7 @@ export default async function ProfilePage({
               <div className="bg-card border border-border p-5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint">building</p>
                 <p className="text-text-secondary text-sm mt-2">
-                  {profile.what_they_are_building ?? "—"}
+                  {profile.what_they_are_building ?? "â€”"}
                 </p>
               </div>
               <div className="bg-card border border-border p-5">
@@ -324,7 +324,7 @@ export default async function ProfilePage({
               </div>
             </div>
 
-            {/* Cohort fingerprint — abstract shape from post type distribution */}
+            {/* Cohort fingerprint â€” abstract shape from post type distribution */}
             <div className="bg-card border border-border p-5 mt-6 flex items-center gap-6">
               <div className="shrink-0">
                 <CohortFingerprint fp={fingerprint} />
@@ -339,14 +339,14 @@ export default async function ProfilePage({
                 <div className="flex flex-wrap gap-2 mt-3">
                   <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#38bdf8" }}>question</span>
                   <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#707070" }}>update</span>
-                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#f59e0b" }}>decision</span>
+                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#dc6414" }}>decision</span>
                   <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#22c55e" }}>win</span>
                   <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#a78bfa" }}>blocker</span>
                 </div>
               </div>
             </div>
 
-            {/* Private mirror — owner only */}
+            {/* Private mirror â€” owner only */}
             {isOwner && (
               <div className="bg-card border border-border p-5 mt-6 space-y-2.5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2">
@@ -368,7 +368,7 @@ export default async function ProfilePage({
                   </p>
                 )}
                 {favoriteTag && (
-                  <p className="font-mono lowercase text-[0.75rem]" style={{ color: "#f59e0b" }}>
+                  <p className="font-mono lowercase text-[0.75rem]" style={{ color: "#dc6414" }}>
                     you keep coming back to {favoriteTag}.
                   </p>
                 )}
@@ -419,9 +419,9 @@ export default async function ProfilePage({
                       key={s}
                       className="font-mono lowercase text-[0.7rem] px-2.5 py-1"
                       style={{
-                        border: "1px solid rgba(245,158,11,0.35)",
-                        color: "#f59e0b",
-                        background: "rgba(245,158,11,0.06)",
+                        border: "1px solid rgba(220, 100, 20,0.35)",
+                        color: "#dc6414",
+                        background: "rgba(220, 100, 20,0.06)",
                       }}
                     >
                       {s.toLowerCase()}
@@ -453,7 +453,7 @@ export default async function ProfilePage({
                         key={h.id}
                         className="p-3 border flex items-start gap-3"
                         style={{
-                          borderColor: "rgba(245,158,11,0.25)",
+                          borderColor: "rgba(220, 100, 20,0.25)",
                           background: "var(--card-elev)",
                         }}
                       >
@@ -467,12 +467,12 @@ export default async function ProfilePage({
                           <div className="flex items-center gap-2">
                             <span
                               className="font-mono lowercase text-[0.8rem]"
-                              style={{ color: "#f59e0b" }}
+                              style={{ color: "#dc6414" }}
                             >
-                              ◈
+                              â—ˆ
                             </span>
                             <p className="font-mono lowercase text-[0.75rem] text-text-primary truncate">
-                              {other?.full_name?.toLowerCase() ?? "—"}
+                              {other?.full_name?.toLowerCase() ?? "â€”"}
                             </p>
                             <span className="font-mono lowercase text-[0.6rem] text-text-faint ml-auto shrink-0">
                               {formatDate(h.date)}
@@ -515,9 +515,9 @@ export default async function ProfilePage({
                       <span
                         className="font-mono lowercase text-[0.6rem] px-2 py-0.5 border whitespace-nowrap"
                         style={{
-                          color: p.status === "completed" ? "#22c55e" : "#f59e0b",
+                          color: p.status === "completed" ? "#22c55e" : "#dc6414",
                           borderColor:
-                            p.status === "completed" ? "#22c55e" : "#f59e0b",
+                            p.status === "completed" ? "#22c55e" : "#dc6414",
                         }}
                       >
                         {p.status ?? "active"}

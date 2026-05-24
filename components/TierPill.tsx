@@ -1,8 +1,8 @@
-export type Tier = "free" | "tier_1" | "tier_2";
+﻿export type Tier = "free" | "tier_1" | "tier_2";
 
 const TIER_STYLES: Record<Tier, { color: string; label: string }> = {
   free: { color: "#707070", label: "free" },
-  tier_1: { color: "#f59e0b", label: "tier_1" },
+  tier_1: { color: "#dc6414", label: "tier_1" },
   tier_2: { color: "#22c55e", label: "tier_2" },
 };
 

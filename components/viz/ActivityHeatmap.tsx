@@ -1,4 +1,4 @@
-import VizCard from "./VizCard";
+﻿import VizCard from "./VizCard";
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 // Four 6-hour slots labeled by their start.
@@ -62,7 +62,7 @@ export default function ActivityHeatmap({
                 key={`${day}-${si}`}
                 title={`${grid[di][si]} post${grid[di][si] === 1 ? "" : "s"}`}
                 style={{
-                  background: `rgba(245,158,11,${0.05 + v * 0.75})`,
+                  background: `rgba(220, 100, 20,${0.05 + v * 0.75})`,
                   aspectRatio: "1.4 / 1",
                   minHeight: 10,
                   border: "1px solid var(--border)",
@@ -73,11 +73,11 @@ export default function ActivityHeatmap({
         ])}
       </div>
       {peak ? (
-        <p className="font-mono lowercase text-[0.6rem] text-amber mt-2">↑ peak {peak}</p>
+        <p className="font-mono lowercase text-[0.6rem] text-amber mt-2">â†‘ peak {peak}</p>
       ) : (
         <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-2">no activity yet</p>
       )}
-      <p className="font-mono lowercase text-[0.55rem] text-text-faint">{posts7d} posts · 7d</p>
+      <p className="font-mono lowercase text-[0.55rem] text-text-faint">{posts7d} posts Â· 7d</p>
     </VizCard>
   );
 }

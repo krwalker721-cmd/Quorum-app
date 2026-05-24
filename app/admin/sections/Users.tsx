@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { adminFetch } from "../lib/api";
@@ -105,8 +105,8 @@ export default function UsersSection() {
               filter === f ? "text-text-primary" : "text-text-muted"
             }`}
             style={{
-              borderColor: filter === f ? "#f59e0b" : "var(--border)",
-              background: filter === f ? "rgba(245,158,11,0.08)" : "transparent",
+              borderColor: filter === f ? "#dc6414" : "var(--border)",
+              background: filter === f ? "rgba(220, 100, 20,0.08)" : "transparent",
             }}
           >
             {f}
@@ -117,7 +117,7 @@ export default function UsersSection() {
       {selected.size > 0 && (
         <div
           className="flex items-center gap-2 mb-3 p-2 border"
-          style={{ borderColor: "rgba(245,158,11,0.4)", background: "rgba(245,158,11,0.06)" }}
+          style={{ borderColor: "rgba(220, 100, 20,0.4)", background: "rgba(220, 100, 20,0.06)" }}
         >
           <span className="font-mono text-[0.65rem] lowercase text-text-muted">
             {selected.size} selected
@@ -140,7 +140,7 @@ export default function UsersSection() {
             className="font-mono text-[0.65rem] lowercase"
             style={{ width: "auto" }}
           >
-            <option value="">bulk change tier…</option>
+            <option value="">bulk change tierâ€¦</option>
             <option value="free">free</option>
             <option value="tier_1">tier_1</option>
             <option value="tier_2">tier_2</option>
@@ -172,7 +172,7 @@ export default function UsersSection() {
           </thead>
           <tbody>
             {loading && users.length === 0 ? (
-              <tr><td colSpan={10} className="px-3 py-6 font-mono text-xs text-text-faint">loading…</td></tr>
+              <tr><td colSpan={10} className="px-3 py-6 font-mono text-xs text-text-faint">loadingâ€¦</td></tr>
             ) : users.length === 0 ? (
               <tr><td colSpan={10} className="px-3 py-6 font-mono text-xs text-text-faint">no users</td></tr>
             ) : (
@@ -195,7 +195,7 @@ export default function UsersSection() {
                         {(u.full_name ?? u.username ?? "?")[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-text-secondary">{u.full_name ?? "—"}</p>
+                        <p className="text-text-secondary">{u.full_name ?? "â€”"}</p>
                         {u.username && (
                           <p className="font-mono text-[0.6rem] text-text-faint lowercase">@{u.username}</p>
                         )}
@@ -204,7 +204,7 @@ export default function UsersSection() {
                   </td>
                   <td className="px-3 py-2 font-mono text-[0.7rem] text-text-muted lowercase">{u.email}</td>
                   <td className="px-3 py-2 font-mono text-[0.65rem] text-text-muted lowercase">
-                    {u.stage ?? "—"}
+                    {u.stage ?? "â€”"}
                   </td>
                   <td className="px-3 py-2">
                     <span
@@ -222,7 +222,7 @@ export default function UsersSection() {
                     {u.created_at?.slice(0, 10)}
                   </td>
                   <td className="px-3 py-2 font-mono text-[0.6rem] text-text-faint">
-                    {u.last_active_at?.slice(0, 10) ?? "—"}
+                    {u.last_active_at?.slice(0, 10) ?? "â€”"}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap gap-1">
@@ -285,7 +285,7 @@ export default function UsersSection() {
 
 function StatusPill({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    pending: "#f59e0b",
+    pending: "#dc6414",
     approved: "#22c55e",
     suspended: "#ef4444",
   };

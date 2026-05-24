@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { STAGE_COLOR, initials } from "@/lib/stage";
 
 export default function Avatar({
@@ -13,7 +13,7 @@ export default function Avatar({
   stage?: string | null;
   size?: number;
   username?: string | null;
-  // Quiet recognition flags. Default off — opt-in per caller.
+  // Quiet recognition flags. Default off â€” opt-in per caller.
   depthRing?: boolean;
   anniversary?: boolean;
 }) {
@@ -63,7 +63,7 @@ export default function Avatar({
             width: Math.max(5, size * 0.18),
             height: Math.max(5, size * 0.18),
             borderRadius: "50%",
-            background: "#f59e0b",
+            background: "#dc6414",
             top: 0,
             right: 0,
             boxShadow: "0 0 0 1.5px var(--card)",

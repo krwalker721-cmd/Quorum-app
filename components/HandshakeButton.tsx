@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -48,9 +48,9 @@ export default function HandshakeButton({
       <button
         onClick={() => setOpen(true)}
         className="font-mono lowercase text-[0.7rem] px-3 py-2 border hover:border-amber transition-colors whitespace-nowrap"
-        style={{ borderColor: "var(--border)", color: "#f59e0b" }}
+        style={{ borderColor: "var(--border)", color: "#dc6414" }}
       >
-        ◈ log handshake
+        â—ˆ log handshake
       </button>
 
       {open && (
@@ -66,7 +66,7 @@ export default function HandshakeButton({
           >
             <div className="flex items-center justify-between">
               <p className="font-mono lowercase text-xs text-text-muted">
-                ◈ handshake with {recipientName?.toLowerCase() ?? "—"}
+                â—ˆ handshake with {recipientName?.toLowerCase() ?? "â€”"}
               </p>
               <button
                 onClick={() => setOpen(false)}
@@ -106,7 +106,7 @@ export default function HandshakeButton({
                 disabled={busy || !agreement.trim()}
                 className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
               >
-                {busy ? "..." : "log handshake →"}
+                {busy ? "..." : "log handshake â†’"}
               </button>
             </div>
           </div>

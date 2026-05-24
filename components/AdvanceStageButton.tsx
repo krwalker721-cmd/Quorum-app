@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -71,12 +71,12 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
         onClick={() => setOpen(true)}
         className="font-mono lowercase text-[0.7rem] px-2.5 py-1 transition-colors"
         style={{
-          border: "1px solid rgba(245,158,11,0.4)",
-          color: "#f59e0b",
+          border: "1px solid rgba(220, 100, 20,0.4)",
+          color: "#dc6414",
           background: "transparent",
         }}
       >
-        advance stage →
+        advance stage â†’
       </button>
 
       {open && (
@@ -104,12 +104,12 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
 
             <div className="flex items-center gap-3 justify-center py-2">
               <StagePillSwatch stage={cur} dim />
-              <span className="font-mono text-text-faint">→</span>
+              <span className="font-mono text-text-faint">â†’</span>
               <StagePillSwatch stage={next} glow />
             </div>
 
             <p className="font-mono lowercase text-[0.7rem] text-text-muted text-center leading-relaxed">
-              advancing your stage is permanent — make sure you&apos;re ready
+              advancing your stage is permanent â€” make sure you&apos;re ready
             </p>
 
             {err && (
@@ -130,7 +130,7 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
                 disabled={busy}
                 className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
               >
-                {busy ? "..." : `advance to ${next} →`}
+                {busy ? "..." : `advance to ${next} â†’`}
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -128,9 +128,9 @@ export default function FeedbackPrompt() {
                 onClick={() => submit()}
                 disabled={busy || !response.trim()}
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                style={{ background: "#f59e0b", color: "#000" }}
+                style={{ background: "#dc6414", color: "#000" }}
               >
-                {busy ? "sending…" : "send →"}
+                {busy ? "sendingâ€¦" : "send â†’"}
               </button>
             )}
           </div>

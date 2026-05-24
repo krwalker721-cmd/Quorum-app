@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -49,9 +49,9 @@ export default function SkillsEditor({
             key={s}
             className="font-mono lowercase text-[0.7rem] px-2.5 py-1 flex items-center gap-2"
             style={{
-              border: "1px solid rgba(245,158,11,0.35)",
-              color: "#f59e0b",
-              background: "rgba(245,158,11,0.06)",
+              border: "1px solid rgba(220, 100, 20,0.35)",
+              color: "#dc6414",
+              background: "rgba(220, 100, 20,0.06)",
             }}
           >
             {s.toLowerCase()}
@@ -60,7 +60,7 @@ export default function SkillsEditor({
               className="text-text-faint hover:text-text-primary"
               aria-label={`remove ${s}`}
             >
-              ×
+              Ã—
             </button>
           </span>
         ))}
@@ -83,7 +83,7 @@ export default function SkillsEditor({
           onClick={add}
           disabled={busy || !text.trim()}
           className="font-mono lowercase text-[0.7rem] px-3 py-1.5 hover:opacity-90 disabled:opacity-50"
-          style={{ background: "#f59e0b", color: "#000" }}
+          style={{ background: "#dc6414", color: "#000" }}
         >
           add
         </button>

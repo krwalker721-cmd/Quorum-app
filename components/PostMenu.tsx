@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 
@@ -91,7 +91,7 @@ export default function PostMenu({ postId }: { postId: string }) {
             }}
             className="block w-full text-left font-mono lowercase text-[0.7rem] text-text-muted hover:text-text-primary px-3 py-2"
           >
-            nominate to vault →
+            nominate to vault â†’
           </button>
           <button
             type="button"
@@ -118,7 +118,7 @@ export default function PostMenu({ postId }: { postId: string }) {
             <>
               <p className="font-mono lowercase text-xs text-amber mb-2">nominated</p>
               <p className="text-text-secondary text-[0.92rem] mb-5">
-                thanks — admins will review it.
+                thanks â€” admins will review it.
               </p>
               <div className="flex justify-end">
                 <CloseBtn onClick={() => setNominateModal(false)} />
@@ -133,7 +133,7 @@ export default function PostMenu({ postId }: { postId: string }) {
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="a short reason — what makes this worth preserving?"
+                placeholder="a short reason â€” what makes this worth preserving?"
                 rows={4}
               />
               <div className="flex justify-end gap-2 mt-4">
@@ -142,9 +142,9 @@ export default function PostMenu({ postId }: { postId: string }) {
                   onClick={submitNominate}
                   disabled={busy || reason.trim().length === 0}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                  style={{ background: "#f59e0b", color: "#000" }}
+                  style={{ background: "#dc6414", color: "#000" }}
                 >
-                  {busy ? "sending…" : "nominate →"}
+                  {busy ? "sendingâ€¦" : "nominate â†’"}
                 </button>
               </div>
             </>
@@ -158,7 +158,7 @@ export default function PostMenu({ postId }: { postId: string }) {
             <>
               <p className="font-mono lowercase text-xs text-amber mb-2">reported</p>
               <p className="text-text-secondary text-[0.92rem] mb-5">
-                thanks — an admin will review it.
+                thanks â€” an admin will review it.
               </p>
               <div className="flex justify-end">
                 <CloseBtn onClick={() => setReportModal(false)} />
@@ -193,9 +193,9 @@ export default function PostMenu({ postId }: { postId: string }) {
                   onClick={submitReport}
                   disabled={reportBusy}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                  style={{ background: "#f59e0b", color: "#000" }}
+                  style={{ background: "#dc6414", color: "#000" }}
                 >
-                  {reportBusy ? "sending…" : "submit report"}
+                  {reportBusy ? "sendingâ€¦" : "submit report"}
                 </button>
               </div>
             </>

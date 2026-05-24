@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
@@ -26,7 +26,7 @@ export type WorkspaceProject = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  growth: "#f59e0b",
+  growth: "#dc6414",
   fundraising: "#38bdf8",
   hiring: "#707070",
   product: "#707070",
@@ -47,7 +47,7 @@ export default function YourWorkspace({
           style={{ border: "1px dashed var(--border)", background: "transparent" }}
         >
           <p className="font-mono lowercase text-xs text-text-faint">
-            you're not in any projects yet — start one or respond to one below.
+            you're not in any projects yet â€” start one or respond to one below.
           </p>
         </div>
       ) : (
@@ -83,7 +83,7 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
         className="p-5"
         style={{
           background: "var(--card-elev)",
-          borderLeft: "3px solid #f59e0b",
+          borderLeft: "3px solid #dc6414",
           borderTop: "1px solid var(--border)",
           borderRight: "1px solid var(--border)",
           borderBottom: "1px solid var(--border)",
@@ -146,9 +146,9 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
         <footer className="flex items-center justify-between mt-4 gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <Pill>{project.doc_count} docs</Pill>
-            <Pill>·</Pill>
+            <Pill>Â·</Pill>
             <Pill>{project.decision_count} decisions</Pill>
-            <Pill>·</Pill>
+            <Pill>Â·</Pill>
             <Pill>{project.message_count} messages</Pill>
           </div>
           {project.needs_vote && (
@@ -157,12 +157,12 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
               onClick={(e) => e.stopPropagation()}
               className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
               style={{
-                background: "rgba(245,158,11,0.12)",
-                border: "1px solid #f59e0b",
-                color: "#f59e0b",
+                background: "rgba(220, 100, 20,0.12)",
+                border: "1px solid #dc6414",
+                color: "#dc6414",
               }}
             >
-              decision needs your vote →
+              decision needs your vote â†’
             </Link>
           )}
         </footer>

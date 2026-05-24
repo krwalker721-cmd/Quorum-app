@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { adminFetch } from "../lib/api";
@@ -75,18 +75,18 @@ export default function OverviewSection() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
-        <ChartCard title="signups · last 30d">
+        <ChartCard title="signups Â· last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={signups}>
               <CartesianGrid stroke="#2e2e2e" strokeDasharray="3 3" />
               <XAxis dataKey="date" stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} />
               <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="count" stroke="#f59e0b" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="count" stroke="#dc6414" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard title="activity · last 30d">
+        <ChartCard title="activity Â· last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={activity}>
               <CartesianGrid stroke="#2e2e2e" strokeDasharray="3 3" />
@@ -94,7 +94,7 @@ export default function OverviewSection() {
               <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 10, fontFamily: "monospace" }} />
-              <Line type="monotone" dataKey="posts" stroke="#f59e0b" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="posts" stroke="#dc6414" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="checkins" stroke="#22c55e" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -144,14 +144,14 @@ function Metric({ label, value, amber }: { label: string; value: number; amber?:
     <div
       className="border p-3"
       style={{
-        borderColor: amber ? "rgba(245,158,11,0.4)" : "var(--border)",
+        borderColor: amber ? "rgba(220, 100, 20,0.4)" : "var(--border)",
         background: "var(--card)",
       }}
     >
       <p className="font-mono lowercase text-[0.6rem] text-text-faint">{label}</p>
       <p
         className="font-mono text-2xl mt-1"
-        style={{ color: amber ? "#f59e0b" : "var(--text-primary)" }}
+        style={{ color: amber ? "#dc6414" : "var(--text-primary)" }}
       >
         {value}
       </p>
@@ -193,7 +193,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function EventPill({ type }: { type: string }) {
   const colors: Record<string, string> = {
     signup: "#22c55e",
-    post: "#f59e0b",
+    post: "#dc6414",
     nomination: "#a78bfa",
     handshake: "#38bdf8",
   };

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NOTE_TAGS, type NoteBlock, type NoteRow, type NoteCollectionRow } from "@/lib/vault";
@@ -133,7 +133,7 @@ export default function NotesTab({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="search notes…"
+            placeholder="search notesâ€¦"
             className="w-full bg-transparent border px-2 py-1.5 text-[0.75rem] text-text-secondary focus:outline-none focus:border-amber"
             style={{ borderColor: "var(--border)" }}
           />
@@ -151,7 +151,7 @@ export default function NotesTab({
                   className="w-full text-left font-mono lowercase text-[0.65rem] text-text-faint px-3 py-2 hover:text-text-muted flex items-center justify-between"
                 >
                   <span>
-                    {isCollapsed ? "▸" : "▾"} {c.name.toLowerCase()}
+                    {isCollapsed ? "â–¸" : "â–¾"} {c.name.toLowerCase()}
                   </span>
                   <span>{items.length}</span>
                 </button>
@@ -254,8 +254,8 @@ function NoteRowItem({
       onClick={onOpen}
       className="relative px-3 py-2 cursor-pointer border-l-2"
       style={{
-        borderColor: active ? "#f59e0b" : "transparent",
-        background: active ? "rgba(245,158,11,0.05)" : "transparent",
+        borderColor: active ? "#dc6414" : "transparent",
+        background: active ? "rgba(220, 100, 20,0.05)" : "transparent",
       }}
     >
       <div className="flex items-center justify-between gap-2">
@@ -271,7 +271,7 @@ function NoteRowItem({
           className="text-text-faint hover:text-text-primary px-1"
           aria-label="note actions"
         >
-          ⋯
+          â‹¯
         </button>
       </div>
       <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-0.5">
@@ -353,14 +353,14 @@ function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
               notes you write here are entirely private.
             </p>
             <p className="text-text-muted text-sm leading-relaxed mb-5">
-              capture decisions, frameworks, retrospectives — anything worth organizing.
+              capture decisions, frameworks, retrospectives â€” anything worth organizing.
             </p>
           </>
         )}
         <button
           onClick={onCreate}
           className="vault-breathe font-mono lowercase text-xs px-5 py-2.5 mt-2"
-          style={{ background: "#f59e0b", color: "#000" }}
+          style={{ background: "#dc6414", color: "#000" }}
         >
           + new note
         </button>

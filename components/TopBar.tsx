@@ -1,4 +1,4 @@
-import ThemeToggle from "@/components/ThemeToggle";
+﻿import ThemeToggle from "@/components/ThemeToggle";
 import NewPostButton from "@/components/NewPostButton";
 import SignOutButton from "@/components/SignOutButton";
 
@@ -26,7 +26,7 @@ export default function TopBar({
         <ThemeToggle />
         <span
           className="font-mono uppercase text-[0.6rem] tracking-wider px-2 py-1 border"
-          style={{ borderColor: "#f59e0b", color: "#f59e0b", letterSpacing: "0.08em" }}
+          style={{ borderColor: "#dc6414", color: "#dc6414", letterSpacing: "0.08em" }}
         >
           {tier}
         </span>

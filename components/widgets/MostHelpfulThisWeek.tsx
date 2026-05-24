@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import Avatar from "@/components/Avatar";
 import { STAGE_COLOR } from "@/lib/stage";
 
@@ -62,7 +62,7 @@ export default async function MostHelpfulThisWeek() {
                   className="rounded-full"
                   style={{
                     padding: 2,
-                    background: "rgba(245, 158, 11, 0.35)",
+                    background: "rgba(220, 100, 20, 0.35)",
                   }}
                 >
                   <Avatar
@@ -74,7 +74,7 @@ export default async function MostHelpfulThisWeek() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-mono lowercase text-[0.7rem] text-text-secondary truncate">
-                    {p.full_name?.toLowerCase() ?? "—"}
+                    {p.full_name?.toLowerCase() ?? "â€”"}
                   </p>
                   <div className="flex items-center gap-2">
                     {p.stage && (

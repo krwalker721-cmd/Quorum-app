@@ -1,4 +1,4 @@
-import Avatar from "@/components/Avatar";
+﻿import Avatar from "@/components/Avatar";
 import { TAG_COLOR, ROOM_TYPE_COLOR, timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
 import BookmarkButton from "@/components/BookmarkButton";
@@ -44,12 +44,12 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   const isQuestion = roomType === "question";
   const isActive = !!post.isActive;
 
-  // Left-border treatment — chosen by type, then anonymity, then default.
+  // Left-border treatment â€” chosen by type, then anonymity, then default.
   let leftBorder = `1px solid var(--border-amber)`;
   if (anon) {
     leftBorder = "2px solid #3a3a3a";
   } else if (isDecision || isBlocker) {
-    leftBorder = "3px solid rgba(245, 158, 11, 0.75)";
+    leftBorder = "3px solid rgba(220, 100, 20, 0.75)";
   } else if (isWin) {
     leftBorder = "3px solid rgba(34, 197, 94, 0.75)";
   } else if (isQuestion) {
@@ -64,7 +64,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   const winTint = isWin ? "rgba(34, 197, 94, 0.025)" : "var(--card-elev)";
 
   const borderColor = isDecision || isBlocker
-    ? "rgba(245, 158, 11, 0.4)"
+    ? "rgba(220, 100, 20, 0.4)"
     : "var(--border-amber)";
 
   const classes = [
@@ -84,17 +84,17 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         borderColor,
         borderLeft: leftBorder,
         boxShadow: lateNight
-          ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
+          ? "0 0 22px 1px rgba(220, 100, 20, 0.10), 0 0 4px rgba(220, 100, 20, 0.06)"
           : undefined,
       }}
     >
-      {/* Top-right indicators — always visible */}
+      {/* Top-right indicators â€” always visible */}
       <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
         {(isDecision || isBlocker) && (
           <span
             aria-hidden
             className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(245,158,11,0.7)" }}
+            style={{ background: "#dc6414", boxShadow: "0 0 6px rgba(220, 100, 20,0.7)" }}
           />
         )}
         {isActive && !anon && (
@@ -107,7 +107,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         )}
       </div>
 
-      {/* Hover-only actions — sit to the left of indicators */}
+      {/* Hover-only actions â€” sit to the left of indicators */}
       <div
         className="absolute top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ right: 56 }}
@@ -136,11 +136,11 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         )}
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-xs text-text-primary truncate">
-            {anon ? <span className="text-text-faint">anonymous</span> : post.author?.full_name?.toLowerCase() ?? "—"}
+            {anon ? <span className="text-text-faint">anonymous</span> : post.author?.full_name?.toLowerCase() ?? "â€”"}
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
             {timeAgo(post.created_at)} ago
-            {anon && <span className="ml-2" style={{ fontSize: "9px" }}>· posted anonymously</span>}
+            {anon && <span className="ml-2" style={{ fontSize: "9px" }}>Â· posted anonymously</span>}
           </p>
         </div>
       </header>
@@ -152,12 +152,12 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
       <footer className="flex items-center justify-between mt-3">
         <div className="flex flex-col gap-0.5">
           <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-            ↳ {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
+            â†³ {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
           </span>
           {(isDecision || isBlocker) && (
             <span
               className="font-mono lowercase tracking-wider"
-              style={{ color: "#f59e0b", fontSize: "9px" }}
+              style={{ color: "#dc6414", fontSize: "9px" }}
             >
               needs input
             </span>

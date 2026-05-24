@@ -1,36 +1,52 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root,
 [data-theme="dark"] {
-  --bg: #070707;
-  --card: #0c0c0c;
-  --card-elev: #161616;
-  --border: #2e2e2e;
-  --border-amber: rgba(245, 158, 11, 0.18);
+  --bg: #060504;
+  --bg-0: #030201;
+  --card: rgba(10, 7, 4, 0.85);
+  --card-elev: rgba(14, 10, 6, 0.9);
+  --border: rgba(220, 100, 20, 0.12);
+  --border-subtle: rgba(220, 100, 20, 0.08);
+  --border-hover: rgba(220, 100, 20, 0.25);
+  --border-amber: rgba(220, 100, 20, 0.2);
   --text-primary: #ffffff;
-  --text-secondary: #eeeeee;
-  --text-muted: #c0c0c0;
-  --text-faint: #707070;
-  --grid-line: rgba(255, 255, 255, 0.032);
-  --glow: rgba(245, 158, 11, 0.22);
-  --glow-soft: rgba(245, 158, 11, 0.08);
+  --text-secondary: #d0b090;
+  --text-muted: #4a3020;
+  --text-faint: #2a1808;
+  --grid-line: rgba(220, 100, 20, 0.028);
+  --glow: rgba(220, 100, 20, 0.28);
+  --glow-soft: rgba(220, 100, 20, 0.08);
+  --accent: #dc6414;
+  --accent-dim: #6a2a08;
+  --accent-bg: rgba(220, 100, 20, 0.08);
+  --accent-border: rgba(220, 100, 20, 0.2);
+  --accent-glow: rgba(220, 100, 20, 0.35);
 }
 
 [data-theme="light"] {
-  --bg: #f4f7fb;
-  --card: #eaeef5;
-  --card-elev: #ffffff;
-  --border: #c8d0de;
-  --border-amber: rgba(245, 158, 11, 0.35);
-  --text-primary: #0a1322;
-  --text-secondary: #1f2a3c;
-  --text-muted: #4a5567;
-  --text-faint: #7c8696;
-  --grid-line: rgba(20, 30, 50, 0.05);
-  --glow: rgba(245, 158, 11, 0.18);
-  --glow-soft: rgba(245, 158, 11, 0.05);
+  --bg: #f0ede8;
+  --bg-0: #e6e0d8;
+  --card: rgba(248, 244, 238, 0.9);
+  --card-elev: rgba(252, 248, 242, 0.95);
+  --border: rgba(220, 100, 20, 0.12);
+  --border-subtle: rgba(220, 100, 20, 0.08);
+  --border-hover: rgba(220, 100, 20, 0.25);
+  --border-amber: rgba(184, 80, 16, 0.3);
+  --text-primary: #1a0e08;
+  --text-secondary: #4a3020;
+  --text-muted: #8a6040;
+  --text-faint: #c0a080;
+  --grid-line: rgba(220, 100, 20, 0.015);
+  --glow: rgba(220, 100, 20, 0.1);
+  --glow-soft: rgba(220, 100, 20, 0.03);
+  --accent: #b85010;
+  --accent-dim: #6a2a08;
+  --accent-bg: rgba(220, 100, 20, 0.08);
+  --accent-border: rgba(184, 80, 16, 0.3);
+  --accent-glow: rgba(184, 80, 16, 0.35);
 }
 
 html, body {
@@ -41,18 +57,19 @@ html, body {
 
 body {
   background-image:
-    radial-gradient(ellipse at 18% 14%, var(--glow) 0%, var(--glow-soft) 30%, transparent 58%),
+    radial-gradient(ellipse at 0% 0%, var(--glow) 0%, var(--glow-soft) 35%, transparent 65%),
+    radial-gradient(ellipse at 100% 100%, rgba(220, 100, 20, 0.04) 0%, transparent 40%),
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: auto, 28px 28px, 28px 28px;
+  background-size: auto, auto, 28px 28px, 28px 28px;
   background-color: var(--bg);
   background-attachment: fixed;
   font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 }
 
 input, select, textarea {
-  background-color: var(--card);
-  border: 1px solid var(--border);
+  background-color: rgba(10, 7, 4, 0.9);
+  border: 1px solid rgba(220, 100, 20, 0.15);
   color: var(--text-primary);
   padding: 0.6rem 0.75rem;
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -63,8 +80,10 @@ input, select, textarea {
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: #f59e0b;
+  border-color: #dc6414;
 }
+
+input::placeholder, textarea::placeholder { color: #2a1808; }
 
 label {
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -76,7 +95,17 @@ label {
   margin-bottom: 0.4rem;
 }
 
-::selection { background: rgba(245, 158, 11, 0.35); }
+::selection { background: rgba(220, 100, 20, 0.35); }
+
+/* Global thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a1a08 transparent;
+}
+*::-webkit-scrollbar { width: 3px; height: 3px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #2a1a08; border-radius: 2px; }
+*::-webkit-scrollbar-thumb:hover { background: #3a2a10; }
 
 /* Glowing online dot */
 .dot-online {
@@ -84,26 +113,19 @@ label {
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.18), 0 0 8px rgba(34, 197, 94, 0.6);
 }
 .dot-offline {
-  background: #3a3a3a;
+  background: #2a1808;
 }
 
-/* ──────────────────────────────────────────────────────────────────────────
-   Recognition system — quiet, almost-invisible signals.
-   Nothing here should announce itself; tune toward "barely noticeable".
-   ────────────────────────────────────────────────────────────────────────── */
-
-/* "moved the room" — slow, very subtle border pulse on posts that pulled
-   replies from 3+ distinct cohort members within 48h. */
+/* "moved the room" â€” subtle border pulse */
 @keyframes moved-room-pulse {
   0%, 100% { border-color: var(--border-amber); }
-  50%      { border-color: rgba(245, 158, 11, 0.36); }
+  50%      { border-color: rgba(220, 100, 20, 0.4); }
 }
 .moved-room-pulse {
   animation: moved-room-pulse 6.5s ease-in-out infinite;
 }
 
-/* "consistency ghost" — extremely subtle shimmer across roster names after
-   8 consecutive weekly check-ins. Reads as a light effect, not a badge. */
+/* consistency ghost shimmer */
 @keyframes consistency-ghost-shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -113,7 +135,7 @@ label {
     90deg,
     var(--text-primary) 0%,
     var(--text-primary) 40%,
-    rgba(245, 158, 11, 0.55) 50%,
+    rgba(220, 100, 20, 0.55) 50%,
     var(--text-primary) 60%,
     var(--text-primary) 100%
   );
@@ -125,20 +147,18 @@ label {
   animation: consistency-ghost-shimmer 9s linear infinite;
 }
 
-/* Quiet notice strip (first honest post, connector). Subtle amber left border. */
+/* Quiet notice strip */
 .quiet-notice {
-  border-left: 2px solid #f59e0b;
-  background: rgba(245, 158, 11, 0.04);
+  border-left: 2px solid #dc6414;
+  background: rgba(220, 100, 20, 0.04);
 }
 
-/* Vault — slow amber breathing behind the "+ new note" button */
 @keyframes vault-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.0); }
-  50%      { box-shadow: 0 0 24px 4px rgba(245, 158, 11, 0.18); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 100, 20, 0.0); }
+  50%      { box-shadow: 0 0 24px 4px rgba(220, 100, 20, 0.18); }
 }
 .vault-breathe { animation: vault-breathe 5.5s ease-in-out infinite; }
 
-/* Vault — ambient activity feed slow scroll */
 @keyframes vault-ambient-drift {
   0%   { transform: translateY(100%); opacity: 0; }
   10%  { opacity: 0.6; }
@@ -147,49 +167,44 @@ label {
 }
 .vault-ambient-card { animation: vault-ambient-drift 22s linear infinite; }
 
-/* Vault — toast slide in */
 @keyframes vault-toast-in {
   from { transform: translateY(8px); opacity: 0; }
   to   { transform: translateY(0);   opacity: 1; }
 }
 .vault-toast { animation: vault-toast-in 220ms ease-out; }
 
-/* Vault — prompt fade */
 @keyframes vault-prompt-fade {
   0%, 100% { opacity: 0; }
   10%, 90% { opacity: 1; }
 }
 .vault-prompt-cycle { animation: vault-prompt-fade 8s ease-in-out infinite; }
 
-/* Pulse — active post: slow green border breathe (3s loop, 0.4 -> 1.0) */
+/* Pulse â€” active post: burnt orange border breathe */
 @keyframes pulse-active-breathe {
-  0%, 100% { border-left-color: rgba(34, 197, 94, 0.4); }
-  50%      { border-left-color: rgba(34, 197, 94, 1.0); }
+  0%, 100% { border-left-color: rgba(220, 100, 20, 0.4); }
+  50%      { border-left-color: rgba(220, 100, 20, 1.0); }
 }
 .pulse-active-breathe {
   animation: pulse-active-breathe 3s ease-in-out infinite;
 }
 
-/* Pulse — header card 1: subtle amber glow behind founders-in-the-room */
 .pulse-card-amber-glow {
-  box-shadow: 0 0 28px 2px rgba(245, 158, 11, 0.10), inset 0 0 0 1px rgba(245, 158, 11, 0.10);
+  box-shadow: 0 0 28px 2px rgba(220, 100, 20, 0.10), inset 0 0 0 1px rgba(220, 100, 20, 0.10);
 }
 
-/* Pulse — activity ticker line: fade in/out */
 @keyframes pulse-ticker-fade {
   0%, 100% { opacity: 0; }
   15%, 85% { opacity: 1; }
 }
 .pulse-ticker-line { animation: pulse-ticker-fade 4s ease-in-out infinite; }
 
-/* Pulse — amber online/active dot (slow pulse, for ticker) */
 @keyframes pulse-amber-dot {
   0%, 100% { opacity: 0.45; }
   50%      { opacity: 1; }
 }
 .pulse-amber-dot {
-  background: #f59e0b;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+  background: #dc6414;
+  box-shadow: 0 0 8px rgba(220, 100, 20, 0.6);
   animation: pulse-amber-dot 2.5s ease-in-out infinite;
 }
 
@@ -204,12 +219,11 @@ label {
   .pulse-amber-dot { animation: none; }
 }
 
-/* Scrollbars */
-.scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-.scroll-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.scroll-thin::-webkit-scrollbar { width: 3px; height: 3px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #2a1a08; border-radius: 2px; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 
-/* Weekly summary card — gentle fade in on mount */
+/* Weekly summary card â€” gentle fade in on mount */
 @keyframes weekly-summary-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -227,8 +241,8 @@ label {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: #f59e0b;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+  background: #dc6414;
+  box-shadow: 0 0 6px rgba(220, 100, 20, 0.7);
   margin-left: 6px;
   vertical-align: middle;
 }

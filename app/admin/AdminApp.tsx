@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { loadSession, saveSession, clearSession, verifyCode, adminFetch } from "./lib/api";
@@ -79,7 +79,7 @@ export default function AdminApp() {
             quorum / admin
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint mt-1">
-            session · 24h
+            session Â· 24h
           </p>
         </div>
         <nav className="flex-1 py-3">
@@ -97,7 +97,7 @@ export default function AdminApp() {
                 }`}
                 style={
                   active
-                    ? { borderLeft: "2px solid #f59e0b", background: "rgba(245,158,11,0.06)" }
+                    ? { borderLeft: "2px solid #dc6414", background: "rgba(220, 100, 20,0.06)" }
                     : { borderLeft: "2px solid transparent" }
                 }
               >
@@ -105,7 +105,7 @@ export default function AdminApp() {
                 {badge !== null && (
                   <span
                     className="font-mono text-[0.6rem] px-1.5 py-0.5"
-                    style={{ background: "#f59e0b", color: "#000" }}
+                    style={{ background: "#dc6414", color: "#000" }}
                   >
                     {badge}
                   </span>
@@ -122,7 +122,7 @@ export default function AdminApp() {
             }}
             className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
           >
-            lock →
+            lock â†’
           </button>
         </div>
       </aside>
@@ -188,9 +188,9 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
           type="submit"
           disabled={busy || !code}
           className="w-full mt-5 font-mono lowercase text-xs py-2.5 disabled:opacity-50"
-          style={{ background: "#f59e0b", color: "#000" }}
+          style={{ background: "#dc6414", color: "#000" }}
         >
-          {busy ? "checking…" : "submit"}
+          {busy ? "checkingâ€¦" : "submit"}
         </button>
       </form>
     </main>

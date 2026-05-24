@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { adminFetch, saveSession } from "../lib/api";
@@ -69,7 +69,7 @@ export default function SettingsSection() {
     }
   }
 
-  if (!s) return <SectionShell title="settings"><p className="font-mono text-xs text-text-faint">loading…</p></SectionShell>;
+  if (!s) return <SectionShell title="settings"><p className="font-mono text-xs text-text-faint">loadingâ€¦</p></SectionShell>;
 
   return (
     <SectionShell title="settings">
@@ -82,8 +82,8 @@ export default function SettingsSection() {
                 onClick={() => update("platform_status", v)}
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
                 style={{
-                  borderColor: s.platform_status === v ? "#f59e0b" : "var(--border)",
-                  background: s.platform_status === v ? "rgba(245,158,11,0.08)" : "transparent",
+                  borderColor: s.platform_status === v ? "#dc6414" : "var(--border)",
+                  background: s.platform_status === v ? "rgba(220, 100, 20,0.08)" : "transparent",
                   color: s.platform_status === v ? "var(--text-primary)" : "var(--text-muted)",
                 }}
               >
@@ -95,7 +95,7 @@ export default function SettingsSection() {
             )}
           </div>
           <p className="font-mono text-[0.6rem] text-text-faint mt-2 lowercase">
-            open: anyone with invite signs up · waitlist: new signups go to pending
+            open: anyone with invite signs up Â· waitlist: new signups go to pending
           </p>
         </Card>
 
@@ -108,10 +108,10 @@ export default function SettingsSection() {
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
                 style={{
                   borderColor: s.maintenance_mode === v
-                    ? v === "true" ? "#ef4444" : "#f59e0b"
+                    ? v === "true" ? "#ef4444" : "#dc6414"
                     : "var(--border)",
                   background: s.maintenance_mode === v
-                    ? v === "true" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)"
+                    ? v === "true" ? "rgba(239,68,68,0.08)" : "rgba(220, 100, 20,0.08)"
                     : "transparent",
                   color: s.maintenance_mode === v ? "var(--text-primary)" : "var(--text-muted)",
                 }}
@@ -143,9 +143,9 @@ export default function SettingsSection() {
                 setSavingWelcome(false);
               }}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "#f59e0b", color: "#000" }}
+              style={{ background: "#dc6414", color: "#000" }}
             >
-              {savingWelcome ? "saving…" : "save"}
+              {savingWelcome ? "savingâ€¦" : "save"}
             </button>
             {savedFlash === "welcome_message" && (
               <span className="font-mono text-[0.6rem] text-amber self-center">saved</span>
@@ -176,7 +176,7 @@ export default function SettingsSection() {
               type="submit"
               disabled={!curCode || !newCode || !confirmCode}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "#f59e0b", color: "#000" }}
+              style={{ background: "#dc6414", color: "#000" }}
             >
               update code
             </button>

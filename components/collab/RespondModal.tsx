@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -86,9 +86,9 @@ export default function RespondModal({
             onClick={submit}
             disabled={busy}
             className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
-            style={{ background: "#f59e0b", color: "#000" }}
+            style={{ background: "#dc6414", color: "#000" }}
           >
-            {busy ? "..." : "send →"}
+            {busy ? "..." : "send â†’"}
           </button>
         </div>
       </div>

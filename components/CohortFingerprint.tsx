@@ -1,9 +1,9 @@
-import type { Fingerprint } from "@/lib/recognition";
+﻿import type { Fingerprint } from "@/lib/recognition";
 
 const SEGMENTS: { key: keyof Fingerprint; color: string }[] = [
   { key: "question", color: "#38bdf8" },
   { key: "update", color: "#707070" },
-  { key: "decision", color: "#f59e0b" },
+  { key: "decision", color: "#dc6414" },
   { key: "win", color: "#22c55e" },
   { key: "blocker", color: "#a78bfa" },
 ];
@@ -52,8 +52,8 @@ export default function CohortFingerprint({
     >
       <defs>
         <radialGradient id="fp-fill" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="rgba(245,158,11,0.18)" />
-          <stop offset="100%" stopColor="rgba(245,158,11,0.02)" />
+          <stop offset="0%" stopColor="rgba(220, 100, 20,0.18)" />
+          <stop offset="100%" stopColor="rgba(220, 100, 20,0.02)" />
         </radialGradient>
       </defs>
       {/* faint outer ring as visual anchor */}
@@ -62,13 +62,13 @@ export default function CohortFingerprint({
         cy={cy}
         r={maxR}
         fill="none"
-        stroke="rgba(245,158,11,0.10)"
+        stroke="rgba(220, 100, 20,0.10)"
         strokeDasharray="2 3"
       />
       <polygon
         points={polyPoints}
         fill="url(#fp-fill)"
-        stroke="rgba(245,158,11,0.55)"
+        stroke="rgba(220, 100, 20,0.55)"
         strokeWidth={1}
       />
       {SEGMENTS.map((s, i) => {

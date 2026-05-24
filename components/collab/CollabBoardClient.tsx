@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -36,7 +36,7 @@ type SkillEntry = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  growth: "#f59e0b",
+  growth: "#dc6414",
   fundraising: "#38bdf8",
   hiring: "#707070",
   product: "#707070",
@@ -92,8 +92,8 @@ export default function CollabBoardClient({
                 onClick={() => setTab(t)}
                 className="font-mono lowercase text-[0.7rem] px-3 py-2"
                 style={{
-                  color: active ? "#f59e0b" : "var(--text-muted)",
-                  borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
+                  color: active ? "#dc6414" : "var(--text-muted)",
+                  borderBottom: active ? "2px solid #dc6414" : "2px solid transparent",
                 }}
               >
                 {label}
@@ -105,7 +105,7 @@ export default function CollabBoardClient({
           <button
             onClick={() => openNew(tab === "needs" ? "need" : "project")}
             className="font-mono lowercase text-[0.7rem] px-3 py-1.5 mb-2 hover:opacity-90"
-            style={{ background: "#f59e0b", color: "#000" }}
+            style={{ background: "#dc6414", color: "#000" }}
           >
             + post a {tab === "needs" ? "need" : "project"}
           </button>
@@ -162,7 +162,7 @@ function ProjectsList({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="font-mono lowercase text-xs text-text-faint">no projects yet. be the first to post →</p>
+      <p className="font-mono lowercase text-xs text-text-faint">no projects yet. be the first to post â†’</p>
     );
   }
   return (
@@ -206,7 +206,7 @@ function ProjectCard({
         />
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-xs text-text-primary truncate">
-            {project.author?.full_name?.toLowerCase() ?? "—"}
+            {project.author?.full_name?.toLowerCase() ?? "â€”"}
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
             {timeAgo(project.created_at)} ago
@@ -272,7 +272,7 @@ function ProjectCard({
 
       <footer className="flex items-center justify-between mt-4">
         <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-          ↳ {project.interest_count} interested
+          â†³ {project.interest_count} interested
         </span>
         {closed ? (
           <span
@@ -282,8 +282,8 @@ function ProjectCard({
             filled
           </span>
         ) : isMember ? (
-          <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#f59e0b" }}>
-            open room →
+          <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#dc6414" }}>
+            open room â†’
           </span>
         ) : (
           <button
@@ -293,9 +293,9 @@ function ProjectCard({
               onRespond(project);
             }}
             className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
-            style={{ background: "#f59e0b", color: "#000" }}
+            style={{ background: "#dc6414", color: "#000" }}
           >
-            respond →
+            respond â†’
           </button>
         )}
       </footer>
@@ -322,7 +322,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
     <div className="space-y-3 max-w-3xl">
       {rows.map((n) => {
         const isQuick = n.category === "quick_ask";
-        const badgeColor = isQuick ? "#f59e0b" : "#707070";
+        const badgeColor = isQuick ? "#dc6414" : "#707070";
         return (
           <article
             key={n.id}
@@ -339,7 +339,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
               />
               <div className="flex-1 min-w-0">
                 <p className="font-mono lowercase text-xs text-text-primary truncate">
-                  {n.author?.full_name?.toLowerCase() ?? "—"}
+                  {n.author?.full_name?.toLowerCase() ?? "â€”"}
                 </p>
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint">
                   {timeAgo(n.created_at)} ago
@@ -375,9 +375,9 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
                 <Link
                   href={`/messages?to=${n.owner_id}`}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
-                  style={{ background: "#f59e0b", color: "#000" }}
+                  style={{ background: "#dc6414", color: "#000" }}
                 >
-                  respond →
+                  respond â†’
                 </Link>
               )}
             </footer>
@@ -415,7 +415,7 @@ function SkillsIndex({
             <span className="font-mono lowercase text-sm text-text-primary">{e.skill.toLowerCase()}</span>
             <span
               className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-              style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
+              style={{ border: "1px solid #dc6414", color: "#dc6414" }}
             >
               {e.members.length}
             </span>

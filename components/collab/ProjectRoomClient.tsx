@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -132,7 +132,7 @@ export default function ProjectRoomClient({
             href="/collab"
             className="font-mono lowercase text-[0.7rem] text-text-faint hover:text-text-primary"
           >
-            ← collab_board
+            â† collab_board
           </Link>
           <span className="text-text-faint">/</span>
           <h2 className="font-sans lowercase text-text-primary text-base truncate">{project.title}</h2>
@@ -182,7 +182,7 @@ export default function ProjectRoomClient({
               {project.category && (
                 <span
                   className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto"
-                  style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
+                  style={{ border: "1px solid #dc6414", color: "#dc6414" }}
                 >
                   {project.category}
                 </span>
@@ -209,8 +209,8 @@ export default function ProjectRoomClient({
                   onClick={() => setTab(t)}
                   className="font-mono lowercase text-[0.7rem] px-3 py-2"
                   style={{
-                    color: active ? "#f59e0b" : "var(--text-muted)",
-                    borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
+                    color: active ? "#dc6414" : "var(--text-muted)",
+                    borderBottom: active ? "2px solid #dc6414" : "2px solid transparent",
                   }}
                 >
                   {label}
@@ -273,7 +273,7 @@ export default function ProjectRoomClient({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                      {m.full_name?.toLowerCase() ?? "—"}
+                      {m.full_name?.toLowerCase() ?? "â€”"}
                     </p>
                     {m.role && (
                       <p className="font-mono lowercase text-[0.6rem] text-text-faint">{m.role}</p>
@@ -286,10 +286,10 @@ export default function ProjectRoomClient({
 
           <div
             className="p-4 border"
-            style={{ background: "rgba(245,158,11,0.06)", borderColor: "rgba(245,158,11,0.35)" }}
+            style={{ background: "rgba(220, 100, 20,0.06)", borderColor: "rgba(220, 100, 20,0.35)" }}
           >
-            <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#f59e0b" }}>
-              ◈ log handshake
+            <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#dc6414" }}>
+              â—ˆ log handshake
             </p>
             <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2">
               capture a commitment scoped to this project.
@@ -334,7 +334,7 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
       </div>
       {total !== undefined && total > 0 && (
         <div className="h-1 mt-1" style={{ background: "var(--border)" }}>
-          <div className="h-1" style={{ background: "#f59e0b", width: `${pct}%` }} />
+          <div className="h-1" style={{ background: "#dc6414", width: `${pct}%` }} />
         </div>
       )}
     </div>
@@ -356,7 +356,7 @@ function HandshakeProjectButton({
   if (!target) {
     return variant === "link" ? (
       <span className="font-mono lowercase text-[0.65rem] text-text-faint mt-3 block">
-        log agreement → (no co-members yet)
+        log agreement â†’ (no co-members yet)
       </span>
     ) : null;
   }
@@ -421,7 +421,7 @@ function ThreadTab({
                   key={m.id}
                   className="font-mono lowercase text-[0.65rem] text-text-faint italic text-center"
                 >
-                  {m.content} · {timeAgo(m.created_at)} ago
+                  {m.content} Â· {timeAgo(m.created_at)} ago
                 </p>
               );
             }
@@ -440,13 +440,13 @@ function ThreadTab({
                 <div
                   className="max-w-[72%] px-3 py-2"
                   style={{
-                    background: mine ? "rgba(245,158,11,0.12)" : "var(--card)",
-                    border: `1px solid ${mine ? "rgba(245,158,11,0.35)" : "var(--border)"}`,
+                    background: mine ? "rgba(220, 100, 20,0.12)" : "var(--card)",
+                    border: `1px solid ${mine ? "rgba(220, 100, 20,0.35)" : "var(--border)"}`,
                   }}
                 >
                   {!mine && (
                     <p className="font-mono lowercase text-[0.6rem] text-text-faint">
-                      {sender?.full_name?.toLowerCase() ?? "—"}
+                      {sender?.full_name?.toLowerCase() ?? "â€”"}
                     </p>
                   )}
                   <p className="text-text-primary text-sm whitespace-pre-wrap leading-snug">{m.content}</p>
@@ -469,7 +469,7 @@ function ThreadTab({
               send();
             }
           }}
-          placeholder="message…"
+          placeholder="messageâ€¦"
           className="flex-1 px-3 py-2 text-text-primary"
           style={{ background: "var(--card)", border: "1px solid var(--border)" }}
         />
@@ -477,7 +477,7 @@ function ThreadTab({
           onClick={send}
           disabled={busy || !text.trim()}
           className="font-mono lowercase text-[0.7rem] px-4 py-2 hover:opacity-90 disabled:opacity-50"
-          style={{ background: "#f59e0b", color: "#000" }}
+          style={{ background: "#dc6414", color: "#000" }}
         >
           send
         </button>
@@ -540,13 +540,13 @@ function DocsTab({
             className="p-4 border flex items-start gap-3"
             style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
           >
-            <span className="font-mono text-lg" style={{ color: "#f59e0b" }}>
-              ▤
+            <span className="font-mono text-lg" style={{ color: "#dc6414" }}>
+              â–¤
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-text-primary text-sm lowercase">{d.title.toLowerCase()}</p>
               <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-1">
-                {adder?.full_name?.toLowerCase() ?? "someone"} · {timeAgo(d.created_at)} ago
+                {adder?.full_name?.toLowerCase() ?? "someone"} Â· {timeAgo(d.created_at)} ago
               </p>
               {d.description && (
                 <p className="text-text-secondary text-xs mt-2 leading-relaxed whitespace-pre-wrap">
@@ -590,9 +590,9 @@ function DocsTab({
               onClick={submit}
               disabled={busy || !title.trim()}
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "#f59e0b", color: "#000" }}
+              style={{ background: "#dc6414", color: "#000" }}
             >
-              add →
+              add â†’
             </button>
           </div>
         </div>
@@ -735,8 +735,8 @@ function DecisionsTab({
               <span
                 className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
                 style={{
-                  border: `1px solid ${d.status === "decided" ? "#22c55e" : "#f59e0b"}`,
-                  color: d.status === "decided" ? "#22c55e" : "#f59e0b",
+                  border: `1px solid ${d.status === "decided" ? "#22c55e" : "#dc6414"}`,
+                  color: d.status === "decided" ? "#22c55e" : "#dc6414",
                 }}
               >
                 {d.status}
@@ -749,9 +749,9 @@ function DecisionsTab({
             )}
             {d.status === "decided" && d.winning_option ? (
               <p className="font-mono lowercase text-xs mt-2">
-                <span style={{ color: "#22c55e" }}>→ {d.winning_option}</span>{" "}
+                <span style={{ color: "#22c55e" }}>â†’ {d.winning_option}</span>{" "}
                 <span className="text-text-faint">
-                  · {totalVoted === totalMembers ? "unanimous" : `${tally[d.winning_option] ?? 0}/${totalMembers} voted`}
+                  Â· {totalVoted === totalMembers ? "unanimous" : `${tally[d.winning_option] ?? 0}/${totalMembers} voted`}
                 </span>
               </p>
             ) : (
@@ -765,12 +765,12 @@ function DecisionsTab({
                       onClick={() => vote(d, label)}
                       className="font-mono lowercase text-[0.65rem] px-3 py-1"
                       style={{
-                        border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
-                        color: active ? "#f59e0b" : "var(--text-muted)",
-                        background: active ? "rgba(245,158,11,0.08)" : "transparent",
+                        border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
+                        color: active ? "#dc6414" : "var(--text-muted)",
+                        background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
                       }}
                     >
-                      {label.toLowerCase()} {tally[label] ? `· ${tally[label]}` : ""}
+                      {label.toLowerCase()} {tally[label] ? `Â· ${tally[label]}` : ""}
                     </button>
                   );
                 })}
@@ -820,9 +820,9 @@ function DecisionsTab({
               onClick={submit}
               disabled={busy || !title.trim()}
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "#f59e0b", color: "#000" }}
+              style={{ background: "#dc6414", color: "#000" }}
             >
-              open decision →
+              open decision â†’
             </button>
           </div>
         </div>
@@ -876,7 +876,7 @@ function ActivityWidget({
         <ul className="space-y-2">
           {recent.map((e, i) => (
             <li key={i} className="font-mono lowercase text-[0.65rem] text-text-muted leading-snug">
-              {e.text} · <span className="text-text-faint">{timeAgo(e.ts)} ago</span>
+              {e.text} Â· <span className="text-text-faint">{timeAgo(e.ts)} ago</span>
             </li>
           ))}
         </ul>

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 import { ROOM_TYPE_COLOR, TAG_COLOR } from "@/lib/stage";
 import FoundersInRoomCount from "@/components/pulse/FoundersInRoomCount";
 import InTheRoomGrid from "@/components/pulse/InTheRoomGrid";
@@ -31,7 +31,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
   }
   const top3 = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
 
-  // Recent activity for the ticker (last 10 minutes — posts + replies).
+  // Recent activity for the ticker (last 10 minutes â€” posts + replies).
   const { data: recentPosts } = await supabase
     .from("posts")
     .select("room_type, tag, author_id, created_at")
@@ -96,7 +96,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
 
   const cardBase: React.CSSProperties = {
     background: "var(--bg2, var(--card-elev))",
-    borderColor: "rgba(245, 158, 11, 0.18)",
+    borderColor: "rgba(220, 100, 20, 0.18)",
   };
 
   const topTag = top3[0];
@@ -104,12 +104,12 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
   const thirdTag = top3[2];
 
   function tagColor(t: string) {
-    return ROOM_TYPE_COLOR[t] ?? TAG_COLOR[t] ?? "#f59e0b";
+    return ROOM_TYPE_COLOR[t] ?? TAG_COLOR[t] ?? "#dc6414";
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {/* Card 1 — founders in the room */}
+      {/* Card 1 â€” founders in the room */}
       <div className="p-4 border pulse-card-amber-glow" style={cardBase}>
         <FoundersInRoomCount />
         <p className="font-mono lowercase text-[0.65rem] text-text-faint mt-2 tracking-wider">
@@ -117,7 +117,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
         </p>
       </div>
 
-      {/* Card 2 — this week's conversation */}
+      {/* Card 2 â€” this week's conversation */}
       <div className="p-4 border" style={cardBase}>
         <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
           this week the room is talking about
@@ -160,7 +160,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
         )}
       </div>
 
-      {/* Card 3 — activity ticker */}
+      {/* Card 3 â€” activity ticker */}
       <div className="p-4 border" style={cardBase}>
         <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
           live activity
@@ -168,7 +168,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
         <ActivityTicker initialEvents={initialEvents} />
       </div>
 
-      {/* Card 4 — who's here */}
+      {/* Card 4 â€” who's here */}
       <div className="p-4 border" style={cardBase}>
         <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
           in the room

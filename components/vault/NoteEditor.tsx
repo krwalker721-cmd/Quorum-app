@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -151,12 +151,12 @@ export default function NoteEditor({
             onClick={() => toggleTag(t)}
             className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
             style={{
-              border: "1px solid rgba(245,158,11,0.4)",
-              color: "#f59e0b",
-              background: "rgba(245,158,11,0.06)",
+              border: "1px solid rgba(220, 100, 20,0.4)",
+              color: "#dc6414",
+              background: "rgba(220, 100, 20,0.06)",
             }}
           >
-            {t} ×
+            {t} Ã—
           </button>
         ))}
         <div className="relative">
@@ -278,7 +278,7 @@ function BlockRow({
   if (block.type === "bullet") {
     return Wrap(
       <div className="flex gap-2">
-        <span className="text-amber pt-0.5">•</span>
+        <span className="text-amber pt-0.5">â€¢</span>
         <Auto
           value={text}
           onChange={onChange}
@@ -305,12 +305,12 @@ function BlockRow({
   }
   if (block.type === "quote") {
     return Wrap(
-      <div className="pl-3 italic" style={{ borderLeft: "3px solid #f59e0b" }}>
+      <div className="pl-3 italic" style={{ borderLeft: "3px solid #dc6414" }}>
         <Auto
           value={text}
           onChange={onChange}
           onKeyDown={handleKey}
-          placeholder="a quote worth keeping…"
+          placeholder="a quote worth keepingâ€¦"
           className={`${sharedClass} text-text-secondary italic`}
         />
       </div>,
@@ -323,7 +323,7 @@ function BlockRow({
           value={text}
           onChange={onChange}
           onKeyDown={handleKey}
-          placeholder="code or framework…"
+          placeholder="code or frameworkâ€¦"
           className={`${sharedClass} font-mono text-[0.85rem] text-text-secondary`}
         />
       </div>,
@@ -334,7 +334,7 @@ function BlockRow({
       value={text}
       onChange={onChange}
       onKeyDown={handleKey}
-      placeholder="write…   ( / for block types )"
+      placeholder="writeâ€¦   ( / for block types )"
       className={`${sharedClass} text-text-secondary leading-relaxed`}
     />,
   );
@@ -416,7 +416,7 @@ function DragHandle({ onUp, onDown }: { onUp: () => void; onDown: () => void }) 
         className="text-text-faint hover:text-text-primary leading-none text-[10px]"
         aria-label="move up"
       >
-        ▲
+        â–²
       </button>
       <button
         type="button"
@@ -424,7 +424,7 @@ function DragHandle({ onUp, onDown }: { onUp: () => void; onDown: () => void }) 
         className="text-text-faint hover:text-text-primary leading-none text-[10px]"
         aria-label="move down"
       >
-        ▼
+        â–¼
       </button>
     </div>
   );

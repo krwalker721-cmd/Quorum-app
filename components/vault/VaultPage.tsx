@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -79,7 +79,7 @@ export default function VaultPage({
   const [liveStats, setLiveStats] = useState(stats);
   const [livePulseRecent, setLivePulseRecent] = useState(pulseRecent);
 
-  // sync tab → URL
+  // sync tab â†’ URL
   useEffect(() => {
     const params = new URLSearchParams(Array.from(sp?.entries() ?? []));
     if (tab === "library") params.delete("tab");
@@ -89,7 +89,7 @@ export default function VaultPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  // Live stat updates via realtime — every relevant insert nudges the count.
+  // Live stat updates via realtime â€” every relevant insert nudges the count.
   useEffect(() => {
     const supabase = createClient();
     const ch = supabase
@@ -176,7 +176,7 @@ function Tabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
             className="font-mono lowercase text-[0.72rem] px-3 py-2 transition-colors"
             style={{
               color: active ? "var(--text-primary)" : "var(--text-faint)",
-              borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
+              borderBottom: active ? "2px solid #dc6414" : "2px solid transparent",
             }}
           >
             {t.label}
