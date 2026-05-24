@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,6 +8,7 @@ import CohortPanel from "@/components/CohortPanel";
 
 const VIEWED_KEY = "last_summary_viewed_week";
 const DISMISS_KEY_PREFIX = "dismissed_weekly_summary:";
+const COLLAPSED_KEY = "quorum-sidebar-collapsed";
 
 function currentWeekKey() {
   const now = new Date();
@@ -18,8 +19,6 @@ function currentWeekKey() {
 }
 
 function computeHomeDot(): boolean {
-  // Show after Sunday 8pm local through Tuesday end-of-day, as long as the
-  // current week's summary hasn't been viewed or dismissed.
   const now = new Date();
   const day = now.getDay();
   const hour = now.getHours();
@@ -45,6 +44,9 @@ const NAV = [
   { href: "/referrals", label: "referrals" },
 ];
 
+const EXPANDED_W = 188;
+const COLLAPSED_W = 48;
+
 export default function Sidebar({
   cohort,
   currentUserId,
@@ -54,6 +56,26 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const [showHomeDot, setShowHomeDot] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Hydrate collapsed state from localStorage.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(COLLAPSED_KEY);
+      if (stored === "1") setCollapsed(true);
+    } catch {}
+    setMounted(true);
+  }, []);
+
+  // Sync width into a CSS variable so the main content reflows.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.style.setProperty(
+      "--sidebar-w",
+      `${collapsed ? COLLAPSED_W : EXPANDED_W}px`
+    );
+  }, [collapsed]);
 
   useEffect(() => {
     const refresh = () => setShowHomeDot(computeHomeDot());
@@ -69,44 +91,111 @@ export default function Sidebar({
     };
   }, [pathname]);
 
+  function toggle() {
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
+      } catch {}
+      return next;
+    });
+  }
+
+  const width = collapsed ? COLLAPSED_W : EXPANDED_W;
+
   return (
     <aside
-      className="flex flex-col fixed left-0 top-0 h-screen border-r"
+      className="flex flex-col fixed left-0 top-0 h-screen"
       style={{
-        width: 192,
-        background: "rgba(3, 2, 1, 0.95)",
-        borderRight: "0.5px solid rgba(232, 112, 42, 0.1)",
+        width,
+        background:
+          "linear-gradient(160deg, rgba(232,112,42,0.1) 0%, rgba(3,2,1,0.97) 35%)",
+        borderRight: "0.5px solid rgba(232,112,42,0.15)",
+        transition: "width 0.25s ease",
+        overflow: "hidden",
       }}
     >
-      <div className="flex items-center gap-2 px-4 py-5">
+      {/* Logo area */}
+      <div
+        className="flex items-center px-3 py-5"
+        style={{
+          gap: 8,
+          justifyContent: collapsed ? "center" : "flex-start",
+          borderBottom: "0.5px solid rgba(232,112,42,0.08)",
+        }}
+      >
         <LogoMark size={22} />
-        <span className="font-sans tracking-tight text-text-primary text-base lowercase">quorum</span>
+        <span
+          className="font-sans tracking-tight lowercase sidebar-fade"
+          style={{
+            color: "#ffffff",
+            fontSize: 14,
+            fontWeight: 700,
+            letterSpacing: "-0.5px",
+            opacity: collapsed ? 0 : 1,
+            pointerEvents: collapsed ? "none" : "auto",
+            whiteSpace: "nowrap",
+          }}
+        >
+          quorum
+        </span>
       </div>
 
-      <nav className="px-2 pt-2 flex-1 overflow-y-auto scroll-thin">
+      {/* Nav */}
+      <nav
+        className="pt-2 flex-1 overflow-y-auto scroll-thin"
+        style={{ paddingLeft: collapsed ? 0 : 8, paddingRight: collapsed ? 0 : 8 }}
+      >
         {NAV.map((item) => {
-          const active = pathname === item.href || (item.href !== "/home" && pathname.startsWith(item.href));
+          const active =
+            pathname === item.href || (item.href !== "/home" && pathname.startsWith(item.href));
+          const firstLetter = item.label.charAt(0);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="block font-mono lowercase text-xs px-3 py-2 mb-0.5 transition-colors"
+              title={collapsed ? item.label : undefined}
+              className="block font-mono lowercase transition-colors"
               style={{
-                color: active ? "#ffffff" : "#1a0e04",
-                background: active ? "rgba(232, 112, 42, 0.05)" : "transparent",
+                fontSize: collapsed ? 11 : 10,
+                letterSpacing: "0.03em",
+                color: active ? "#ffffff" : "#3a2010",
+                background: active ? "rgba(232,112,42,0.05)" : "transparent",
                 borderRight: active ? "2px solid #e8702a" : "2px solid transparent",
+                padding: collapsed ? "10px 0" : "8px 12px",
+                marginBottom: 2,
+                textAlign: collapsed ? "center" : "left",
               }}
             >
-              {item.label}
-              {item.href === "/home" && showHomeDot && (
-                <span className="nav-unseen-dot" aria-label="weekly summary available" />
+              {collapsed ? (
+                firstLetter
+              ) : (
+                <>
+                  {item.label}
+                  {item.href === "/home" && showHomeDot && (
+                    <span className="nav-unseen-dot" aria-label="weekly summary available" />
+                  )}
+                </>
               )}
             </Link>
           );
         })}
+
+        {/* Collapse toggle */}
+        <div className="flex justify-center mt-3 mb-2" style={{ paddingInline: collapsed ? 0 : 8 }}>
+          <button
+            type="button"
+            onClick={toggle}
+            className="sidebar-toggle"
+            aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
+            title={collapsed ? "expand" : "collapse"}
+          >
+            {mounted ? (collapsed ? "→" : "←") : "←"}
+          </button>
+        </div>
       </nav>
 
-      <CohortPanel members={cohort} currentUserId={currentUserId} />
+      <CohortPanel members={cohort} currentUserId={currentUserId} collapsed={collapsed} />
     </aside>
   );
 }

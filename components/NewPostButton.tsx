@@ -61,10 +61,7 @@ export default function NewPostButton({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="font-mono lowercase text-[0.7rem] px-3 py-1.5 bg-amber text-black hover:opacity-90 transition-opacity"
-      >
+      <button onClick={() => setOpen(true)} className="btn-primary">
         {isPulse ? "+ post to pulse" : "+ post"}
       </button>
 
@@ -246,7 +243,7 @@ export default function NewPostButton({
               <button
                 onClick={submit}
                 disabled={busy || !content.trim()}
-                className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="btn-primary"
               >
                 {busy ? "..." : isPulse ? "post to the room â†’" : "post â†’"}
               </button>
