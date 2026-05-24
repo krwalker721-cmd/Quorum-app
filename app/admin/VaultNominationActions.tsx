@@ -32,7 +32,7 @@ export default function VaultNominationActions({ id }: { id: string }) {
         disabled={pending}
         onClick={() => act("approve")}
         className="font-mono lowercase text-xs px-3 py-1.5 disabled:opacity-50"
-        style={{ background: "#dc6414", color: "#000" }}
+        style={{ background: "#e8702a", color: "#000" }}
       >
         approve
       </button>

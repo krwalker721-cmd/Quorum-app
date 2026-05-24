@@ -9,9 +9,9 @@ type RoomType = "question" | "update" | "decision" | "win" | "blocker";
 const TYPES: { value: RoomType; color: string; desc: string }[] = [
   { value: "question", color: "#38bdf8", desc: "needs input from the room" },
   { value: "update", color: "#707070", desc: "here's where i'm at" },
-  { value: "decision", color: "#dc6414", desc: "deciding something, thoughts welcome" },
+  { value: "decision", color: "#e8702a", desc: "deciding something, thoughts welcome" },
   { value: "win", color: "#22c55e", desc: "something worked" },
-  { value: "blocker", color: "#dc6414", desc: "stuck on something specific" },
+  { value: "blocker", color: "#e8702a", desc: "stuck on something specific" },
 ];
 
 export default function RoomPostModal({
@@ -126,7 +126,7 @@ export default function RoomPostModal({
               width: 34,
               height: 18,
               borderRadius: 9999,
-              background: anon ? "#dc6414" : "var(--border)",
+              background: anon ? "#e8702a" : "var(--border)",
               transition: "background 150ms ease",
             }}
           >

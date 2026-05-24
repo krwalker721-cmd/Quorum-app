@@ -25,8 +25,8 @@ export default function CohortNav() {
             href={i.href}
             className="font-mono lowercase text-[0.7rem] px-3 py-1.5 transition-colors"
             style={{
-              color: active ? "#dc6414" : "var(--text-muted)",
-              borderBottom: active ? "2px solid #dc6414" : "2px solid transparent",
+              color: active ? "#e8702a" : "var(--text-muted)",
+              borderBottom: active ? "2px solid #e8702a" : "2px solid transparent",
             }}
           >
             {i.label}

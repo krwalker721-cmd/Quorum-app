@@ -62,7 +62,7 @@ export default function ActivityHeatmap({
                 key={`${day}-${si}`}
                 title={`${grid[di][si]} post${grid[di][si] === 1 ? "" : "s"}`}
                 style={{
-                  background: `rgba(220, 100, 20,${0.05 + v * 0.75})`,
+                  background: `rgba(232, 112, 42,${0.05 + v * 0.75})`,
                   aspectRatio: "1.4 / 1",
                   minHeight: 10,
                   border: "1px solid var(--border)",

@@ -128,7 +128,7 @@ export default function FeedbackPrompt() {
                 onClick={() => submit()}
                 disabled={busy || !response.trim()}
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                style={{ background: "#dc6414", color: "#000" }}
+                style={{ background: "#e8702a", color: "#000" }}
               >
                 {busy ? "sendingâ€¦" : "send â†’"}
               </button>

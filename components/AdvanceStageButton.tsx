@@ -71,8 +71,8 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
         onClick={() => setOpen(true)}
         className="font-mono lowercase text-[0.7rem] px-2.5 py-1 transition-colors"
         style={{
-          border: "1px solid rgba(220, 100, 20,0.4)",
-          color: "#dc6414",
+          border: "1px solid rgba(232, 112, 42,0.4)",
+          color: "#e8702a",
           background: "transparent",
         }}
       >

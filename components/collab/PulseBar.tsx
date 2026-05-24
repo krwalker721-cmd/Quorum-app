@@ -221,7 +221,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
       style={{
         height: 36,
         background: "var(--card-elev)",
-        borderLeft: "2px solid #dc6414",
+        borderLeft: "2px solid #e8702a",
         borderBottom: "1px solid var(--border)",
       }}
       aria-live="polite"
@@ -232,7 +232,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
         style={{
           width: 6,
           height: 6,
-          background: "#dc6414",
+          background: "#e8702a",
           animation: "pulseDot 2s ease-in-out infinite",
         }}
       />
@@ -247,7 +247,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
       >
         {current && !stale ? (
           <>
-            <span style={{ color: "#dc6414" }}>{current.username}</span>{" "}
+            <span style={{ color: "#e8702a" }}>{current.username}</span>{" "}
             {current.text}
             {current.projectName ? (
               <>

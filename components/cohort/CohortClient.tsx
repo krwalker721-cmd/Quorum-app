@@ -141,8 +141,8 @@ export default function CohortClient({
                 onClick={() => setSelectedId(m.id)}
                 className="w-full flex items-center gap-2 px-2 py-2 text-left transition-colors"
                 style={{
-                  background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
-                  borderRight: active ? "2px solid #dc6414" : "2px solid transparent",
+                  background: active ? "rgba(232, 112, 42,0.06)" : "transparent",
+                  borderRight: active ? "2px solid #e8702a" : "2px solid transparent",
                 }}
               >
                 <div className="relative">
@@ -193,7 +193,7 @@ export default function CohortClient({
                 </button>
                 <button
                   className="font-mono lowercase text-[0.65rem] px-2.5 py-1.5"
-                  style={{ background: "#dc6414", color: "#000" }}
+                  style={{ background: "#e8702a", color: "#000" }}
                 >
                   + handshake
                 </button>
@@ -214,8 +214,8 @@ export default function CohortClient({
                       <div
                         className="px-3 py-2"
                         style={{
-                          background: mine ? "rgba(220, 100, 20,0.12)" : "var(--card-elev)",
-                          border: `1px solid ${mine ? "rgba(220, 100, 20,0.35)" : "var(--border)"}`,
+                          background: mine ? "rgba(232, 112, 42,0.12)" : "var(--card-elev)",
+                          border: `1px solid ${mine ? "rgba(232, 112, 42,0.35)" : "var(--border)"}`,
                           color: "var(--text-primary)",
                         }}
                       >

@@ -22,7 +22,7 @@ function showVaultToast() {
   el.style.cssText = [
     "background:var(--card-elev)",
     "border:1px solid var(--border)",
-    "border-left:2px solid #dc6414",
+    "border-left:2px solid #e8702a",
     "color:var(--text-muted)",
     "padding:10px 14px",
     "font-family:var(--font-jetbrains-mono),ui-monospace,monospace",
@@ -104,7 +104,7 @@ export default function BookmarkButton({
     }
   }
 
-  const color = saved ? "#dc6414" : "#707070";
+  const color = saved ? "#e8702a" : "#707070";
   const base =
     variant === "card-corner"
       ? "absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1"
@@ -119,16 +119,16 @@ export default function BookmarkButton({
       style={{
         color,
         filter: saved
-          ? "drop-shadow(0 0 4px rgba(220, 100, 20,0.6))"
+          ? "drop-shadow(0 0 4px rgba(232, 112, 42,0.6))"
           : undefined,
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLButtonElement).style.filter =
-          "drop-shadow(0 0 6px rgba(220, 100, 20,0.55))";
+          "drop-shadow(0 0 6px rgba(232, 112, 42,0.55))";
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLButtonElement).style.filter = saved
-          ? "drop-shadow(0 0 4px rgba(220, 100, 20,0.6))"
+          ? "drop-shadow(0 0 4px rgba(232, 112, 42,0.6))"
           : "";
       }}
     >

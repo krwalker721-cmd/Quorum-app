@@ -2,7 +2,7 @@
 
 export const STAGE_COLOR: Record<string, string> = {
   idea: "#38bdf8",
-  "pre-seed": "#dc6414",
+  "pre-seed": "#e8702a",
   seed: "#22c55e",
   series_a: "#a78bfa",
 };
@@ -12,9 +12,9 @@ export const STAGE_COLOR: Record<string, string> = {
 export const ROOM_TYPE_COLOR: Record<string, string> = {
   question: "#38bdf8",
   update: "#707070",
-  decision: "#dc6414",
+  decision: "#e8702a",
   win: "#22c55e",
-  blocker: "#dc6414",
+  blocker: "#e8702a",
 };
 
 export const ROOM_TYPE_LABEL: Record<string, string> = {
@@ -26,13 +26,13 @@ export const ROOM_TYPE_LABEL: Record<string, string> = {
 };
 
 export const TAG_COLOR: Record<string, string> = {
-  decision: "#dc6414",
+  decision: "#e8702a",
   mindset: "#a78bfa",
   hiring: "#38bdf8",
-  real_talk: "#dc6414",
-  growth: "#dc6414",
+  real_talk: "#e8702a",
+  growth: "#e8702a",
   ops: "#707070",
-  fundraising: "#dc6414",
+  fundraising: "#e8702a",
   "co-founder": "#22c55e",
 };
 

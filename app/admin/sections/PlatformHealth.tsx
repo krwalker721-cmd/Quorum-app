@@ -89,7 +89,7 @@ export default function PlatformHealthSection() {
               <XAxis dataKey="tag" stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} />
               <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={{ background: "#0c0c0c", border: "1px solid #2e2e2e", fontSize: 10, fontFamily: "monospace" }} />
-              <Bar dataKey="count" fill="#dc6414" />
+              <Bar dataKey="count" fill="#e8702a" />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -112,7 +112,7 @@ function Cell({ value, prev }: { value: number; prev?: number }) {
   if (prev !== undefined) {
     if (value > prev) color = "#22c55e";
     else if (value < prev) color = "#ef4444";
-    else color = "#dc6414";
+    else color = "#e8702a";
   }
   return (
     <td className="px-3 py-2 font-mono text-[0.78rem]" style={{ color }}>

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (profile?.status === "suspended") redirect("/suspended");
   if (WAITLIST_ENABLED && profile?.status !== "approved") redirect("/pending");
 
-  // Maintenance mode check (skips for admin section — admin uses its own route).
+  // Maintenance mode check (skips for admin section â€” admin uses its own route).
   try {
     const admin = createAdminClient();
     const { data: maint } = await admin
@@ -63,8 +63,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         style={{
           backgroundColor: "#060504",
           backgroundImage:
-            "radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.28) 0%, rgba(220,100,20,0.08) 35%, transparent 65%), radial-gradient(ellipse at 100% 100%, rgba(220,100,20,0.04) 0%, transparent 40%), linear-gradient(rgba(220,100,20,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(220,100,20,0.028) 1px, transparent 1px)",
-          backgroundSize: "auto, auto, 28px 28px, 28px 28px",
+            "radial-gradient(ellipse at 15% 15%, rgba(232, 112, 42, 0.12) 0%, transparent 55%), linear-gradient(rgba(232, 112, 42, 0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.018) 1px, transparent 1px)",
+          backgroundSize: "auto, 28px 28px, 28px 28px",
           backgroundAttachment: "fixed",
         }}
       >

@@ -119,7 +119,7 @@ export default function NewPostButton({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                   {ROOM_TYPES.map((t) => {
                     const active = roomType === t;
-                    const color = ROOM_TYPE_COLOR[t] ?? "#dc6414";
+                    const color = ROOM_TYPE_COLOR[t] ?? "#e8702a";
                     return (
                       <button
                         key={t}
@@ -163,9 +163,9 @@ export default function NewPostButton({
                         onClick={() => setTag(t)}
                         className="font-mono lowercase text-[0.65rem] px-2 py-1 transition-colors"
                         style={{
-                          border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
-                          color: active ? "#dc6414" : "var(--text-muted)",
-                          background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
+                          border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
+                          color: active ? "#e8702a" : "var(--text-muted)",
+                          background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
                         }}
                       >
                         {t}
@@ -190,9 +190,9 @@ export default function NewPostButton({
                         onClick={() => setPostType(d)}
                         className="font-mono lowercase text-[0.7rem] px-3 py-1.5 flex-1 transition-colors"
                         style={{
-                          border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
-                          color: active ? "#dc6414" : "var(--text-muted)",
-                          background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
+                          border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
+                          color: active ? "#e8702a" : "var(--text-muted)",
+                          background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
                         }}
                       >
                         {d === "cohort" ? "cohort_feed" : "pulse"}
@@ -213,7 +213,7 @@ export default function NewPostButton({
                   width: 34,
                   height: 18,
                   borderRadius: 9999,
-                  background: anon ? "#dc6414" : "var(--border)",
+                  background: anon ? "#e8702a" : "var(--border)",
                   transition: "background 150ms ease",
                 }}
               >

@@ -102,7 +102,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
       style={{
         background: "var(--card-elev)",
         borderRadius: 8,
-        borderLeft: "3px solid #dc6414",
+        borderLeft: "3px solid #e8702a",
         padding: "20px 24px",
         boxShadow: "0 0 32px var(--glow-soft), 0 0 64px var(--glow-soft)",
       }}
@@ -187,7 +187,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
                 >
                   <div
                     className="font-mono uppercase tracking-wider"
-                    style={{ fontSize: 9, color: "#dc6414", marginBottom: 4 }}
+                    style={{ fontSize: 9, color: "#e8702a", marginBottom: 4 }}
                   >
                     {h.label}
                   </div>

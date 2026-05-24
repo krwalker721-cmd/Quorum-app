@@ -42,8 +42,8 @@ export default function ContentSection({
               tab === t ? "text-text-primary" : "text-text-muted"
             }`}
             style={{
-              borderColor: tab === t ? "#dc6414" : "var(--border)",
-              background: tab === t ? "rgba(220, 100, 20,0.06)" : "transparent",
+              borderColor: tab === t ? "#e8702a" : "var(--border)",
+              background: tab === t ? "rgba(232, 112, 42,0.06)" : "transparent",
             }}
           >
             {t}

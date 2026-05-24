@@ -111,7 +111,7 @@ export default function CheckinModal({
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: i <= step ? "#dc6414" : "var(--border)",
+                  background: i <= step ? "#e8702a" : "var(--border)",
                   transition: "background 150ms",
                 }}
               />
@@ -179,7 +179,7 @@ export default function CheckinModal({
                       width: 34,
                       height: 18,
                       borderRadius: 9999,
-                      background: anon ? "#dc6414" : "var(--border)",
+                      background: anon ? "#e8702a" : "var(--border)",
                     }}
                   >
                     <span
@@ -214,9 +214,9 @@ export default function CheckinModal({
                         onClick={() => setRating(r)}
                         className="font-mono lowercase text-xs py-3 transition-colors"
                         style={{
-                          border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
-                          color: active ? "#dc6414" : "var(--text-muted)",
-                          background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
+                          border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
+                          color: active ? "#e8702a" : "var(--text-muted)",
+                          background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
                         }}
                       >
                         {r}

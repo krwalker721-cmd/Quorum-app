@@ -105,8 +105,8 @@ export default function UsersSection() {
               filter === f ? "text-text-primary" : "text-text-muted"
             }`}
             style={{
-              borderColor: filter === f ? "#dc6414" : "var(--border)",
-              background: filter === f ? "rgba(220, 100, 20,0.08)" : "transparent",
+              borderColor: filter === f ? "#e8702a" : "var(--border)",
+              background: filter === f ? "rgba(232, 112, 42,0.08)" : "transparent",
             }}
           >
             {f}
@@ -117,7 +117,7 @@ export default function UsersSection() {
       {selected.size > 0 && (
         <div
           className="flex items-center gap-2 mb-3 p-2 border"
-          style={{ borderColor: "rgba(220, 100, 20,0.4)", background: "rgba(220, 100, 20,0.06)" }}
+          style={{ borderColor: "rgba(232, 112, 42,0.4)", background: "rgba(232, 112, 42,0.06)" }}
         >
           <span className="font-mono text-[0.65rem] lowercase text-text-muted">
             {selected.size} selected
@@ -285,7 +285,7 @@ export default function UsersSection() {
 
 function StatusPill({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    pending: "#dc6414",
+    pending: "#e8702a",
     approved: "#22c55e",
     suspended: "#ef4444",
   };

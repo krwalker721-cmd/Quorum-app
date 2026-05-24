@@ -82,7 +82,7 @@ export default function OverviewSection() {
               <XAxis dataKey="date" stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} />
               <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="count" stroke="#dc6414" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="count" stroke="#e8702a" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -94,7 +94,7 @@ export default function OverviewSection() {
               <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 10, fontFamily: "monospace" }} />
-              <Line type="monotone" dataKey="posts" stroke="#dc6414" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="posts" stroke="#e8702a" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="checkins" stroke="#22c55e" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -144,14 +144,14 @@ function Metric({ label, value, amber }: { label: string; value: number; amber?:
     <div
       className="border p-3"
       style={{
-        borderColor: amber ? "rgba(220, 100, 20,0.4)" : "var(--border)",
+        borderColor: amber ? "rgba(232, 112, 42,0.4)" : "var(--border)",
         background: "var(--card)",
       }}
     >
       <p className="font-mono lowercase text-[0.6rem] text-text-faint">{label}</p>
       <p
         className="font-mono text-2xl mt-1"
-        style={{ color: amber ? "#dc6414" : "var(--text-primary)" }}
+        style={{ color: amber ? "#e8702a" : "var(--text-primary)" }}
       >
         {value}
       </p>
@@ -193,7 +193,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function EventPill({ type }: { type: string }) {
   const colors: Record<string, string> = {
     signup: "#22c55e",
-    post: "#dc6414",
+    post: "#e8702a",
     nomination: "#a78bfa",
     handshake: "#38bdf8",
   };

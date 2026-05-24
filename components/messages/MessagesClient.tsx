@@ -201,8 +201,8 @@ export default function MessagesClient({
                 onClick={() => setSelectedId(c.partner.id)}
                 className="w-full flex items-start gap-3 px-3 py-3 text-left transition-colors border-b"
                 style={{
-                  background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
-                  borderRight: active ? "2px solid #dc6414" : "2px solid transparent",
+                  background: active ? "rgba(232, 112, 42,0.06)" : "transparent",
+                  borderRight: active ? "2px solid #e8702a" : "2px solid transparent",
                   borderColor: "var(--border)",
                 }}
               >
@@ -227,7 +227,7 @@ export default function MessagesClient({
                     {c.unread && (
                       <span
                         className="ml-auto w-2 h-2 rounded-full"
-                        style={{ background: "#dc6414" }}
+                        style={{ background: "#e8702a" }}
                       />
                     )}
                   </div>
@@ -290,10 +290,10 @@ export default function MessagesClient({
                         className="px-3 py-2"
                         style={{
                           background: mine
-                            ? "rgba(220, 100, 20,0.12)"
+                            ? "rgba(232, 112, 42,0.12)"
                             : "var(--card-elev)",
                           border: `1px solid ${
-                            mine ? "rgba(220, 100, 20,0.35)" : "var(--border)"
+                            mine ? "rgba(232, 112, 42,0.35)" : "var(--border)"
                           }`,
                           color: "var(--text-primary)",
                         }}

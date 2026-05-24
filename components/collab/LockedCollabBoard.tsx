@@ -33,7 +33,7 @@
       >
         <div
           className="max-w-md w-full text-center p-8 border"
-          style={{ background: "var(--card-elev)", borderColor: "rgba(220, 100, 20,0.4)" }}
+          style={{ background: "var(--card-elev)", borderColor: "rgba(232, 112, 42,0.4)" }}
         >
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">tier_2 exclusive</p>
           <h2 className="font-sans text-2xl text-text-primary mt-2 lowercase">collab_board</h2>
@@ -45,7 +45,7 @@
           </p>
           <button
             className="font-mono lowercase text-xs px-4 py-2 mt-4 hover:opacity-90"
-            style={{ background: "#dc6414", color: "#000" }}
+            style={{ background: "#e8702a", color: "#000" }}
             disabled
           >
             upgrade â†’

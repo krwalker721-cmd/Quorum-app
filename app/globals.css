@@ -5,25 +5,50 @@
 :root,
 [data-theme="dark"] {
   --bg: #060504;
+  --bg-base: #060504;
   --bg-0: #030201;
-  --card: rgba(10, 7, 4, 0.85);
-  --card-elev: rgba(14, 10, 6, 0.9);
-  --border: rgba(220, 100, 20, 0.12);
-  --border-subtle: rgba(220, 100, 20, 0.08);
-  --border-hover: rgba(220, 100, 20, 0.25);
-  --border-amber: rgba(220, 100, 20, 0.2);
+  --bg-sidebar: rgba(3, 2, 1, 0.95);
+  --bg-card: rgba(10, 7, 4, 0.80);
+  --bg-widget: rgba(8, 5, 3, 0.80);
+  --bg-topbar: rgba(3, 2, 1, 0.60);
+  --bg-strip: rgba(3, 2, 1, 0.40);
+  --card: rgba(10, 7, 4, 0.80);
+  --card-elev: rgba(8, 5, 3, 0.80);
+  --border: rgba(232, 112, 42, 0.12);
+  --border-default: rgba(232, 112, 42, 0.12);
+  --border-subtle: rgba(232, 112, 42, 0.08);
+  --border-hover: rgba(232, 112, 42, 0.25);
+  --border-amber: rgba(232, 112, 42, 0.18);
   --text-primary: #ffffff;
-  --text-secondary: #d0b090;
-  --text-muted: #4a3020;
-  --text-faint: #2a1808;
-  --grid-line: rgba(220, 100, 20, 0.028);
-  --glow: rgba(220, 100, 20, 0.28);
-  --glow-soft: rgba(220, 100, 20, 0.08);
-  --accent: #dc6414;
-  --accent-dim: #6a2a08;
-  --accent-bg: rgba(220, 100, 20, 0.08);
-  --accent-border: rgba(220, 100, 20, 0.2);
-  --accent-glow: rgba(220, 100, 20, 0.35);
+  --text-secondary: #d0a070;
+  --text-muted: #a08060;
+  --text-faint: #3a2010;
+  --t1: #ffffff;
+  --t2: #d0a070;
+  --t3: #a08060;
+  --t4: #3a2010;
+  --t5: #1a0e04;
+  --grid-line: rgba(232, 112, 42, 0.018);
+  --glow: rgba(232, 112, 42, 0.12);
+  --glow-soft: rgba(232, 112, 42, 0.04);
+  --accent: #e8702a;
+  --ac: #e8702a;
+  --ac-dim: #3a1808;
+  --ac-bg: rgba(232, 112, 42, 0.08);
+  --ac-border: rgba(232, 112, 42, 0.18);
+  --ac-hover: rgba(232, 112, 42, 0.25);
+  --ac-glow: rgba(232, 112, 42, 0.12);
+  --accent-dim: #3a1808;
+  --accent-bg: rgba(232, 112, 42, 0.08);
+  --accent-border: rgba(232, 112, 42, 0.18);
+  --accent-glow: rgba(232, 112, 42, 0.25);
+  --green: #22c55e;
+  --green-bg: rgba(34, 197, 94, 0.08);
+  --green-border: rgba(34, 197, 94, 0.18);
+  --blue: #38bdf8;
+  --blue-bg: rgba(56, 189, 248, 0.08);
+  --blue-border: rgba(56, 189, 248, 0.18);
+  --purple: #a78bfa;
 }
 
 [data-theme="light"] {
@@ -31,20 +56,20 @@
   --bg-0: #e6e0d8;
   --card: rgba(248, 244, 238, 0.9);
   --card-elev: rgba(252, 248, 242, 0.95);
-  --border: rgba(220, 100, 20, 0.12);
-  --border-subtle: rgba(220, 100, 20, 0.08);
-  --border-hover: rgba(220, 100, 20, 0.25);
+  --border: rgba(232, 112, 42, 0.12);
+  --border-subtle: rgba(232, 112, 42, 0.08);
+  --border-hover: rgba(232, 112, 42, 0.25);
   --border-amber: rgba(184, 80, 16, 0.3);
   --text-primary: #1a0e08;
   --text-secondary: #4a3020;
   --text-muted: #8a6040;
   --text-faint: #c0a080;
-  --grid-line: rgba(220, 100, 20, 0.015);
-  --glow: rgba(220, 100, 20, 0.1);
-  --glow-soft: rgba(220, 100, 20, 0.03);
+  --grid-line: rgba(232, 112, 42, 0.015);
+  --glow: rgba(232, 112, 42, 0.1);
+  --glow-soft: rgba(232, 112, 42, 0.03);
   --accent: #b85010;
   --accent-dim: #6a2a08;
-  --accent-bg: rgba(220, 100, 20, 0.08);
+  --accent-bg: rgba(232, 112, 42, 0.08);
   --accent-border: rgba(184, 80, 16, 0.3);
   --accent-glow: rgba(184, 80, 16, 0.35);
 }
@@ -57,19 +82,18 @@ html, body {
 
 body {
   background-image:
-    radial-gradient(ellipse at 0% 0%, var(--glow) 0%, var(--glow-soft) 35%, transparent 65%),
-    radial-gradient(ellipse at 100% 100%, rgba(220, 100, 20, 0.04) 0%, transparent 40%),
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: auto, auto, 28px 28px, 28px 28px;
-  background-color: var(--bg);
+    radial-gradient(ellipse at 15% 15%, rgba(232, 112, 42, 0.12) 0%, transparent 55%),
+    linear-gradient(rgba(232, 112, 42, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 112, 42, 0.018) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
+  background-color: #060504;
   background-attachment: fixed;
   font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 }
 
 input, select, textarea {
   background-color: rgba(10, 7, 4, 0.9);
-  border: 1px solid rgba(220, 100, 20, 0.15);
+  border: 1px solid rgba(232, 112, 42, 0.15);
   color: var(--text-primary);
   padding: 0.6rem 0.75rem;
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -80,10 +104,10 @@ input, select, textarea {
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: #dc6414;
+  border-color: #e8702a;
 }
 
-input::placeholder, textarea::placeholder { color: #2a1808; }
+input::placeholder, textarea::placeholder { color: #1a0e04; }
 
 label {
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -95,16 +119,16 @@ label {
   margin-bottom: 0.4rem;
 }
 
-::selection { background: rgba(220, 100, 20, 0.35); }
+::selection { background: rgba(232, 112, 42, 0.35); }
 
 /* Global thin scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a1a08 transparent;
+  scrollbar-color: #2a1408 transparent;
 }
 *::-webkit-scrollbar { width: 3px; height: 3px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: #2a1a08; border-radius: 2px; }
+*::-webkit-scrollbar-thumb { background: #2a1408; border-radius: 2px; }
 *::-webkit-scrollbar-thumb:hover { background: #3a2a10; }
 
 /* Glowing online dot */
@@ -119,7 +143,7 @@ label {
 /* "moved the room" â€” subtle border pulse */
 @keyframes moved-room-pulse {
   0%, 100% { border-color: var(--border-amber); }
-  50%      { border-color: rgba(220, 100, 20, 0.4); }
+  50%      { border-color: rgba(232, 112, 42, 0.4); }
 }
 .moved-room-pulse {
   animation: moved-room-pulse 6.5s ease-in-out infinite;
@@ -135,7 +159,7 @@ label {
     90deg,
     var(--text-primary) 0%,
     var(--text-primary) 40%,
-    rgba(220, 100, 20, 0.55) 50%,
+    rgba(232, 112, 42, 0.55) 50%,
     var(--text-primary) 60%,
     var(--text-primary) 100%
   );
@@ -149,13 +173,13 @@ label {
 
 /* Quiet notice strip */
 .quiet-notice {
-  border-left: 2px solid #dc6414;
-  background: rgba(220, 100, 20, 0.04);
+  border-left: 2px solid #e8702a;
+  background: rgba(232, 112, 42, 0.04);
 }
 
 @keyframes vault-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 100, 20, 0.0); }
-  50%      { box-shadow: 0 0 24px 4px rgba(220, 100, 20, 0.18); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 112, 42, 0.0); }
+  50%      { box-shadow: 0 0 24px 4px rgba(232, 112, 42, 0.18); }
 }
 .vault-breathe { animation: vault-breathe 5.5s ease-in-out infinite; }
 
@@ -181,15 +205,15 @@ label {
 
 /* Pulse â€” active post: burnt orange border breathe */
 @keyframes pulse-active-breathe {
-  0%, 100% { border-left-color: rgba(220, 100, 20, 0.4); }
-  50%      { border-left-color: rgba(220, 100, 20, 1.0); }
+  0%, 100% { border-left-color: rgba(232, 112, 42, 0.4); }
+  50%      { border-left-color: rgba(232, 112, 42, 1.0); }
 }
 .pulse-active-breathe {
   animation: pulse-active-breathe 3s ease-in-out infinite;
 }
 
 .pulse-card-amber-glow {
-  box-shadow: 0 0 28px 2px rgba(220, 100, 20, 0.10), inset 0 0 0 1px rgba(220, 100, 20, 0.10);
+  box-shadow: 0 0 28px 2px rgba(232, 112, 42, 0.10), inset 0 0 0 1px rgba(232, 112, 42, 0.10);
 }
 
 @keyframes pulse-ticker-fade {
@@ -203,8 +227,8 @@ label {
   50%      { opacity: 1; }
 }
 .pulse-amber-dot {
-  background: #dc6414;
-  box-shadow: 0 0 8px rgba(220, 100, 20, 0.6);
+  background: #e8702a;
+  box-shadow: 0 0 8px rgba(232, 112, 42, 0.6);
   animation: pulse-amber-dot 2.5s ease-in-out infinite;
 }
 
@@ -220,7 +244,7 @@ label {
 }
 
 .scroll-thin::-webkit-scrollbar { width: 3px; height: 3px; }
-.scroll-thin::-webkit-scrollbar-thumb { background: #2a1a08; border-radius: 2px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #2a1408; border-radius: 2px; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 
 /* Weekly summary card â€” gentle fade in on mount */
@@ -241,8 +265,8 @@ label {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: #dc6414;
-  box-shadow: 0 0 6px rgba(220, 100, 20, 0.7);
+  background: #e8702a;
+  box-shadow: 0 0 6px rgba(232, 112, 42, 0.7);
   margin-left: 6px;
   vertical-align: middle;
 }

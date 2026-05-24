@@ -62,7 +62,7 @@ export default async function MostHelpfulThisWeek() {
                   className="rounded-full"
                   style={{
                     padding: 2,
-                    background: "rgba(220, 100, 20, 0.35)",
+                    background: "rgba(232, 112, 42, 0.35)",
                   }}
                 >
                   <Avatar

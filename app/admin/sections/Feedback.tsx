@@ -75,7 +75,7 @@ export default function FeedbackSection() {
                   onClick={() => setSelected(q)}
                   className="w-full text-left border p-3"
                   style={{
-                    borderColor: selected?.id === q.id ? "#dc6414" : "var(--border)",
+                    borderColor: selected?.id === q.id ? "#e8702a" : "var(--border)",
                     background: "var(--card)",
                   }}
                 >
@@ -259,7 +259,7 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
           type="submit"
           disabled={busy || !question}
           className="w-full font-mono lowercase text-xs py-2.5 disabled:opacity-50"
-          style={{ background: "#dc6414", color: "#000" }}
+          style={{ background: "#e8702a", color: "#000" }}
         >
           {busy ? "postingâ€¦" : "post question â†’"}
         </button>
@@ -291,7 +291,7 @@ function RatingSummary({ responses }: { responses: Response[] }) {
                 style={{
                   width: `${(d.n / max) * 100}%`,
                   height: "100%",
-                  background: "#dc6414",
+                  background: "#e8702a",
                 }}
               />
             </div>

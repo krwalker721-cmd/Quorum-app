@@ -26,7 +26,7 @@ export type WorkspaceProject = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  growth: "#dc6414",
+  growth: "#e8702a",
   fundraising: "#38bdf8",
   hiring: "#707070",
   product: "#707070",
@@ -83,7 +83,7 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
         className="p-5"
         style={{
           background: "var(--card-elev)",
-          borderLeft: "3px solid #dc6414",
+          borderLeft: "3px solid #e8702a",
           borderTop: "1px solid var(--border)",
           borderRight: "1px solid var(--border)",
           borderBottom: "1px solid var(--border)",
@@ -157,9 +157,9 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
               onClick={(e) => e.stopPropagation()}
               className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
               style={{
-                background: "rgba(220, 100, 20,0.12)",
-                border: "1px solid #dc6414",
-                color: "#dc6414",
+                background: "rgba(232, 112, 42,0.12)",
+                border: "1px solid #e8702a",
+                color: "#e8702a",
               }}
             >
               decision needs your vote â†’

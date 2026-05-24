@@ -46,9 +46,9 @@ export default function LibraryTab({
               onClick={() => setFilter(f)}
               className="font-mono lowercase text-[0.65rem] px-3 py-1.5 border transition-colors"
               style={{
-                borderColor: active ? "#dc6414" : "var(--border)",
-                color: active ? "#dc6414" : "var(--text-faint)",
-                background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
+                borderColor: active ? "#e8702a" : "var(--border)",
+                color: active ? "#e8702a" : "var(--text-faint)",
+                background: active ? "rgba(232, 112, 42,0.06)" : "transparent",
               }}
             >
               {FILTER_LABEL[f]}

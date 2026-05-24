@@ -8,7 +8,7 @@
             display: "inline-block",
             width: 6,
             height: 8,
-            background: i < filled ? "#dc6414" : "var(--border)",
+            background: i < filled ? "#e8702a" : "var(--border)",
             opacity: i < filled ? 1 : 0.6,
           }}
         />

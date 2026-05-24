@@ -142,7 +142,7 @@ export default function PostMenu({ postId }: { postId: string }) {
                   onClick={submitNominate}
                   disabled={busy || reason.trim().length === 0}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                  style={{ background: "#dc6414", color: "#000" }}
+                  style={{ background: "#e8702a", color: "#000" }}
                 >
                   {busy ? "sendingâ€¦" : "nominate â†’"}
                 </button>
@@ -193,7 +193,7 @@ export default function PostMenu({ postId }: { postId: string }) {
                   onClick={submitReport}
                   disabled={reportBusy}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                  style={{ background: "#dc6414", color: "#000" }}
+                  style={{ background: "#e8702a", color: "#000" }}
                 >
                   {reportBusy ? "sendingâ€¦" : "submit report"}
                 </button>

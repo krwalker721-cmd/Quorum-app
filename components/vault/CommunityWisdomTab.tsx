@@ -73,8 +73,8 @@ export default function CommunityWisdomTab({
         <div
           className="mb-4 px-3 py-2 border-l-2 vault-toast"
           style={{
-            borderLeftColor: "#dc6414",
-            background: "rgba(220, 100, 20,0.05)",
+            borderLeftColor: "#e8702a",
+            background: "rgba(232, 112, 42,0.05)",
             color: "var(--text-muted)",
           }}
         >
@@ -91,9 +91,9 @@ export default function CommunityWisdomTab({
               onClick={() => setTag(t)}
               className="font-mono lowercase text-[0.65rem] px-3 py-1.5 border transition-colors"
               style={{
-                borderColor: active ? "#dc6414" : "var(--border)",
-                color: active ? "#dc6414" : "var(--text-faint)",
-                background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
+                borderColor: active ? "#e8702a" : "var(--border)",
+                color: active ? "#e8702a" : "var(--text-faint)",
+                background: active ? "rgba(232, 112, 42,0.06)" : "transparent",
               }}
             >
               {t}
@@ -164,7 +164,7 @@ function WisdomCard({ item }: { item: WisdomItem }) {
           )}
           <span
             className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-            style={{ border: "1px solid #dc6414", color: "#dc6414" }}
+            style={{ border: "1px solid #e8702a", color: "#e8702a" }}
           >
             vaulted
           </span>
@@ -282,7 +282,7 @@ function GhostPreview({ post }: { post: GhostPost }) {
         <Link
           href={`/pulse#${post.id}`}
           className="font-mono lowercase text-[0.7rem] px-3 py-1 inline-block"
-          style={{ background: "#dc6414", color: "#000" }}
+          style={{ background: "#e8702a", color: "#000" }}
         >
           nominate this â†’
         </Link>

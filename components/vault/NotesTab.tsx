@@ -254,8 +254,8 @@ function NoteRowItem({
       onClick={onOpen}
       className="relative px-3 py-2 cursor-pointer border-l-2"
       style={{
-        borderColor: active ? "#dc6414" : "transparent",
-        background: active ? "rgba(220, 100, 20,0.05)" : "transparent",
+        borderColor: active ? "#e8702a" : "transparent",
+        background: active ? "rgba(232, 112, 42,0.05)" : "transparent",
       }}
     >
       <div className="flex items-center justify-between gap-2">
@@ -360,7 +360,7 @@ function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
         <button
           onClick={onCreate}
           className="vault-breathe font-mono lowercase text-xs px-5 py-2.5 mt-2"
-          style={{ background: "#dc6414", color: "#000" }}
+          style={{ background: "#e8702a", color: "#000" }}
         >
           + new note
         </button>

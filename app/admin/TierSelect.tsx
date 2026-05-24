@@ -38,7 +38,7 @@ export default function TierSelect({ id, currentTier }: { id: string; currentTie
       <div className="flex items-center gap-1">
         {OPTIONS.map((opt) => {
           const active = tier === opt;
-          const color = opt === "free" ? "#707070" : opt === "tier_1" ? "#dc6414" : "#22c55e";
+          const color = opt === "free" ? "#707070" : opt === "tier_1" ? "#e8702a" : "#22c55e";
           return (
             <button
               key={opt}

@@ -56,7 +56,7 @@ export default function SkillModal({
               <Link
                 href={`/messages?to=${m.id}`}
                 className="font-mono lowercase text-[0.65rem] px-3 py-1 hover:opacity-90"
-                style={{ background: "#dc6414", color: "#000" }}
+                style={{ background: "#e8702a", color: "#000" }}
               >
                 dm
               </Link>

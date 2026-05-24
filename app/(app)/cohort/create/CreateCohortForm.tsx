@@ -62,7 +62,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
             width: 34,
             height: 18,
             borderRadius: 9999,
-            background: isOpen ? "#dc6414" : "var(--border)",
+            background: isOpen ? "#e8702a" : "var(--border)",
           }}
         >
           <span

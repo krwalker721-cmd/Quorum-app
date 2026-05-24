@@ -2,7 +2,7 @@
 
 const TIER_STYLES: Record<Tier, { color: string; label: string }> = {
   free: { color: "#707070", label: "free" },
-  tier_1: { color: "#dc6414", label: "tier_1" },
+  tier_1: { color: "#e8702a", label: "tier_1" },
   tier_2: { color: "#22c55e", label: "tier_2" },
 };
 

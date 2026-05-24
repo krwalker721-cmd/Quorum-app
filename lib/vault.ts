@@ -64,7 +64,7 @@ export const ITEM_TYPE_LABEL: Record<SavedItemType, string> = {
 };
 
 export const ITEM_TYPE_COLOR: Record<SavedItemType, string> = {
-  pulse_post: "#dc6414",
+  pulse_post: "#e8702a",
   cohort_post: "#38bdf8",
   project: "#a78bfa",
 };

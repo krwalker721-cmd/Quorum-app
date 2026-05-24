@@ -48,7 +48,7 @@ export default function HandshakeButton({
       <button
         onClick={() => setOpen(true)}
         className="font-mono lowercase text-[0.7rem] px-3 py-2 border hover:border-amber transition-colors whitespace-nowrap"
-        style={{ borderColor: "var(--border)", color: "#dc6414" }}
+        style={{ borderColor: "var(--border)", color: "#e8702a" }}
       >
         â—ˆ log handshake
       </button>

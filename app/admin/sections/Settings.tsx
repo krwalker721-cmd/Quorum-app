@@ -82,8 +82,8 @@ export default function SettingsSection() {
                 onClick={() => update("platform_status", v)}
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
                 style={{
-                  borderColor: s.platform_status === v ? "#dc6414" : "var(--border)",
-                  background: s.platform_status === v ? "rgba(220, 100, 20,0.08)" : "transparent",
+                  borderColor: s.platform_status === v ? "#e8702a" : "var(--border)",
+                  background: s.platform_status === v ? "rgba(232, 112, 42,0.08)" : "transparent",
                   color: s.platform_status === v ? "var(--text-primary)" : "var(--text-muted)",
                 }}
               >
@@ -108,10 +108,10 @@ export default function SettingsSection() {
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
                 style={{
                   borderColor: s.maintenance_mode === v
-                    ? v === "true" ? "#ef4444" : "#dc6414"
+                    ? v === "true" ? "#ef4444" : "#e8702a"
                     : "var(--border)",
                   background: s.maintenance_mode === v
-                    ? v === "true" ? "rgba(239,68,68,0.08)" : "rgba(220, 100, 20,0.08)"
+                    ? v === "true" ? "rgba(239,68,68,0.08)" : "rgba(232, 112, 42,0.08)"
                     : "transparent",
                   color: s.maintenance_mode === v ? "var(--text-primary)" : "var(--text-muted)",
                 }}
@@ -143,7 +143,7 @@ export default function SettingsSection() {
                 setSavingWelcome(false);
               }}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "#dc6414", color: "#000" }}
+              style={{ background: "#e8702a", color: "#000" }}
             >
               {savingWelcome ? "savingâ€¦" : "save"}
             </button>
@@ -176,7 +176,7 @@ export default function SettingsSection() {
               type="submit"
               disabled={!curCode || !newCode || !confirmCode}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "#dc6414", color: "#000" }}
+              style={{ background: "#e8702a", color: "#000" }}
             >
               update code
             </button>

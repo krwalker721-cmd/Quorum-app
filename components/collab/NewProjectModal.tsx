@@ -103,9 +103,9 @@ export default function NewProjectModal({
                   onClick={() => setCategory(c)}
                   className="font-mono lowercase text-[0.65rem] px-2 py-1"
                   style={{
-                    border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
-                    color: active ? "#dc6414" : "var(--text-muted)",
-                    background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
+                    border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
+                    color: active ? "#e8702a" : "var(--text-muted)",
+                    background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
                   }}
                 >
                   {c}
@@ -140,7 +140,7 @@ export default function NewProjectModal({
             onClick={submit}
             disabled={busy || !title.trim()}
             className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
-            style={{ background: "#dc6414", color: "#000" }}
+            style={{ background: "#e8702a", color: "#000" }}
           >
             {busy ? "..." : "post â†’"}
           </button>

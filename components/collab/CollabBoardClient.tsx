@@ -36,7 +36,7 @@ type SkillEntry = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  growth: "#dc6414",
+  growth: "#e8702a",
   fundraising: "#38bdf8",
   hiring: "#707070",
   product: "#707070",
@@ -92,8 +92,8 @@ export default function CollabBoardClient({
                 onClick={() => setTab(t)}
                 className="font-mono lowercase text-[0.7rem] px-3 py-2"
                 style={{
-                  color: active ? "#dc6414" : "var(--text-muted)",
-                  borderBottom: active ? "2px solid #dc6414" : "2px solid transparent",
+                  color: active ? "#e8702a" : "var(--text-muted)",
+                  borderBottom: active ? "2px solid #e8702a" : "2px solid transparent",
                 }}
               >
                 {label}
@@ -105,7 +105,7 @@ export default function CollabBoardClient({
           <button
             onClick={() => openNew(tab === "needs" ? "need" : "project")}
             className="font-mono lowercase text-[0.7rem] px-3 py-1.5 mb-2 hover:opacity-90"
-            style={{ background: "#dc6414", color: "#000" }}
+            style={{ background: "#e8702a", color: "#000" }}
           >
             + post a {tab === "needs" ? "need" : "project"}
           </button>
@@ -282,7 +282,7 @@ function ProjectCard({
             filled
           </span>
         ) : isMember ? (
-          <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#dc6414" }}>
+          <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#e8702a" }}>
             open room â†’
           </span>
         ) : (
@@ -293,7 +293,7 @@ function ProjectCard({
               onRespond(project);
             }}
             className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
-            style={{ background: "#dc6414", color: "#000" }}
+            style={{ background: "#e8702a", color: "#000" }}
           >
             respond â†’
           </button>
@@ -322,7 +322,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
     <div className="space-y-3 max-w-3xl">
       {rows.map((n) => {
         const isQuick = n.category === "quick_ask";
-        const badgeColor = isQuick ? "#dc6414" : "#707070";
+        const badgeColor = isQuick ? "#e8702a" : "#707070";
         return (
           <article
             key={n.id}
@@ -375,7 +375,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
                 <Link
                   href={`/messages?to=${n.owner_id}`}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
-                  style={{ background: "#dc6414", color: "#000" }}
+                  style={{ background: "#e8702a", color: "#000" }}
                 >
                   respond â†’
                 </Link>
@@ -415,7 +415,7 @@ function SkillsIndex({
             <span className="font-mono lowercase text-sm text-text-primary">{e.skill.toLowerCase()}</span>
             <span
               className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-              style={{ border: "1px solid #dc6414", color: "#dc6414" }}
+              style={{ border: "1px solid #e8702a", color: "#e8702a" }}
             >
               {e.members.length}
             </span>

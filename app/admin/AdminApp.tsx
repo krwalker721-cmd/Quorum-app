@@ -61,7 +61,7 @@ export default function AdminApp() {
   }, [authed]);
 
   if (!ready) {
-    return <main className="min-h-screen" style={{ backgroundColor: '#060504', backgroundImage: 'radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.28) 0%, rgba(220,100,20,0.08) 35%, transparent 65%), radial-gradient(ellipse at 100% 100%, rgba(220,100,20,0.04) 0%, transparent 40%), linear-gradient(rgba(220,100,20,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(220,100,20,0.028) 1px, transparent 1px)', backgroundSize: 'auto, auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }} />;
+    return <main className="min-h-screen" style={{ backgroundColor: '#060504', backgroundImage: 'radial-gradient(ellipse at 0% 0%, rgba(232, 112, 42,0.28) 0%, rgba(232, 112, 42,0.08) 35%, transparent 65%), radial-gradient(ellipse at 100% 100%, rgba(232, 112, 42,0.04) 0%, transparent 40%), linear-gradient(rgba(232, 112, 42,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42,0.028) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }} />;
   }
 
   if (!authed) {
@@ -69,7 +69,7 @@ export default function AdminApp() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#060504', backgroundImage: 'radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.28) 0%, rgba(220,100,20,0.08) 35%, transparent 65%), radial-gradient(ellipse at 100% 100%, rgba(220,100,20,0.04) 0%, transparent 40%), linear-gradient(rgba(220,100,20,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(220,100,20,0.028) 1px, transparent 1px)', backgroundSize: 'auto, auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#060504', backgroundImage: 'radial-gradient(ellipse at 0% 0%, rgba(232, 112, 42,0.28) 0%, rgba(232, 112, 42,0.08) 35%, transparent 65%), radial-gradient(ellipse at 100% 100%, rgba(232, 112, 42,0.04) 0%, transparent 40%), linear-gradient(rgba(232, 112, 42,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42,0.028) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}>
       <aside
         className="w-56 border-r flex flex-col"
         style={{ borderColor: "var(--border)", background: "var(--card)" }}
@@ -97,7 +97,7 @@ export default function AdminApp() {
                 }`}
                 style={
                   active
-                    ? { borderLeft: "2px solid #dc6414", background: "rgba(220, 100, 20,0.06)" }
+                    ? { borderLeft: "2px solid #e8702a", background: "rgba(232, 112, 42,0.06)" }
                     : { borderLeft: "2px solid transparent" }
                 }
               >
@@ -105,7 +105,7 @@ export default function AdminApp() {
                 {badge !== null && (
                   <span
                     className="font-mono text-[0.6rem] px-1.5 py-0.5"
-                    style={{ background: "#dc6414", color: "#000" }}
+                    style={{ background: "#e8702a", color: "#000" }}
                   >
                     {badge}
                   </span>
@@ -162,7 +162,7 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
   return (
     <main
       className="min-h-screen flex items-center justify-center px-6"
-      style={{ backgroundColor: '#060504', backgroundImage: 'radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.28) 0%, rgba(220,100,20,0.08) 35%, transparent 65%), radial-gradient(ellipse at 100% 100%, rgba(220,100,20,0.04) 0%, transparent 40%), linear-gradient(rgba(220,100,20,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(220,100,20,0.028) 1px, transparent 1px)', backgroundSize: 'auto, auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}
+      style={{ backgroundColor: '#060504', backgroundImage: 'radial-gradient(ellipse at 0% 0%, rgba(232, 112, 42,0.28) 0%, rgba(232, 112, 42,0.08) 35%, transparent 65%), radial-gradient(ellipse at 100% 100%, rgba(232, 112, 42,0.04) 0%, transparent 40%), linear-gradient(rgba(232, 112, 42,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42,0.028) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}
     >
       <form onSubmit={submit} className="w-full max-w-sm">
         <p className="font-mono lowercase text-[0.65rem] text-text-faint text-center mb-1">
@@ -188,7 +188,7 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
           type="submit"
           disabled={busy || !code}
           className="w-full mt-5 font-mono lowercase text-xs py-2.5 disabled:opacity-50"
-          style={{ background: "#dc6414", color: "#000" }}
+          style={{ background: "#e8702a", color: "#000" }}
         >
           {busy ? "checkingâ€¦" : "submit"}
         </button>

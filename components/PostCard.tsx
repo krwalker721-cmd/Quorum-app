@@ -49,7 +49,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   if (anon) {
     leftBorder = "2px solid #3a3a3a";
   } else if (isDecision || isBlocker) {
-    leftBorder = "3px solid rgba(220, 100, 20, 0.75)";
+    leftBorder = "3px solid rgba(232, 112, 42, 0.75)";
   } else if (isWin) {
     leftBorder = "3px solid rgba(34, 197, 94, 0.75)";
   } else if (isQuestion) {
@@ -64,7 +64,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   const winTint = isWin ? "rgba(34, 197, 94, 0.025)" : "var(--card-elev)";
 
   const borderColor = isDecision || isBlocker
-    ? "rgba(220, 100, 20, 0.4)"
+    ? "rgba(232, 112, 42, 0.4)"
     : "var(--border-amber)";
 
   const classes = [
@@ -84,7 +84,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         borderColor,
         borderLeft: leftBorder,
         boxShadow: lateNight
-          ? "0 0 22px 1px rgba(220, 100, 20, 0.10), 0 0 4px rgba(220, 100, 20, 0.06)"
+          ? "0 0 22px 1px rgba(232, 112, 42, 0.10), 0 0 4px rgba(232, 112, 42, 0.06)"
           : undefined,
       }}
     >
@@ -94,7 +94,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           <span
             aria-hidden
             className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "#dc6414", boxShadow: "0 0 6px rgba(220, 100, 20,0.7)" }}
+            style={{ background: "#e8702a", boxShadow: "0 0 6px rgba(232, 112, 42,0.7)" }}
           />
         )}
         {isActive && !anon && (
@@ -157,7 +157,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           {(isDecision || isBlocker) && (
             <span
               className="font-mono lowercase tracking-wider"
-              style={{ color: "#dc6414", fontSize: "9px" }}
+              style={{ color: "#e8702a", fontSize: "9px" }}
             >
               needs input
             </span>

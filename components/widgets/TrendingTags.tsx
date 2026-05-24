@@ -21,8 +21,8 @@ export default async function TrendingTags() {
   const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
   function colorFor(tag: string, rank: number) {
-    if (rank === 0) return "#dc6414";
-    if (rank < 3) return "rgba(220, 100, 20, 0.7)";
+    if (rank === 0) return "#e8702a";
+    if (rank < 3) return "rgba(232, 112, 42, 0.7)";
     return "#707070";
   }
   function sizeFor(rank: number) {

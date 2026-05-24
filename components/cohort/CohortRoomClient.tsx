@@ -50,13 +50,13 @@ const TYPE_STYLE: Record<
   question: { color: "#38bdf8", label: "question", needsReply: true },
   update: { color: "#707070", label: "update" },
   decision: {
-    color: "#dc6414",
-    bg: "rgba(220, 100, 20,0.06)",
+    color: "#e8702a",
+    bg: "rgba(232, 112, 42,0.06)",
     label: "decision",
     needsReply: true,
   },
   win: { color: "#22c55e", label: "win" },
-  blocker: { color: "#dc6414", label: "blocker" },
+  blocker: { color: "#e8702a", label: "blocker" },
 };
 
 export default function CohortRoomClient({
@@ -231,7 +231,7 @@ export default function CohortRoomClient({
                       width: 240,
                       background: "var(--card-elev)",
                       borderColor: hasCheckin
-                        ? "rgba(220, 100, 20,0.35)"
+                        ? "rgba(232, 112, 42,0.35)"
                         : "var(--border)",
                     }}
                   >
@@ -328,7 +328,7 @@ export default function CohortRoomClient({
                       borderColor: "var(--border)",
                       borderLeft,
                       boxShadow: lateNight
-                        ? "0 0 22px 1px rgba(220, 100, 20, 0.10), 0 0 4px rgba(220, 100, 20, 0.06)"
+                        ? "0 0 22px 1px rgba(232, 112, 42, 0.10), 0 0 4px rgba(232, 112, 42, 0.06)"
                         : undefined,
                     }}
                   >

@@ -182,7 +182,7 @@ export default function ProjectRoomClient({
               {project.category && (
                 <span
                   className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto"
-                  style={{ border: "1px solid #dc6414", color: "#dc6414" }}
+                  style={{ border: "1px solid #e8702a", color: "#e8702a" }}
                 >
                   {project.category}
                 </span>
@@ -209,8 +209,8 @@ export default function ProjectRoomClient({
                   onClick={() => setTab(t)}
                   className="font-mono lowercase text-[0.7rem] px-3 py-2"
                   style={{
-                    color: active ? "#dc6414" : "var(--text-muted)",
-                    borderBottom: active ? "2px solid #dc6414" : "2px solid transparent",
+                    color: active ? "#e8702a" : "var(--text-muted)",
+                    borderBottom: active ? "2px solid #e8702a" : "2px solid transparent",
                   }}
                 >
                   {label}
@@ -286,9 +286,9 @@ export default function ProjectRoomClient({
 
           <div
             className="p-4 border"
-            style={{ background: "rgba(220, 100, 20,0.06)", borderColor: "rgba(220, 100, 20,0.35)" }}
+            style={{ background: "rgba(232, 112, 42,0.06)", borderColor: "rgba(232, 112, 42,0.35)" }}
           >
-            <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#dc6414" }}>
+            <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#e8702a" }}>
               â—ˆ log handshake
             </p>
             <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2">
@@ -334,7 +334,7 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
       </div>
       {total !== undefined && total > 0 && (
         <div className="h-1 mt-1" style={{ background: "var(--border)" }}>
-          <div className="h-1" style={{ background: "#dc6414", width: `${pct}%` }} />
+          <div className="h-1" style={{ background: "#e8702a", width: `${pct}%` }} />
         </div>
       )}
     </div>
@@ -440,8 +440,8 @@ function ThreadTab({
                 <div
                   className="max-w-[72%] px-3 py-2"
                   style={{
-                    background: mine ? "rgba(220, 100, 20,0.12)" : "var(--card)",
-                    border: `1px solid ${mine ? "rgba(220, 100, 20,0.35)" : "var(--border)"}`,
+                    background: mine ? "rgba(232, 112, 42,0.12)" : "var(--card)",
+                    border: `1px solid ${mine ? "rgba(232, 112, 42,0.35)" : "var(--border)"}`,
                   }}
                 >
                   {!mine && (
@@ -477,7 +477,7 @@ function ThreadTab({
           onClick={send}
           disabled={busy || !text.trim()}
           className="font-mono lowercase text-[0.7rem] px-4 py-2 hover:opacity-90 disabled:opacity-50"
-          style={{ background: "#dc6414", color: "#000" }}
+          style={{ background: "#e8702a", color: "#000" }}
         >
           send
         </button>
@@ -540,7 +540,7 @@ function DocsTab({
             className="p-4 border flex items-start gap-3"
             style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
           >
-            <span className="font-mono text-lg" style={{ color: "#dc6414" }}>
+            <span className="font-mono text-lg" style={{ color: "#e8702a" }}>
               â–¤
             </span>
             <div className="min-w-0 flex-1">
@@ -590,7 +590,7 @@ function DocsTab({
               onClick={submit}
               disabled={busy || !title.trim()}
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "#dc6414", color: "#000" }}
+              style={{ background: "#e8702a", color: "#000" }}
             >
               add â†’
             </button>
@@ -735,8 +735,8 @@ function DecisionsTab({
               <span
                 className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
                 style={{
-                  border: `1px solid ${d.status === "decided" ? "#22c55e" : "#dc6414"}`,
-                  color: d.status === "decided" ? "#22c55e" : "#dc6414",
+                  border: `1px solid ${d.status === "decided" ? "#22c55e" : "#e8702a"}`,
+                  color: d.status === "decided" ? "#22c55e" : "#e8702a",
                 }}
               >
                 {d.status}
@@ -765,9 +765,9 @@ function DecisionsTab({
                       onClick={() => vote(d, label)}
                       className="font-mono lowercase text-[0.65rem] px-3 py-1"
                       style={{
-                        border: `1px solid ${active ? "#dc6414" : "var(--border)"}`,
-                        color: active ? "#dc6414" : "var(--text-muted)",
-                        background: active ? "rgba(220, 100, 20,0.08)" : "transparent",
+                        border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
+                        color: active ? "#e8702a" : "var(--text-muted)",
+                        background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
                       }}
                     >
                       {label.toLowerCase()} {tally[label] ? `Â· ${tally[label]}` : ""}
@@ -820,7 +820,7 @@ function DecisionsTab({
               onClick={submit}
               disabled={busy || !title.trim()}
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "#dc6414", color: "#000" }}
+              style={{ background: "#e8702a", color: "#000" }}
             >
               open decision â†’
             </button>

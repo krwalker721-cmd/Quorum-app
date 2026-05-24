@@ -74,9 +74,8 @@ export default function Sidebar({
       className="flex flex-col fixed left-0 top-0 h-screen border-r"
       style={{
         width: 192,
-        background:
-          "radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.2) 0%, transparent 60%), rgba(3,2,1,0.96)",
-        borderRight: "0.5px solid rgba(220,100,20,0.15)",
+        background: "rgba(3, 2, 1, 0.95)",
+        borderRight: "0.5px solid rgba(232, 112, 42, 0.1)",
       }}
     >
       <div className="flex items-center gap-2 px-4 py-5">
@@ -93,9 +92,9 @@ export default function Sidebar({
               href={item.href}
               className="block font-mono lowercase text-xs px-3 py-2 mb-0.5 transition-colors"
               style={{
-                color: active ? "var(--text-primary)" : "var(--text-faint)",
-                background: active ? "rgba(220, 100, 20,0.06)" : "transparent",
-                borderRight: active ? "2px solid #dc6414" : "2px solid transparent",
+                color: active ? "#ffffff" : "#1a0e04",
+                background: active ? "rgba(232, 112, 42, 0.05)" : "transparent",
+                borderRight: active ? "2px solid #e8702a" : "2px solid transparent",
               }}
             >
               {item.label}

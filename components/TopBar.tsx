@@ -17,11 +17,10 @@ export default function TopBar({
     <div
       className="flex items-center justify-between px-6 py-3 sticky top-0 z-30"
       style={{
-        background:
-          "radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.12) 0%, transparent 50%), rgba(3,2,1,0.7)",
+        background: "rgba(3, 2, 1, 0.60)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
-        borderBottom: "0.5px solid rgba(220,100,20,0.12)",
+        borderBottom: "0.5px solid rgba(232, 112, 42, 0.08)",
       }}
     >
       <div>
@@ -32,7 +31,7 @@ export default function TopBar({
         <ThemeToggle />
         <span
           className="font-mono uppercase text-[0.6rem] tracking-wider px-2 py-1 border"
-          style={{ borderColor: "#dc6414", color: "#dc6414", letterSpacing: "0.08em" }}
+          style={{ borderColor: "#e8702a", color: "#e8702a", letterSpacing: "0.08em" }}
         >
           {tier}
         </span>

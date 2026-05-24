@@ -63,7 +63,7 @@ export default function Avatar({
             width: Math.max(5, size * 0.18),
             height: Math.max(5, size * 0.18),
             borderRadius: "50%",
-            background: "#dc6414",
+            background: "#e8702a",
             top: 0,
             right: 0,
             boxShadow: "0 0 0 1.5px var(--card)",

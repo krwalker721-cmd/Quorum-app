@@ -151,9 +151,9 @@ export default function NoteEditor({
             onClick={() => toggleTag(t)}
             className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
             style={{
-              border: "1px solid rgba(220, 100, 20,0.4)",
-              color: "#dc6414",
-              background: "rgba(220, 100, 20,0.06)",
+              border: "1px solid rgba(232, 112, 42,0.4)",
+              color: "#e8702a",
+              background: "rgba(232, 112, 42,0.06)",
             }}
           >
             {t} Ã—
@@ -305,7 +305,7 @@ function BlockRow({
   }
   if (block.type === "quote") {
     return Wrap(
-      <div className="pl-3 italic" style={{ borderLeft: "3px solid #dc6414" }}>
+      <div className="pl-3 italic" style={{ borderLeft: "3px solid #e8702a" }}>
         <Auto
           value={text}
           onChange={onChange}

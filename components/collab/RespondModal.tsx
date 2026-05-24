@@ -86,7 +86,7 @@ export default function RespondModal({
             onClick={submit}
             disabled={busy}
             className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
-            style={{ background: "#dc6414", color: "#000" }}
+            style={{ background: "#e8702a", color: "#000" }}
           >
             {busy ? "..." : "send â†’"}
           </button>

@@ -117,7 +117,7 @@ function NomCard({
               <button
                 onClick={onApprove}
                 className="font-mono text-[0.65rem] lowercase px-3 py-1.5"
-                style={{ background: "#dc6414", color: "#000" }}
+                style={{ background: "#e8702a", color: "#000" }}
               >
                 approve
               </button>

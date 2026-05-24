@@ -96,7 +96,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
 
   const cardBase: React.CSSProperties = {
     background: "var(--bg2, var(--card-elev))",
-    borderColor: "rgba(220, 100, 20, 0.18)",
+    borderColor: "rgba(232, 112, 42, 0.18)",
   };
 
   const topTag = top3[0];
@@ -104,7 +104,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
   const thirdTag = top3[2];
 
   function tagColor(t: string) {
-    return ROOM_TYPE_COLOR[t] ?? TAG_COLOR[t] ?? "#dc6414";
+    return ROOM_TYPE_COLOR[t] ?? TAG_COLOR[t] ?? "#e8702a";
   }
 
   return (

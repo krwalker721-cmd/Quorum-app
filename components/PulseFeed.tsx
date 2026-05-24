@@ -149,7 +149,7 @@ export default function PulseFeed({
         >
           <p className="font-mono lowercase text-[0.7rem] text-text-muted">
             filtered by{" "}
-            <span style={{ color: "#dc6414" }}>#{tagFilter}</span>
+            <span style={{ color: "#e8702a" }}>#{tagFilter}</span>
           </p>
           <button
             onClick={clearFilter}
