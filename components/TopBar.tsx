@@ -15,8 +15,14 @@ export default function TopBar({
 }) {
   return (
     <div
-      className="flex items-center justify-between px-6 py-3 border-b sticky top-0 z-30"
-      style={{ background: "var(--bg)", borderColor: "var(--border)" }}
+      className="flex items-center justify-between px-6 py-3 sticky top-0 z-30"
+      style={{
+        background:
+          "radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.12) 0%, transparent 50%), rgba(3,2,1,0.7)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        borderBottom: "0.5px solid rgba(220,100,20,0.12)",
+      }}
     >
       <div>
         <p className="font-mono lowercase text-[0.65rem] text-text-faint">/{title}</p>

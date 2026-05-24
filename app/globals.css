@@ -50,9 +50,9 @@
 }
 
 html, body {
-  background-color: var(--bg);
+  background-color: #060504;
   color: var(--text-primary);
-  min-height: 100%;
+  min-height: 100vh;
 }
 
 body {

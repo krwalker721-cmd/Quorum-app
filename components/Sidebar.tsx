@@ -72,7 +72,12 @@ export default function Sidebar({
   return (
     <aside
       className="flex flex-col fixed left-0 top-0 h-screen border-r"
-      style={{ width: 192, background: "var(--card)", borderColor: "var(--border)" }}
+      style={{
+        width: 192,
+        background:
+          "radial-gradient(ellipse at 0% 0%, rgba(220,100,20,0.2) 0%, transparent 60%), rgba(3,2,1,0.96)",
+        borderRight: "0.5px solid rgba(220,100,20,0.15)",
+      }}
     >
       <div className="flex items-center gap-2 px-4 py-5">
         <LogoMark size={22} />
