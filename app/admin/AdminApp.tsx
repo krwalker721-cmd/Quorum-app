@@ -61,7 +61,7 @@ export default function AdminApp() {
   }, [authed]);
 
   if (!ready) {
-    return <main className="min-h-screen" style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.012) 3px, rgba(232, 112, 42, 0.012) 4px), linear-gradient(rgba(232, 112, 42, 0.016) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.016) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }} />;
+    return <main className="min-h-screen" style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }} />;
   }
 
   if (!authed) {
@@ -69,7 +69,7 @@ export default function AdminApp() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.012) 3px, rgba(232, 112, 42, 0.012) 4px), linear-gradient(rgba(232, 112, 42, 0.016) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.016) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}>
       <aside
         className="w-56 border-r flex flex-col"
         style={{ borderColor: "var(--border)", background: "var(--card)" }}
@@ -162,7 +162,7 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
   return (
     <main
       className="min-h-screen flex items-center justify-center px-6"
-      style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.012) 3px, rgba(232, 112, 42, 0.012) 4px), linear-gradient(rgba(232, 112, 42, 0.016) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.016) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}
+      style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}
     >
       <form onSubmit={submit} className="w-full max-w-sm">
         <p className="font-mono lowercase text-[0.65rem] text-text-faint text-center mb-1">

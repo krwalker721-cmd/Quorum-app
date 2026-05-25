@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
+import AppOverlay from "@/components/AppOverlay";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const cohort = cohortRaw ?? [];
 
+  // Total approved nodes for the status bar — best-effort.
+  let nodeCount = cohort.length;
+  try {
+    const { count } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved");
+    if (typeof count === "number") nodeCount = count;
+  } catch {}
+
   return (
     <PresenceProvider currentUserId={user.id}>
       <div
@@ -63,7 +74,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         style={{
           backgroundColor: "#060504",
           backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.012) 3px, rgba(232, 112, 42, 0.012) 4px), linear-gradient(rgba(232, 112, 42, 0.016) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.016) 1px, transparent 1px)",
+            "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)",
           backgroundSize: "auto, 28px 28px, 28px 28px",
           backgroundAttachment: "fixed",
         }}
@@ -72,11 +83,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div
           style={{
             marginLeft: "var(--sidebar-w, 188px)",
+            paddingBottom: 20,
             transition: "margin-left 0.25s ease",
           }}
         >
           {children}
         </div>
+        <AppOverlay nodeCount={nodeCount} />
       </div>
     </PresenceProvider>
   );

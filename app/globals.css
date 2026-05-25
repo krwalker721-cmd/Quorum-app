@@ -89,11 +89,11 @@ body {
       0deg,
       transparent,
       transparent 3px,
-      rgba(232, 112, 42, 0.012) 3px,
-      rgba(232, 112, 42, 0.012) 4px
+      rgba(232, 112, 42, 0.018) 3px,
+      rgba(232, 112, 42, 0.018) 4px
     ),
-    linear-gradient(rgba(232, 112, 42, 0.016) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(232, 112, 42, 0.016) 1px, transparent 1px);
+    linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px);
   background-size: auto, 28px 28px, 28px 28px;
   background-attachment: fixed;
   font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
@@ -375,3 +375,25 @@ label {
 .sidebar-toggle:hover { background: rgba(232, 112, 42, 0.18); }
 
 .sidebar-fade { transition: opacity 0.2s ease; }
+
+/* Status bar active dot — slow pulse */
+.status-bar-active-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: status-bar-active-pulse 2s ease-in-out infinite;
+}
+@keyframes status-bar-active-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-bar-active-dot { animation: none; opacity: 0.7; }
+}
+
+/* Hide coordinate strips and crosshair on mobile (status bar stays) */
+@media (max-width: 767px) {
+  .app-coord-strip, .app-crosshair { display: none !important; }
+}
