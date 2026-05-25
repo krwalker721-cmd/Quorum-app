@@ -51,9 +51,16 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
 
   const coordNumbers = Array.from({ length: COORD_COUNT }, (_, i) => i + 1);
 
+  // Hide the left coord strip on routes whose main column hugs the sidebar
+  // with a nested left panel (conversation list / room roster). The strip
+  // would sit on top of that nested panel instead of in true negative space.
+  const hideLeftStrip =
+    pathname?.startsWith("/messages") || pathname?.startsWith("/cohort");
+
   return (
     <>
       {/* Left coordinate strip */}
+      {!hideLeftStrip && (
       <div
         className="app-coord-strip"
         style={{
@@ -86,6 +93,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
           </span>
         ))}
       </div>
+      )}
 
       {/* Right coordinate strip */}
       <div
