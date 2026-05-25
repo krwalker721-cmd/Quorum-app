@@ -39,7 +39,9 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
   }, []);
 
   const sidebarW = collapsed ? 48 : 188;
-  const coordLeftX = collapsed ? 56 : 196;
+  // Left coordinate strip sits flush against the right edge of the sidebar so
+  // it only ever paints inside the main content area, never over the sidebar.
+  const coordLeftX = sidebarW;
 
   // Friendly page name from the route.
   const seg = (pathname || "/").split("/").filter(Boolean)[0] || "home";
