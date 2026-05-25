@@ -63,7 +63,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         style={{
           backgroundColor: "#060504",
           backgroundImage:
-            "radial-gradient(ellipse at 15% 15%, rgba(232, 112, 42, 0.12) 0%, transparent 55%), linear-gradient(rgba(232, 112, 42, 0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.018) 1px, transparent 1px)",
+            "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.012) 3px, rgba(232, 112, 42, 0.012) 4px), linear-gradient(rgba(232, 112, 42, 0.016) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.016) 1px, transparent 1px)",
           backgroundSize: "auto, 28px 28px, 28px 28px",
           backgroundAttachment: "fixed",
         }}

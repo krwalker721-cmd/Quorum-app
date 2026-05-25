@@ -108,9 +108,8 @@ export default function Sidebar({
       className="flex flex-col fixed left-0 top-0 h-screen"
       style={{
         width,
-        background:
-          "linear-gradient(160deg, rgba(232,112,42,0.1) 0%, rgba(3,2,1,0.97) 35%)",
-        borderRight: "0.5px solid rgba(232,112,42,0.15)",
+        background: "rgba(3, 2, 1, 0.97)",
+        borderRight: "0.5px solid rgba(232, 112, 42, 0.1)",
         transition: "width 0.25s ease",
         overflow: "hidden",
       }}
@@ -159,7 +158,7 @@ export default function Sidebar({
               style={{
                 fontSize: collapsed ? 11 : 10,
                 letterSpacing: "0.03em",
-                color: active ? "#ffffff" : "#3a2010",
+                color: active ? "#ffffff" : "#555555",
                 background: active ? "rgba(232,112,42,0.05)" : "transparent",
                 borderRight: active ? "2px solid #e8702a" : "2px solid transparent",
                 padding: collapsed ? "10px 0" : "8px 12px",

@@ -26,7 +26,7 @@ export default function CohortPanel({
       {!collapsed && (
         <p
           className="font-mono lowercase px-1 mb-2"
-          style={{ fontSize: 7, letterSpacing: "0.12em", color: "#4a3020", textTransform: "uppercase" }}
+          style={{ fontSize: 7, letterSpacing: "0.12em", color: "#444444", textTransform: "uppercase" }}
         >
           your cohort
         </p>
@@ -36,7 +36,7 @@ export default function CohortPanel({
         style={collapsed ? { maxHeight: "calc(100vh - 220px)" } : undefined}
       >
         {members.length === 0 && !collapsed && (
-          <p className="font-mono lowercase px-1" style={{ fontSize: 9, color: "#4a3020" }}>
+          <p className="font-mono lowercase px-1" style={{ fontSize: 9, color: "#555555" }}>
             no members yet
           </p>
         )}
@@ -64,7 +64,7 @@ export default function CohortPanel({
               </div>
               <span
                 className="font-mono lowercase truncate"
-                style={{ fontSize: 9, color: "#4a3020" }}
+                style={{ fontSize: 9, color: "#555555" }}
               >
                 {m.full_name?.toLowerCase() ?? "—"}
               </span>

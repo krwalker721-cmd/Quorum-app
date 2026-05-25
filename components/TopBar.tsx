@@ -17,10 +17,10 @@ export default function TopBar({
     <div
       className="flex items-center justify-between px-6 py-3 sticky top-0 z-30"
       style={{
-        background: "rgba(3, 2, 1, 0.60)",
+        background: "rgba(3, 2, 1, 0.7)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
-        borderBottom: "0.5px solid rgba(232, 112, 42, 0.08)",
+        borderBottom: "0.5px solid rgba(232, 112, 42, 0.07)",
       }}
     >
       <div>

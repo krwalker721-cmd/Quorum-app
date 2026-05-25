@@ -20,15 +20,16 @@
   --border-hover: rgba(232, 112, 42, 0.25);
   --border-amber: rgba(232, 112, 42, 0.18);
   --text-primary: #ffffff;
-  --text-secondary: #e0c090;
-  --text-muted: #c0a080;
-  --text-faint: #4a3020;
+  --text-secondary: #cccccc;
+  --text-muted: #bbbbbb;
+  --text-faint: #666666;
   --t1: #ffffff;
-  --t2: #e0c090;
-  --t3: #c0a080;
-  --t4: #4a3020;
-  --t5: #3a2010;
-  --t6: #1a0e04;
+  --t2: #eeeeee;
+  --t3: #cccccc;
+  --t4: #bbbbbb;
+  --t5: #666666;
+  --t6: #555555;
+  --t7: #444444;
   --grid-line: rgba(232, 112, 42, 0.018);
   --glow: rgba(232, 112, 42, 0.12);
   --glow-soft: rgba(232, 112, 42, 0.04);
@@ -82,14 +83,34 @@ html, body {
 }
 
 body {
-  background-image:
-    radial-gradient(ellipse at 15% 15%, rgba(232, 112, 42, 0.12) 0%, transparent 55%),
-    linear-gradient(rgba(232, 112, 42, 0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(232, 112, 42, 0.018) 1px, transparent 1px);
-  background-size: auto, 28px 28px, 28px 28px;
   background-color: #060504;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(232, 112, 42, 0.012) 3px,
+      rgba(232, 112, 42, 0.012) 4px
+    ),
+    linear-gradient(rgba(232, 112, 42, 0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 112, 42, 0.016) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
   background-attachment: fixed;
   font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  position: relative;
+}
+
+/* Tiny warm glow only at the very top edge */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 180px;
+  background: radial-gradient(ellipse at 20% 0%, rgba(232, 112, 42, 0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 input, select, textarea {
@@ -108,7 +129,7 @@ input:focus, select:focus, textarea:focus {
   border-color: #e8702a;
 }
 
-input::placeholder, textarea::placeholder { color: #1a0e04; }
+input::placeholder, textarea::placeholder { color: #444444; }
 
 label {
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -138,7 +159,7 @@ label {
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.18), 0 0 8px rgba(34, 197, 94, 0.6);
 }
 .dot-offline {
-  background: #2a1808;
+  background: #444444;
 }
 
 /* "moved the room" â€” subtle border pulse */
@@ -307,7 +328,7 @@ label {
 
 .btn-ghost {
   background: rgba(255, 255, 255, 0.04);
-  color: #c0a080;
+  color: #cccccc;
   font-size: 10px;
   padding: 5px 14px;
   border-radius: 100px;
