@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ export default function RequestJoinButton({
       <button
         onClick={request}
         disabled={busy}
-        className="font-mono lowercase text-[0.65rem] px-3 py-1.5 bg-amber text-black hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+        className="btn-primary whitespace-nowrap"
       >
         {busy ? "..." : "request to join"}
       </button>

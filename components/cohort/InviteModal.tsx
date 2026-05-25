@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -132,7 +132,7 @@ export default function InviteModal({
                 type="button"
                 onClick={() => generate({ withEmail: true })}
                 disabled={busy || !cohortId || !email.trim()}
-                className="font-mono lowercase text-[0.7rem] px-3 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
+                className="btn-primary"
               >
                 invite by email
               </button>
@@ -151,7 +151,7 @@ export default function InviteModal({
                   <button
                     onClick={copy}
                     type="button"
-                    className="font-mono lowercase text-[0.7rem] px-3 py-2 bg-amber text-black whitespace-nowrap"
+                    className="btn-primary whitespace-nowrap"
                   >
                     {copied ? "copied" : "copy"}
                   </button>

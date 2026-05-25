@@ -305,10 +305,15 @@ label {
   box-shadow: 0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06);
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
   text-transform: lowercase;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: background 150ms ease, box-shadow 150ms ease;
+  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
-.btn-primary:hover { background: rgba(232, 112, 42, 0.25); }
+.btn-primary:hover {
+  background: rgba(232, 112, 42, 0.25);
+  border-color: rgba(232, 112, 42, 0.7);
+  box-shadow: 0 0 14px rgba(232, 112, 42, 0.3), inset 0 0 10px rgba(232, 112, 42, 0.08);
+}
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn-secondary {

@@ -192,7 +192,7 @@ export default function CohortRoomClient({
           >
             <button
               onClick={() => setInviteOpen(true)}
-              className="w-full font-mono lowercase text-[0.7rem] px-3 py-2 bg-amber text-black hover:opacity-90"
+              className="btn-primary w-full"
             >
               + invite to cohort
             </button>
@@ -300,7 +300,7 @@ export default function CohortRoomClient({
               </p>
               <button
                 onClick={() => setPostOpen(true)}
-                className="font-mono lowercase text-[0.7rem] px-3 py-1.5 bg-amber text-black hover:opacity-90"
+                className="btn-primary"
               >
                 + post to room
               </button>

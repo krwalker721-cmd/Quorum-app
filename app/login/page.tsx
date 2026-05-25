@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -69,7 +69,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full font-mono lowercase text-xs py-2.5 bg-amber text-bg hover:opacity-90 disabled:opacity-50 transition-opacity"
+        className="btn-primary w-full"
       >
         {loading ? "..." : "log in"}
       </button>

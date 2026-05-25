@@ -150,7 +150,7 @@ export default function CheckinModal({
             <div className="flex justify-end pt-2">
               <button
                 onClick={close}
-                className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90"
+                className="btn-primary"
               >
                 done
               </button>
@@ -272,7 +272,7 @@ export default function CheckinModal({
                     (step === 1 && !rating) ||
                     (step === 2 && !blocker.trim())
                   }
-                  className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
+                  className="btn-primary"
                 >
                   continue â†’
                 </button>
@@ -280,7 +280,7 @@ export default function CheckinModal({
                 <button
                   onClick={submit}
                   disabled={!win.trim() || busy}
-                  className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
+                  className="btn-primary"
                 >
                   {busy ? "..." : "submit â†’"}
                 </button>

@@ -104,7 +104,7 @@ export default function HandshakeButton({
               <button
                 onClick={submit}
                 disabled={busy || !agreement.trim()}
-                className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
+                className="btn-primary"
               >
                 {busy ? "..." : "log handshake â†’"}
               </button>

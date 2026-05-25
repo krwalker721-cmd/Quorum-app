@@ -143,7 +143,7 @@ export default function SettingsSection() {
                 setSavingWelcome(false);
               }}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "#e8702a", color: "#000" }}
+              style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
               {savingWelcome ? "savingâ€¦" : "save"}
             </button>
@@ -176,7 +176,7 @@ export default function SettingsSection() {
               type="submit"
               disabled={!curCode || !newCode || !confirmCode}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "#e8702a", color: "#000" }}
+              style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
               update code
             </button>

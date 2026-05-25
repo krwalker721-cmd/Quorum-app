@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -116,7 +116,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full font-mono lowercase text-xs py-2.5 bg-amber text-bg hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="btn-primary w-full"
           >
             {loading ? "..." : "request access"}
           </button>

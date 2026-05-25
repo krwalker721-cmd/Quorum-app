@@ -333,7 +333,7 @@ export default function MessagesClient({
               <button
                 onClick={send}
                 disabled={sending || !draft.trim()}
-                className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                className="btn-primary whitespace-nowrap"
               >
                 send
               </button>

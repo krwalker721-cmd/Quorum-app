@@ -193,7 +193,7 @@ export default function CohortClient({
                 </button>
                 <button
                   className="font-mono lowercase text-[0.65rem] px-2.5 py-1.5"
-                  style={{ background: "#e8702a", color: "#000" }}
+                  style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                 >
                   + handshake
                 </button>
@@ -249,7 +249,7 @@ export default function CohortClient({
               <button
                 onClick={send}
                 disabled={sending || !draft.trim()}
-                className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                className="btn-primary whitespace-nowrap"
               >
                 send
               </button>

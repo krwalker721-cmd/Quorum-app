@@ -105,7 +105,7 @@ export default function AdminApp() {
                 {badge !== null && (
                   <span
                     className="font-mono text-[0.6rem] px-1.5 py-0.5"
-                    style={{ background: "#e8702a", color: "#000" }}
+                    style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                   >
                     {badge}
                   </span>
@@ -188,7 +188,7 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
           type="submit"
           disabled={busy || !code}
           className="w-full mt-5 font-mono lowercase text-xs py-2.5 disabled:opacity-50"
-          style={{ background: "#e8702a", color: "#000" }}
+          style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
         >
           {busy ? "checkingâ€¦" : "submit"}
         </button>

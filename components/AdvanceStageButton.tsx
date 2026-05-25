@@ -128,7 +128,7 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
               <button
                 onClick={confirm}
                 disabled={busy}
-                className="font-mono lowercase text-xs px-4 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
+                className="btn-primary"
               >
                 {busy ? "..." : `advance to ${next} â†’`}
               </button>

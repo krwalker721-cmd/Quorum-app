@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -89,7 +89,7 @@ export default function InviteForm({
           type="button"
           onClick={() => generate({ withEmail: true })}
           disabled={busy || !cohortId || !email.trim()}
-          className="font-mono lowercase text-[0.7rem] px-3 py-2 bg-amber text-black hover:opacity-90 disabled:opacity-50"
+          className="btn-primary"
         >
           invite by email
         </button>
@@ -98,20 +98,20 @@ export default function InviteForm({
       {link && (
         <div className="pt-3 space-y-2 border-t" style={{ borderColor: "var(--border)" }}>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            invite link · share this with the person you&apos;re inviting
+            invite link Â· share this with the person you&apos;re inviting
           </p>
           <div className="flex gap-2">
             <input value={link} readOnly className="flex-1" />
             <button
               onClick={copy}
               type="button"
-              className="font-mono lowercase text-[0.7rem] px-3 py-2 bg-amber text-black whitespace-nowrap"
+              className="btn-primary whitespace-nowrap"
             >
               copy
             </button>
           </div>
           <p className="font-mono lowercase text-[0.6rem] text-text-faint">
-            note: sending the email is a manual step for now — copy the link and send it from your inbox.
+            note: sending the email is a manual step for now â€” copy the link and send it from your inbox.
           </p>
         </div>
       )}
