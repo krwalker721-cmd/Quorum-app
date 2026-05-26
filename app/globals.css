@@ -70,74 +70,126 @@
   --accent-dim: rgba(245, 158, 11, 0.25);
 }
 
-/* ─── Light theme — soft warm cream, not pure white ─────────────────── */
-[data-theme="light"] {
-  --bg-base: #f5f1e8;
-  --bg-surface: #fbf9f3;
-  --bg-elevated: #ffffff;
-  --bg-overlay: #ebe7dd;
-  --border-default: #d8d1bf;
-  --border-muted: #c5bda7;
-  --border-hover: #0969da;
-  --text-primary: #1c1810;
-  --text-secondary: #5c5446;
-  --text-muted: #857c6a;
-  --text-disabled: #a89e88;
-  --accent: #a96d17;
-  --accent-bg: rgba(169, 109, 23, 0.10);
-  --accent-border: rgba(169, 109, 23, 0.25);
-  --accent-glow: rgba(169, 109, 23, 0.12);
-  --green: #1a7f37;
-  --green-bg: rgba(26, 127, 55, 0.10);
-  --green-border: rgba(26, 127, 55, 0.22);
-  --blue: #0969da;
-  --blue-bg: rgba(9, 105, 218, 0.10);
-  --blue-border: rgba(9, 105, 218, 0.22);
-  --red: #cf222e;
-  --red-bg: rgba(207, 34, 46, 0.10);
-  --red-border: rgba(207, 34, 46, 0.22);
-  --purple: #8250df;
-  --purple-bg: rgba(130, 80, 223, 0.10);
-  --purple-border: rgba(130, 80, 223, 0.22);
-  --teal: #1f7a8c;
-  --teal-bg: rgba(31, 122, 140, 0.10);
-  --teal-border: rgba(31, 122, 140, 0.22);
+/* ─── High contrast — same dark base, brighter text + borders ──────── */
+[data-theme="high-contrast"] {
+  /* Backgrounds unchanged — keep eye-friendly dark base */
+  --bg-base: #0d1117;
+  --bg-surface: #1a212b;       /* slightly lifted vs #161b22 for card pop */
+  --bg-elevated: #232a36;
+  --bg-overlay: #2d3441;
+
+  /* Borders — much more visible (was #21262d/#30363d) */
+  --border-default: #4a525e;
+  --border-muted: #5c6470;
+  --border-hover: #79c0ff;
+
+  /* Text — boosted brightness/contrast at every tier */
+  --text-primary: #ffffff;     /* was #e6edf3 */
+  --text-secondary: #d0d7de;   /* was #8b949e */
+  --text-muted: #b1bac4;       /* was #6e7681 */
+  --text-disabled: #8b949e;    /* was #484f58 */
+
+  /* Accents — slightly brighter / more saturated */
+  --accent: #ffc043;            /* was #f59e0b */
+  --accent-bg: rgba(255, 192, 67, 0.16);
+  --accent-border: rgba(255, 192, 67, 0.45);
+  --accent-glow: rgba(255, 192, 67, 0.20);
+  --green: #4ade80;             /* was #22c55e */
+  --green-bg: rgba(74, 222, 128, 0.16);
+  --green-border: rgba(74, 222, 128, 0.40);
+  --blue: #79c0ff;              /* was #58a6ff */
+  --blue-bg: rgba(121, 192, 255, 0.16);
+  --blue-border: rgba(121, 192, 255, 0.40);
+  --red: #ff7b72;               /* was #f85149 */
+  --red-bg: rgba(255, 123, 114, 0.16);
+  --red-border: rgba(255, 123, 114, 0.40);
+  --purple: #d2a8ff;            /* was #a78bfa */
+  --purple-bg: rgba(210, 168, 255, 0.16);
+  --purple-border: rgba(210, 168, 255, 0.40);
+  --teal: #56d4f1;              /* was #38bdf8 */
+  --teal-bg: rgba(86, 212, 241, 0.16);
+  --teal-border: rgba(86, 212, 241, 0.40);
 
   /* Back-compat aliases */
-  --bg: #f5f1e8;
-  --bg-0: #f5f1e8;
-  --bg-sidebar: #fbf9f3;
-  --bg-card: #fbf9f3;
-  --bg-widget: #fbf9f3;
-  --bg-topbar: #fbf9f3;
-  --bg-strip: #fbf9f3;
-  --card: #fbf9f3;
-  --card-elev: #ffffff;
-  --border: #d8d1bf;
-  --border-subtle: #d8d1bf;
+  --bg: #0d1117;
+  --bg-0: #0d1117;
+  --bg-sidebar: #1a212b;
+  --bg-card: #1a212b;
+  --bg-widget: #1a212b;
+  --bg-topbar: #1a212b;
+  --bg-strip: #1a212b;
+  --card: #1a212b;
+  --card-elev: #232a36;
+  --border: #4a525e;
+  --border-subtle: #4a525e;
   --border-amber: var(--accent-border);
-  --text-secondary: #5c5446;
-  --text-faint: #857c6a;
-  --t1: #1c1810;
-  --t2: #1c1810;
-  --t3: #5c5446;
-  --t4: #5c5446;
-  --t5: #857c6a;
-  --t6: #a89e88;
-  --t7: #a89e88;
-  --grid-line: rgba(0, 0, 0, 0.04);
+  --text-faint: #b1bac4;
+  --t1: #ffffff;
+  --t2: #ffffff;
+  --t3: #d0d7de;
+  --t4: #d0d7de;
+  --t5: #b1bac4;
+  --t6: #8b949e;
+  --t7: #8b949e;
+  --grid-line: rgba(255, 255, 255, 0.06);
   --glow: var(--accent-glow);
-  --glow-soft: rgba(169, 109, 23, 0.04);
+  --glow-soft: rgba(255, 192, 67, 0.06);
   --ac: var(--accent);
-  --ac-dim: rgba(169, 109, 23, 0.25);
+  --ac-dim: rgba(255, 192, 67, 0.35);
   --ac-bg: var(--accent-bg);
   --ac-border: var(--accent-border);
-  --ac-hover: rgba(169, 109, 23, 0.18);
+  --ac-hover: rgba(255, 192, 67, 0.28);
   --ac-glow: var(--accent-glow);
-  --accent-dim: rgba(169, 109, 23, 0.25);
+  --accent-dim: rgba(255, 192, 67, 0.35);
 }
-/* Also expose grid-line on dark for symmetry */
-:root, [data-theme="dark"] { --grid-line: rgba(255, 255, 255, 0.03); }
+
+/* Default grid-line exposed on the normal/dark theme */
+:root, [data-theme="normal"], [data-theme="dark"] { --grid-line: rgba(255, 255, 255, 0.03); }
+
+/* ─── High contrast — small-text legibility bumps ──────────────────── */
+[data-theme="high-contrast"] .stat-label,
+[data-theme="high-contrast"] .summary-stat-label,
+[data-theme="high-contrast"] .tag,
+[data-theme="high-contrast"] .stage-idea,
+[data-theme="high-contrast"] .stage-pre-seed,
+[data-theme="high-contrast"] .stage-seed,
+[data-theme="high-contrast"] .stage-series-a {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+}
+[data-theme="high-contrast"] .nav-section-label,
+[data-theme="high-contrast"] .cohort-label,
+[data-theme="high-contrast"] .summary-highlight-label,
+[data-theme="high-contrast"] .widget-title,
+[data-theme="high-contrast"] .post-replies,
+[data-theme="high-contrast"] .post-timestamp,
+[data-theme="high-contrast"] .summary-dismiss {
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+}
+[data-theme="high-contrast"] .nav-item { font-size: 12px !important; }
+[data-theme="high-contrast"] .stat-value { font-size: 14.5px !important; }
+[data-theme="high-contrast"] .empty-state { font-size: 13px !important; }
+[data-theme="high-contrast"] .post-body,
+[data-theme="high-contrast"] .widget-body { font-size: 12.5px !important; }
+[data-theme="high-contrast"] .status-item { font-size: 8px !important; }
+
+/* Bolder accent rings on focus / active to make state changes obvious */
+[data-theme="high-contrast"] input:focus,
+[data-theme="high-contrast"] select:focus,
+[data-theme="high-contrast"] textarea:focus {
+  border-color: var(--blue) !important;
+  box-shadow: 0 0 0 2px rgba(121, 192, 255, 0.25) !important;
+}
+[data-theme="high-contrast"] .nav-item.active { border-color: var(--accent) !important; }
+[data-theme="high-contrast"] .post-card:hover { border-color: var(--blue) !important; }
+
+/* Text rendering — sharper at small sizes */
+[data-theme="high-contrast"] {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 html, body, #__next, #root {
   background-color: var(--bg-base) !important;

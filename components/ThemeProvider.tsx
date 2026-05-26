@@ -2,24 +2,25 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Mode = "dark" | "light";
+type Mode = "normal" | "high-contrast";
 const ThemeCtx = createContext<{ mode: Mode; toggle: () => void }>({
-  mode: "dark",
+  mode: "normal",
   toggle: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<Mode>("dark");
+  const [mode, setMode] = useState<Mode>("normal");
 
   useEffect(() => {
-    const saved = (typeof window !== "undefined" && localStorage.getItem("quorum-theme")) as Mode | null;
-    const next = saved === "light" || saved === "dark" ? saved : "dark";
+    const saved = typeof window !== "undefined" ? localStorage.getItem("quorum-theme") : null;
+    // Accept new values; gracefully migrate legacy "dark"/"light" → "normal".
+    const next: Mode = saved === "high-contrast" ? "high-contrast" : "normal";
     setMode(next);
     document.documentElement.setAttribute("data-theme", next);
   }, []);
 
   const toggle = () => {
-    const next = mode === "dark" ? "light" : "dark";
+    const next: Mode = mode === "normal" ? "high-contrast" : "normal";
     setMode(next);
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("quorum-theme", next);
