@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { STAGE_COLOR, initials } from "@/lib/stage";
 
 export default function Avatar({
@@ -17,7 +17,7 @@ export default function Avatar({
   depthRing?: boolean;
   anniversary?: boolean;
 }) {
-  const ring = stage ? STAGE_COLOR[stage] ?? "#707070" : "#707070";
+  const ring = stage ? STAGE_COLOR[stage] ?? "#6e7681" : "#6e7681";
 
   const core = (
     <div
@@ -63,7 +63,7 @@ export default function Avatar({
             width: Math.max(5, size * 0.18),
             height: Math.max(5, size * 0.18),
             borderRadius: "50%",
-            background: "#e8702a",
+            background: "#f59e0b",
             top: 0,
             right: 0,
             boxShadow: "0 0 0 1.5px var(--card)",

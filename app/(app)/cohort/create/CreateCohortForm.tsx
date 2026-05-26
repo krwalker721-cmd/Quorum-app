@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -62,7 +62,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
             width: 34,
             height: 18,
             borderRadius: 9999,
-            background: isOpen ? "#e8702a" : "var(--border)",
+            background: isOpen ? "#f59e0b" : "var(--border)",
           }}
         >
           <span

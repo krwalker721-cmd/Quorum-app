@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -48,7 +48,7 @@ export default function HandshakeButton({
       <button
         onClick={() => setOpen(true)}
         className="font-mono lowercase text-[0.7rem] px-3 py-2 border hover:border-amber transition-colors whitespace-nowrap"
-        style={{ borderColor: "var(--border)", color: "#e8702a" }}
+        style={{ borderColor: "var(--border)", color: "#f59e0b" }}
       >
         â—ˆ log handshake
       </button>

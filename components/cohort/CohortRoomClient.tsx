@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Avatar from "@/components/Avatar";
@@ -48,15 +48,15 @@ const TYPE_STYLE: Record<
   { color: string; bg?: string; label: string; needsReply?: boolean }
 > = {
   question: { color: "#38bdf8", label: "question", needsReply: true },
-  update: { color: "#707070", label: "update" },
+  update: { color: "#6e7681", label: "update" },
   decision: {
-    color: "#e8702a",
-    bg: "rgba(232, 112, 42,0.06)",
+    color: "#f59e0b",
+    bg: "rgba(245, 158, 11,0.06)",
     label: "decision",
     needsReply: true,
   },
   win: { color: "#22c55e", label: "win" },
-  blocker: { color: "#e8702a", label: "blocker" },
+  blocker: { color: "#f59e0b", label: "blocker" },
 };
 
 export default function CohortRoomClient({
@@ -113,9 +113,9 @@ export default function CohortRoomClient({
         {/* LEFT â€” roster */}
         <aside
           className="border-r flex flex-col"
-          style={{ width: 260, background: "var(--card)", borderColor: "var(--border)" }}
+          style={{ width: 260, background: "#1c2128", borderColor: "#21262d" }}
         >
-          <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "var(--border)" }}>
+          <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "#21262d" }}>
             <p className="font-mono lowercase text-[0.65rem] text-text-faint">room</p>
             <p className="font-sans lowercase text-text-primary text-base mt-0.5 truncate">
               {roomName.toLowerCase()}
@@ -175,7 +175,7 @@ export default function CohortRoomClient({
                       {typeof f?.tenureDays === "number" && (
                         <span
                           className="font-mono lowercase text-[0.55rem]"
-                          style={{ color: "#707070" }}
+                          style={{ color: "#6e7681" }}
                         >
                           in cohort {f.tenureDays} days
                         </span>
@@ -231,7 +231,7 @@ export default function CohortRoomClient({
                       width: 240,
                       background: "var(--card-elev)",
                       borderColor: hasCheckin
-                        ? "rgba(232, 112, 42,0.35)"
+                        ? "rgba(245, 158, 11,0.35)"
                         : "var(--border)",
                     }}
                   >
@@ -270,7 +270,7 @@ export default function CohortRoomClient({
                       ) : (
                         <p
                           className="text-[0.78rem] mt-1 leading-snug"
-                          style={{ color: "#707070" }}
+                          style={{ color: "#6e7681" }}
                         >
                           hasn&apos;t checked in yet
                         </p>
@@ -328,7 +328,7 @@ export default function CohortRoomClient({
                       borderColor: "var(--border)",
                       borderLeft,
                       boxShadow: lateNight
-                        ? "0 0 22px 1px rgba(232, 112, 42, 0.10), 0 0 4px rgba(232, 112, 42, 0.06)"
+                        ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
                         : undefined,
                     }}
                   >

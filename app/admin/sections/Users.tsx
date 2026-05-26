@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { adminFetch } from "../lib/api";
@@ -105,8 +105,8 @@ export default function UsersSection() {
               filter === f ? "text-text-primary" : "text-text-muted"
             }`}
             style={{
-              borderColor: filter === f ? "#e8702a" : "var(--border)",
-              background: filter === f ? "rgba(232, 112, 42,0.08)" : "transparent",
+              borderColor: filter === f ? "#f59e0b" : "var(--border)",
+              background: filter === f ? "rgba(245, 158, 11,0.08)" : "transparent",
             }}
           >
             {f}
@@ -117,7 +117,7 @@ export default function UsersSection() {
       {selected.size > 0 && (
         <div
           className="flex items-center gap-2 mb-3 p-2 border"
-          style={{ borderColor: "rgba(232, 112, 42,0.4)", background: "rgba(232, 112, 42,0.06)" }}
+          style={{ borderColor: "rgba(245, 158, 11,0.4)", background: "rgba(245, 158, 11,0.06)" }}
         >
           <span className="font-mono text-[0.65rem] lowercase text-text-muted">
             {selected.size} selected
@@ -285,7 +285,7 @@ export default function UsersSection() {
 
 function StatusPill({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    pending: "#e8702a",
+    pending: "#f59e0b",
     approved: "#22c55e",
     suspended: "#ef4444",
   };
@@ -293,8 +293,8 @@ function StatusPill({ status }: { status: string }) {
     <span
       className="font-mono text-[0.6rem] lowercase px-1.5 py-0.5"
       style={{
-        background: `${colors[status] ?? "#707070"}22`,
-        color: colors[status] ?? "#c0c0c0",
+        background: `${colors[status] ?? "#6e7681"}22`,
+        color: colors[status] ?? "#8b949e",
       }}
     >
       {status}

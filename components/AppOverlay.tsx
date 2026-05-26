@@ -84,7 +84,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
               left: 0,
               fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
               fontSize: 6,
-              color: "rgba(232, 112, 42, 0.2)",
+              color: "rgba(245, 158, 11, 0.2)",
               letterSpacing: "0.05em",
               lineHeight: 1,
             }}
@@ -118,7 +118,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
               left: 0,
               fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
               fontSize: 6,
-              color: "rgba(232, 112, 42, 0.12)",
+              color: "rgba(245, 158, 11, 0.12)",
               letterSpacing: "0.05em",
               lineHeight: 1,
             }}
@@ -151,7 +151,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
             left: 0,
             right: 0,
             height: "0.5px",
-            background: "rgba(232, 112, 42, 0.45)",
+            background: "rgba(245, 158, 11, 0.45)",
           }}
         />
         <span
@@ -161,7 +161,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
             top: 0,
             bottom: 0,
             width: "0.5px",
-            background: "rgba(232, 112, 42, 0.45)",
+            background: "rgba(245, 158, 11, 0.45)",
           }}
         />
       </div>
@@ -174,7 +174,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
           width: 4,
           height: 4,
           borderRadius: "50%",
-          background: "rgba(232, 112, 42, 0.5)",
+          background: "rgba(245, 158, 11, 0.5)",
           transform: "translate(-50%, -50%)",
           pointerEvents: "none",
           zIndex: 11,
@@ -191,8 +191,8 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
           left: 0,
           right: 0,
           height: 20,
-          background: "rgba(3, 2, 1, 0.92)",
-          borderTop: "0.5px solid rgba(232, 112, 42, 0.12)",
+          background: "rgba(13, 17, 23, 0.95)",
+          borderTop: "1px solid #21262d",
           display: "flex",
           alignItems: "center",
           padding: "0 14px",
@@ -206,7 +206,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
         <span
           style={{
             fontSize: 6,
-            color: "rgba(232, 112, 42, 0.35)",
+            color: "rgba(245, 158, 11, 0.35)",
             letterSpacing: "0.1em",
             textTransform: "uppercase",
           }}
@@ -217,13 +217,13 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
           style={{
             width: "0.5px",
             height: 10,
-            background: "rgba(232, 112, 42, 0.15)",
+            background: "rgba(245, 158, 11, 0.15)",
           }}
         />
         <span
           style={{
             fontSize: 6,
-            color: "rgba(232, 112, 42, 0.25)",
+            color: "rgba(245, 158, 11, 0.25)",
             letterSpacing: "0.08em",
           }}
         >
@@ -233,10 +233,10 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
           style={{
             width: "0.5px",
             height: 10,
-            background: "rgba(232, 112, 42, 0.15)",
+            background: "rgba(245, 158, 11, 0.15)",
           }}
         />
-        <span style={{ fontSize: 6, color: "rgba(232, 112, 42, 0.2)" }}>
+        <span style={{ fontSize: 6, color: "rgba(245, 158, 11, 0.2)" }}>
           {nodeCount} nodes
         </span>
 
@@ -251,13 +251,13 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
             style={{
               width: "0.5px",
               height: 10,
-              background: "rgba(232, 112, 42, 0.15)",
+              background: "rgba(245, 158, 11, 0.15)",
             }}
           />
           <span
             style={{
               fontSize: 6,
-              color: "rgba(232, 112, 42, 0.25)",
+              color: "rgba(245, 158, 11, 0.25)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
             }}

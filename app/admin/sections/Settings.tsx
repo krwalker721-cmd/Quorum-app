@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { adminFetch, saveSession } from "../lib/api";
@@ -82,8 +82,8 @@ export default function SettingsSection() {
                 onClick={() => update("platform_status", v)}
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
                 style={{
-                  borderColor: s.platform_status === v ? "#e8702a" : "var(--border)",
-                  background: s.platform_status === v ? "rgba(232, 112, 42,0.08)" : "transparent",
+                  borderColor: s.platform_status === v ? "#f59e0b" : "var(--border)",
+                  background: s.platform_status === v ? "rgba(245, 158, 11,0.08)" : "transparent",
                   color: s.platform_status === v ? "var(--text-primary)" : "var(--text-muted)",
                 }}
               >
@@ -108,10 +108,10 @@ export default function SettingsSection() {
                 className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
                 style={{
                   borderColor: s.maintenance_mode === v
-                    ? v === "true" ? "#ef4444" : "#e8702a"
+                    ? v === "true" ? "#ef4444" : "#f59e0b"
                     : "var(--border)",
                   background: s.maintenance_mode === v
-                    ? v === "true" ? "rgba(239,68,68,0.08)" : "rgba(232, 112, 42,0.08)"
+                    ? v === "true" ? "rgba(239,68,68,0.08)" : "rgba(245, 158, 11,0.08)"
                     : "transparent",
                   color: s.maintenance_mode === v ? "var(--text-primary)" : "var(--text-muted)",
                 }}
@@ -143,7 +143,7 @@ export default function SettingsSection() {
                 setSavingWelcome(false);
               }}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+              style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
               {savingWelcome ? "savingâ€¦" : "save"}
             </button>
@@ -176,7 +176,7 @@ export default function SettingsSection() {
               type="submit"
               disabled={!curCode || !newCode || !confirmCode}
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-              style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+              style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
               update code
             </button>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,7 +22,7 @@ function StagePillSwatch({
   dim?: boolean;
   glow?: boolean;
 }) {
-  const color = STAGE_COLOR[stage] ?? "#707070";
+  const color = STAGE_COLOR[stage] ?? "#6e7681";
   return (
     <span
       className="font-mono lowercase text-[0.75rem] px-3 py-1.5 inline-flex items-center"
@@ -71,8 +71,8 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
         onClick={() => setOpen(true)}
         className="font-mono lowercase text-[0.7rem] px-2.5 py-1 transition-colors"
         style={{
-          border: "1px solid rgba(232, 112, 42,0.4)",
-          color: "#e8702a",
+          border: "1px solid rgba(245, 158, 11,0.4)",
+          color: "#f59e0b",
           background: "transparent",
         }}
       >

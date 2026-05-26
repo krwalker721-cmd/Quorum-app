@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -8,10 +8,10 @@ type RoomType = "question" | "update" | "decision" | "win" | "blocker";
 
 const TYPES: { value: RoomType; color: string; desc: string }[] = [
   { value: "question", color: "#38bdf8", desc: "needs input from the room" },
-  { value: "update", color: "#707070", desc: "here's where i'm at" },
-  { value: "decision", color: "#e8702a", desc: "deciding something, thoughts welcome" },
+  { value: "update", color: "#6e7681", desc: "here's where i'm at" },
+  { value: "decision", color: "#f59e0b", desc: "deciding something, thoughts welcome" },
   { value: "win", color: "#22c55e", desc: "something worked" },
-  { value: "blocker", color: "#e8702a", desc: "stuck on something specific" },
+  { value: "blocker", color: "#f59e0b", desc: "stuck on something specific" },
 ];
 
 export default function RoomPostModal({
@@ -126,7 +126,7 @@ export default function RoomPostModal({
               width: 34,
               height: 18,
               borderRadius: 9999,
-              background: anon ? "#e8702a" : "var(--border)",
+              background: anon ? "#f59e0b" : "var(--border)",
               transition: "background 150ms ease",
             }}
           >

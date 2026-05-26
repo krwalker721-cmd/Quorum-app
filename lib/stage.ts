@@ -1,8 +1,8 @@
-﻿export type Stage = "idea" | "pre-seed" | "seed" | "series_a";
+export type Stage = "idea" | "pre-seed" | "seed" | "series_a";
 
 export const STAGE_COLOR: Record<string, string> = {
   idea: "#38bdf8",
-  "pre-seed": "#e8702a",
+  "pre-seed": "#f59e0b",
   seed: "#22c55e",
   series_a: "#a78bfa",
 };
@@ -11,10 +11,10 @@ export const STAGE_COLOR: Record<string, string> = {
 // trending widgets, and the post-creation type selector.
 export const ROOM_TYPE_COLOR: Record<string, string> = {
   question: "#38bdf8",
-  update: "#707070",
-  decision: "#e8702a",
+  update: "#6e7681",
+  decision: "#f59e0b",
   win: "#22c55e",
-  blocker: "#e8702a",
+  blocker: "#f59e0b",
 };
 
 export const ROOM_TYPE_LABEL: Record<string, string> = {
@@ -26,13 +26,13 @@ export const ROOM_TYPE_LABEL: Record<string, string> = {
 };
 
 export const TAG_COLOR: Record<string, string> = {
-  decision: "#e8702a",
+  decision: "#f59e0b",
   mindset: "#a78bfa",
   hiring: "#38bdf8",
-  real_talk: "#e8702a",
-  growth: "#e8702a",
-  ops: "#707070",
-  fundraising: "#e8702a",
+  real_talk: "#f59e0b",
+  growth: "#f59e0b",
+  ops: "#6e7681",
+  fundraising: "#f59e0b",
   "co-founder": "#22c55e",
 };
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { adminFetch } from "../lib/api";
@@ -85,11 +85,11 @@ export default function PlatformHealthSection() {
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data.tagPopularity}>
-              <CartesianGrid stroke="#2e2e2e" strokeDasharray="3 3" />
-              <XAxis dataKey="tag" stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} />
-              <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "#0c0c0c", border: "1px solid #2e2e2e", fontSize: 10, fontFamily: "monospace" }} />
-              <Bar dataKey="count" fill="#e8702a" />
+              <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />
+              <XAxis dataKey="tag" stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} />
+              <YAxis stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: "#161b22", border: "1px solid #21262d", fontSize: 10, fontFamily: "monospace" }} />
+              <Bar dataKey="count" fill="#f59e0b" />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -112,7 +112,7 @@ function Cell({ value, prev }: { value: number; prev?: number }) {
   if (prev !== undefined) {
     if (value > prev) color = "#22c55e";
     else if (value < prev) color = "#ef4444";
-    else color = "#e8702a";
+    else color = "#f59e0b";
   }
   return (
     <td className="px-3 py-2 font-mono text-[0.78rem]" style={{ color }}>

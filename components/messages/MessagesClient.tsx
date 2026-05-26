@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
@@ -178,7 +178,7 @@ export default function MessagesClient({
       {/* LEFT â€” inbox */}
       <div
         className="flex flex-col border-r"
-        style={{ width: 320, background: "var(--card)", borderColor: "var(--border)" }}
+        style={{ width: 320, background: "#1c2128", borderColor: "#21262d" }}
       >
         <div className="px-4 pt-4 pb-2">
           <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">
@@ -201,8 +201,8 @@ export default function MessagesClient({
                 onClick={() => setSelectedId(c.partner.id)}
                 className="w-full flex items-start gap-3 px-3 py-3 text-left transition-colors border-b"
                 style={{
-                  background: active ? "rgba(232, 112, 42,0.06)" : "transparent",
-                  borderRight: active ? "2px solid #e8702a" : "2px solid transparent",
+                  background: active ? "rgba(88, 166, 255, 0.08)" : "transparent",
+                  borderRight: active ? "2px solid #f59e0b" : "2px solid transparent",
                   borderColor: "var(--border)",
                 }}
               >
@@ -227,7 +227,7 @@ export default function MessagesClient({
                     {c.unread && (
                       <span
                         className="ml-auto w-2 h-2 rounded-full"
-                        style={{ background: "#e8702a" }}
+                        style={{ background: "#f59e0b" }}
                       />
                     )}
                   </div>
@@ -290,10 +290,10 @@ export default function MessagesClient({
                         className="px-3 py-2"
                         style={{
                           background: mine
-                            ? "rgba(232, 112, 42,0.12)"
+                            ? "rgba(245, 158, 11,0.12)"
                             : "var(--card-elev)",
                           border: `1px solid ${
-                            mine ? "rgba(232, 112, 42,0.35)" : "var(--border)"
+                            mine ? "rgba(245, 158, 11,0.35)" : "var(--border)"
                           }`,
                           color: "var(--text-primary)",
                         }}

@@ -1,4 +1,4 @@
-﻿// Tiny markdown renderer. Handles: # / ## / ### headings, blank-line paragraphs,
+// Tiny markdown renderer. Handles: # / ## / ### headings, blank-line paragraphs,
 // - bullet lists, **bold**, *italic*, `inline code`. No HTML escaping beyond
 // what React does automatically.
 
@@ -25,7 +25,7 @@ function inline(text: string, keyBase: string): React.ReactNode[] {
         <code
           key={`${keyBase}-c-${i++}`}
           className="font-mono text-[0.85em] px-1"
-          style={{ background: "var(--card)", color: "#e8702a" }}
+          style={{ background: "var(--card)", color: "#f59e0b" }}
         >
           {tok.slice(1, -1)}
         </code>,

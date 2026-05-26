@@ -108,8 +108,8 @@ export default function Sidebar({
       className="flex flex-col fixed left-0 top-0 h-screen"
       style={{
         width,
-        background: "rgba(3, 2, 1, 0.97)",
-        borderRight: "0.5px solid rgba(232, 112, 42, 0.1)",
+        background: "#161b22",
+        borderRight: "1px solid #21262d",
         transition: "width 0.25s ease",
         overflow: "hidden",
       }}
@@ -120,7 +120,7 @@ export default function Sidebar({
         style={{
           gap: 8,
           justifyContent: collapsed ? "center" : "flex-start",
-          borderBottom: "0.5px solid rgba(232,112,42,0.08)",
+          borderBottom: "1px solid #21262d",
         }}
       >
         <LogoMark size={22} />
@@ -154,23 +154,19 @@ export default function Sidebar({
               key={item.href}
               href={item.href}
               title={collapsed ? item.label : undefined}
-              className="block font-mono lowercase transition-colors"
+              className={`nav-item font-mono lowercase${active ? " active" : ""}`}
               style={{
-                fontSize: collapsed ? 11 : 10,
-                letterSpacing: "0.03em",
-                color: active ? "#ffffff" : "#555555",
-                background: active ? "rgba(232,112,42,0.05)" : "transparent",
-                borderRight: active ? "2px solid #e8702a" : "2px solid transparent",
-                padding: collapsed ? "10px 0" : "8px 12px",
-                marginBottom: 2,
-                textAlign: collapsed ? "center" : "left",
+                fontSize: collapsed ? 11 : 11,
+                justifyContent: collapsed ? "center" : "flex-start",
+                padding: collapsed ? "8px 0" : "6px 10px",
               }}
             >
               {collapsed ? (
                 firstLetter
               ) : (
                 <>
-                  {item.label}
+                  <span className="nav-dot" />
+                  <span>{item.label}</span>
                   {item.href === "/home" && showHomeDot && (
                     <span className="nav-unseen-dot" aria-label="weekly summary available" />
                   )}

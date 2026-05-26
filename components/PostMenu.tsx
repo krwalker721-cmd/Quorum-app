@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 
@@ -142,7 +142,7 @@ export default function PostMenu({ postId }: { postId: string }) {
                   onClick={submitNominate}
                   disabled={busy || reason.trim().length === 0}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                  style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+                  style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                 >
                   {busy ? "sendingâ€¦" : "nominate â†’"}
                 </button>
@@ -193,7 +193,7 @@ export default function PostMenu({ postId }: { postId: string }) {
                   onClick={submitReport}
                   disabled={reportBusy}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                  style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+                  style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                 >
                   {reportBusy ? "sendingâ€¦" : "submit report"}
                 </button>

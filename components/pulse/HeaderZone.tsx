@@ -1,4 +1,4 @@
-﻿import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { ROOM_TYPE_COLOR, TAG_COLOR } from "@/lib/stage";
 import FoundersInRoomCount from "@/components/pulse/FoundersInRoomCount";
 import InTheRoomGrid from "@/components/pulse/InTheRoomGrid";
@@ -96,7 +96,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
 
   const cardBase: React.CSSProperties = {
     background: "var(--bg2, var(--card-elev))",
-    borderColor: "rgba(232, 112, 42, 0.18)",
+    borderColor: "rgba(88, 166, 255, 0.22)",
   };
 
   const topTag = top3[0];
@@ -104,7 +104,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
   const thirdTag = top3[2];
 
   function tagColor(t: string) {
-    return ROOM_TYPE_COLOR[t] ?? TAG_COLOR[t] ?? "#e8702a";
+    return ROOM_TYPE_COLOR[t] ?? TAG_COLOR[t] ?? "#f59e0b";
   }
 
   return (

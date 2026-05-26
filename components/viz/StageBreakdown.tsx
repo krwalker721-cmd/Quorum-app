@@ -1,4 +1,4 @@
-﻿import VizCard from "./VizCard";
+import VizCard from "./VizCard";
 
 const STAGES: { key: string; label: string }[] = [
   { key: "idea", label: "idea" },
@@ -32,7 +32,7 @@ export default function StageBreakdown({ counts }: { counts: Record<string, numb
                   style={{
                     width: `${pct}%`,
                     height: "100%",
-                    background: "#e8702a",
+                    background: "#f59e0b",
                     opacity: n === 0 ? 0.05 : 0.25 + 0.75 * (n / max),
                     transition: "width 200ms ease",
                   }}

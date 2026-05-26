@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ROOM_TYPE_COLOR, TAG_COLOR } from "@/lib/stage";
 
@@ -21,9 +21,9 @@ export default async function TrendingTags() {
   const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
   function colorFor(tag: string, rank: number) {
-    if (rank === 0) return "#e8702a";
-    if (rank < 3) return "rgba(232, 112, 42, 0.7)";
-    return "#707070";
+    if (rank === 0) return "#f59e0b";
+    if (rank < 3) return "rgba(245, 158, 11, 0.7)";
+    return "#6e7681";
   }
   function sizeFor(rank: number) {
     if (rank === 0) return "1.15rem";

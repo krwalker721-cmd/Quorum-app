@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -149,7 +149,7 @@ export default function PulseFeed({
         >
           <p className="font-mono lowercase text-[0.7rem] text-text-muted">
             filtered by{" "}
-            <span style={{ color: "#e8702a" }}>#{tagFilter}</span>
+            <span style={{ color: "#f59e0b" }}>#{tagFilter}</span>
           </p>
           <button
             onClick={clearFilter}

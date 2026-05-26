@@ -1,4 +1,4 @@
-﻿import VizCard from "./VizCard";
+import VizCard from "./VizCard";
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 // Four 6-hour slots labeled by their start.
@@ -62,7 +62,7 @@ export default function ActivityHeatmap({
                 key={`${day}-${si}`}
                 title={`${grid[di][si]} post${grid[di][si] === 1 ? "" : "s"}`}
                 style={{
-                  background: `rgba(232, 112, 42,${0.05 + v * 0.75})`,
+                  background: `rgba(245, 158, 11,${0.05 + v * 0.75})`,
                   aspectRatio: "1.4 / 1",
                   minHeight: 10,
                   border: "1px solid var(--border)",

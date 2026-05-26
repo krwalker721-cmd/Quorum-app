@@ -1,4 +1,4 @@
-﻿import ThemeToggle from "@/components/ThemeToggle";
+import ThemeToggle from "@/components/ThemeToggle";
 import NewPostButton from "@/components/NewPostButton";
 import SignOutButton from "@/components/SignOutButton";
 
@@ -17,10 +17,8 @@ export default function TopBar({
     <div
       className="flex items-center justify-between px-6 py-3 sticky top-0 z-30"
       style={{
-        background: "rgba(3, 2, 1, 0.7)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        borderBottom: "0.5px solid rgba(232, 112, 42, 0.07)",
+        background: "#161b22",
+        borderBottom: "1px solid #21262d",
       }}
     >
       <div>
@@ -30,8 +28,8 @@ export default function TopBar({
       <div className="flex items-center gap-3">
         <ThemeToggle />
         <span
-          className="font-mono uppercase text-[0.6rem] tracking-wider px-2 py-1 border"
-          style={{ borderColor: "#e8702a", color: "#e8702a", letterSpacing: "0.08em" }}
+          className="tier-badge font-mono uppercase tracking-wider"
+          style={{ letterSpacing: "0.08em" }}
         >
           {tier}
         </span>

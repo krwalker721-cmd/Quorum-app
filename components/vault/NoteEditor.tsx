@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -151,9 +151,9 @@ export default function NoteEditor({
             onClick={() => toggleTag(t)}
             className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
             style={{
-              border: "1px solid rgba(232, 112, 42,0.4)",
-              color: "#e8702a",
-              background: "rgba(232, 112, 42,0.06)",
+              border: "1px solid rgba(245, 158, 11,0.4)",
+              color: "#f59e0b",
+              background: "rgba(245, 158, 11,0.06)",
             }}
           >
             {t} Ã—
@@ -305,7 +305,7 @@ function BlockRow({
   }
   if (block.type === "quote") {
     return Wrap(
-      <div className="pl-3 italic" style={{ borderLeft: "3px solid #e8702a" }}>
+      <div className="pl-3 italic" style={{ borderLeft: "3px solid #58a6ff" }}>
         <Auto
           value={text}
           onChange={onChange}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -36,11 +36,11 @@ type SkillEntry = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  growth: "#e8702a",
+  growth: "#f59e0b",
   fundraising: "#38bdf8",
-  hiring: "#707070",
-  product: "#707070",
-  ops: "#707070",
+  hiring: "#6e7681",
+  product: "#6e7681",
+  ops: "#6e7681",
 };
 
 type Tab = "projects" | "needs" | "skills";
@@ -92,8 +92,8 @@ export default function CollabBoardClient({
                 onClick={() => setTab(t)}
                 className="font-mono lowercase text-[0.7rem] px-3 py-2"
                 style={{
-                  color: active ? "#e8702a" : "var(--text-muted)",
-                  borderBottom: active ? "2px solid #e8702a" : "2px solid transparent",
+                  color: active ? "#f59e0b" : "var(--text-muted)",
+                  borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
                 }}
               >
                 {label}
@@ -105,7 +105,7 @@ export default function CollabBoardClient({
           <button
             onClick={() => openNew(tab === "needs" ? "need" : "project")}
             className="font-mono lowercase text-[0.7rem] px-3 py-1.5 mb-2 hover:opacity-90"
-            style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+            style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
           >
             + post a {tab === "needs" ? "need" : "project"}
           </button>
@@ -185,7 +185,7 @@ function ProjectCard({
 }) {
   const closed = project.status === "closed";
   const isMember = project.is_member || project.owner_id === currentUserId;
-  const catColor = project.category ? CATEGORY_COLOR[project.category] ?? "#707070" : "#707070";
+  const catColor = project.category ? CATEGORY_COLOR[project.category] ?? "#6e7681" : "#6e7681";
 
   const inner = (
     <article
@@ -216,8 +216,8 @@ function ProjectCard({
           <span
             className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
             style={{
-              border: `1px solid ${closed ? "#707070" : "#22c55e"}`,
-              color: closed ? "#707070" : "#22c55e",
+              border: `1px solid ${closed ? "#6e7681" : "#22c55e"}`,
+              color: closed ? "#6e7681" : "#22c55e",
             }}
           >
             {closed ? "closed" : "open"}
@@ -277,12 +277,12 @@ function ProjectCard({
         {closed ? (
           <span
             className="font-mono lowercase text-[0.65rem] px-2 py-0.5"
-            style={{ border: "1px solid #707070", color: "#707070" }}
+            style={{ border: "1px solid #6e7681", color: "#6e7681" }}
           >
             filled
           </span>
         ) : isMember ? (
-          <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#e8702a" }}>
+          <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#f59e0b" }}>
             open room â†’
           </span>
         ) : (
@@ -293,7 +293,7 @@ function ProjectCard({
               onRespond(project);
             }}
             className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
-            style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+            style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
           >
             respond â†’
           </button>
@@ -322,7 +322,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
     <div className="space-y-3 max-w-3xl">
       {rows.map((n) => {
         const isQuick = n.category === "quick_ask";
-        const badgeColor = isQuick ? "#e8702a" : "#707070";
+        const badgeColor = isQuick ? "#f59e0b" : "#6e7681";
         return (
           <article
             key={n.id}
@@ -375,7 +375,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
                 <Link
                   href={`/messages?to=${n.owner_id}`}
                   className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
-                  style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+                  style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                 >
                   respond â†’
                 </Link>
@@ -415,7 +415,7 @@ function SkillsIndex({
             <span className="font-mono lowercase text-sm text-text-primary">{e.skill.toLowerCase()}</span>
             <span
               className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-              style={{ border: "1px solid #e8702a", color: "#e8702a" }}
+              style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
             >
               {e.members.length}
             </span>

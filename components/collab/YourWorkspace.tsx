@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
@@ -26,11 +26,11 @@ export type WorkspaceProject = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  growth: "#e8702a",
+  growth: "#f59e0b",
   fundraising: "#38bdf8",
-  hiring: "#707070",
-  product: "#707070",
-  ops: "#707070",
+  hiring: "#6e7681",
+  product: "#6e7681",
+  ops: "#6e7681",
 };
 
 export default function YourWorkspace({
@@ -72,7 +72,7 @@ export default function YourWorkspace({
 
 function WorkspaceCard({ project }: { project: WorkspaceProject }) {
   const online = usePresence();
-  const catColor = project.category ? CATEGORY_COLOR[project.category] ?? "#707070" : "#707070";
+  const catColor = project.category ? CATEGORY_COLOR[project.category] ?? "#6e7681" : "#6e7681";
 
   return (
     <Link
@@ -83,7 +83,7 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
         className="p-5"
         style={{
           background: "var(--card-elev)",
-          borderLeft: "3px solid #e8702a",
+          borderLeft: "3px solid #58a6ff",
           borderTop: "1px solid var(--border)",
           borderRight: "1px solid var(--border)",
           borderBottom: "1px solid var(--border)",
@@ -157,9 +157,9 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
               onClick={(e) => e.stopPropagation()}
               className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
               style={{
-                background: "rgba(232, 112, 42,0.12)",
-                border: "1px solid #e8702a",
-                color: "#e8702a",
+                background: "rgba(245, 158, 11,0.12)",
+                border: "1px solid #f59e0b",
+                color: "#f59e0b",
               }}
             >
               decision needs your vote â†’

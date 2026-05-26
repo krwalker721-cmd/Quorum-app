@@ -1,4 +1,4 @@
-﻿import VizCard from "./VizCard";
+import VizCard from "./VizCard";
 import { STAGE_COLOR } from "@/lib/stage";
 
 type Member = { id: string; full_name: string | null; stage: string | null };
@@ -25,7 +25,7 @@ export default function CohortNetwork({ members }: { members: Member[] }) {
             <line
               key={`c-line-${m.id}`}
               x1={cx} y1={cy} x2={p.x} y2={p.y}
-              stroke="#e8702a" strokeWidth="0.8" opacity="0.6"
+              stroke="#f59e0b" strokeWidth="0.8" opacity="0.6"
             />
           );
         })}
@@ -35,7 +35,7 @@ export default function CohortNetwork({ members }: { members: Member[] }) {
             <line
               key={`p-line-${m.id}`}
               x1={cx} y1={cy} x2={p.x} y2={p.y}
-              stroke="#707070" strokeWidth="0.5" opacity="0.4"
+              stroke="#6e7681" strokeWidth="0.5" opacity="0.4"
             />
           );
         })}
@@ -45,7 +45,7 @@ export default function CohortNetwork({ members }: { members: Member[] }) {
             <circle
               key={`c-${m.id}`}
               cx={p.x} cy={p.y} r="3"
-              fill={(m.stage && STAGE_COLOR[m.stage]) || "#707070"}
+              fill={(m.stage && STAGE_COLOR[m.stage]) || "#6e7681"}
             />
           );
         })}
@@ -55,12 +55,12 @@ export default function CohortNetwork({ members }: { members: Member[] }) {
             <circle
               key={`p-${m.id}`}
               cx={p.x} cy={p.y} r="2"
-              fill="#707070" opacity="0.7"
+              fill="#6e7681" opacity="0.7"
             />
           );
         })}
-        <circle cx={cx} cy={cy} r="5" fill="#e8702a" />
-        <circle cx={cx} cy={cy} r="9" fill="none" stroke="#e8702a" strokeWidth="0.5" opacity="0.4" />
+        <circle cx={cx} cy={cy} r="5" fill="#f59e0b" />
+        <circle cx={cx} cy={cy} r="9" fill="none" stroke="#f59e0b" strokeWidth="0.5" opacity="0.4" />
       </svg>
       <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-2">
         you Â· {cohort.length} cohort Â· {pulse.length} pulse

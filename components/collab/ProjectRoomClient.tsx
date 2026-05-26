@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -139,8 +139,8 @@ export default function ProjectRoomClient({
           <span
             className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
             style={{
-              border: `1px solid ${project.status === "closed" ? "#707070" : "#22c55e"}`,
-              color: project.status === "closed" ? "#707070" : "#22c55e",
+              border: `1px solid ${project.status === "closed" ? "#6e7681" : "#22c55e"}`,
+              color: project.status === "closed" ? "#6e7681" : "#22c55e",
             }}
           >
             {project.status === "closed" ? "closed" : "active"}
@@ -182,7 +182,7 @@ export default function ProjectRoomClient({
               {project.category && (
                 <span
                   className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto"
-                  style={{ border: "1px solid #e8702a", color: "#e8702a" }}
+                  style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
                 >
                   {project.category}
                 </span>
@@ -209,8 +209,8 @@ export default function ProjectRoomClient({
                   onClick={() => setTab(t)}
                   className="font-mono lowercase text-[0.7rem] px-3 py-2"
                   style={{
-                    color: active ? "#e8702a" : "var(--text-muted)",
-                    borderBottom: active ? "2px solid #e8702a" : "2px solid transparent",
+                    color: active ? "#f59e0b" : "var(--text-muted)",
+                    borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
                   }}
                 >
                   {label}
@@ -286,9 +286,9 @@ export default function ProjectRoomClient({
 
           <div
             className="p-4 border"
-            style={{ background: "rgba(232, 112, 42,0.06)", borderColor: "rgba(232, 112, 42,0.35)" }}
+            style={{ background: "rgba(88, 166, 255, 0.06)", borderColor: "rgba(88, 166, 255, 0.35)" }}
           >
-            <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#e8702a" }}>
+            <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#58a6ff" }}>
               â—ˆ log handshake
             </p>
             <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2">
@@ -334,7 +334,7 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
       </div>
       {total !== undefined && total > 0 && (
         <div className="h-1 mt-1" style={{ background: "var(--border)" }}>
-          <div className="h-1" style={{ background: "#e8702a", width: `${pct}%` }} />
+          <div className="h-1" style={{ background: "#f59e0b", width: `${pct}%` }} />
         </div>
       )}
     </div>
@@ -440,8 +440,8 @@ function ThreadTab({
                 <div
                   className="max-w-[72%] px-3 py-2"
                   style={{
-                    background: mine ? "rgba(232, 112, 42,0.12)" : "var(--card)",
-                    border: `1px solid ${mine ? "rgba(232, 112, 42,0.35)" : "var(--border)"}`,
+                    background: mine ? "rgba(245, 158, 11,0.12)" : "var(--card)",
+                    border: `1px solid ${mine ? "rgba(245, 158, 11,0.35)" : "var(--border)"}`,
                   }}
                 >
                   {!mine && (
@@ -477,7 +477,7 @@ function ThreadTab({
           onClick={send}
           disabled={busy || !text.trim()}
           className="font-mono lowercase text-[0.7rem] px-4 py-2 hover:opacity-90 disabled:opacity-50"
-          style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+          style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
         >
           send
         </button>
@@ -540,7 +540,7 @@ function DocsTab({
             className="p-4 border flex items-start gap-3"
             style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
           >
-            <span className="font-mono text-lg" style={{ color: "#e8702a" }}>
+            <span className="font-mono text-lg" style={{ color: "#f59e0b" }}>
               â–¤
             </span>
             <div className="min-w-0 flex-1">
@@ -590,7 +590,7 @@ function DocsTab({
               onClick={submit}
               disabled={busy || !title.trim()}
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+              style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
               add â†’
             </button>
@@ -735,8 +735,8 @@ function DecisionsTab({
               <span
                 className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
                 style={{
-                  border: `1px solid ${d.status === "decided" ? "#22c55e" : "#e8702a"}`,
-                  color: d.status === "decided" ? "#22c55e" : "#e8702a",
+                  border: `1px solid ${d.status === "decided" ? "#22c55e" : "#f59e0b"}`,
+                  color: d.status === "decided" ? "#22c55e" : "#f59e0b",
                 }}
               >
                 {d.status}
@@ -765,9 +765,9 @@ function DecisionsTab({
                       onClick={() => vote(d, label)}
                       className="font-mono lowercase text-[0.65rem] px-3 py-1"
                       style={{
-                        border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
-                        color: active ? "#e8702a" : "var(--text-muted)",
-                        background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
+                        border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
+                        color: active ? "#f59e0b" : "var(--text-muted)",
+                        background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
                       }}
                     >
                       {label.toLowerCase()} {tally[label] ? `Â· ${tally[label]}` : ""}
@@ -820,7 +820,7 @@ function DecisionsTab({
               onClick={submit}
               disabled={busy || !title.trim()}
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+              style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
               open decision â†’
             </button>

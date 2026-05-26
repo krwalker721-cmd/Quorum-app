@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -73,8 +73,8 @@ export default function CommunityWisdomTab({
         <div
           className="mb-4 px-3 py-2 border-l-2 vault-toast"
           style={{
-            borderLeftColor: "#e8702a",
-            background: "rgba(232, 112, 42,0.05)",
+            borderLeftColor: "#f59e0b",
+            background: "rgba(245, 158, 11,0.05)",
             color: "var(--text-muted)",
           }}
         >
@@ -91,9 +91,9 @@ export default function CommunityWisdomTab({
               onClick={() => setTag(t)}
               className="font-mono lowercase text-[0.65rem] px-3 py-1.5 border transition-colors"
               style={{
-                borderColor: active ? "#e8702a" : "var(--border)",
-                color: active ? "#e8702a" : "var(--text-faint)",
-                background: active ? "rgba(232, 112, 42,0.06)" : "transparent",
+                borderColor: active ? "#f59e0b" : "var(--border)",
+                color: active ? "#f59e0b" : "var(--text-faint)",
+                background: active ? "rgba(245, 158, 11,0.06)" : "transparent",
               }}
             >
               {t}
@@ -123,7 +123,7 @@ export default function CommunityWisdomTab({
 }
 
 function WisdomCard({ item }: { item: WisdomItem }) {
-  const color = item.post.tag ? TAG_COLOR[item.post.tag] ?? "#707070" : "#707070";
+  const color = item.post.tag ? TAG_COLOR[item.post.tag] ?? "#6e7681" : "#6e7681";
   return (
     <article
       className="p-4 border"
@@ -164,7 +164,7 @@ function WisdomCard({ item }: { item: WisdomItem }) {
           )}
           <span
             className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-            style={{ border: "1px solid #e8702a", color: "#e8702a" }}
+            style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
           >
             vaulted
           </span>
@@ -282,7 +282,7 @@ function GhostPreview({ post }: { post: GhostPost }) {
         <Link
           href={`/pulse#${post.id}`}
           className="font-mono lowercase text-[0.7rem] px-3 py-1 inline-block"
-          style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+          style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
         >
           nominate this â†’
         </Link>

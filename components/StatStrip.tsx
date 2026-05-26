@@ -1,17 +1,8 @@
-﻿function SegmentedBar({ filled, total = 12 }: { filled: number; total?: number }) {
+function SegmentedBar({ filled, total = 12 }: { filled: number; total?: number }) {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-0.5 items-center">
       {Array.from({ length: total }).map((_, i) => (
-        <span
-          key={i}
-          style={{
-            display: "inline-block",
-            width: 6,
-            height: 8,
-            background: i < filled ? "#e8702a" : "var(--border)",
-            opacity: i < filled ? 1 : 0.6,
-          }}
-        />
+        <span key={i} className={`seg${i < filled ? " on" : ""}`} />
       ))}
     </div>
   );
@@ -27,12 +18,10 @@ function Stat({
   bar?: { filled: number; total?: number };
 }) {
   return (
-    <div className="flex flex-col gap-1 pr-6 min-w-0">
-      <span className="font-mono lowercase text-[0.6rem] tracking-wider text-text-faint">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-sm text-text-primary">{value}</span>
-        {bar && <SegmentedBar filled={bar.filled} total={bar.total} />}
-      </div>
+    <div className="stat-item">
+      <span className="stat-label font-mono lowercase">{label}</span>
+      <span className="stat-value font-mono">{value}</span>
+      {bar && <SegmentedBar filled={bar.filled} total={bar.total} />}
     </div>
   );
 }
@@ -53,10 +42,7 @@ export default function StatStrip({
   trustScore: number;
 }) {
   return (
-    <div
-      className="flex items-center px-6 py-3 border-b overflow-x-auto scroll-thin"
-      style={{ background: "var(--card)", borderColor: "var(--border)" }}
-    >
+    <div className="stat-strip overflow-x-auto scroll-thin">
       <Stat label="members" value={members} />
       <Stat label="active_now" value={activeNow} />
       <Stat label="posts_7d" value={posts7d} />

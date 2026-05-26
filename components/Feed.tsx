@@ -36,27 +36,27 @@ export default function Feed({ initial }: { initial: PostWithAuthor[] }) {
   const pulse = posts.filter((p) => p.post_type === "pulse");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <section>
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint mb-3 tracking-wider">
-          cohort_feed
-        </p>
+        <p className="widget-title font-mono lowercase mb-3">cohort_feed</p>
         <div className="space-y-3">
           {cohort.length === 0 ? (
-            <p className="font-mono lowercase text-xs text-text-faint">no posts in your cohort yet.</p>
+            <div className="widget">
+              <p className="empty-state font-mono lowercase">no posts in your cohort yet.</p>
+            </div>
           ) : (
             cohort.map((p) => <PostCard key={p.id} post={p} />)
           )}
         </div>
       </section>
 
-      <div className="border-t" style={{ borderColor: "var(--border)" }} />
-
       <section>
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint mb-3 tracking-wider">pulse</p>
+        <p className="widget-title font-mono lowercase mb-3">pulse</p>
         <div className="space-y-3">
           {pulse.length === 0 ? (
-            <p className="font-mono lowercase text-xs text-text-faint">nothing on the pulse yet.</p>
+            <div className="widget">
+              <p className="empty-state font-mono lowercase">nothing on the pulse yet.</p>
+            </div>
           ) : (
             pulse.map((p) => <PostCard key={p.id} post={p} />)
           )}

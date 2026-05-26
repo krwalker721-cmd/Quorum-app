@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { loadSession, saveSession, clearSession, verifyCode, adminFetch } from "./lib/api";
@@ -61,7 +61,7 @@ export default function AdminApp() {
   }, [authed]);
 
   if (!ready) {
-    return <main className="min-h-screen" style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }} />;
+    return <main className="min-h-screen" style={{ backgroundColor: '#0d1117', backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)', backgroundSize: '28px 28px', backgroundAttachment: 'fixed' }} />;
   }
 
   if (!authed) {
@@ -69,7 +69,7 @@ export default function AdminApp() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#0d1117', backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)', backgroundSize: '28px 28px', backgroundAttachment: 'fixed' }}>
       <aside
         className="w-56 border-r flex flex-col"
         style={{ borderColor: "var(--border)", background: "var(--card)" }}
@@ -97,7 +97,7 @@ export default function AdminApp() {
                 }`}
                 style={
                   active
-                    ? { borderLeft: "2px solid #e8702a", background: "rgba(232, 112, 42,0.06)" }
+                    ? { borderLeft: "2px solid #f59e0b", background: "rgba(245, 158, 11,0.06)" }
                     : { borderLeft: "2px solid transparent" }
                 }
               >
@@ -105,7 +105,7 @@ export default function AdminApp() {
                 {badge !== null && (
                   <span
                     className="font-mono text-[0.6rem] px-1.5 py-0.5"
-                    style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+                    style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                   >
                     {badge}
                   </span>
@@ -162,7 +162,7 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
   return (
     <main
       className="min-h-screen flex items-center justify-center px-6"
-      style={{ backgroundColor: '#060504', backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)', backgroundSize: 'auto, 28px 28px, 28px 28px', backgroundAttachment: 'fixed' }}
+      style={{ backgroundColor: '#0d1117', backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)', backgroundSize: '28px 28px', backgroundAttachment: 'fixed' }}
     >
       <form onSubmit={submit} className="w-full max-w-sm">
         <p className="font-mono lowercase text-[0.65rem] text-text-faint text-center mb-1">
@@ -188,7 +188,7 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
           type="submit"
           disabled={busy || !code}
           className="w-full mt-5 font-mono lowercase text-xs py-2.5 disabled:opacity-50"
-          style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+          style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
         >
           {busy ? "checkingâ€¦" : "submit"}
         </button>

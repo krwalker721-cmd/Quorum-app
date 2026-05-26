@@ -1,4 +1,4 @@
-﻿import Avatar from "@/components/Avatar";
+import Avatar from "@/components/Avatar";
 import { TAG_COLOR, ROOM_TYPE_COLOR, timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
 import BookmarkButton from "@/components/BookmarkButton";
@@ -30,7 +30,7 @@ export type PostWithAuthor = {
 
 export default function PostCard({ post }: { post: PostWithAuthor }) {
   const anon = post.is_anonymous;
-  const tagColor = post.tag ? TAG_COLOR[post.tag] ?? "#707070" : "#707070";
+  const tagColor = post.tag ? TAG_COLOR[post.tag] ?? "#6e7681" : "#6e7681";
   const lateNight = is2amPost(post);
   const moved = !!post.movedTheRoom;
 
@@ -47,9 +47,9 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   // Left-border treatment â€” chosen by type, then anonymity, then default.
   let leftBorder = `1px solid var(--border-amber)`;
   if (anon) {
-    leftBorder = "2px solid #3a3a3a";
+    leftBorder = "2px solid #30363d";
   } else if (isDecision || isBlocker) {
-    leftBorder = "3px solid rgba(232, 112, 42, 0.75)";
+    leftBorder = "3px solid rgba(245, 158, 11, 0.75)";
   } else if (isWin) {
     leftBorder = "3px solid rgba(34, 197, 94, 0.75)";
   } else if (isQuestion) {
@@ -64,7 +64,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   const winTint = isWin ? "rgba(34, 197, 94, 0.025)" : "var(--card-elev)";
 
   const borderColor = isDecision || isBlocker
-    ? "rgba(232, 112, 42, 0.4)"
+    ? "rgba(245, 158, 11, 0.4)"
     : "var(--border-amber)";
 
   const classes = [
@@ -84,7 +84,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         borderColor,
         borderLeft: leftBorder,
         boxShadow: lateNight
-          ? "0 0 22px 1px rgba(232, 112, 42, 0.10), 0 0 4px rgba(232, 112, 42, 0.06)"
+          ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
           : undefined,
       }}
     >
@@ -94,7 +94,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           <span
             aria-hidden
             className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "#e8702a", boxShadow: "0 0 6px rgba(232, 112, 42,0.7)" }}
+            style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(245, 158, 11,0.7)" }}
           />
         )}
         {isActive && !anon && (
@@ -157,7 +157,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           {(isDecision || isBlocker) && (
             <span
               className="font-mono lowercase tracking-wider"
-              style={{ color: "#e8702a", fontSize: "9px" }}
+              style={{ color: "#f59e0b", fontSize: "9px" }}
             >
               needs input
             </span>
@@ -176,8 +176,8 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
             <span
               className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
               style={{
-                border: `1px solid ${ROOM_TYPE_COLOR[roomType] ?? "#707070"}`,
-                color: ROOM_TYPE_COLOR[roomType] ?? "#707070",
+                border: `1px solid ${ROOM_TYPE_COLOR[roomType] ?? "#6e7681"}`,
+                color: ROOM_TYPE_COLOR[roomType] ?? "#6e7681",
                 background: "transparent",
               }}
             >

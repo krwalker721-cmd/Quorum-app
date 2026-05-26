@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -102,9 +102,9 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
       style={{
         background: "var(--card-elev)",
         borderRadius: 8,
-        borderLeft: "3px solid #e8702a",
+        borderLeft: "3px solid #58a6ff",
         padding: "20px 24px",
-        boxShadow: "0 0 32px var(--glow-soft), 0 0 64px var(--glow-soft)",
+        boxShadow: "0 0 32px rgba(88, 166, 255, 0.05), 0 0 64px rgba(88, 166, 255, 0.04)",
       }}
     >
       <p
@@ -187,7 +187,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
                 >
                   <div
                     className="font-mono uppercase tracking-wider"
-                    style={{ fontSize: 9, color: "#e8702a", marginBottom: 4 }}
+                    style={{ fontSize: 9, color: "#f59e0b", marginBottom: 4 }}
                   >
                     {h.label}
                   </div>

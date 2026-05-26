@@ -1,4 +1,4 @@
-﻿export default function LockedCollabBoard() {
+export default function LockedCollabBoard() {
   return (
     <div className="relative" style={{ minHeight: "calc(100vh - 60px)" }}>
       {/* Blurred preview behind */}
@@ -33,7 +33,7 @@
       >
         <div
           className="max-w-md w-full text-center p-8 border"
-          style={{ background: "var(--card-elev)", borderColor: "rgba(232, 112, 42,0.4)" }}
+          style={{ background: "var(--card-elev)", borderColor: "rgba(88, 166, 255, 0.40)" }}
         >
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">tier_2 exclusive</p>
           <h2 className="font-sans text-2xl text-text-primary mt-2 lowercase">collab_board</h2>
@@ -45,7 +45,7 @@
           </p>
           <button
             className="font-mono lowercase text-xs px-4 py-2 mt-4 hover:opacity-90"
-            style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+            style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             disabled
           >
             upgrade â†’

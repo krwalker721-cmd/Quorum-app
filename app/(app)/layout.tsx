@@ -1,4 +1,4 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
@@ -70,12 +70,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <PresenceProvider currentUserId={user.id}>
       <div
-        className="min-h-screen"
+        className="min-h-screen root-layout"
         style={{
-          backgroundColor: "#060504",
+          backgroundColor: "#0d1117",
           backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(232, 112, 42, 0.018) 3px, rgba(232, 112, 42, 0.018) 4px), linear-gradient(rgba(232, 112, 42, 0.065) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 112, 42, 0.065) 1px, transparent 1px)",
-          backgroundSize: "auto, 28px 28px, 28px 28px",
+            "linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
           backgroundAttachment: "fixed",
         }}
       >

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -103,9 +103,9 @@ export default function NewProjectModal({
                   onClick={() => setCategory(c)}
                   className="font-mono lowercase text-[0.65rem] px-2 py-1"
                   style={{
-                    border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
-                    color: active ? "#e8702a" : "var(--text-muted)",
-                    background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
+                    border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
+                    color: active ? "#f59e0b" : "var(--text-muted)",
+                    background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
                   }}
                 >
                   {c}
@@ -140,7 +140,7 @@ export default function NewProjectModal({
             onClick={submit}
             disabled={busy || !title.trim()}
             className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
-            style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+            style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
           >
             {busy ? "..." : "post â†’"}
           </button>

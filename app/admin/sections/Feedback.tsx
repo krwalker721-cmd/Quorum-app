@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { adminFetch, loadSession } from "../lib/api";
@@ -75,7 +75,7 @@ export default function FeedbackSection() {
                   onClick={() => setSelected(q)}
                   className="w-full text-left border p-3"
                   style={{
-                    borderColor: selected?.id === q.id ? "#e8702a" : "var(--border)",
+                    borderColor: selected?.id === q.id ? "#f59e0b" : "var(--border)",
                     background: "var(--card)",
                   }}
                 >
@@ -84,7 +84,7 @@ export default function FeedbackSection() {
                       className="font-mono text-[0.55rem] lowercase px-1.5 py-0.5"
                       style={{
                         background: q.status === "active" ? "rgba(34,197,94,0.15)" : "rgba(112,112,112,0.15)",
-                        color: q.status === "active" ? "#22c55e" : "#707070",
+                        color: q.status === "active" ? "#22c55e" : "#6e7681",
                       }}
                     >
                       {q.status}
@@ -259,7 +259,7 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
           type="submit"
           disabled={busy || !question}
           className="w-full font-mono lowercase text-xs py-2.5 disabled:opacity-50"
-          style={{ background: "rgba(232, 112, 42, 0.18)", color: "#e8702a", border: "1px solid rgba(232, 112, 42, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(232, 112, 42, 0.2), inset 0 0 8px rgba(232, 112, 42, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+          style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
         >
           {busy ? "postingâ€¦" : "post question â†’"}
         </button>
@@ -291,7 +291,7 @@ function RatingSummary({ responses }: { responses: Response[] }) {
                 style={{
                   width: `${(d.n / max) * 100}%`,
                   height: "100%",
-                  background: "#e8702a",
+                  background: "#f59e0b",
                 }}
               />
             </div>

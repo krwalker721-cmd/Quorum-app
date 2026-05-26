@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { adminFetch } from "../lib/api";
@@ -42,8 +42,8 @@ export default function ContentSection({
               tab === t ? "text-text-primary" : "text-text-muted"
             }`}
             style={{
-              borderColor: tab === t ? "#e8702a" : "var(--border)",
-              background: tab === t ? "rgba(232, 112, 42,0.06)" : "transparent",
+              borderColor: tab === t ? "#f59e0b" : "var(--border)",
+              background: tab === t ? "rgba(245, 158, 11,0.06)" : "transparent",
             }}
           >
             {t}

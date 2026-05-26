@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { adminFetch } from "../lib/api";
@@ -78,23 +78,23 @@ export default function OverviewSection() {
         <ChartCard title="signups Â· last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={signups}>
-              <CartesianGrid stroke="#2e2e2e" strokeDasharray="3 3" />
-              <XAxis dataKey="date" stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} />
-              <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
+              <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />
+              <XAxis dataKey="date" stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} />
+              <YAxis stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="count" stroke="#e8702a" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="count" stroke="#f59e0b" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
         <ChartCard title="activity Â· last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={activity}>
-              <CartesianGrid stroke="#2e2e2e" strokeDasharray="3 3" />
-              <XAxis dataKey="date" stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} />
-              <YAxis stroke="#707070" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
+              <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />
+              <XAxis dataKey="date" stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} />
+              <YAxis stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 10, fontFamily: "monospace" }} />
-              <Line type="monotone" dataKey="posts" stroke="#e8702a" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="posts" stroke="#f59e0b" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="checkins" stroke="#22c55e" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -144,14 +144,14 @@ function Metric({ label, value, amber }: { label: string; value: number; amber?:
     <div
       className="border p-3"
       style={{
-        borderColor: amber ? "rgba(232, 112, 42,0.4)" : "var(--border)",
+        borderColor: amber ? "rgba(245, 158, 11,0.4)" : "var(--border)",
         background: "var(--card)",
       }}
     >
       <p className="font-mono lowercase text-[0.6rem] text-text-faint">{label}</p>
       <p
         className="font-mono text-2xl mt-1"
-        style={{ color: amber ? "#e8702a" : "var(--text-primary)" }}
+        style={{ color: amber ? "#f59e0b" : "var(--text-primary)" }}
       >
         {value}
       </p>
@@ -193,14 +193,14 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function EventPill({ type }: { type: string }) {
   const colors: Record<string, string> = {
     signup: "#22c55e",
-    post: "#e8702a",
+    post: "#f59e0b",
     nomination: "#a78bfa",
     handshake: "#38bdf8",
   };
   return (
     <span
       className="font-mono text-[0.6rem] lowercase px-1.5 py-0.5 w-24 text-center shrink-0"
-      style={{ background: "rgba(255,255,255,0.04)", color: colors[type] ?? "#c0c0c0" }}
+      style={{ background: "rgba(255,255,255,0.04)", color: colors[type] ?? "#8b949e" }}
     >
       {type}
     </span>
@@ -224,8 +224,8 @@ function Skeleton() {
 }
 
 const tooltipStyle = {
-  background: "#0c0c0c",
-  border: "1px solid #2e2e2e",
+  background: "#161b22",
+  border: "1px solid #21262d",
   fontSize: 10,
   fontFamily: "monospace",
 };

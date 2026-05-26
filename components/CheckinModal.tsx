@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -111,7 +111,7 @@ export default function CheckinModal({
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: i <= step ? "#e8702a" : "var(--border)",
+                  background: i <= step ? "#f59e0b" : "var(--border)",
                   transition: "background 150ms",
                 }}
               />
@@ -179,7 +179,7 @@ export default function CheckinModal({
                       width: 34,
                       height: 18,
                       borderRadius: 9999,
-                      background: anon ? "#e8702a" : "var(--border)",
+                      background: anon ? "#f59e0b" : "var(--border)",
                     }}
                   >
                     <span
@@ -214,9 +214,9 @@ export default function CheckinModal({
                         onClick={() => setRating(r)}
                         className="font-mono lowercase text-xs py-3 transition-colors"
                         style={{
-                          border: `1px solid ${active ? "#e8702a" : "var(--border)"}`,
-                          color: active ? "#e8702a" : "var(--text-muted)",
-                          background: active ? "rgba(232, 112, 42,0.08)" : "transparent",
+                          border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
+                          color: active ? "#f59e0b" : "var(--text-muted)",
+                          background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
                         }}
                       >
                         {r}

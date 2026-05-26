@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -46,9 +46,9 @@ export default function LibraryTab({
               onClick={() => setFilter(f)}
               className="font-mono lowercase text-[0.65rem] px-3 py-1.5 border transition-colors"
               style={{
-                borderColor: active ? "#e8702a" : "var(--border)",
-                color: active ? "#e8702a" : "var(--text-faint)",
-                background: active ? "rgba(232, 112, 42,0.06)" : "transparent",
+                borderColor: active ? "#f59e0b" : "var(--border)",
+                color: active ? "#f59e0b" : "var(--text-faint)",
+                background: active ? "rgba(245, 158, 11,0.06)" : "transparent",
               }}
             >
               {FILTER_LABEL[f]}
@@ -196,7 +196,7 @@ function LibraryEmpty({ communitySaved }: { communitySaved: number }) {
           height="56"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#707070"
+          stroke="#6e7681"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"

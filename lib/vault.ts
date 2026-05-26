@@ -1,4 +1,4 @@
-﻿// Vault â€” shared types for the rebuilt vault system.
+// Vault â€” shared types for the rebuilt vault system.
 
 export const NOTE_TAGS = [
   "decision",
@@ -64,7 +64,7 @@ export const ITEM_TYPE_LABEL: Record<SavedItemType, string> = {
 };
 
 export const ITEM_TYPE_COLOR: Record<SavedItemType, string> = {
-  pulse_post: "#e8702a",
+  pulse_post: "#f59e0b",
   cohort_post: "#38bdf8",
   project: "#a78bfa",
 };
