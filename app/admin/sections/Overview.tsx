@@ -78,7 +78,7 @@ export default function OverviewSection() {
         <ChartCard title="signups · last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={signups}>
-              <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />
+              <CartesianGrid stroke="var(--border-default)" strokeDasharray="3 3" />
               <XAxis dataKey="date" stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} />
               <YAxis stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
@@ -89,7 +89,7 @@ export default function OverviewSection() {
         <ChartCard title="activity · last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={activity}>
-              <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />
+              <CartesianGrid stroke="var(--border-default)" strokeDasharray="3 3" />
               <XAxis dataKey="date" stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} />
               <YAxis stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
@@ -224,7 +224,7 @@ function Skeleton() {
 }
 
 const tooltipStyle = {
-  background: "#161b22",
+  background: "var(--bg-surface)",
   border: "1px solid #21262d",
   fontSize: 10,
   fontFamily: "monospace",

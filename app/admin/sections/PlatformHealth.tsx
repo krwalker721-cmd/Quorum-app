@@ -85,10 +85,10 @@ export default function PlatformHealthSection() {
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data.tagPopularity}>
-              <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />
+              <CartesianGrid stroke="var(--border-default)" strokeDasharray="3 3" />
               <XAxis dataKey="tag" stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} />
               <YAxis stroke="#6e7681" tick={{ fontSize: 10, fontFamily: "monospace" }} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "#161b22", border: "1px solid #21262d", fontSize: 10, fontFamily: "monospace" }} />
+              <Tooltip contentStyle={{ background: "var(--bg-surface)", border: "1px solid #21262d", fontSize: 10, fontFamily: "monospace" }} />
               <Bar dataKey="count" fill="#f59e0b" />
             </BarChart>
           </ResponsiveContainer>

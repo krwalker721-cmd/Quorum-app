@@ -17,8 +17,8 @@ export default function TopBar({
     <div
       className="flex items-center justify-between px-6 py-3 sticky top-0 z-30"
       style={{
-        background: "#161b22",
-        borderBottom: "1px solid #21262d",
+        background: "var(--bg-surface)",
+        borderBottom: "1px solid var(--border-default)",
       }}
     >
       <div>

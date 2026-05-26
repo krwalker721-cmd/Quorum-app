@@ -69,16 +69,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <PresenceProvider currentUserId={user.id}>
-      <div
-        className="min-h-screen root-layout"
-        style={{
-          backgroundColor: "#0d1117",
-          backgroundImage:
-            "linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-          backgroundAttachment: "fixed",
-        }}
-      >
+      <div className="min-h-screen root-layout">
         <Sidebar cohort={cohort} currentUserId={user.id} />
         <div
           style={{

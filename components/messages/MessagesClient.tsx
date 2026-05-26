@@ -178,7 +178,7 @@ export default function MessagesClient({
       {/* LEFT — inbox */}
       <div
         className="flex flex-col border-r"
-        style={{ width: 320, background: "#1c2128", borderColor: "#21262d" }}
+        style={{ width: 320, background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
       >
         <div className="px-4 pt-4 pb-2">
           <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">

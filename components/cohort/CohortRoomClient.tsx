@@ -113,9 +113,9 @@ export default function CohortRoomClient({
         {/* LEFT — roster */}
         <aside
           className="border-r flex flex-col"
-          style={{ width: 260, background: "#1c2128", borderColor: "#21262d" }}
+          style={{ width: 260, background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
         >
-          <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "#21262d" }}>
+          <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "var(--border-default)" }}>
             <p className="font-mono lowercase text-[0.65rem] text-text-faint">room</p>
             <p className="font-sans lowercase text-text-primary text-base mt-0.5 truncate">
               {roomName.toLowerCase()}

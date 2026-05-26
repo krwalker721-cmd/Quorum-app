@@ -108,8 +108,8 @@ export default function Sidebar({
       className="flex flex-col fixed left-0 top-0 h-screen"
       style={{
         width,
-        background: "#161b22",
-        borderRight: "1px solid #21262d",
+        background: "var(--bg-surface)",
+        borderRight: "1px solid var(--border-default)",
         transition: "width 0.25s ease",
         overflow: "hidden",
       }}
@@ -120,14 +120,14 @@ export default function Sidebar({
         style={{
           gap: 8,
           justifyContent: collapsed ? "center" : "flex-start",
-          borderBottom: "1px solid #21262d",
+          borderBottom: "1px solid var(--border-default)",
         }}
       >
         <LogoMark size={22} />
         <span
           className="font-sans tracking-tight lowercase sidebar-fade"
           style={{
-            color: "#ffffff",
+            color: "var(--text-primary)",
             fontSize: 14,
             fontWeight: 700,
             letterSpacing: "-0.5px",
