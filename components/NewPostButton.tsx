@@ -207,8 +207,14 @@ export default function NewPostButton({
                 aria-pressed={anon}
                 className="relative shrink-0"
                 style={{
+                  flex: "0 0 34px",
                   width: 34,
+                  minWidth: 34,
+                  maxWidth: 34,
                   height: 18,
+                  minHeight: 18,
+                  maxHeight: 18,
+                  padding: 0,
                   borderRadius: 9999,
                   background: anon ? "#f59e0b" : "var(--border)",
                   transition: "background 150ms ease",
@@ -227,7 +233,7 @@ export default function NewPostButton({
                   }}
                 />
               </button>
-              <div className="text-[0.7rem] leading-snug">
+              <div className="text-[0.7rem] leading-snug" style={{ flex: "1 1 auto", minWidth: 0 }}>
                 <p className="font-mono lowercase text-text-secondary">post anonymously</p>
                 <p className="font-mono lowercase text-text-faint">
                   {isPulse
