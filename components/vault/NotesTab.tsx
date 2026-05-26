@@ -133,7 +133,7 @@ export default function NotesTab({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="search notesâ€¦"
+            placeholder="search notes…"
             className="w-full bg-transparent border px-2 py-1.5 text-[0.75rem] text-text-secondary focus:outline-none focus:border-amber"
             style={{ borderColor: "var(--border)" }}
           />
@@ -151,7 +151,7 @@ export default function NotesTab({
                   className="w-full text-left font-mono lowercase text-[0.65rem] text-text-faint px-3 py-2 hover:text-text-muted flex items-center justify-between"
                 >
                   <span>
-                    {isCollapsed ? "â–¸" : "â–¾"} {c.name.toLowerCase()}
+                    {isCollapsed ? "" : ""} {c.name.toLowerCase()}
                   </span>
                   <span>{items.length}</span>
                 </button>
@@ -271,7 +271,7 @@ function NoteRowItem({
           className="text-text-faint hover:text-text-primary px-1"
           aria-label="note actions"
         >
-          â‹¯
+
         </button>
       </div>
       <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-0.5">
@@ -353,7 +353,7 @@ function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
               notes you write here are entirely private.
             </p>
             <p className="text-text-muted text-sm leading-relaxed mb-5">
-              capture decisions, frameworks, retrospectives â€” anything worth organizing.
+              capture decisions, frameworks, retrospectives — anything worth organizing.
             </p>
           </>
         )}

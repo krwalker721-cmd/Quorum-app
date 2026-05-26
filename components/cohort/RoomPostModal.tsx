@@ -161,7 +161,7 @@ export default function RoomPostModal({
             disabled={busy || !content.trim()}
             className="btn-primary"
           >
-            {busy ? "..." : "post to room â†’"}
+            {busy ? "..." : "post to room "}
           </button>
         </div>
       </div>

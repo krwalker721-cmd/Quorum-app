@@ -154,7 +154,7 @@ export default function CohortClient({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                    {m.full_name?.toLowerCase() ?? "â€”"}
+                    {m.full_name?.toLowerCase() ?? "—"}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <StagePill stage={m.stage} />
@@ -179,7 +179,7 @@ export default function CohortClient({
                 <Avatar name={selected.full_name} stage={selected.stage} username={selected.username} size={32} />
                 <div className="min-w-0">
                   <p className="font-mono lowercase text-sm text-text-primary truncate">
-                    {selected.full_name?.toLowerCase() ?? "â€”"}
+                    {selected.full_name?.toLowerCase() ?? "—"}
                   </p>
                   <div className="mt-0.5"><StagePill stage={selected.stage} /></div>
                 </div>

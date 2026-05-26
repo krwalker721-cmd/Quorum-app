@@ -95,7 +95,7 @@ export default function FeedbackSection() {
                   </div>
                   <p className="text-text-secondary text-sm">{q.question}</p>
                   <p className="font-mono text-[0.55rem] text-text-faint lowercase mt-1">
-                    {q.question_type} Â· {q.target_audience}
+                    {q.question_type} · {q.target_audience}
                   </p>
                 </button>
               ))
@@ -108,7 +108,7 @@ export default function FeedbackSection() {
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-              responses Â· {selected.question}
+              responses · {selected.question}
             </p>
             <div className="flex gap-2">
               <a
@@ -157,9 +157,9 @@ export default function FeedbackSection() {
                 {responses.map((r) => (
                   <div key={r.id} className="px-4 py-2.5 flex items-start gap-3 text-[0.78rem]">
                     <div className="w-32 shrink-0">
-                      <p className="text-text-secondary text-[0.78rem]">{r.user?.full_name ?? "â€”"}</p>
+                      <p className="text-text-secondary text-[0.78rem]">{r.user?.full_name ?? "—"}</p>
                       <p className="font-mono text-[0.55rem] text-text-faint lowercase">
-                        @{r.user?.username ?? "â€”"}
+                        @{r.user?.username ?? "—"}
                       </p>
                     </div>
                     <p className="text-text-secondary flex-1 whitespace-pre-wrap">{r.response}</p>
@@ -261,7 +261,7 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
           className="w-full font-mono lowercase text-xs py-2.5 disabled:opacity-50"
           style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
         >
-          {busy ? "postingâ€¦" : "post question â†’"}
+          {busy ? "posting…" : "post question "}
         </button>
       </div>
     </form>

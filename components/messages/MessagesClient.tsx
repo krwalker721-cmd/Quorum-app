@@ -175,7 +175,7 @@ export default function MessagesClient({
 
   return (
     <div className="flex" style={{ height: "calc(100vh - 56px)" }}>
-      {/* LEFT â€” inbox */}
+      {/* LEFT — inbox */}
       <div
         className="flex flex-col border-r"
         style={{ width: 320, background: "#1c2128", borderColor: "#21262d" }}
@@ -189,7 +189,7 @@ export default function MessagesClient({
           {conversations.length === 0 && (
             <div className="px-4 py-6">
               <p className="font-mono lowercase text-[0.7rem] text-text-faint leading-relaxed">
-                no messages yet â€” start a conversation from someone&apos;s profile.
+                no messages yet — start a conversation from someone&apos;s profile.
               </p>
             </div>
           )}
@@ -214,7 +214,7 @@ export default function MessagesClient({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 justify-between">
                     <p className="font-mono lowercase text-[0.75rem] text-text-primary truncate">
-                      {c.partner.full_name?.toLowerCase() ?? "â€”"}
+                      {c.partner.full_name?.toLowerCase() ?? "—"}
                     </p>
                     {c.lastAt && (
                       <span className="font-mono lowercase text-[0.55rem] text-text-faint shrink-0">
@@ -243,7 +243,7 @@ export default function MessagesClient({
         </div>
       </div>
 
-      {/* RIGHT â€” thread */}
+      {/* RIGHT — thread */}
       <div className="flex-1 flex flex-col min-w-0">
         {selected ? (
           <>
@@ -260,7 +260,7 @@ export default function MessagesClient({
                 />
                 <div className="min-w-0">
                   <p className="font-mono lowercase text-sm text-text-primary truncate">
-                    {selected.full_name?.toLowerCase() ?? "â€”"}
+                    {selected.full_name?.toLowerCase() ?? "—"}
                   </p>
                   <div className="mt-0.5">
                     <StagePill stage={selected.stage} />
@@ -342,7 +342,7 @@ export default function MessagesClient({
         ) : (
           <div className="flex-1 flex items-center justify-center px-6">
             <p className="font-mono lowercase text-xs text-text-faint text-center">
-              no messages yet â€” start a conversation from someone&apos;s profile.
+              no messages yet — start a conversation from someone&apos;s profile.
             </p>
           </div>
         )}

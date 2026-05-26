@@ -79,7 +79,7 @@ export default function VaultPage({
   const [liveStats, setLiveStats] = useState(stats);
   const [livePulseRecent, setLivePulseRecent] = useState(pulseRecent);
 
-  // sync tab â†’ URL
+  // sync tab  URL
   useEffect(() => {
     const params = new URLSearchParams(Array.from(sp?.entries() ?? []));
     if (tab === "library") params.delete("tab");
@@ -89,7 +89,7 @@ export default function VaultPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  // Live stat updates via realtime â€” every relevant insert nudges the count.
+  // Live stat updates via realtime — every relevant insert nudges the count.
   useEffect(() => {
     const supabase = createClient();
     const ch = supabase

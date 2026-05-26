@@ -48,7 +48,7 @@ export default function CommunityWisdomTab({
     });
   }, [items, search, tag]);
 
-  // ticker â€” live pulse insert signal
+  // ticker — live pulse insert signal
   useEffect(() => {
     const supabase = createClient();
     const ch = supabase
@@ -103,7 +103,7 @@ export default function CommunityWisdomTab({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="searchâ€¦"
+          placeholder="search…"
           className="ml-auto bg-transparent border px-3 py-1.5 text-[0.75rem] text-text-secondary focus:outline-none focus:border-amber"
           style={{ borderColor: "var(--border)", minWidth: 200 }}
         />
@@ -177,14 +177,14 @@ function WisdomCard({ item }: { item: WisdomItem }) {
 
       <footer className="flex items-center justify-between mt-3">
         <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-          â†³ {item.post.reply_count} {item.post.reply_count === 1 ? "reply" : "replies"} Â·
+           {item.post.reply_count} {item.post.reply_count === 1 ? "reply" : "replies"} ·
           vaulted {shortTimeAgo(item.approved_at)} ago
         </span>
         <Link
           href={`/pulse#${item.post_id}`}
           className="font-mono lowercase text-[0.7rem] text-amber hover:opacity-80"
         >
-          view full conversation â†’
+          view full conversation
         </Link>
       </footer>
 
@@ -194,7 +194,7 @@ function WisdomCard({ item }: { item: WisdomItem }) {
           style={{ borderColor: "var(--border)" }}
         >
           nominated by {item.nominator?.full_name?.toLowerCase() ?? "anonymous"}
-          {item.nomination_reason ? ` â€” "${item.nomination_reason}"` : ""}
+          {item.nomination_reason ? ` — "${item.nomination_reason}"` : ""}
         </div>
       )}
     </article>
@@ -221,20 +221,20 @@ function WisdomEmpty({
           the community nominates it.
         </p>
         <p className="text-text-muted text-sm leading-relaxed mt-3">
-          the best insights don't disappear here â€” they get kept.
+          the best insights don't disappear here — they get kept.
         </p>
         <Link
           href="/pulse"
           className="inline-block font-mono lowercase text-[0.7rem] text-amber hover:opacity-80 mt-5"
         >
-          {pulseRecent} posts on pulse right now that could end up here â†’
+          {pulseRecent} posts on pulse right now that could end up here
         </Link>
       </div>
 
       {topRepliedPulse.length > 0 && (
         <div>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2 tracking-wider">
-            most_replied_to Â· last 7 days
+            most_replied_to · last 7 days
           </p>
           <div className="space-y-3">
             {topRepliedPulse.map((p) => (
@@ -271,12 +271,12 @@ function GhostPreview({ post }: { post: GhostPost }) {
           {post.author?.full_name?.toLowerCase() ?? "anonymous"}
         </p>
         <span className="font-mono lowercase text-[0.6rem] text-text-faint">
-          â†³ {post.reply_count}
+           {post.reply_count}
         </span>
       </header>
       <p className="text-text-muted text-[0.9rem] leading-relaxed line-clamp-3 whitespace-pre-wrap">
         {post.content.slice(0, 220)}
-        {post.content.length > 220 && "â€¦"}
+        {post.content.length > 220 && "…"}
       </p>
       <div className="mt-3">
         <Link
@@ -284,7 +284,7 @@ function GhostPreview({ post }: { post: GhostPost }) {
           className="font-mono lowercase text-[0.7rem] px-3 py-1 inline-block"
           style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
         >
-          nominate this â†’
+          nominate this
         </Link>
       </div>
     </article>

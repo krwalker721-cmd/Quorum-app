@@ -75,7 +75,7 @@ export default function OverviewSection() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
-        <ChartCard title="signups Â· last 30d">
+        <ChartCard title="signups · last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={signups}>
               <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />
@@ -86,7 +86,7 @@ export default function OverviewSection() {
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard title="activity Â· last 30d">
+        <ChartCard title="activity · last 30d">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={activity}>
               <CartesianGrid stroke="#21262d" strokeDasharray="3 3" />

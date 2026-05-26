@@ -125,7 +125,7 @@ export default function CheckinModal({
         {done ? (
           <div className="space-y-4">
             <div>
-              <p className="font-mono lowercase text-[0.7rem] text-amber">checkin_logged âœ“</p>
+              <p className="font-mono lowercase text-[0.7rem] text-amber">checkin_logged </p>
               <p className="text-text-secondary text-sm mt-2 leading-relaxed">
                 here&apos;s what two of your cohort members shared this week:
               </p>
@@ -139,7 +139,7 @@ export default function CheckinModal({
                 >
                   <div className="flex items-center justify-between">
                     <p className="font-mono lowercase text-[0.7rem] text-text-secondary">
-                      {c.name} Â· {c.stage}
+                      {c.name} · {c.stage}
                     </p>
                     <span className="font-mono lowercase text-[0.6rem] text-amber">{c.rating}</span>
                   </div>
@@ -262,7 +262,7 @@ export default function CheckinModal({
                 className="font-mono lowercase text-xs px-3 py-2 border disabled:opacity-30"
                 style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
               >
-                â† back
+                 back
               </button>
               {step < TOTAL - 1 ? (
                 <button
@@ -274,7 +274,7 @@ export default function CheckinModal({
                   }
                   className="btn-primary"
                 >
-                  continue â†’
+                  continue
                 </button>
               ) : (
                 <button
@@ -282,7 +282,7 @@ export default function CheckinModal({
                   disabled={!win.trim() || busy}
                   className="btn-primary"
                 >
-                  {busy ? "..." : "submit â†’"}
+                  {busy ? "..." : "submit "}
                 </button>
               )}
             </div>

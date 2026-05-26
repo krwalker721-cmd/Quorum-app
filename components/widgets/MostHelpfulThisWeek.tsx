@@ -74,7 +74,7 @@ export default async function MostHelpfulThisWeek() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-mono lowercase text-[0.7rem] text-text-secondary truncate">
-                    {p.full_name?.toLowerCase() ?? "â€”"}
+                    {p.full_name?.toLowerCase() ?? "—"}
                   </p>
                   <div className="flex items-center gap-2">
                     {p.stage && (

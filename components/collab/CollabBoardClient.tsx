@@ -162,7 +162,7 @@ function ProjectsList({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="font-mono lowercase text-xs text-text-faint">no projects yet. be the first to post â†’</p>
+      <p className="font-mono lowercase text-xs text-text-faint">no projects yet. be the first to post </p>
     );
   }
   return (
@@ -206,7 +206,7 @@ function ProjectCard({
         />
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-xs text-text-primary truncate">
-            {project.author?.full_name?.toLowerCase() ?? "â€”"}
+            {project.author?.full_name?.toLowerCase() ?? "—"}
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
             {timeAgo(project.created_at)} ago
@@ -272,7 +272,7 @@ function ProjectCard({
 
       <footer className="flex items-center justify-between mt-4">
         <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-          â†³ {project.interest_count} interested
+           {project.interest_count} interested
         </span>
         {closed ? (
           <span
@@ -283,7 +283,7 @@ function ProjectCard({
           </span>
         ) : isMember ? (
           <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#f59e0b" }}>
-            open room â†’
+            open room
           </span>
         ) : (
           <button
@@ -295,7 +295,7 @@ function ProjectCard({
             className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
             style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
           >
-            respond â†’
+            respond
           </button>
         )}
       </footer>
@@ -339,7 +339,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
               />
               <div className="flex-1 min-w-0">
                 <p className="font-mono lowercase text-xs text-text-primary truncate">
-                  {n.author?.full_name?.toLowerCase() ?? "â€”"}
+                  {n.author?.full_name?.toLowerCase() ?? "—"}
                 </p>
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint">
                   {timeAgo(n.created_at)} ago
@@ -377,7 +377,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
                   className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90"
                   style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                 >
-                  respond â†’
+                  respond
                 </Link>
               )}
             </footer>

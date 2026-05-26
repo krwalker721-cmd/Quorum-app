@@ -80,7 +80,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
         </button>
         <div className="text-[0.7rem] leading-snug">
           <p className="font-mono lowercase text-text-secondary">
-            {isOpen ? "open Â· anyone can request to join" : "invite-only Â· join by invite link"}
+            {isOpen ? "open · anyone can request to join" : "invite-only · join by invite link"}
           </p>
         </div>
       </div>
@@ -93,7 +93,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
           disabled={busy || !name.trim()}
           className="btn-primary"
         >
-          {busy ? "..." : "create â†’"}
+          {busy ? "..." : "create "}
         </button>
       </div>
     </form>

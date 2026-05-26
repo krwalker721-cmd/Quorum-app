@@ -156,7 +156,7 @@ export default function NoteEditor({
               background: "rgba(245, 158, 11,0.06)",
             }}
           >
-            {t} Ã—
+            {t} ×
           </button>
         ))}
         <div className="relative">
@@ -278,7 +278,7 @@ function BlockRow({
   if (block.type === "bullet") {
     return Wrap(
       <div className="flex gap-2">
-        <span className="text-amber pt-0.5">â€¢</span>
+        <span className="text-amber pt-0.5">•</span>
         <Auto
           value={text}
           onChange={onChange}
@@ -310,7 +310,7 @@ function BlockRow({
           value={text}
           onChange={onChange}
           onKeyDown={handleKey}
-          placeholder="a quote worth keepingâ€¦"
+          placeholder="a quote worth keeping…"
           className={`${sharedClass} text-text-secondary italic`}
         />
       </div>,
@@ -323,7 +323,7 @@ function BlockRow({
           value={text}
           onChange={onChange}
           onKeyDown={handleKey}
-          placeholder="code or frameworkâ€¦"
+          placeholder="code or framework…"
           className={`${sharedClass} font-mono text-[0.85rem] text-text-secondary`}
         />
       </div>,
@@ -334,7 +334,7 @@ function BlockRow({
       value={text}
       onChange={onChange}
       onKeyDown={handleKey}
-      placeholder="writeâ€¦   ( / for block types )"
+      placeholder="write…   ( / for block types )"
       className={`${sharedClass} text-text-secondary leading-relaxed`}
     />,
   );
@@ -416,7 +416,7 @@ function DragHandle({ onUp, onDown }: { onUp: () => void; onDown: () => void }) 
         className="text-text-faint hover:text-text-primary leading-none text-[10px]"
         aria-label="move up"
       >
-        â–²
+
       </button>
       <button
         type="button"
@@ -424,7 +424,7 @@ function DragHandle({ onUp, onDown }: { onUp: () => void; onDown: () => void }) 
         className="text-text-faint hover:text-text-primary leading-none text-[10px]"
         aria-label="move down"
       >
-        â–¼
+
       </button>
     </div>
   );

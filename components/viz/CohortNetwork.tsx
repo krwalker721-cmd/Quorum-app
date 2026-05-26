@@ -63,7 +63,7 @@ export default function CohortNetwork({ members }: { members: Member[] }) {
         <circle cx={cx} cy={cy} r="9" fill="none" stroke="#f59e0b" strokeWidth="0.5" opacity="0.4" />
       </svg>
       <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-2">
-        you Â· {cohort.length} cohort Â· {pulse.length} pulse
+        you · {cohort.length} cohort · {pulse.length} pulse
       </p>
     </VizCard>
   );

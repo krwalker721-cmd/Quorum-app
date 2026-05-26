@@ -69,7 +69,7 @@ export default function SettingsSection() {
     }
   }
 
-  if (!s) return <SectionShell title="settings"><p className="font-mono text-xs text-text-faint">loadingâ€¦</p></SectionShell>;
+  if (!s) return <SectionShell title="settings"><p className="font-mono text-xs text-text-faint">loading…</p></SectionShell>;
 
   return (
     <SectionShell title="settings">
@@ -95,7 +95,7 @@ export default function SettingsSection() {
             )}
           </div>
           <p className="font-mono text-[0.6rem] text-text-faint mt-2 lowercase">
-            open: anyone with invite signs up Â· waitlist: new signups go to pending
+            open: anyone with invite signs up · waitlist: new signups go to pending
           </p>
         </Card>
 
@@ -145,7 +145,7 @@ export default function SettingsSection() {
               className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
               style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
-              {savingWelcome ? "savingâ€¦" : "save"}
+              {savingWelcome ? "saving…" : "save"}
             </button>
             {savedFlash === "welcome_message" && (
               <span className="font-mono text-[0.6rem] text-amber self-center">saved</span>

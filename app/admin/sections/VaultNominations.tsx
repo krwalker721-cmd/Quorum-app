@@ -50,7 +50,7 @@ export default function VaultNominationsSection() {
   return (
     <SectionShell title="vault_nominations">
       {loading && noms.length === 0 ? (
-        <p className="font-mono text-xs text-text-faint">loadingâ€¦</p>
+        <p className="font-mono text-xs text-text-faint">loading…</p>
       ) : noms.length === 0 ? (
         <p className="font-mono text-xs text-text-faint">no pending nominations</p>
       ) : (
@@ -91,14 +91,14 @@ function NomCard({
       <div className="flex items-start justify-between gap-6">
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-[0.6rem] text-text-faint mb-2">
-            original post Â· {n.post?.is_anonymous ? "anonymous" : n.author?.full_name?.toLowerCase() ?? "â€”"}
-            {n.post?.tag ? ` Â· ${n.post.tag}` : ""}
+            original post · {n.post?.is_anonymous ? "anonymous" : n.author?.full_name?.toLowerCase() ?? "—"}
+            {n.post?.tag ? ` · ${n.post.tag}` : ""}
           </p>
           <p className="text-text-secondary text-sm whitespace-pre-wrap">
             {n.post?.content ?? "(post deleted)"}
           </p>
           <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-4">
-            nominated by {n.nominator?.full_name?.toLowerCase() ?? "â€”"}
+            nominated by {n.nominator?.full_name?.toLowerCase() ?? "—"}
           </p>
           {n.reason && (
             <p className="text-text-muted text-[0.85rem] mt-1 italic">"{n.reason}"</p>

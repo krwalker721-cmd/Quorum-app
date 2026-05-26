@@ -258,7 +258,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
           </>
         ) : (
           <span style={{ color: "var(--text-faint)" }}>
-            nothing happening right now â€” start something.
+            nothing happening right now — start something.
           </span>
         )}
       </p>

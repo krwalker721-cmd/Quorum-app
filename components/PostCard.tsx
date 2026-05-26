@@ -44,7 +44,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
   const isQuestion = roomType === "question";
   const isActive = !!post.isActive;
 
-  // Left-border treatment â€” chosen by type, then anonymity, then default.
+  // Left-border treatment — chosen by type, then anonymity, then default.
   let leftBorder = `1px solid var(--border-amber)`;
   if (anon) {
     leftBorder = "2px solid #30363d";
@@ -88,7 +88,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
           : undefined,
       }}
     >
-      {/* Top-right indicators â€” always visible */}
+      {/* Top-right indicators — always visible */}
       <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
         {(isDecision || isBlocker) && (
           <span
@@ -107,7 +107,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         )}
       </div>
 
-      {/* Hover-only actions â€” sit to the left of indicators */}
+      {/* Hover-only actions — sit to the left of indicators */}
       <div
         className="absolute top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ right: 56 }}
@@ -136,11 +136,11 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         )}
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-xs text-text-primary truncate">
-            {anon ? <span className="text-text-faint">anonymous</span> : post.author?.full_name?.toLowerCase() ?? "â€”"}
+            {anon ? <span className="text-text-faint">anonymous</span> : post.author?.full_name?.toLowerCase() ?? "—"}
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
             {timeAgo(post.created_at)} ago
-            {anon && <span className="ml-2" style={{ fontSize: "9px" }}>Â· posted anonymously</span>}
+            {anon && <span className="ml-2" style={{ fontSize: "9px" }}>· posted anonymously</span>}
           </p>
         </div>
       </header>
@@ -152,7 +152,7 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
       <footer className="flex items-center justify-between mt-3">
         <div className="flex flex-col gap-0.5">
           <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-            â†³ {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
+             {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
           </span>
           {(isDecision || isBlocker) && (
             <span

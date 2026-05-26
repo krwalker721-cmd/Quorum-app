@@ -60,7 +60,7 @@ export default function SkillsEditor({
               className="text-text-faint hover:text-text-primary"
               aria-label={`remove ${s}`}
             >
-              Ã—
+              ×
             </button>
           </span>
         ))}

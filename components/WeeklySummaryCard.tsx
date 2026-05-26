@@ -6,7 +6,7 @@ export type WeeklySummaryData = {
   firstName: string;
   weekStart: string; // ISO date
   weekEnd: string; // ISO date
-  weekKey: string; // YYYY-MM-DD of the Monday â€” used to namespace dismissal
+  weekKey: string; // YYYY-MM-DD of the Monday — used to namespace dismissal
   stats: {
     posts_this_week: number;
     replies_given: number;
@@ -212,7 +212,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
           className="font-sans lowercase"
           style={{ fontSize: 10, color: "var(--text-faint)" }}
         >
-          week of {formatDate(data.weekStart)} â€” {formatDate(data.weekEnd)}
+          week of {formatDate(data.weekStart)} — {formatDate(data.weekEnd)}
         </span>
         <button
           onClick={handleDismiss}
@@ -220,7 +220,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
           style={{ fontSize: 10, color: "var(--text-faint)" }}
           aria-label="dismiss weekly summary"
         >
-          dismiss âœ•
+          dismiss
         </button>
       </div>
     </div>

@@ -140,7 +140,7 @@ export default function UsersSection() {
             className="font-mono text-[0.65rem] lowercase"
             style={{ width: "auto" }}
           >
-            <option value="">bulk change tierâ€¦</option>
+            <option value="">bulk change tier…</option>
             <option value="free">free</option>
             <option value="tier_1">tier_1</option>
             <option value="tier_2">tier_2</option>
@@ -172,7 +172,7 @@ export default function UsersSection() {
           </thead>
           <tbody>
             {loading && users.length === 0 ? (
-              <tr><td colSpan={10} className="px-3 py-6 font-mono text-xs text-text-faint">loadingâ€¦</td></tr>
+              <tr><td colSpan={10} className="px-3 py-6 font-mono text-xs text-text-faint">loading…</td></tr>
             ) : users.length === 0 ? (
               <tr><td colSpan={10} className="px-3 py-6 font-mono text-xs text-text-faint">no users</td></tr>
             ) : (
@@ -195,7 +195,7 @@ export default function UsersSection() {
                         {(u.full_name ?? u.username ?? "?")[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-text-secondary">{u.full_name ?? "â€”"}</p>
+                        <p className="text-text-secondary">{u.full_name ?? "—"}</p>
                         {u.username && (
                           <p className="font-mono text-[0.6rem] text-text-faint lowercase">@{u.username}</p>
                         )}
@@ -204,7 +204,7 @@ export default function UsersSection() {
                   </td>
                   <td className="px-3 py-2 font-mono text-[0.7rem] text-text-muted lowercase">{u.email}</td>
                   <td className="px-3 py-2 font-mono text-[0.65rem] text-text-muted lowercase">
-                    {u.stage ?? "â€”"}
+                    {u.stage ?? "—"}
                   </td>
                   <td className="px-3 py-2">
                     <span
@@ -222,7 +222,7 @@ export default function UsersSection() {
                     {u.created_at?.slice(0, 10)}
                   </td>
                   <td className="px-3 py-2 font-mono text-[0.6rem] text-text-faint">
-                    {u.last_active_at?.slice(0, 10) ?? "â€”"}
+                    {u.last_active_at?.slice(0, 10) ?? "—"}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap gap-1">

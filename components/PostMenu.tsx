@@ -91,7 +91,7 @@ export default function PostMenu({ postId }: { postId: string }) {
             }}
             className="block w-full text-left font-mono lowercase text-[0.7rem] text-text-muted hover:text-text-primary px-3 py-2"
           >
-            nominate to vault â†’
+            nominate to vault
           </button>
           <button
             type="button"
@@ -118,7 +118,7 @@ export default function PostMenu({ postId }: { postId: string }) {
             <>
               <p className="font-mono lowercase text-xs text-amber mb-2">nominated</p>
               <p className="text-text-secondary text-[0.92rem] mb-5">
-                thanks â€” admins will review it.
+                thanks — admins will review it.
               </p>
               <div className="flex justify-end">
                 <CloseBtn onClick={() => setNominateModal(false)} />
@@ -133,7 +133,7 @@ export default function PostMenu({ postId }: { postId: string }) {
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="a short reason â€” what makes this worth preserving?"
+                placeholder="a short reason — what makes this worth preserving?"
                 rows={4}
               />
               <div className="flex justify-end gap-2 mt-4">
@@ -144,7 +144,7 @@ export default function PostMenu({ postId }: { postId: string }) {
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
                   style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                 >
-                  {busy ? "sendingâ€¦" : "nominate â†’"}
+                  {busy ? "sending…" : "nominate "}
                 </button>
               </div>
             </>
@@ -158,7 +158,7 @@ export default function PostMenu({ postId }: { postId: string }) {
             <>
               <p className="font-mono lowercase text-xs text-amber mb-2">reported</p>
               <p className="text-text-secondary text-[0.92rem] mb-5">
-                thanks â€” an admin will review it.
+                thanks — an admin will review it.
               </p>
               <div className="flex justify-end">
                 <CloseBtn onClick={() => setReportModal(false)} />
@@ -195,7 +195,7 @@ export default function PostMenu({ postId }: { postId: string }) {
                   className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
                   style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
                 >
-                  {reportBusy ? "sendingâ€¦" : "submit report"}
+                  {reportBusy ? "sending…" : "submit report"}
                 </button>
               </div>
             </>

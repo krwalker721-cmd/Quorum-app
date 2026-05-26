@@ -73,11 +73,11 @@ export default function ActivityHeatmap({
         ])}
       </div>
       {peak ? (
-        <p className="font-mono lowercase text-[0.6rem] text-amber mt-2">â†‘ peak {peak}</p>
+        <p className="font-mono lowercase text-[0.6rem] text-amber mt-2"> peak {peak}</p>
       ) : (
         <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-2">no activity yet</p>
       )}
-      <p className="font-mono lowercase text-[0.55rem] text-text-faint">{posts7d} posts Â· 7d</p>
+      <p className="font-mono lowercase text-[0.55rem] text-text-faint">{posts7d} posts · 7d</p>
     </VizCard>
   );
 }

@@ -76,7 +76,7 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
           background: "transparent",
         }}
       >
-        advance stage â†’
+        advance stage
       </button>
 
       {open && (
@@ -104,12 +104,12 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
 
             <div className="flex items-center gap-3 justify-center py-2">
               <StagePillSwatch stage={cur} dim />
-              <span className="font-mono text-text-faint">â†’</span>
+              <span className="font-mono text-text-faint"></span>
               <StagePillSwatch stage={next} glow />
             </div>
 
             <p className="font-mono lowercase text-[0.7rem] text-text-muted text-center leading-relaxed">
-              advancing your stage is permanent â€” make sure you&apos;re ready
+              advancing your stage is permanent — make sure you&apos;re ready
             </p>
 
             {err && (
@@ -130,7 +130,7 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
                 disabled={busy}
                 className="btn-primary"
               >
-                {busy ? "..." : `advance to ${next} â†’`}
+                {busy ? "..." : `advance to ${next} `}
               </button>
             </div>
           </div>

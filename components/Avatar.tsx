@@ -13,7 +13,7 @@ export default function Avatar({
   stage?: string | null;
   size?: number;
   username?: string | null;
-  // Quiet recognition flags. Default off â€” opt-in per caller.
+  // Quiet recognition flags. Default off — opt-in per caller.
   depthRing?: boolean;
   anniversary?: boolean;
 }) {

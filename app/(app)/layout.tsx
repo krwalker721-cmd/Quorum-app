@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (profile?.status === "suspended") redirect("/suspended");
   if (WAITLIST_ENABLED && profile?.status !== "approved") redirect("/pending");
 
-  // Maintenance mode check (skips for admin section â€” admin uses its own route).
+  // Maintenance mode check (skips for admin section — admin uses its own route).
   try {
     const admin = createAdminClient();
     const { data: maint } = await admin

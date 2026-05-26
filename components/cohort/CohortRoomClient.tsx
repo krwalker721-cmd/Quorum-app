@@ -110,7 +110,7 @@ export default function CohortRoomClient({
   return (
     <>
       <div className="flex" style={{ minHeight: "calc(100vh - 96px)" }}>
-        {/* LEFT â€” roster */}
+        {/* LEFT — roster */}
         <aside
           className="border-r flex flex-col"
           style={{ width: 260, background: "#1c2128", borderColor: "#21262d" }}
@@ -153,7 +153,7 @@ export default function CohortRoomClient({
                           f?.consistencyGhost ? "consistency-ghost" : "text-text-primary"
                         }`}
                       >
-                        {m.full_name?.toLowerCase() ?? "â€”"}
+                        {m.full_name?.toLowerCase() ?? "—"}
                       </p>
                       {f?.questionResponder && (
                         <span
@@ -201,21 +201,21 @@ export default function CohortRoomClient({
               className="block w-full text-center font-mono lowercase text-[0.65rem] px-3 py-1.5 border hover:border-amber transition-colors"
               style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
             >
-              find a cohort â†’
+              find a cohort
             </Link>
           </div>
         </aside>
 
         {/* MAIN */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* ZONE 1 â€” Status board */}
+          {/* ZONE 1 — Status board */}
           <section
             className="border-b px-6 py-4"
             style={{ background: "var(--card)", borderColor: "var(--border)" }}
           >
             <div className="flex items-center justify-between mb-3">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">
-                status_board Â· this week
+                status_board · this week
               </p>
             </div>
             <div className="flex gap-3 overflow-x-auto scroll-thin pb-1">
@@ -254,7 +254,7 @@ export default function CohortRoomClient({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                          {m.full_name?.toLowerCase() ?? "â€”"}
+                          {m.full_name?.toLowerCase() ?? "—"}
                         </p>
                         <StagePill stage={m.stage} />
                       </div>
@@ -292,7 +292,7 @@ export default function CohortRoomClient({
             </div>
           </section>
 
-          {/* ZONE 2 â€” Discussion floor */}
+          {/* ZONE 2 — Discussion floor */}
           <section className="flex-1 px-6 py-5">
             <div className="flex items-center justify-between mb-4">
               <p className="font-mono lowercase text-[0.7rem] text-text-faint tracking-wider">
@@ -361,7 +361,7 @@ export default function CohortRoomClient({
                         <p className="font-mono lowercase text-xs text-text-primary truncate">
                           {p.is_anonymous
                             ? "anonymous"
-                            : p.author?.full_name?.toLowerCase() ?? "â€”"}
+                            : p.author?.full_name?.toLowerCase() ?? "—"}
                         </p>
                         <p className="font-mono lowercase text-[0.6rem] text-text-faint">
                           {timeAgo(p.created_at)} ago
@@ -387,7 +387,7 @@ export default function CohortRoomClient({
                         className="font-mono lowercase text-[0.65rem] mt-3"
                         style={{ color: ts.color }}
                       >
-                        respond â†’
+                        respond
                       </p>
                     )}
                   </article>

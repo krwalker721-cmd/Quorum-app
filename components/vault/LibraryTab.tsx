@@ -127,10 +127,10 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
           <p className="font-mono lowercase text-xs text-text-primary truncate">
             {origin?.is_anonymous
               ? "anonymous"
-              : origin?.author?.full_name?.toLowerCase() ?? "â€”"}
+              : origin?.author?.full_name?.toLowerCase() ?? "—"}
           </p>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            posted {origin ? shortTimeAgo(origin.created_at) : "â€”"} ago
+            posted {origin ? shortTimeAgo(origin.created_at) : "—"} ago
           </p>
         </div>
         <span
@@ -146,7 +146,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
       )}
       <p className="text-text-secondary text-[0.92rem] leading-relaxed whitespace-pre-wrap">
         {preview}
-        {fullPreviewHidden && "â€¦"}
+        {fullPreviewHidden && "…"}
       </p>
 
       <div className="mt-3">
@@ -179,7 +179,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
           href={viewHref}
           className="font-mono lowercase text-[0.7rem] text-amber hover:opacity-80"
         >
-          view original â†’
+          view original
         </Link>
       </footer>
     </article>
@@ -241,7 +241,7 @@ function AmbientSaveFeed() {
           }}
         >
           <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            a founder saved something from {s.type} Â· {shortTimeAgo(new Date(s.at).toISOString())} ago
+            a founder saved something from {s.type} · {shortTimeAgo(new Date(s.at).toISOString())} ago
           </p>
         </div>
       ))}

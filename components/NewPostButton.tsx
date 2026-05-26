@@ -102,7 +102,7 @@ export default function NewPostButton({
               rows={5}
               placeholder={
                 isPulse
-                  ? "say something realâ€¦"
+                  ? "say something real…"
                   : "what's on your mind?"
               }
               value={content}
@@ -173,7 +173,7 @@ export default function NewPostButton({
               </div>
             )}
 
-            {/* Destination selector â€” hidden when locked to pulse */}
+            {/* Destination selector — hidden when locked to pulse */}
             {!isPulse && (
               <div>
                 <label>destination</label>
@@ -251,7 +251,7 @@ export default function NewPostButton({
                 disabled={busy || !content.trim()}
                 className="btn-primary"
               >
-                {busy ? "..." : isPulse ? "post to the room â†’" : "post â†’"}
+                {busy ? "..." : isPulse ? "post to the room " : "post "}
               </button>
             </div>
           </div>

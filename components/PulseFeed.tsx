@@ -156,7 +156,7 @@ export default function PulseFeed({
             className="font-mono lowercase text-[0.65rem] px-2 py-1 border hover:border-amber transition-colors"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
           >
-            clear filter â†’
+            clear filter
           </button>
         </div>
       )}
@@ -177,7 +177,7 @@ export default function PulseFeed({
             className="font-mono lowercase text-[0.7rem] px-4 py-2 border hover:border-amber transition-colors disabled:opacity-50"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
           >
-            {busy ? "loadingâ€¦" : "load more â†’"}
+            {busy ? "loading…" : "load more "}
           </button>
         </div>
       )}

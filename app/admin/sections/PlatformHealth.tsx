@@ -31,7 +31,7 @@ export default function PlatformHealthSection() {
     })();
   }, []);
 
-  if (loading) return <SectionShell title="platform_health"><p className="font-mono text-xs text-text-faint">loadingâ€¦</p></SectionShell>;
+  if (loading) return <SectionShell title="platform_health"><p className="font-mono text-xs text-text-faint">loading…</p></SectionShell>;
   if (!data) return <SectionShell title="platform_health"><p className="font-mono text-xs text-text-faint">failed to load</p></SectionShell>;
 
   return (
@@ -43,13 +43,13 @@ export default function PlatformHealthSection() {
         <HCard label="vault_saves_this_week" value={data.vaultSavesWeek} />
         <HCard
           label="collab_board_activity"
-          value={`${data.collabActivity.projects} projects Â· ${data.collabActivity.votes} votes`}
+          value={`${data.collabActivity.projects} projects · ${data.collabActivity.votes} votes`}
           mono
         />
         <HCard label="referral_conversion_rate" value={`${data.referralConversion}%`} />
       </div>
 
-      <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-6 mb-2">retention Â· last 8 weeks</p>
+      <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-6 mb-2">retention · last 8 weeks</p>
       <div className="border overflow-x-auto" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
         <table className="w-full text-[0.78rem]">
           <thead>
@@ -78,7 +78,7 @@ export default function PlatformHealthSection() {
         </table>
       </div>
 
-      <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-6 mb-2">tag popularity Â· last 30d</p>
+      <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-6 mb-2">tag popularity · last 30d</p>
       <div className="border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
         {data.tagPopularity.length === 0 ? (
           <p className="font-mono text-xs text-text-faint">no tagged posts yet</p>

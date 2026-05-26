@@ -47,7 +47,7 @@ export default function YourWorkspace({
           style={{ border: "1px dashed var(--border)", background: "transparent" }}
         >
           <p className="font-mono lowercase text-xs text-text-faint">
-            you're not in any projects yet â€” start one or respond to one below.
+            you're not in any projects yet — start one or respond to one below.
           </p>
         </div>
       ) : (
@@ -146,9 +146,9 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
         <footer className="flex items-center justify-between mt-4 gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <Pill>{project.doc_count} docs</Pill>
-            <Pill>Â·</Pill>
+            <Pill>·</Pill>
             <Pill>{project.decision_count} decisions</Pill>
-            <Pill>Â·</Pill>
+            <Pill>·</Pill>
             <Pill>{project.message_count} messages</Pill>
           </div>
           {project.needs_vote && (
@@ -162,7 +162,7 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
                 color: "#f59e0b",
               }}
             >
-              decision needs your vote â†’
+              decision needs your vote
             </Link>
           )}
         </footer>

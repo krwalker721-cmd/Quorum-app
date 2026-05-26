@@ -88,7 +88,7 @@ export default function RespondModal({
             className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
             style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
           >
-            {busy ? "..." : "send â†’"}
+            {busy ? "..." : "send "}
           </button>
         </div>
       </div>

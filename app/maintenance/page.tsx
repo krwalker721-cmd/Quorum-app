@@ -16,7 +16,7 @@ export default function MaintenancePage() {
           platform_status
         </p>
         <h1 className="font-mono lowercase text-text-primary text-xl">
-          quorum is undergoing maintenance â€” back soon
+          quorum is undergoing maintenance — back soon
         </h1>
       </div>
     </main>

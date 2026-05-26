@@ -115,7 +115,7 @@ export default async function ProfilePage({
     .order("created_at", { ascending: true });
   const skills = (skillsRows ?? []).map((s: any) => s.skill as string);
 
-  // Projects â€” owned + joined
+  // Projects — owned + joined
   const { data: ownedProjects } = await supabase
     .from("projects")
     .select("id, name, description, status, created_at")
@@ -173,7 +173,7 @@ export default async function ProfilePage({
     authorAnniversary: anniversary,
   }));
 
-  // Handshakes â€” owner sees all involving them; viewers see only mutual (involving both)
+  // Handshakes — owner sees all involving them; viewers see only mutual (involving both)
   const { data: handshakesRaw } = isOwner
     ? await supabase
         .from("handshakes")
@@ -229,7 +229,7 @@ export default async function ProfilePage({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h1 className="font-sans lowercase text-text-primary text-2xl">
-                  {profile.full_name?.toLowerCase() ?? "â€”"}
+                  {profile.full_name?.toLowerCase() ?? "—"}
                 </h1>
                 <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-1">
                   @{profile.username}
@@ -244,7 +244,7 @@ export default async function ProfilePage({
                       style={{ color: "#f59e0b" }}
                       aria-label={`${handshakeCount} handshakes`}
                     >
-                      â—ˆ {handshakeCount}
+                       {handshakeCount}
                     </span>
                   )}
                   {vouchers.length > 0 && (
@@ -309,7 +309,7 @@ export default async function ProfilePage({
               <div className="bg-card border border-border p-5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint">building</p>
                 <p className="text-text-secondary text-sm mt-2">
-                  {profile.what_they_are_building ?? "â€”"}
+                  {profile.what_they_are_building ?? "—"}
                 </p>
               </div>
               <div className="bg-card border border-border p-5">
@@ -324,7 +324,7 @@ export default async function ProfilePage({
               </div>
             </div>
 
-            {/* Cohort fingerprint â€” abstract shape from post type distribution */}
+            {/* Cohort fingerprint — abstract shape from post type distribution */}
             <div className="bg-card border border-border p-5 mt-6 flex items-center gap-6">
               <div className="shrink-0">
                 <CohortFingerprint fp={fingerprint} />
@@ -346,7 +346,7 @@ export default async function ProfilePage({
               </div>
             </div>
 
-            {/* Private mirror â€” owner only */}
+            {/* Private mirror — owner only */}
             {isOwner && (
               <div className="bg-card border border-border p-5 mt-6 space-y-2.5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2">
@@ -469,10 +469,10 @@ export default async function ProfilePage({
                               className="font-mono lowercase text-[0.8rem]"
                               style={{ color: "#f59e0b" }}
                             >
-                              â—ˆ
+
                             </span>
                             <p className="font-mono lowercase text-[0.75rem] text-text-primary truncate">
-                              {other?.full_name?.toLowerCase() ?? "â€”"}
+                              {other?.full_name?.toLowerCase() ?? "—"}
                             </p>
                             <span className="font-mono lowercase text-[0.6rem] text-text-faint ml-auto shrink-0">
                               {formatDate(h.date)}

@@ -1,4 +1,4 @@
-// Vault â€” shared types for the rebuilt vault system.
+// Vault — shared types for the rebuilt vault system.
 
 export const NOTE_TAGS = [
   "decision",

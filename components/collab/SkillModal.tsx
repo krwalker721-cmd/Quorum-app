@@ -47,7 +47,7 @@ export default function SkillModal({
               <Avatar name={m.full_name} stage={m.stage} username={m.username} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="font-mono lowercase text-xs text-text-primary truncate">
-                  {m.full_name?.toLowerCase() ?? "â€”"}
+                  {m.full_name?.toLowerCase() ?? "—"}
                 </p>
                 {m.stage && (
                   <p className="font-mono lowercase text-[0.6rem] text-text-faint">{m.stage}</p>

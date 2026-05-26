@@ -50,7 +50,7 @@ export default function HandshakeButton({
         className="font-mono lowercase text-[0.7rem] px-3 py-2 border hover:border-amber transition-colors whitespace-nowrap"
         style={{ borderColor: "var(--border)", color: "#f59e0b" }}
       >
-        â—ˆ log handshake
+         log handshake
       </button>
 
       {open && (
@@ -66,7 +66,7 @@ export default function HandshakeButton({
           >
             <div className="flex items-center justify-between">
               <p className="font-mono lowercase text-xs text-text-muted">
-                â—ˆ handshake with {recipientName?.toLowerCase() ?? "â€”"}
+                 handshake with {recipientName?.toLowerCase() ?? "—"}
               </p>
               <button
                 onClick={() => setOpen(false)}
@@ -106,7 +106,7 @@ export default function HandshakeButton({
                 disabled={busy || !agreement.trim()}
                 className="btn-primary"
               >
-                {busy ? "..." : "log handshake â†’"}
+                {busy ? "..." : "log handshake "}
               </button>
             </div>
           </div>

@@ -132,7 +132,7 @@ export default function ProjectRoomClient({
             href="/collab"
             className="font-mono lowercase text-[0.7rem] text-text-faint hover:text-text-primary"
           >
-            â† collab_board
+             collab_board
           </Link>
           <span className="text-text-faint">/</span>
           <h2 className="font-sans lowercase text-text-primary text-base truncate">{project.title}</h2>
@@ -273,7 +273,7 @@ export default function ProjectRoomClient({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                      {m.full_name?.toLowerCase() ?? "â€”"}
+                      {m.full_name?.toLowerCase() ?? "—"}
                     </p>
                     {m.role && (
                       <p className="font-mono lowercase text-[0.6rem] text-text-faint">{m.role}</p>
@@ -289,7 +289,7 @@ export default function ProjectRoomClient({
             style={{ background: "rgba(88, 166, 255, 0.06)", borderColor: "rgba(88, 166, 255, 0.35)" }}
           >
             <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#58a6ff" }}>
-              â—ˆ log handshake
+               log handshake
             </p>
             <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2">
               capture a commitment scoped to this project.
@@ -356,7 +356,7 @@ function HandshakeProjectButton({
   if (!target) {
     return variant === "link" ? (
       <span className="font-mono lowercase text-[0.65rem] text-text-faint mt-3 block">
-        log agreement â†’ (no co-members yet)
+        log agreement  (no co-members yet)
       </span>
     ) : null;
   }
@@ -421,7 +421,7 @@ function ThreadTab({
                   key={m.id}
                   className="font-mono lowercase text-[0.65rem] text-text-faint italic text-center"
                 >
-                  {m.content} Â· {timeAgo(m.created_at)} ago
+                  {m.content} · {timeAgo(m.created_at)} ago
                 </p>
               );
             }
@@ -446,7 +446,7 @@ function ThreadTab({
                 >
                   {!mine && (
                     <p className="font-mono lowercase text-[0.6rem] text-text-faint">
-                      {sender?.full_name?.toLowerCase() ?? "â€”"}
+                      {sender?.full_name?.toLowerCase() ?? "—"}
                     </p>
                   )}
                   <p className="text-text-primary text-sm whitespace-pre-wrap leading-snug">{m.content}</p>
@@ -469,7 +469,7 @@ function ThreadTab({
               send();
             }
           }}
-          placeholder="messageâ€¦"
+          placeholder="message…"
           className="flex-1 px-3 py-2 text-text-primary"
           style={{ background: "var(--card)", border: "1px solid var(--border)" }}
         />
@@ -541,12 +541,12 @@ function DocsTab({
             style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
           >
             <span className="font-mono text-lg" style={{ color: "#f59e0b" }}>
-              â–¤
+
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-text-primary text-sm lowercase">{d.title.toLowerCase()}</p>
               <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-1">
-                {adder?.full_name?.toLowerCase() ?? "someone"} Â· {timeAgo(d.created_at)} ago
+                {adder?.full_name?.toLowerCase() ?? "someone"} · {timeAgo(d.created_at)} ago
               </p>
               {d.description && (
                 <p className="text-text-secondary text-xs mt-2 leading-relaxed whitespace-pre-wrap">
@@ -592,7 +592,7 @@ function DocsTab({
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
               style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
-              add â†’
+              add
             </button>
           </div>
         </div>
@@ -749,9 +749,9 @@ function DecisionsTab({
             )}
             {d.status === "decided" && d.winning_option ? (
               <p className="font-mono lowercase text-xs mt-2">
-                <span style={{ color: "#22c55e" }}>â†’ {d.winning_option}</span>{" "}
+                <span style={{ color: "#22c55e" }}> {d.winning_option}</span>{" "}
                 <span className="text-text-faint">
-                  Â· {totalVoted === totalMembers ? "unanimous" : `${tally[d.winning_option] ?? 0}/${totalMembers} voted`}
+                  · {totalVoted === totalMembers ? "unanimous" : `${tally[d.winning_option] ?? 0}/${totalMembers} voted`}
                 </span>
               </p>
             ) : (
@@ -770,7 +770,7 @@ function DecisionsTab({
                         background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
                       }}
                     >
-                      {label.toLowerCase()} {tally[label] ? `Â· ${tally[label]}` : ""}
+                      {label.toLowerCase()} {tally[label] ? `· ${tally[label]}` : ""}
                     </button>
                   );
                 })}
@@ -822,7 +822,7 @@ function DecisionsTab({
               className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
               style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
             >
-              open decision â†’
+              open decision
             </button>
           </div>
         </div>
@@ -876,7 +876,7 @@ function ActivityWidget({
         <ul className="space-y-2">
           {recent.map((e, i) => (
             <li key={i} className="font-mono lowercase text-[0.65rem] text-text-muted leading-snug">
-              {e.text} Â· <span className="text-text-faint">{timeAgo(e.ts)} ago</span>
+              {e.text} · <span className="text-text-faint">{timeAgo(e.ts)} ago</span>
             </li>
           ))}
         </ul>

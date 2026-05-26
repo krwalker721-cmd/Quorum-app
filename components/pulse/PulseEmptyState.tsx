@@ -39,7 +39,7 @@ export default function PulseEmptyState({ userId }: { userId: string }) {
 }
 
 function EmptyStateCTA({ userId }: { userId: string }) {
-  // Re-uses the NewPostButton modal â€” just styles the trigger to be the
+  // Re-uses the NewPostButton modal — just styles the trigger to be the
   // big amber prominent button.
   return (
     <div className="flex justify-center [&_button:first-child]:!w-full [&_button:first-child]:!py-3 [&_button:first-child]:!px-6 [&_button:first-child]:!text-sm [&_button:first-child]:!rounded">
