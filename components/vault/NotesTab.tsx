@@ -2,8 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NOTE_TAGS, type NoteBlock, type NoteRow, type NoteCollectionRow } from "@/lib/vault";
-import NoteEditor from "./NoteEditor";
+import dynamic from "next/dynamic";
+import NoteEditorBoundary from "./NoteEditorBoundary";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+
+// Tiptap is a client-only library — disable SSR for it entirely to avoid
+// hydration mismatches surfacing as the generic Next.js error overlay.
+const NoteEditor = dynamic(() => import("./NoteEditor"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="border min-h-[600px] flex items-center justify-center"
+      style={{ background: "var(--card)", borderColor: "var(--border)" }}
+    >
+      <p className="font-mono lowercase text-[0.7rem] text-text-faint">
+        loading editor...
+      </p>
+    </div>
+  ),
+});
 
 const PROMPTS = [
   "what decision are you sitting on right now?",
@@ -212,11 +229,12 @@ export default function NotesTab({
       {/* right panel */}
       <div className="flex-1 min-w-0">
         {activeNote ? (
-          <NoteEditor
-            key={activeNote.id}
-            note={activeNote}
-            onLocalChange={(patch) => patchLocal(activeNote.id, patch)}
-          />
+          <NoteEditorBoundary key={activeNote.id}>
+            <NoteEditor
+              note={activeNote}
+              onLocalChange={(patch) => patchLocal(activeNote.id, patch)}
+            />
+          </NoteEditorBoundary>
         ) : (
           <NotesEmpty onCreate={createNote} hasAny={notes.length > 0} />
         )}
