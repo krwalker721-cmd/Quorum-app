@@ -100,6 +100,10 @@ export default function NoteEditor({
   const initialContent = useMemo(() => convertLegacyIfNeeded(note.content), [note.id]);
 
   const editor = useEditor({
+    // Tiptap v3 + Next.js SSR: without this we get a hydration mismatch that
+    // surfaces as "client-side exception" once hydration runs.
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
     extensions: [
       StarterKit.configure({
         codeBlock: { HTMLAttributes: { class: "" } },
@@ -119,7 +123,7 @@ export default function NoteEditor({
     autofocus: false,
     editorProps: {
       attributes: { class: "tiptap" },
-      handleKeyDown(view, event) {
+      handleKeyDown(_view, event) {
         // Cmd/Ctrl+K → wrap selection in a link
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
           event.preventDefault();
@@ -133,14 +137,18 @@ export default function NoteEditor({
       },
     },
     onUpdate({ editor: ed }) {
-      // Detect slash trigger at start of an empty block
-      const { from } = ed.state.selection;
-      const before = ed.state.doc.textBetween(Math.max(0, from - 1), from, "\n", "\0");
-      if (before === "/") {
-        const coords = ed.view.coordsAtPos(from);
-        setSlashCoords({ top: coords.bottom + 4, left: coords.left });
-        setSlashOpen(true);
-      } else {
+      try {
+        const { from } = ed.state.selection;
+        const before = ed.state.doc.textBetween(Math.max(0, from - 1), from, "\n", "\0");
+        if (before === "/") {
+          const coords = ed.view.coordsAtPos(from);
+          setSlashCoords({ top: coords.bottom + 4, left: coords.left });
+          setSlashOpen(true);
+        } else {
+          setSlashOpen(false);
+        }
+      } catch {
+        // coordsAtPos can throw during transitions; ignore.
         setSlashOpen(false);
       }
       scheduleSave();
@@ -207,14 +215,19 @@ export default function NoteEditor({
 
   function pickSlash(item: SlashItem) {
     const ed = editorRef.current;
-    if (!ed) return;
-    // Remove the trailing "/" character before applying the block change.
-    const { from } = ed.state.selection;
-    ed.chain()
-      .focus()
-      .deleteRange({ from: from - 1, to: from })
-      .run();
-    item.run(ed);
+    if (!ed || ed.isDestroyed) return;
+    try {
+      const { from } = ed.state.selection;
+      if (from > 0) {
+        ed.chain()
+          .focus()
+          .deleteRange({ from: from - 1, to: from })
+          .run();
+      }
+      item.run(ed);
+    } catch {
+      // ignore — fall through to closing the menu
+    }
     setSlashOpen(false);
   }
 
@@ -222,7 +235,12 @@ export default function NoteEditor({
     setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
-  const wordCount = editor?.storage.characterCount.words() ?? 0;
+  let wordCount = 0;
+  try {
+    wordCount = editor?.storage?.characterCount?.words?.() ?? 0;
+  } catch {
+    wordCount = 0;
+  }
 
   return (
     <div
