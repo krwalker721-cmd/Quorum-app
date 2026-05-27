@@ -11,6 +11,7 @@ import SkillModal from "./SkillModal";
 import BookmarkButton from "@/components/BookmarkButton";
 import PulseBar, { type PulseEvent } from "./PulseBar";
 import YourWorkspace, { type WorkspaceProject } from "./YourWorkspace";
+import ProjectMenu from "./ProjectMenu";
 
 type Author = { id: string; full_name: string | null; stage: string | null; username: string | null };
 
@@ -68,6 +69,18 @@ export default function CollabBoardClient({
   const [newType, setNewType] = useState<"project" | "need">("project");
   const [respondFor, setRespondFor] = useState<ProjectRow | null>(null);
   const [skillFor, setSkillFor] = useState<SkillEntry | null>(null);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const visibleProjects = projects.filter((p) => !removedIds.has(p.id));
+  const visibleNeeds = needs.filter((p) => !removedIds.has(p.id));
+  function onItemDeleted(id: string) {
+    setRemovedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    // background refresh so server state catches up
+    router.refresh();
+  }
 
   function openNew(type: "project" | "need") {
     setNewType(type);
@@ -117,13 +130,20 @@ export default function CollabBoardClient({
           <>
             <YourWorkspace projects={workspaceProjects} />
             <ProjectsList
-              rows={projects}
+              rows={visibleProjects}
               currentUserId={currentUserId}
               onRespond={setRespondFor}
+              onDeleted={onItemDeleted}
             />
           </>
         )}
-        {tab === "needs" && <NeedsList rows={needs} currentUserId={currentUserId} />}
+        {tab === "needs" && (
+          <NeedsList
+            rows={visibleNeeds}
+            currentUserId={currentUserId}
+            onDeleted={onItemDeleted}
+          />
+        )}
         {tab === "skills" && <SkillsIndex entries={skillIndex} onOpen={setSkillFor} />}
       </div>
 
@@ -155,10 +175,12 @@ function ProjectsList({
   rows,
   currentUserId,
   onRespond,
+  onDeleted,
 }: {
   rows: ProjectRow[];
   currentUserId: string;
   onRespond: (p: ProjectRow) => void;
+  onDeleted: (id: string) => void;
 }) {
   if (rows.length === 0) {
     return (
@@ -168,7 +190,13 @@ function ProjectsList({
   return (
     <div className="space-y-3 max-w-3xl">
       {rows.map((p) => (
-        <ProjectCard key={p.id} project={p} currentUserId={currentUserId} onRespond={onRespond} />
+        <ProjectCard
+          key={p.id}
+          project={p}
+          currentUserId={currentUserId}
+          onRespond={onRespond}
+          onDeleted={onDeleted}
+        />
       ))}
     </div>
   );
@@ -178,13 +206,16 @@ function ProjectCard({
   project,
   currentUserId,
   onRespond,
+  onDeleted,
 }: {
   project: ProjectRow;
   currentUserId: string;
   onRespond: (p: ProjectRow) => void;
+  onDeleted: (id: string) => void;
 }) {
   const closed = project.status === "closed";
   const isMember = project.is_member || project.owner_id === currentUserId;
+  const isOwner = project.owner_id === currentUserId;
   const catColor = project.category ? CATEGORY_COLOR[project.category] ?? "#6e7681" : "#6e7681";
 
   const inner = (
@@ -197,6 +228,15 @@ function ProjectCard({
       }}
     >
       <BookmarkButton itemType="project" itemId={project.id} />
+      {isOwner && (
+        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ProjectMenu
+            projectId={project.id}
+            itemLabel="project"
+            onDeleted={() => onDeleted(project.id)}
+          />
+        </div>
+      )}
       <header className="flex items-center gap-3 mb-3">
         <Avatar
           name={project.author?.full_name}
@@ -312,7 +352,15 @@ function ProjectCard({
   return inner;
 }
 
-function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId: string }) {
+function NeedsList({
+  rows,
+  currentUserId,
+  onDeleted,
+}: {
+  rows: ProjectRow[];
+  currentUserId: string;
+  onDeleted: (id: string) => void;
+}) {
   if (rows.length === 0) {
     return (
       <p className="font-mono lowercase text-xs text-text-faint">no needs posted yet.</p>
@@ -323,6 +371,7 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
       {rows.map((n) => {
         const isQuick = n.category === "quick_ask";
         const badgeColor = isQuick ? "#f59e0b" : "#6e7681";
+        const isOwner = n.owner_id === currentUserId;
         return (
           <article
             key={n.id}
@@ -330,6 +379,15 @@ function NeedsList({ rows, currentUserId }: { rows: ProjectRow[]; currentUserId:
             style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)" }}
           >
             <BookmarkButton itemType="project" itemId={n.id} />
+            {isOwner && (
+              <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ProjectMenu
+                  projectId={n.id}
+                  itemLabel="need"
+                  onDeleted={() => onDeleted(n.id)}
+                />
+              </div>
+            )}
             <header className="flex items-center gap-3 mb-3">
               <Avatar
                 name={n.author?.full_name}

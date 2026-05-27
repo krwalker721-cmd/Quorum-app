@@ -1,10 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 const REPORT_REASONS = ["spam", "inappropriate", "harassment", "misinformation", "other"];
 
-export default function PostMenu({ postId }: { postId: string }) {
+export default function PostMenu({
+  postId,
+  canDelete = false,
+  onDeleted,
+}: {
+  postId: string;
+  canDelete?: boolean;
+  onDeleted?: () => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  async function doDelete() {
+    const supabase = createClient();
+    const { error } = await supabase.from("posts").delete().eq("id", postId);
+    if (!error) {
+      setConfirmDelete(false);
+      onDeleted?.();
+    }
+  }
   const [open, setOpen] = useState(false);
   const [nominateModal, setNominateModal] = useState(false);
   const [reportModal, setReportModal] = useState(false);
@@ -109,7 +129,30 @@ export default function PostMenu({ postId }: { postId: string }) {
           >
             report post
           </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(false);
+                setConfirmDelete(true);
+              }}
+              className="block w-full text-left font-mono lowercase text-[0.7rem] px-3 py-2 border-t"
+              style={{ borderColor: "var(--border)", color: "#f87171" }}
+            >
+              delete post
+            </button>
+          )}
         </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDeleteModal
+          itemLabel="post"
+          onConfirm={doDelete}
+          onClose={() => setConfirmDelete(false)}
+        />
       )}
 
       {nominateModal && (

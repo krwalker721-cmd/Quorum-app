@@ -4,8 +4,16 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import PostCard, { PostWithAuthor } from "@/components/PostCard";
 
-export default function Feed({ initial }: { initial: PostWithAuthor[] }) {
+export default function Feed({
+  initial,
+  currentUserId,
+}: {
+  initial: PostWithAuthor[];
+  currentUserId?: string;
+}) {
   const [posts, setPosts] = useState<PostWithAuthor[]>(initial);
+  const onDeleted = (id: string) =>
+    setPosts((prev) => prev.filter((p) => p.id !== id));
 
   useEffect(() => {
     const supabase = createClient();
@@ -45,7 +53,14 @@ export default function Feed({ initial }: { initial: PostWithAuthor[] }) {
               <p className="empty-state font-mono lowercase">no posts in your cohort yet.</p>
             </div>
           ) : (
-            cohort.map((p) => <PostCard key={p.id} post={p} />)
+            cohort.map((p) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                currentUserId={currentUserId}
+                onDeleted={onDeleted}
+              />
+            ))
           )}
         </div>
       </section>
@@ -58,7 +73,14 @@ export default function Feed({ initial }: { initial: PostWithAuthor[] }) {
               <p className="empty-state font-mono lowercase">nothing on the pulse yet.</p>
             </div>
           ) : (
-            pulse.map((p) => <PostCard key={p.id} post={p} />)
+            pulse.map((p) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                currentUserId={currentUserId}
+                onDeleted={onDeleted}
+              />
+            ))
           )}
         </div>
       </section>

@@ -8,6 +8,9 @@ import { usePresence } from "@/components/PresenceProvider";
 import { timeAgo } from "@/lib/stage";
 import RoomPostModal from "@/components/cohort/RoomPostModal";
 import InviteModal from "@/components/cohort/InviteModal";
+import FounderAgreements from "@/components/cohort/FounderAgreements";
+import LeaveCohortButton from "@/components/cohort/LeaveCohortButton";
+import PostMenu from "@/components/PostMenu";
 import Link from "next/link";
 import { isAnniversary, type RosterFlags } from "@/lib/recognition";
 
@@ -204,6 +207,12 @@ export default function CohortRoomClient({
               find a cohort
             </Link>
           </div>
+          <FounderAgreements />
+          {myCohorts[0]?.id && (
+            <div className="px-3 pb-3">
+              <LeaveCohortButton cohortId={myCohorts[0].id} />
+            </div>
+          )}
         </aside>
 
         {/* MAIN */}
@@ -322,7 +331,7 @@ export default function CohortRoomClient({
                 return (
                   <article
                     key={p.id}
-                    className={`p-4 border${p.movedTheRoom ? " moved-room-pulse" : ""}`}
+                    className={`relative group p-4 border${p.movedTheRoom ? " moved-room-pulse" : ""}`}
                     style={{
                       background: ts?.bg ?? "var(--card-elev)",
                       borderColor: "var(--border)",
@@ -332,6 +341,15 @@ export default function CohortRoomClient({
                         : undefined,
                     }}
                   >
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <PostMenu
+                        postId={p.id}
+                        canDelete={!!p.author_id && p.author_id === currentUserId}
+                        onDeleted={() =>
+                          setPosts((prev) => prev.filter((x) => x.id !== p.id))
+                        }
+                      />
+                    </div>
                     <header className="flex items-center gap-3 mb-2">
                       {p.is_anonymous ? (
                         <div

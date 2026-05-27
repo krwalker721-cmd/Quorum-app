@@ -46,9 +46,56 @@ export default function MessagesClient({
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Partner[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const supabase = useMemo(() => createClient(), []);
   const selected =
     conversations.find((c) => c.partner.id === selectedId)?.partner ?? null;
+
+  // Founder search — debounced lookup against profiles
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSearchLoading(true);
+    const t = setTimeout(async () => {
+      const like = `%${q}%`;
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, stage, username")
+        .or(`username.ilike.${like},full_name.ilike.${like}`)
+        .eq("status", "approved")
+        .neq("id", currentUserId)
+        .limit(8);
+      if (!cancelled) {
+        setSearchResults((data ?? []) as Partner[]);
+        setSearchLoading(false);
+      }
+    }, 180);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [searchQuery, supabase, currentUserId]);
+
+  function openConversationWith(p: Partner) {
+    setConversations((prev) => {
+      if (prev.some((c) => c.partner.id === p.id)) return prev;
+      return [
+        { partner: p, last: null, lastAt: null, unread: false },
+        ...prev,
+      ];
+    });
+    setSelectedId(p.id);
+    setSearchQuery("");
+    setSearchResults([]);
+  }
 
   // Ensure selected partner exists in convo list (deep-link from profile)
   useEffect(() => {
@@ -185,11 +232,70 @@ export default function MessagesClient({
             inbox
           </p>
         </div>
+        <div className="px-3 pb-2 relative">
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="search founders to message..."
+            className="w-full font-mono lowercase text-[0.7rem] px-2.5 py-1.5"
+            style={{
+              background: "var(--card)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-primary)",
+              outline: "none",
+              borderRadius: 4,
+            }}
+          />
+          {searchQuery.trim() !== "" && (
+            <div
+              className="absolute left-3 right-3 mt-1 z-30 max-h-72 overflow-y-auto scroll-thin"
+              style={{
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-default)",
+                borderRadius: 4,
+                boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+              }}
+            >
+              {searchLoading && searchResults.length === 0 && (
+                <p className="font-mono lowercase text-[0.65rem] text-text-faint px-3 py-2">
+                  searching...
+                </p>
+              )}
+              {!searchLoading && searchResults.length === 0 && (
+                <p className="font-mono lowercase text-[0.65rem] text-text-faint px-3 py-2">
+                  no founders match.
+                </p>
+              )}
+              {searchResults.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => openConversationWith(r)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-[rgba(245,158,11,0.06)]"
+                >
+                  <Avatar
+                    name={r.full_name}
+                    stage={r.stage}
+                    size={28}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
+                      {r.username ?? r.full_name?.toLowerCase() ?? "—"}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <StagePill stage={r.stage} />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex-1 overflow-y-auto scroll-thin">
           {conversations.length === 0 && (
             <div className="px-4 py-6">
               <p className="font-mono lowercase text-[0.7rem] text-text-faint leading-relaxed">
-                no messages yet — start a conversation from someone&apos;s profile.
+                no messages yet — search above to find a founder.
               </p>
             </div>
           )}

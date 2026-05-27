@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import CohortNav from "@/components/cohort/CohortNav";
 import CohortRoomClient from "@/components/cohort/CohortRoomClient";
+import NoCohortEmptyState from "@/components/cohort/NoCohortEmptyState";
 import {
   loadRosterFlags,
   postsMovedTheRoomBatch,
@@ -91,13 +92,22 @@ export default async function CohortPage() {
   // user's cohorts (for the invite button)
   const { data: memberships } = await supabase
     .from("cohort_members")
-    .select("cohorts:cohort_id (id, name)")
+    .select("cohort_id")
     .eq("user_id", user.id);
-  type Row = { cohorts: { id: string; name: string } | null };
-  const myCohorts =
-    (memberships as Row[] | null)
-      ?.map((m) => m.cohorts)
-      .filter((c): c is { id: string; name: string } => Boolean(c)) ?? [];
+
+  const cohortIds =
+    (memberships ?? [])
+      .map((m: any) => m.cohort_id as string | null)
+      .filter((id): id is string => !!id);
+
+  let myCohorts: { id: string; name: string }[] = [];
+  if (cohortIds.length > 0) {
+    const { data: cohortRows } = await supabase
+      .from("cohorts")
+      .select("id, name")
+      .in("id", cohortIds);
+    myCohorts = (cohortRows ?? []) as { id: string; name: string }[];
+  }
 
   const roomName = myCohorts[0]?.name ?? "the cohort";
   const cohortId = myCohorts[0]?.id ?? null;
@@ -111,6 +121,19 @@ export default async function CohortPage() {
   members.forEach((m, i) => {
     rosterFlags[m.id] = flagsList[i];
   });
+
+  if (myCohorts.length === 0) {
+    return (
+      <>
+        <TopBar
+          title="cohort"
+          tier={(profile?.tier ?? "free").toUpperCase()}
+          userId={user.id}
+        />
+        <NoCohortEmptyState />
+      </>
+    );
+  }
 
   return (
     <>

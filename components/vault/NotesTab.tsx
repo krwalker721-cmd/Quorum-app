@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NOTE_TAGS, type NoteBlock, type NoteRow, type NoteCollectionRow } from "@/lib/vault";
 import NoteEditor from "./NoteEditor";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 const PROMPTS = [
   "what decision are you sitting on right now?",
@@ -23,6 +24,7 @@ export default function NotesTab({
   const [activeId, setActiveId] = useState<string | null>(initialNotes[0]?.id ?? null);
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const activeNote = useMemo(() => notes.find((n) => n.id === activeId) ?? null, [notes, activeId]);
 
@@ -56,8 +58,7 @@ export default function NotesTab({
     setActiveId(id);
   }
 
-  async function deleteNote(id: string) {
-    if (!confirm("delete this note? this cannot be undone.")) return;
+  async function performDelete(id: string) {
     await fetch("/api/vault/notes", {
       method: "DELETE",
       headers: { "content-type": "application/json" },
@@ -65,6 +66,11 @@ export default function NotesTab({
     });
     setNotes((prev) => prev.filter((n) => n.id !== id));
     if (activeId === id) setActiveId(null);
+    setPendingDelete(null);
+  }
+
+  function deleteNote(id: string) {
+    setPendingDelete(id);
   }
 
   function patchLocal(id: string, patch: Partial<NoteRow>) {
@@ -215,6 +221,14 @@ export default function NotesTab({
           <NotesEmpty onCreate={createNote} hasAny={notes.length > 0} />
         )}
       </div>
+
+      {pendingDelete && (
+        <ConfirmDeleteModal
+          itemLabel="note"
+          onConfirm={() => performDelete(pendingDelete)}
+          onClose={() => setPendingDelete(null)}
+        />
+      )}
     </div>
   );
 }
@@ -271,7 +285,11 @@ function NoteRowItem({
           className="text-text-faint hover:text-text-primary px-1"
           aria-label="note actions"
         >
-
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="12" r="1.6" />
+            <circle cx="12" cy="12" r="1.6" />
+            <circle cx="19" cy="12" r="1.6" />
+          </svg>
         </button>
       </div>
       <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-0.5">

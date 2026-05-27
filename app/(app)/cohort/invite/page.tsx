@@ -13,14 +13,20 @@ export default async function InvitePage() {
 
   const { data: memberships } = await supabase
     .from("cohort_members")
-    .select("cohort_id, cohorts:cohort_id (id, name)")
+    .select("cohort_id")
     .eq("user_id", user.id);
 
-  type Row = { cohort_id: string; cohorts: { id: string; name: string } | null };
-  const cohorts =
-    (memberships as Row[] | null)
-      ?.map((m) => m.cohorts)
-      .filter((c): c is { id: string; name: string } => Boolean(c)) ?? [];
+  const cohortIds =
+    (memberships ?? []).map((m: any) => m.cohort_id).filter(Boolean) as string[];
+
+  let cohorts: { id: string; name: string }[] = [];
+  if (cohortIds.length > 0) {
+    const { data: cohortRows } = await supabase
+      .from("cohorts")
+      .select("id, name")
+      .in("id", cohortIds);
+    cohorts = (cohortRows ?? []) as { id: string; name: string }[];
+  }
 
   return (
     <>

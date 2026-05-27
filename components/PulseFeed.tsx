@@ -166,7 +166,14 @@ export default function PulseFeed({
           nothing here yet for #{tagFilter}.
         </p>
       ) : (
-        filtered.map((p) => <PostCard key={p.id} post={p} />)
+        filtered.map((p) => (
+          <PostCard
+            key={p.id}
+            post={p}
+            currentUserId={currentUserId}
+            onDeleted={(id) => setPosts((prev) => prev.filter((x) => x.id !== id))}
+          />
+        ))
       )}
 
       {!done && filtered.length > 0 && !tagFilter && (

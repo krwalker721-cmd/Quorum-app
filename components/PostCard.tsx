@@ -6,6 +6,7 @@ import PostMenu from "@/components/PostMenu";
 
 export type PostWithAuthor = {
   id: string;
+  author_id?: string | null;
   content: string;
   tag: string | null;
   room_type?: string | null;
@@ -28,7 +29,15 @@ export type PostWithAuthor = {
   authorAnniversary?: boolean;
 };
 
-export default function PostCard({ post }: { post: PostWithAuthor }) {
+export default function PostCard({
+  post,
+  currentUserId,
+  onDeleted,
+}: {
+  post: PostWithAuthor;
+  currentUserId?: string | null;
+  onDeleted?: (postId: string) => void;
+}) {
   const anon = post.is_anonymous;
   const tagColor = post.tag ? TAG_COLOR[post.tag] ?? "#6e7681" : "#6e7681";
   const lateNight = is2amPost(post);
@@ -113,7 +122,13 @@ export default function PostCard({ post }: { post: PostWithAuthor }) {
         style={{ right: 56 }}
       >
         <BookmarkButton itemType={savedType} itemId={post.id} variant="inline" />
-        {isPulse && <PostMenu postId={post.id} />}
+        <PostMenu
+          postId={post.id}
+          canDelete={
+            !!currentUserId && !!post.author_id && currentUserId === post.author_id
+          }
+          onDeleted={() => onDeleted?.(post.id)}
+        />
       </div>
 
       <header className="flex items-center gap-3 mb-2">

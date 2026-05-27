@@ -31,21 +31,17 @@ export default function InviteModal({
     setErr(null);
     setLink(null);
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("cohort_invites")
-      .insert({
-        cohort_id: cohortId,
-        inviter_id: userId,
-        email: opts.withEmail ? email.trim() : null,
-      })
-      .select("token")
-      .single();
+    const { error } = await supabase.from("cohort_invites").insert({
+      cohort_id: cohortId,
+      inviter_id: userId,
+      email: opts.withEmail ? email.trim() : null,
+    });
     setBusy(false);
-    if (error || !data) {
-      setErr(error?.message?.toLowerCase() ?? "failed");
+    if (error) {
+      setErr(error.message?.toLowerCase() ?? "failed");
       return;
     }
-    setLink(`${origin}/invite/${data.token}`);
+    setLink(`${origin}/join/cohort/${cohortId}`);
   }
 
   async function copy() {
