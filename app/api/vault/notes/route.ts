@@ -31,7 +31,11 @@ export async function PATCH(req: Request) {
   }
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (typeof title === "string") patch.title = title.slice(0, 240);
-  if (Array.isArray(content)) patch.content = content;
+  // Tiptap saves a ProseMirror JSON object ({ type: "doc", content: [...] }).
+  // Legacy block format was an array. Accept either.
+  if (content !== undefined && (Array.isArray(content) || (typeof content === "object" && content !== null))) {
+    patch.content = content;
+  }
   if (Array.isArray(tags)) patch.tags = tags.filter((t) => typeof t === "string").slice(0, 12);
   if (typeof collection_id === "string" || collection_id === null) patch.collection_id = collection_id;
 

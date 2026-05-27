@@ -172,16 +172,37 @@ export default function NoteEditor({
 
   async function save() {
     const ed = editorRef.current;
-    if (!ed) return;
-    const content = ed.getJSON();
-    const res = await fetch("/api/vault/notes", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: note.id, title, content, tags }),
-    });
-    if (res.ok) {
-      setLastSavedAt(new Date());
-      onLocalChange({ title, content: content as any, tags });
+    if (!ed || ed.isDestroyed) return;
+    let content: unknown;
+    try {
+      content = ed.getJSON();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("[note editor] getJSON failed", e);
+      return;
+    }
+    try {
+      const res = await fetch("/api/vault/notes", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: note.id, title, content, tags }),
+      });
+      if (res.ok) {
+        setLastSavedAt(new Date());
+        try {
+          onLocalChange({ title, content: content as any, tags });
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn("[note editor] onLocalChange failed", e);
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn("[note editor] save returned", res.status);
+      }
+    } catch (e) {
+      // Network / fetch error — never let it propagate.
+      // eslint-disable-next-line no-console
+      console.warn("[note editor] save failed", e);
     }
   }
 
@@ -195,6 +216,26 @@ export default function NoteEditor({
     saveTimer.current = setTimeout(save, 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, tags.join("|")]);
+
+  // Globally catch unhandled rejections coming from this editor so we can
+  // surface them in DevTools instead of letting them bubble to the Next.js
+  // overlay. (Error boundaries don't catch async errors.)
+  useEffect(() => {
+    function onRej(ev: PromiseRejectionEvent) {
+      // eslint-disable-next-line no-console
+      console.warn("[note editor] unhandled rejection:", ev.reason);
+    }
+    function onErr(ev: ErrorEvent) {
+      // eslint-disable-next-line no-console
+      console.warn("[note editor] window error:", ev.message, ev.error);
+    }
+    window.addEventListener("unhandledrejection", onRej);
+    window.addEventListener("error", onErr);
+    return () => {
+      window.removeEventListener("unhandledrejection", onRej);
+      window.removeEventListener("error", onErr);
+    };
+  }, []);
 
   // Tick the "saved Xm ago" label
   useEffect(() => {
