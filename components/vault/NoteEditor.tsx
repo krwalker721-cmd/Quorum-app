@@ -4,13 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import { Underline } from "@tiptap/extension-underline";
 import { Color } from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
-import { Link } from "@tiptap/extension-link";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { CharacterCount } from "@tiptap/extension-character-count";
 import { NOTE_TAGS, type NoteRow } from "@/lib/vault";
@@ -105,17 +103,19 @@ export default function NoteEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
     extensions: [
+      // StarterKit v3 already includes Underline + Link, so we configure them
+      // here instead of adding them again (duplicate registration crashes the
+      // editor at boot).
       StarterKit.configure({
         codeBlock: { HTMLAttributes: { class: "" } },
         heading: { levels: [1, 2, 3] },
+        link: { openOnClick: false, autolink: true },
       }),
-      Underline,
       TextStyle,
       Color,
       Highlight.configure({ multicolor: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      Link.configure({ openOnClick: false, autolink: true }),
       Placeholder.configure({ placeholder: "type / for blocks, or just start writing..." }),
       CharacterCount.configure({}),
     ],
