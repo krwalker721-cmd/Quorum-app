@@ -4,13 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import { Color } from "@tiptap/extension-color";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Highlight } from "@tiptap/extension-highlight";
-import { TaskList } from "@tiptap/extension-task-list";
-import { TaskItem } from "@tiptap/extension-task-item";
 import { Placeholder } from "@tiptap/extension-placeholder";
-import { CharacterCount } from "@tiptap/extension-character-count";
 import { NOTE_TAGS, type NoteRow } from "@/lib/vault";
 
 // Slash-menu entry points. Each runs a chain on the editor.
@@ -49,15 +43,6 @@ const SLASH_ITEMS: SlashItem[] = [
         })
         .run(),
   },
-];
-
-const TEXT_COLORS: { key: string; value: string; label: string }[] = [
-  { key: "white", value: "#e6edf3", label: "white" },
-  { key: "muted", value: "#8b949e", label: "muted" },
-  { key: "amber", value: "#f59e0b", label: "amber" },
-  { key: "green", value: "#22c55e", label: "green" },
-  { key: "blue", value: "#58a6ff", label: "blue" },
-  { key: "red", value: "#f87171", label: "red" },
 ];
 
 function relativeTime(date: Date | null) {
@@ -103,21 +88,16 @@ export default function NoteEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
     extensions: [
-      // StarterKit v3 already includes Underline + Link, so we configure them
-      // here instead of adding them again (duplicate registration crashes the
-      // editor at boot).
+      // SAFE-MODE: keep StarterKit (which bundles bold/italic/underline/strike/
+      // headings/lists/code/blockquote/hr/link in v3) + Placeholder only.
+      // Color/Highlight/TaskList/CharacterCount removed temporarily while we
+      // figure out which one is throwing.
       StarterKit.configure({
         codeBlock: { HTMLAttributes: { class: "" } },
         heading: { levels: [1, 2, 3] },
         link: { openOnClick: false, autolink: true },
       }),
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: false }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder: "type / for blocks, or just start writing..." }),
-      CharacterCount.configure({}),
     ],
     content: initialContent,
     autofocus: false,
@@ -276,9 +256,11 @@ export default function NoteEditor({
     setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
+  // CharacterCount disabled in safe-mode — show length of plain text instead.
   let wordCount = 0;
   try {
-    wordCount = editor?.storage?.characterCount?.words?.() ?? 0;
+    const text = editor?.getText() ?? "";
+    wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   } catch {
     wordCount = 0;
   }
@@ -400,7 +382,23 @@ export default function NoteEditor({
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
-  const [colorOpen, setColorOpen] = useState(false);
+  function safeRun(fn: () => void) {
+    return () => {
+      try {
+        fn();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn("[note editor] toolbar action failed:", e);
+      }
+    };
+  }
+  function safeActive(name: string, attrs?: Record<string, unknown>) {
+    try {
+      return editor.isActive(name, attrs as any);
+    } catch {
+      return false;
+    }
+  }
 
   function btn(
     label: string,
@@ -422,77 +420,31 @@ function Toolbar({ editor }: { editor: Editor }) {
 
   return (
     <div className="editor-toolbar mx-6 mt-3">
-      {btn("B", editor.isActive("bold"), () => editor.chain().focus().toggleBold().run(), "Bold (Cmd/Ctrl+B)")}
-      {btn("I", editor.isActive("italic"), () => editor.chain().focus().toggleItalic().run(), "Italic (Cmd/Ctrl+I)")}
-      {btn("U", editor.isActive("underline"), () => editor.chain().focus().toggleUnderline().run(), "Underline (Cmd/Ctrl+U)")}
-      {btn("S", editor.isActive("strike"), () => editor.chain().focus().toggleStrike().run(), "Strikethrough")}
-      {btn("</>", editor.isActive("code"), () => editor.chain().focus().toggleCode().run(), "Inline code")}
+      {btn("B", safeActive("bold"), safeRun(() => editor.chain().focus().toggleBold().run()), "Bold (Cmd/Ctrl+B)")}
+      {btn("I", safeActive("italic"), safeRun(() => editor.chain().focus().toggleItalic().run()), "Italic (Cmd/Ctrl+I)")}
+      {btn("U", safeActive("underline"), safeRun(() => editor.chain().focus().toggleUnderline().run()), "Underline (Cmd/Ctrl+U)")}
+      {btn("S", safeActive("strike"), safeRun(() => editor.chain().focus().toggleStrike().run()), "Strikethrough")}
+      {btn("</>", safeActive("code"), safeRun(() => editor.chain().focus().toggleCode().run()), "Inline code")}
       <span className="toolbar-divider" />
-      {btn("H1", editor.isActive("heading", { level: 1 }), () => editor.chain().focus().toggleHeading({ level: 1 }).run())}
-      {btn("H2", editor.isActive("heading", { level: 2 }), () => editor.chain().focus().toggleHeading({ level: 2 }).run())}
-      {btn("H3", editor.isActive("heading", { level: 3 }), () => editor.chain().focus().toggleHeading({ level: 3 }).run())}
+      {btn("H1", safeActive("heading", { level: 1 }), safeRun(() => editor.chain().focus().toggleHeading({ level: 1 }).run()))}
+      {btn("H2", safeActive("heading", { level: 2 }), safeRun(() => editor.chain().focus().toggleHeading({ level: 2 }).run()))}
+      {btn("H3", safeActive("heading", { level: 3 }), safeRun(() => editor.chain().focus().toggleHeading({ level: 3 }).run()))}
       <span className="toolbar-divider" />
-      {btn("•", editor.isActive("bulletList"), () => editor.chain().focus().toggleBulletList().run(), "Bullet list")}
-      {btn("1.", editor.isActive("orderedList"), () => editor.chain().focus().toggleOrderedList().run(), "Numbered list")}
-      {btn("☑", editor.isActive("taskList"), () => editor.chain().focus().toggleTaskList().run(), "Checklist")}
-      {btn("\"", editor.isActive("blockquote"), () => editor.chain().focus().toggleBlockquote().run(), "Quote")}
-      {btn("{ }", editor.isActive("codeBlock"), () => editor.chain().focus().toggleCodeBlock().run(), "Code block")}
-      {btn("—", false, () => editor.chain().focus().setHorizontalRule().run(), "Divider")}
-      <span className="toolbar-divider" />
-      {btn("🖍", editor.isActive("highlight"), () => editor.chain().focus().toggleHighlight().run(), "Highlight")}
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setColorOpen((v) => !v)}
-          className="toolbar-btn"
-          title="text color"
-        >
-          A▾
-        </button>
-        {colorOpen && (
-          <div
-            className="absolute top-full mt-1 right-0 z-40 border p-1 flex gap-1"
-            style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
-          >
-            {TEXT_COLORS.map((c) => (
-              <button
-                key={c.key}
-                title={c.label}
-                onClick={() => {
-                  editor.chain().focus().setColor(c.value).run();
-                  setColorOpen(false);
-                }}
-                className="w-5 h-5 border"
-                style={{ background: c.value, borderColor: "var(--border)" }}
-              />
-            ))}
-            <button
-              title="clear"
-              onClick={() => {
-                editor.chain().focus().unsetColor().run();
-                setColorOpen(false);
-              }}
-              className="w-5 h-5 border font-mono text-[0.55rem]"
-              style={{ background: "transparent", borderColor: "var(--border)", color: "var(--text-muted)" }}
-            >
-              ×
-            </button>
-          </div>
-        )}
-      </div>
+      {btn("•", safeActive("bulletList"), safeRun(() => editor.chain().focus().toggleBulletList().run()), "Bullet list")}
+      {btn("1.", safeActive("orderedList"), safeRun(() => editor.chain().focus().toggleOrderedList().run()), "Numbered list")}
+      {btn("\"", safeActive("blockquote"), safeRun(() => editor.chain().focus().toggleBlockquote().run()), "Quote")}
+      {btn("{ }", safeActive("codeBlock"), safeRun(() => editor.chain().focus().toggleCodeBlock().run()), "Code block")}
+      {btn("—", false, safeRun(() => editor.chain().focus().setHorizontalRule().run()), "Divider")}
       <span className="toolbar-divider" />
       {btn(
         "link",
-        editor.isActive("link"),
-        () => {
+        safeActive("link"),
+        safeRun(() => {
           const url = window.prompt("link url", editor.getAttributes("link").href ?? "");
           if (url === null) return;
-          if (url === "") {
-            editor.chain().focus().extendMarkRange("link").unsetLink().run();
-          } else {
-            editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
-          }
-        },
+          if (url === "") editor.chain().focus().extendMarkRange("link").unsetLink().run();
+          else editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+        }),
         "Link (Cmd/Ctrl+K)",
       )}
     </div>
