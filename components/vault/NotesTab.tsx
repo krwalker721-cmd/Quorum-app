@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { NOTE_TAGS, type NoteBlock, type NoteRow, type NoteCollectionRow } from "@/lib/vault";
+import {
+  NOTE_TAGS,
+  noteContentToText,
+  noteFirstLine,
+  type NoteRow,
+  type NoteCollectionRow,
+} from "@/lib/vault";
 import dynamic from "next/dynamic";
 import NoteEditorBoundary from "./NoteEditorBoundary";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
@@ -49,12 +55,8 @@ export default function NotesTab({
     if (!search.trim()) return notes;
     const q = search.toLowerCase();
     return notes.filter((n) => {
-      if (n.title.toLowerCase().includes(q)) return true;
-      const text = (n.content ?? [])
-        .map((b: NoteBlock) => b.text ?? "")
-        .join(" ")
-        .toLowerCase();
-      return text.includes(q);
+      if ((n.title ?? "").toLowerCase().includes(q)) return true;
+      return noteContentToText(n.content).toLowerCase().includes(q);
     });
   }, [notes, search]);
 
@@ -267,8 +269,7 @@ function NoteRowItem({
   onMove: (cid: string | null) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const firstLine =
-    (note.content ?? []).find((b) => b.text && b.text.trim().length > 0)?.text ?? "";
+  const firstLine = noteFirstLine(note.content);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

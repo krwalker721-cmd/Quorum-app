@@ -4,7 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import { Color } from "@tiptap/extension-color";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Highlight } from "@tiptap/extension-highlight";
+import { TaskList } from "@tiptap/extension-task-list";
+import { TaskItem } from "@tiptap/extension-task-item";
 import { Placeholder } from "@tiptap/extension-placeholder";
+import { CharacterCount } from "@tiptap/extension-character-count";
 import { NOTE_TAGS, type NoteRow } from "@/lib/vault";
 
 // Slash-menu entry points. Each runs a chain on the editor.
@@ -88,16 +94,20 @@ export default function NoteEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
     extensions: [
-      // SAFE-MODE: keep StarterKit (which bundles bold/italic/underline/strike/
-      // headings/lists/code/blockquote/hr/link in v3) + Placeholder only.
-      // Color/Highlight/TaskList/CharacterCount removed temporarily while we
-      // figure out which one is throwing.
+      // StarterKit v3 bundles bold/italic/underline/strike/headings/lists/code/
+      // blockquote/hr/link — configure link here instead of adding twice.
       StarterKit.configure({
         codeBlock: { HTMLAttributes: { class: "" } },
         heading: { levels: [1, 2, 3] },
         link: { openOnClick: false, autolink: true },
       }),
+      TextStyle,
+      Color,
+      Highlight.configure({ multicolor: false }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder: "type / for blocks, or just start writing..." }),
+      CharacterCount.configure({}),
     ],
     content: initialContent,
     autofocus: false,
@@ -256,11 +266,15 @@ export default function NoteEditor({
     setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
-  // CharacterCount disabled in safe-mode — show length of plain text instead.
   let wordCount = 0;
   try {
-    const text = editor?.getText() ?? "";
-    wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const fromCC = editor?.storage?.characterCount?.words?.();
+    if (typeof fromCC === "number") {
+      wordCount = fromCC;
+    } else {
+      const text = editor?.getText() ?? "";
+      wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    }
   } catch {
     wordCount = 0;
   }
