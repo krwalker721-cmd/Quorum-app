@@ -3,6 +3,7 @@ import TopBar from "@/components/TopBar";
 import StatStrip from "@/components/StatStrip";
 import Feed from "@/components/Feed";
 import WeeklyCheckin from "@/components/widgets/WeeklyCheckin";
+import YourProjects from "@/components/widgets/YourProjects";
 import ActiveNow from "@/components/widgets/ActiveNow";
 import FeedbackPrompt from "@/components/widgets/FeedbackPrompt";
 import CohortNetwork from "@/components/viz/CohortNetwork";
@@ -135,6 +136,7 @@ export default async function HomePage() {
 
         <aside className="space-y-4">
           <WeeklyCheckin userId={user.id} />
+          <YourProjects userId={user.id} />
           <ActiveNow members={memberList.filter((m) => m.id !== user.id)} currentUserId={user.id} />
           <FeedbackPrompt />
         </aside>

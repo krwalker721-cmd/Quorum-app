@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/Avatar";
 import HandshakeButton from "@/components/HandshakeButton";
 import { timeAgo } from "@/lib/stage";
+import JoinRequestsWidget, { type JoinRequest } from "./JoinRequestsWidget";
 
 type Member = {
   id: string;
@@ -30,6 +31,8 @@ type Doc = {
   added_by: string | null;
   title: string;
   description: string | null;
+  external_url?: string | null;
+  doc_type?: string | null;
   created_at: string;
 };
 
@@ -67,6 +70,8 @@ export default function ProjectRoomClient({
   docs: initialDocs,
   decisions: initialDecisions,
   votes: initialVotes,
+  joinRequests,
+  isOwner,
   initialTab,
 }: {
   currentUserId: string;
@@ -85,6 +90,8 @@ export default function ProjectRoomClient({
   docs: Doc[];
   decisions: Decision[];
   votes: Vote[];
+  joinRequests: JoinRequest[];
+  isOwner: boolean;
   initialTab: Tab;
 }) {
   const router = useRouter();
@@ -302,6 +309,14 @@ export default function ProjectRoomClient({
             />
           </div>
 
+          {isOwner && (
+            <JoinRequestsWidget
+              projectId={project.id}
+              projectTitle={project.title}
+              initialRequests={joinRequests}
+            />
+          )}
+
           <ActivityWidget
             messages={messages}
             docs={docs}
@@ -486,6 +501,24 @@ function ThreadTab({
   );
 }
 
+function getDomain(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function DocsTab({
   projectId,
   currentUserId,
@@ -500,13 +533,26 @@ function DocsTab({
   onAdded: (d: Doc) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"upload" | "link">("upload");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  async function submit() {
+  function reset() {
+    setTitle("");
+    setDescription("");
+    setUrl("");
+    setErr(null);
+    setActiveTab("upload");
+    setOpen(false);
+  }
+
+  async function submitFile() {
     if (!title.trim()) return;
     setBusy(true);
+    setErr(null);
     const supabase = createClient();
     const { data, error } = await supabase
       .from("shared_docs")
@@ -515,15 +561,50 @@ function DocsTab({
         added_by: currentUserId,
         title: title.trim(),
         description: description.trim() || null,
+        doc_type: "file",
       })
-      .select("id, added_by, title, description, created_at")
+      .select("id, added_by, title, description, external_url, doc_type, created_at")
       .single();
     setBusy(false);
-    if (!error && data) {
+    if (error) {
+      setErr(error.message.toLowerCase());
+      return;
+    }
+    if (data) {
       onAdded(data as Doc);
-      setTitle("");
-      setDescription("");
-      setOpen(false);
+      reset();
+    }
+  }
+
+  async function submitLink() {
+    if (!title.trim()) return;
+    if (!isValidUrl(url.trim())) {
+      setErr("please enter a valid http(s) url.");
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("shared_docs")
+      .insert({
+        project_id: projectId,
+        added_by: currentUserId,
+        title: title.trim(),
+        description: description.trim() || null,
+        external_url: url.trim(),
+        doc_type: "link",
+      })
+      .select("id, added_by, title, description, external_url, doc_type, created_at")
+      .single();
+    setBusy(false);
+    if (error) {
+      setErr(error.message.toLowerCase());
+      return;
+    }
+    if (data) {
+      onAdded(data as Doc);
+      reset();
     }
   }
 
@@ -534,17 +615,38 @@ function DocsTab({
       )}
       {docs.map((d) => {
         const adder = d.added_by ? memberMap.get(d.added_by) : null;
+        const isLink = d.doc_type === "link" && !!d.external_url;
+        const domain = isLink && d.external_url ? getDomain(d.external_url) : "";
         return (
           <div
             key={d.id}
             className="p-4 border flex items-start gap-3"
-            style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+            style={{
+              background: "var(--card-elev)",
+              borderColor: "var(--border)",
+              borderLeft: isLink ? "3px solid #58a6ff" : undefined,
+            }}
           >
-            <span className="font-mono text-lg" style={{ color: "#f59e0b" }}>
-
+            <span className="font-mono text-lg" style={{ color: isLink ? "#58a6ff" : "#f59e0b" }}>
+              {isLink ? "🔗" : "📄"}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-text-primary text-sm lowercase">{d.title.toLowerCase()}</p>
+              {isLink && d.external_url ? (
+                <a
+                  href={d.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-text-primary text-sm lowercase hover:underline"
+                  style={{ color: "#58a6ff" }}
+                >
+                  {d.title.toLowerCase()}
+                </a>
+              ) : (
+                <p className="text-text-primary text-sm lowercase">{d.title.toLowerCase()}</p>
+              )}
+              {domain && (
+                <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-0.5">{domain}</p>
+              )}
               <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-1">
                 {adder?.full_name?.toLowerCase() ?? "someone"} · {timeAgo(d.created_at)} ago
               </p>
@@ -560,40 +662,85 @@ function DocsTab({
 
       {open ? (
         <div
-          className="p-4 border space-y-3"
+          className="border"
           style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
         >
-          <input
-            placeholder="document title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            autoFocus
-            className="w-full px-3 py-2 text-text-primary"
-            style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-          />
-          <textarea
-            rows={3}
-            placeholder="description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 text-text-primary"
-            style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setOpen(false)}
-              className="font-mono lowercase text-[0.7rem] px-3 py-1 text-text-faint hover:text-text-primary"
-            >
-              cancel
-            </button>
-            <button
-              onClick={submit}
-              disabled={busy || !title.trim()}
-              className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
-            >
-              add
-            </button>
+          <div className="flex items-center border-b" style={{ borderColor: "var(--border)" }}>
+            {(["upload", "link"] as const).map((t) => {
+              const active = activeTab === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => {
+                    setActiveTab(t);
+                    setErr(null);
+                  }}
+                  className="font-mono lowercase text-[0.7rem] px-4 py-2"
+                  style={{
+                    color: active ? "#f59e0b" : "var(--text-muted)",
+                    borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
+                  }}
+                >
+                  {t === "upload" ? "upload doc" : "add link"}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="p-4 space-y-3">
+            {activeTab === "link" && (
+              <input
+                placeholder="paste a link..."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                autoFocus
+                className="w-full px-3 py-2 text-text-primary"
+                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+              />
+            )}
+            <input
+              placeholder={activeTab === "link" ? "what is this resource?" : "document title"}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus={activeTab === "upload"}
+              className="w-full px-3 py-2 text-text-primary"
+              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+            />
+            <textarea
+              rows={3}
+              placeholder={activeTab === "link" ? "brief description..." : "description (optional)"}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 text-text-primary"
+              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+            />
+            {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={reset}
+                className="font-mono lowercase text-[0.7rem] px-3 py-1 text-text-faint hover:text-text-primary"
+              >
+                cancel
+              </button>
+              <button
+                onClick={activeTab === "link" ? submitLink : submitFile}
+                disabled={
+                  busy || !title.trim() || (activeTab === "link" && !url.trim())
+                }
+                className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
+                style={{
+                  background: "rgba(245, 158, 11, 0.18)",
+                  color: "#f59e0b",
+                  border: "1px solid rgba(245, 158, 11, 0.55)",
+                  borderRadius: 5,
+                  boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)",
+                  fontWeight: 700,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {activeTab === "link" ? "add link →" : "add"}
+              </button>
+            </div>
           </div>
         </div>
       ) : (

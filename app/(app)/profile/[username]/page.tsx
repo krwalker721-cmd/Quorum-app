@@ -52,7 +52,7 @@ export default async function ProfilePage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, full_name, stage, what_they_are_building, trust_score, tier, created_at")
+    .select("id, username, full_name, stage, what_they_are_building, trust_score, tier, created_at, skills")
     .eq("username", params.username)
     .single();
 
@@ -107,13 +107,8 @@ export default async function ProfilePage({
       .map((m: any) => m.cohorts)
       .filter(Boolean) as { id: string; name: string }[];
 
-  // Skills
-  const { data: skillsRows } = await supabase
-    .from("user_skills")
-    .select("skill")
-    .eq("user_id", profile.id)
-    .order("created_at", { ascending: true });
-  const skills = (skillsRows ?? []).map((s: any) => s.skill as string);
+  // Skills — canonical source is profiles.skills (text[])
+  const skills = ((profile as any).skills ?? []) as string[];
 
   // Projects — owned + joined
   const { data: ownedProjects } = await supabase

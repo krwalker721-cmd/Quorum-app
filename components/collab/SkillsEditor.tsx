@@ -16,6 +16,15 @@ export default function SkillsEditor({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
 
+  async function persist(next: string[]) {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ skills: next })
+      .eq("id", userId);
+    return error;
+  }
+
   async function add() {
     const skill = text.trim().toLowerCase();
     if (!skill) return;
@@ -24,20 +33,20 @@ export default function SkillsEditor({
       return;
     }
     setBusy(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("user_skills").insert({ user_id: userId, skill });
+    const next = [...skills, skill];
+    const err = await persist(next);
     setBusy(false);
-    if (!error) {
-      setSkills([...skills, skill]);
+    if (!err) {
+      setSkills(next);
       setText("");
       router.refresh();
     }
   }
 
   async function remove(skill: string) {
-    const supabase = createClient();
-    await supabase.from("user_skills").delete().eq("user_id", userId).eq("skill", skill);
-    setSkills(skills.filter((s) => s !== skill));
+    const next = skills.filter((s) => s !== skill);
+    setSkills(next);
+    await persist(next);
     router.refresh();
   }
 

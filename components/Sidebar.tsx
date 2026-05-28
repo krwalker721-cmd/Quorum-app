@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import LogoMark from "@/components/LogoMark";
 import CohortPanel from "@/components/CohortPanel";
+import { useNavDots, type NavKey } from "@/components/NotificationsProvider";
 
 const VIEWED_KEY = "last_summary_viewed_week";
 const DISMISS_KEY_PREFIX = "dismissed_weekly_summary:";
@@ -34,13 +35,13 @@ function computeHomeDot(): boolean {
   return true;
 }
 
-const NAV = [
+const NAV: Array<{ href: string; label: string; dotKey?: NavKey }> = [
   { href: "/home", label: "home" },
-  { href: "/cohort", label: "cohort" },
-  { href: "/messages", label: "messages" },
-  { href: "/pulse", label: "pulse" },
-  { href: "/vault", label: "vault" },
-  { href: "/collab", label: "collab_board" },
+  { href: "/cohort", label: "cohort", dotKey: "cohort" },
+  { href: "/messages", label: "messages", dotKey: "messages" },
+  { href: "/pulse", label: "pulse", dotKey: "pulse" },
+  { href: "/vault", label: "vault", dotKey: "vault" },
+  { href: "/collab", label: "collab_board", dotKey: "collab" },
   { href: "/referrals", label: "referrals" },
 ];
 
@@ -55,6 +56,7 @@ export default function Sidebar({
   currentUserId: string;
 }) {
   const pathname = usePathname();
+  const { dots } = useNavDots();
   const [showHomeDot, setShowHomeDot] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -169,6 +171,9 @@ export default function Sidebar({
                   <span>{item.label}</span>
                   {item.href === "/home" && showHomeDot && (
                     <span className="nav-unseen-dot" aria-label="weekly summary available" />
+                  )}
+                  {item.dotKey && dots[item.dotKey] && !active && (
+                    <span className="nav-unseen-dot" aria-label={`new in ${item.label}`} />
                   )}
                 </>
               )}

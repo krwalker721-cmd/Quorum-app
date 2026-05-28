@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
+import NotificationsProvider from "@/components/NotificationsProvider";
 import AppOverlay from "@/components/AppOverlay";
 
 export const dynamic = "force-dynamic";
@@ -67,21 +68,35 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     if (typeof count === "number") nodeCount = count;
   } catch {}
 
+  // Pick the first cohort the user is a member of (used to scope cohort dot).
+  let cohortIdForDots: string | null = null;
+  try {
+    const { data: membership } = await supabase
+      .from("cohort_members")
+      .select("cohort_id")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    cohortIdForDots = (membership?.cohort_id as string | null) ?? null;
+  } catch {}
+
   return (
     <PresenceProvider currentUserId={user.id}>
-      <div className="min-h-screen root-layout">
-        <Sidebar cohort={cohort} currentUserId={user.id} />
-        <div
-          style={{
-            marginLeft: "var(--sidebar-w, 188px)",
-            paddingBottom: 20,
-            transition: "margin-left 0.25s ease",
-          }}
-        >
-          {children}
+      <NotificationsProvider currentUserId={user.id} cohortId={cohortIdForDots}>
+        <div className="min-h-screen root-layout">
+          <Sidebar cohort={cohort} currentUserId={user.id} />
+          <div
+            style={{
+              marginLeft: "var(--sidebar-w, 188px)",
+              paddingBottom: 20,
+              transition: "margin-left 0.25s ease",
+            }}
+          >
+            {children}
+          </div>
+          <AppOverlay nodeCount={nodeCount} />
         </div>
-        <AppOverlay nodeCount={nodeCount} />
-      </div>
+      </NotificationsProvider>
     </PresenceProvider>
   );
 }

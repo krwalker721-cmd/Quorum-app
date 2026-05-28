@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function CollabPage({
   searchParams,
 }: {
-  searchParams: { tab?: string };
+  searchParams: { tab?: string; error?: string };
 }) {
   const supabase = createClient();
   const {
@@ -64,22 +64,16 @@ export default async function CollabPage({
     authorIds.length > 0
       ? await supabase
           .from("profiles")
-          .select("id, full_name, stage, username")
+          .select("id, full_name, stage, username, skills")
           .in("id", authorIds)
       : { data: [] as any[] };
 
   const authorMap = new Map((authorsRaw ?? []).map((a: any) => [a.id, a]));
 
-  // Skills for each author (used in project pills)
-  const { data: skillsRaw } =
-    authorIds.length > 0
-      ? await supabase.from("user_skills").select("user_id, skill").in("user_id", authorIds)
-      : { data: [] as any[] };
+  // Skills for each author (used in project pills) — read from profiles.skills
   const skillsByAuthor = new Map<string, string[]>();
-  for (const row of skillsRaw ?? []) {
-    const arr = skillsByAuthor.get((row as any).user_id) ?? [];
-    arr.push((row as any).skill);
-    skillsByAuthor.set((row as any).user_id, arr);
+  for (const row of (authorsRaw ?? []) as any[]) {
+    if (Array.isArray(row.skills)) skillsByAuthor.set(row.id, row.skills as string[]);
   }
 
   // Interest counts + my membership
@@ -90,6 +84,37 @@ export default async function CollabPage({
   const interestCount = new Map<string, number>();
   for (const r of interestsRaw ?? []) {
     interestCount.set((r as any).project_id, (interestCount.get((r as any).project_id) ?? 0) + 1);
+  }
+
+  // Pending join request counts on my owned projects (visible only to owner)
+  const myOwnedIds = (projectsRaw ?? [])
+    .filter((p: any) => p.owner_id === user.id)
+    .map((p: any) => p.id);
+  const { data: pendingJoinRaw } =
+    myOwnedIds.length > 0
+      ? await supabase
+          .from("join_requests")
+          .select("project_id")
+          .eq("status", "pending")
+          .in("project_id", myOwnedIds)
+      : { data: [] as any[] };
+  const pendingJoinCount = new Map<string, number>();
+  for (const r of pendingJoinRaw ?? []) {
+    pendingJoinCount.set(
+      (r as any).project_id,
+      (pendingJoinCount.get((r as any).project_id) ?? 0) + 1
+    );
+  }
+
+  // Application counts (needs only)
+  const needIds = (needsRaw ?? []).map((n: any) => n.id);
+  const { data: applicationsRaw } =
+    needIds.length > 0
+      ? await supabase.from("need_applications").select("need_id").in("need_id", needIds)
+      : { data: [] as any[] };
+  const applicationCount = new Map<string, number>();
+  for (const r of applicationsRaw ?? []) {
+    applicationCount.set((r as any).need_id, (applicationCount.get((r as any).need_id) ?? 0) + 1);
   }
 
   const { data: myMembershipRaw } =
@@ -115,6 +140,8 @@ export default async function CollabPage({
       created_at: p.created_at,
       skills: skillsByAuthor.get(p.owner_id) ?? [],
       interest_count: interestCount.get(p.id) ?? 0,
+      application_count: applicationCount.get(p.id) ?? 0,
+      pending_requests: pendingJoinCount.get(p.id) ?? 0,
       is_member: myMemberSet.has(p.id),
       owner_id: p.owner_id,
     }));
@@ -122,18 +149,37 @@ export default async function CollabPage({
   const projects = hydrate(projectsRaw ?? []);
   const needs = hydrate(needsRaw ?? []);
 
-  // Skills index — aggregate from user_skills across all approved members
-  const { data: allSkillsRaw } = await supabase
-    .from("user_skills")
-    .select("skill, user_id, profiles!inner(id, full_name, stage, username, status)")
-    .eq("profiles.status", "approved");
+  // Skills index — aggregate from profiles.skills across all approved members
+  const { data: allProfilesWithSkills } = await supabase
+    .from("profiles")
+    .select("id, full_name, stage, username, skills, what_they_are_building")
+    .eq("status", "approved");
 
-  type SkillMember = { id: string; full_name: string | null; stage: string | null; username: string | null };
+  type SkillMember = {
+    id: string;
+    full_name: string | null;
+    stage: string | null;
+    username: string | null;
+    what_they_are_building?: string | null;
+  };
   const skillGroups = new Map<string, SkillMember[]>();
-  for (const r of (allSkillsRaw ?? []) as any[]) {
-    const list = skillGroups.get(r.skill) ?? [];
-    if (!list.find((m) => m.id === r.profiles.id)) list.push(r.profiles);
-    skillGroups.set(r.skill, list);
+  for (const p of (allProfilesWithSkills ?? []) as any[]) {
+    const arr: string[] = Array.isArray(p.skills) ? p.skills : [];
+    for (const raw of arr) {
+      const skill = (raw ?? "").toString().trim().toLowerCase();
+      if (!skill) continue;
+      const list = skillGroups.get(skill) ?? [];
+      if (!list.find((m) => m.id === p.id)) {
+        list.push({
+          id: p.id,
+          full_name: p.full_name,
+          stage: p.stage,
+          username: p.username,
+          what_they_are_building: p.what_they_are_building,
+        });
+      }
+      skillGroups.set(skill, list);
+    }
   }
   const skillIndex = Array.from(skillGroups.entries())
     .map(([skill, members]) => ({ skill, members }))
@@ -401,6 +447,7 @@ export default async function CollabPage({
         skillIndex={skillIndex}
         workspaceProjects={workspaceProjects}
         initialPulseEvents={initialPulseEvents.slice(0, 30)}
+        errorBanner={searchParams.error === "access_denied" ? "you don't have access to this project" : null}
       />
     </>
   );
