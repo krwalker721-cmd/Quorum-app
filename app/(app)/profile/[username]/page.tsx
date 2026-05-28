@@ -6,7 +6,7 @@ import TopBar from "@/components/TopBar";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import TierPill from "@/components/TierPill";
-import PostCard from "@/components/PostCard";
+import ProfilePostsList from "@/components/ProfilePostsList";
 import HandshakeButton from "@/components/HandshakeButton";
 import CohortFingerprint from "@/components/CohortFingerprint";
 import VouchedBadge from "@/components/VouchedBadge";
@@ -149,40 +149,44 @@ export default async function ProfilePage({
     created_at: string;
   }[];
 
-  // Posts authored (attributed only)
-  const { data: postsRows } =
-    tab === "posts"
-      ? await supabase
-          .from("posts")
-          .select(
-            "id, content, tag, is_anonymous, post_type, reply_count, created_at, local_hour",
-          )
-          .eq("author_id", profile.id)
-          .eq("is_anonymous", false)
-          .order("created_at", { ascending: false })
-          .limit(100)
-      : { data: null as any };
-
-  const movedSetProfile =
-    tab === "posts" && postsRows?.length
-      ? await postsMovedTheRoomBatch(
-          supabase,
-          postsRows.map((p: any) => ({ id: p.id, created_at: p.created_at })),
+  // Posts authored (attributed only). Wrapped defensively so a failure in this
+  // tab-specific path degrades to an empty list instead of a 500.
+  let posts: any[] = [];
+  if (tab === "posts") {
+    try {
+      const { data: postsRows } = await supabase
+        .from("posts")
+        .select(
+          "id, content, tag, is_anonymous, post_type, reply_count, created_at, local_hour",
         )
-      : new Set<string>();
+        .eq("author_id", profile.id)
+        .eq("is_anonymous", false)
+        .order("created_at", { ascending: false })
+        .limit(100);
 
-  const posts = (postsRows ?? []).map((p: any) => ({
-    ...p,
-    author: {
-      full_name: profile.full_name,
-      stage: profile.stage,
-      username: profile.username,
-      created_at: profile.created_at,
-    },
-    movedTheRoom: movedSetProfile.has(p.id),
-    authorDepthRing: depthRing,
-    authorAnniversary: anniversary,
-  }));
+      const movedSetProfile = postsRows?.length
+        ? await postsMovedTheRoomBatch(
+            supabase,
+            postsRows.map((p: any) => ({ id: p.id, created_at: p.created_at })),
+          )
+        : new Set<string>();
+
+      posts = (postsRows ?? []).map((p: any) => ({
+        ...p,
+        author: {
+          full_name: profile.full_name,
+          stage: profile.stage,
+          username: profile.username,
+          created_at: profile.created_at,
+        },
+        movedTheRoom: movedSetProfile.has(p.id),
+        authorDepthRing: depthRing,
+        authorAnniversary: anniversary,
+      }));
+    } catch {
+      posts = [];
+    }
+  }
 
   // Handshakes — owner sees all involving them; viewers see only mutual (involving both)
   const { data: handshakesRaw } = isOwner
@@ -541,19 +545,7 @@ export default async function ProfilePage({
           </>
         ) : (
           <div className="mt-6 space-y-3">
-            {posts.length === 0 ? (
-              <p className="font-mono lowercase text-xs text-text-faint">no posts yet.</p>
-            ) : (
-              posts.map((p: any) => (
-                <Link
-                  key={p.id}
-                  href={`/${p.post_type === "pulse" ? "pulse" : "home"}#post-${p.id}`}
-                  className="block hover:opacity-90 transition-opacity"
-                >
-                  <PostCard post={p} />
-                </Link>
-              ))
-            )}
+            <ProfilePostsList posts={posts as any} />
           </div>
         )}
       </section>
