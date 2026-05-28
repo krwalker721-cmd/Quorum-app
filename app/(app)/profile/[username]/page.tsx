@@ -50,11 +50,27 @@ export default async function ProfilePage({
   const { data: me } = await supabase.from("profiles").select("tier").eq("id", user.id).single();
   const myTier = (me?.tier ?? "free") as string;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, username, full_name, stage, what_they_are_building, trust_score, tier, created_at, skills")
-    .eq("username", params.username)
-    .single();
+  // Try selecting with skills; fall back to the base columns if the skills
+  // column doesn't exist yet (migration not run). This keeps profiles loading
+  // regardless of DB state.
+  let profile: any = null;
+  {
+    const withSkills = await supabase
+      .from("profiles")
+      .select("id, username, full_name, stage, what_they_are_building, trust_score, tier, created_at, skills")
+      .eq("username", params.username)
+      .single();
+    if (withSkills.data) {
+      profile = withSkills.data;
+    } else {
+      const base = await supabase
+        .from("profiles")
+        .select("id, username, full_name, stage, what_they_are_building, trust_score, tier, created_at")
+        .eq("username", params.username)
+        .single();
+      profile = base.data ? { ...base.data, skills: [] } : null;
+    }
+  }
 
   if (!profile) notFound();
 

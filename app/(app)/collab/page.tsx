@@ -60,13 +60,22 @@ export default async function CollabPage({
   const authorIds = Array.from(new Set(allProjects.map((p) => p.owner_id).filter(Boolean) as string[]));
   const projectIds = allProjects.map((p) => p.id);
 
-  const { data: authorsRaw } =
-    authorIds.length > 0
-      ? await supabase
-          .from("profiles")
-          .select("id, full_name, stage, username, skills")
-          .in("id", authorIds)
-      : { data: [] as any[] };
+  let authorsRaw: any[] = [];
+  if (authorIds.length > 0) {
+    const withSkills = await supabase
+      .from("profiles")
+      .select("id, full_name, stage, username, skills")
+      .in("id", authorIds);
+    if (withSkills.error) {
+      const base = await supabase
+        .from("profiles")
+        .select("id, full_name, stage, username")
+        .in("id", authorIds);
+      authorsRaw = (base.data ?? []).map((a: any) => ({ ...a, skills: [] }));
+    } else {
+      authorsRaw = withSkills.data ?? [];
+    }
+  }
 
   const authorMap = new Map((authorsRaw ?? []).map((a: any) => [a.id, a]));
 
@@ -149,11 +158,20 @@ export default async function CollabPage({
   const projects = hydrate(projectsRaw ?? []);
   const needs = hydrate(needsRaw ?? []);
 
-  // Skills index — aggregate from profiles.skills across all approved members
-  const { data: allProfilesWithSkills } = await supabase
-    .from("profiles")
-    .select("id, full_name, stage, username, skills, what_they_are_building")
-    .eq("status", "approved");
+  // Skills index — aggregate from profiles.skills across all approved members.
+  // Tolerate the skills column not existing yet (migration not run).
+  let allProfilesWithSkills: any[] = [];
+  {
+    const res = await supabase
+      .from("profiles")
+      .select("id, full_name, stage, username, skills, what_they_are_building")
+      .eq("status", "approved");
+    if (res.error) {
+      allProfilesWithSkills = [];
+    } else {
+      allProfilesWithSkills = res.data ?? [];
+    }
+  }
 
   type SkillMember = {
     id: string;
