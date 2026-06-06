@@ -18,6 +18,9 @@ create table if not exists public.profiles (
 -- Add username column (idempotent)
 alter table public.profiles add column if not exists username text unique;
 
+-- is_admin gates admin-only actions (e.g. nominating posts to the vault).
+alter table public.profiles add column if not exists is_admin boolean default false;
+
 -- Backfill any existing rows missing a username
 update public.profiles
 set username = lower(regexp_replace(coalesce(full_name, 'founder'), '[^a-zA-Z0-9]+', '-', 'g'))
@@ -62,17 +65,21 @@ create table if not exists public.posts (
   created_at timestamp default now()
 );
 
+-- cohort_id scopes a cohort post to a specific cohort room (FK added later,
+-- after the cohorts table exists; see migration 005 for the constrained form).
+alter table public.posts add column if not exists cohort_id uuid;
+
 create index if not exists posts_created_at_idx on public.posts (created_at desc);
 create index if not exists posts_post_type_idx on public.posts (post_type);
+create index if not exists posts_cohort_id_idx on public.posts (cohort_id);
 
 alter table public.posts enable row level security;
 
-drop policy if exists "authenticated_read_posts" on public.posts;
 drop policy if exists "authenticated_insert_posts" on public.posts;
 
-create policy "authenticated_read_posts"
-  on public.posts for select
-  using (auth.role() = 'authenticated');
+-- NOTE: the SELECT policy ("Cohort members can view cohort posts") is created
+-- further down, after the cohort_members table and the my_cohort_ids() helper
+-- it depends on exist.
 
 create policy "authenticated_insert_posts"
   on public.posts for insert
@@ -106,16 +113,55 @@ end $$;
 
 alter table public.cohort_members enable row level security;
 
-drop policy if exists "cohort_members_read_all" on public.cohort_members;
-drop policy if exists "cohort_members_insert_own" on public.cohort_members;
+-- Helper: the set of cohort ids the current user belongs to. SECURITY DEFINER
+-- so it bypasses RLS on cohort_members — this prevents the "infinite recursion
+-- detected in policy" error a self-referential subquery would otherwise cause.
+create or replace function public.my_cohort_ids()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select cohort_id from public.cohort_members where user_id = auth.uid();
+$$;
 
-create policy "cohort_members_read_all"
+drop policy if exists "cohort_members_read_all" on public.cohort_members;
+drop policy if exists "Users can view their cohort memberships" on public.cohort_members;
+drop policy if exists "cohort_members_insert_own" on public.cohort_members;
+drop policy if exists "Users can leave cohorts" on public.cohort_members;
+
+-- Members can see their own rows and co-members of cohorts they belong to.
+create policy "Users can view their cohort memberships"
   on public.cohort_members for select
-  using (auth.role() = 'authenticated');
+  using (
+    user_id = auth.uid()
+    or cohort_id in (select public.my_cohort_ids())
+  );
 
 create policy "cohort_members_insert_own"
   on public.cohort_members for insert
   with check (auth.uid() = user_id);
+
+-- Users can leave a cohort by deleting their own membership row.
+create policy "Users can leave cohorts"
+  on public.cohort_members for delete
+  using (auth.uid() = user_id);
+
+-- Pulse posts are global; cohort posts are only visible to members of that
+-- cohort. Defined here (not next to the posts table) because it depends on
+-- cohort_members and my_cohort_ids() existing first.
+drop policy if exists "authenticated_read_posts" on public.posts;
+drop policy if exists "Cohort members can view cohort posts" on public.posts;
+create policy "Cohort members can view cohort posts"
+  on public.posts for select
+  using (
+    post_type = 'pulse'
+    or (
+      post_type = 'cohort'
+      and cohort_id in (select public.my_cohort_ids())
+    )
+  );
 
 -- ============================================================================
 -- messages (1:1 DMs)
@@ -736,15 +782,23 @@ alter table public.vault_nominations enable row level security;
 
 drop policy if exists "vault_nominations_insert_auth" on public.vault_nominations;
 drop policy if exists "vault_nominations_read_own" on public.vault_nominations;
+drop policy if exists "Admins can nominate posts" on public.vault_nominations;
+drop policy if exists "Admins can view nominations" on public.vault_nominations;
+drop policy if exists "Admins can update nominations" on public.vault_nominations;
 
-create policy "vault_nominations_insert_auth"
+-- Only admins can nominate, view, or review nominations (admin also acts via
+-- the service role on the admin page).
+create policy "Admins can nominate posts"
   on public.vault_nominations for insert
-  with check (auth.uid() = nominated_by);
+  with check ((select is_admin from public.profiles where id = auth.uid()) = true);
 
--- Nominators can read their own; admin reads via service role.
-create policy "vault_nominations_read_own"
+create policy "Admins can view nominations"
   on public.vault_nominations for select
-  using (auth.uid() = nominated_by);
+  using ((select is_admin from public.profiles where id = auth.uid()) = true);
+
+create policy "Admins can update nominations"
+  on public.vault_nominations for update
+  using ((select is_admin from public.profiles where id = auth.uid()) = true);
 
 -- community_wisdom: approved nominations, visible to all authenticated users
 create table if not exists public.community_wisdom (

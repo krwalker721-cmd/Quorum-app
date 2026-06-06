@@ -18,7 +18,16 @@ export default function CohortNav() {
       style={{ background: "var(--card)", borderColor: "var(--border)" }}
     >
       {ITEMS.map((i) => {
-        const active = pathname === i.href;
+        // "room" stays active on the index and on any scoped /cohort/[id] room,
+        // but not on the sibling static routes (browse/create/invite).
+        const active =
+          i.href === "/cohort"
+            ? pathname === "/cohort" ||
+              (pathname.startsWith("/cohort/") &&
+                !["/cohort/browse", "/cohort/create", "/cohort/invite"].some(
+                  (p) => pathname.startsWith(p),
+                ))
+            : pathname === i.href;
         return (
           <Link
             key={i.href}

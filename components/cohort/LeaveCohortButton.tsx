@@ -28,6 +28,10 @@ export default function LeaveCohortButton({
       return;
     }
     setOpen(false);
+    // Membership is gone — return to the cohort index so the (no-cohort /
+    // selection / single-cohort) state is recomputed. refresh() ensures the
+    // server components re-read the now-updated membership list.
+    router.push("/cohort");
     router.refresh();
   }
 
@@ -72,8 +76,9 @@ export default function LeaveCohortButton({
               leave this cohort?
             </p>
             <p className="text-text-muted text-[0.85rem] leading-relaxed mt-3">
-              are you sure you want to leave this cohort? you will be reassigned to
-              another cohort or a new one will be created for you.
+              are you sure you want to leave this cohort? you&apos;ll immediately
+              lose access to its posts, messages, and room. you can join or be
+              invited to another cohort later.
             </p>
             {err && (
               <p className="font-mono text-xs text-red-400 lowercase mt-3">

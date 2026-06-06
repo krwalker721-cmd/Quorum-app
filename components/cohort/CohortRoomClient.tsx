@@ -39,6 +39,7 @@ type Post = {
   tag: string | null;
   is_anonymous: boolean;
   post_type: string;
+  cohort_id?: string | null;
   reply_count: number;
   created_at: string;
   local_hour?: number | null;
@@ -64,19 +65,23 @@ const TYPE_STYLE: Record<
 
 export default function CohortRoomClient({
   currentUserId,
+  cohortId,
   members,
   checkinByUserJson,
   posts: initialPosts,
   roomName,
   myCohorts,
+  showBreadcrumb = false,
   rosterFlags,
 }: {
   currentUserId: string;
+  cohortId: string;
   members: Member[];
   checkinByUserJson: Record<string, CheckIn>;
   posts: Post[];
   roomName: string;
   myCohorts: { id: string; name: string }[];
+  showBreadcrumb?: boolean;
   rosterFlags: Record<string, RosterFlags>;
 }) {
   const online = usePresence();
@@ -91,15 +96,29 @@ export default function CohortRoomClient({
     [members]
   );
 
+  // Mark this cohort as visited so the selection screen's unread badge resets.
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        `cohort-last-visit-${cohortId}`,
+        new Date().toISOString(),
+      );
+    } catch {
+      // ignore storage failures
+    }
+  }, [cohortId]);
+
   useEffect(() => {
     const channel = supabase
-      .channel("cohort_room:posts")
+      .channel(`cohort_room:posts:${cohortId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "posts" },
         async (payload) => {
           const row = payload.new as Post & { author_id: string };
+          // Only posts that belong to THIS cohort room.
           if (row.post_type !== "cohort") return;
+          if (row.cohort_id !== cohortId) return;
           const author = authorMap.get(row.author_id) ?? null;
           setPosts((prev) => [{ ...row, author }, ...prev]);
         }
@@ -108,10 +127,24 @@ export default function CohortRoomClient({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, authorMap]);
+  }, [supabase, authorMap, cohortId]);
 
   return (
     <>
+      {showBreadcrumb && (
+        <div
+          className="px-6 py-2 border-b"
+          style={{ background: "var(--card)", borderColor: "var(--border)" }}
+        >
+          <Link
+            href="/cohort"
+            className="font-mono lowercase text-[0.7rem] hover:text-amber transition-colors"
+            style={{ color: "var(--text-muted)" }}
+          >
+            ← cohorts
+          </Link>
+        </div>
+      )}
       <div className="flex" style={{ minHeight: "calc(100vh - 96px)" }}>
         {/* LEFT — roster */}
         <aside
@@ -419,6 +452,7 @@ export default function CohortRoomClient({
       {postOpen && (
         <RoomPostModal
           userId={currentUserId}
+          cohortId={cohortId}
           onClose={() => setPostOpen(false)}
         />
       )}

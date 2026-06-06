@@ -179,6 +179,16 @@ function AllPosts() {
     if (res.ok) load();
   }
 
+  const [nominated, setNominated] = useState<Record<string, boolean>>({});
+
+  async function nominate(id: string) {
+    const res = await adminFetch("/api/admin/vault-nomination", {
+      method: "POST",
+      body: JSON.stringify({ action: "create", post_id: id }),
+    });
+    if (res.ok) setNominated((m) => ({ ...m, [id]: true }));
+  }
+
   return (
     <div>
       <div className="flex flex-wrap gap-2 mb-3">
@@ -238,13 +248,23 @@ function AllPosts() {
                   <td className="px-3 py-2 font-mono text-[0.7rem] text-text-faint">{p.reply_count}</td>
                   <td className="px-3 py-2 font-mono text-[0.6rem] text-text-faint">{p.created_at.slice(0, 10)}</td>
                   <td className="px-3 py-2">
-                    <button
-                      onClick={() => remove(p.id)}
-                      className="font-mono text-[0.6rem] lowercase px-2 py-1 border"
-                      style={{ borderColor: "var(--border)", color: "#ef4444" }}
-                    >
-                      remove
-                    </button>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => nominate(p.id)}
+                        disabled={nominated[p.id]}
+                        className="font-mono text-[0.6rem] lowercase px-2 py-1 border disabled:opacity-50"
+                        style={{ borderColor: "rgba(245, 158, 11, 0.55)", color: "#f59e0b" }}
+                      >
+                        {nominated[p.id] ? "nominated" : "nominate"}
+                      </button>
+                      <button
+                        onClick={() => remove(p.id)}
+                        className="font-mono text-[0.6rem] lowercase px-2 py-1 border"
+                        style={{ borderColor: "var(--border)", color: "#ef4444" }}
+                      >
+                        remove
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

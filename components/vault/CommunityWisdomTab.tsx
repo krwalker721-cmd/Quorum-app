@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import { createClient } from "@/lib/supabase/client";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 import { TAG_COLOR } from "@/lib/stage";
 import { shortTimeAgo } from "@/lib/vault";
 import type { WisdomItem } from "./VaultPage";
@@ -26,6 +27,7 @@ export default function CommunityWisdomTab({
   topRepliedPulse: GhostPost[];
   pulseRecent: number;
 }) {
+  const isAdmin = useIsAdmin();
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState<string>("all");
   const [tick, setTick] = useState<string | null>(null);
@@ -110,7 +112,11 @@ export default function CommunityWisdomTab({
       </div>
 
       {filtered.length === 0 ? (
-        <WisdomEmpty topRepliedPulse={topRepliedPulse} pulseRecent={pulseRecent} />
+        <WisdomEmpty
+          topRepliedPulse={topRepliedPulse}
+          pulseRecent={pulseRecent}
+          isAdmin={isAdmin}
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((w) => (
@@ -204,9 +210,11 @@ function WisdomCard({ item }: { item: WisdomItem }) {
 function WisdomEmpty({
   topRepliedPulse,
   pulseRecent,
+  isAdmin,
 }: {
   topRepliedPulse: GhostPost[];
   pulseRecent: number;
+  isAdmin: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -218,20 +226,24 @@ function WisdomEmpty({
         <p className="text-text-muted text-sm leading-relaxed mt-1">
           when a conversation on Pulse is worth preserving forever,
           <br />
-          the community nominates it.
+          it gets nominated to the vault.
         </p>
         <p className="text-text-muted text-sm leading-relaxed mt-3">
           the best insights don't disappear here — they get kept.
         </p>
-        <Link
-          href="/pulse"
-          className="inline-block font-mono lowercase text-[0.7rem] text-amber hover:opacity-80 mt-5"
-        >
-          {pulseRecent} posts on pulse right now that could end up here
-        </Link>
+        {/* Nominating is admin-only — only admins see the actionable prompt. */}
+        {isAdmin && (
+          <Link
+            href="/pulse"
+            className="inline-block font-mono lowercase text-[0.7rem] text-amber hover:opacity-80 mt-5"
+          >
+            {pulseRecent} posts on pulse right now that could end up here
+          </Link>
+        )}
       </div>
 
-      {topRepliedPulse.length > 0 && (
+      {/* The "most replied to" previews are a nomination prompt — admins only. */}
+      {isAdmin && topRepliedPulse.length > 0 && (
         <div>
           <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2 tracking-wider">
             most_replied_to · last 7 days

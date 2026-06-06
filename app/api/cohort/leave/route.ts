@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { assignUserToCohort } from "@/lib/cohorts";
 
 export async function POST(req: Request) {
   const supabase = createClient();
@@ -16,6 +15,9 @@ export async function POST(req: Request) {
 
   const admin = createAdminClient();
 
+  // Leaving is a full, permanent removal — delete the membership row and stop.
+  // No reassignment: the user immediately loses access to that cohort's posts,
+  // messages, and room (enforced by RLS on the now-missing membership).
   if (cohortId) {
     const { error } = await admin
       .from("cohort_members")
@@ -24,7 +26,7 @@ export async function POST(req: Request) {
       .eq("cohort_id", cohortId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   } else {
-    // No explicit cohort — remove from all (single-cohort assumption).
+    // No explicit cohort — remove from all of them.
     const { error } = await admin
       .from("cohort_members")
       .delete()
@@ -32,13 +34,5 @@ export async function POST(req: Request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  let reassignedTo: string | null = null;
-  let warn: string | null = null;
-  try {
-    reassignedTo = await assignUserToCohort(admin, user.id);
-  } catch (e: any) {
-    warn = e?.message ?? "reassign failed";
-  }
-
-  return NextResponse.json({ ok: true, reassigned_to: reassignedTo, warning: warn });
+  return NextResponse.json({ ok: true });
 }

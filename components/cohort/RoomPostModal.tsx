@@ -16,9 +16,11 @@ const TYPES: { value: RoomType; color: string; desc: string }[] = [
 
 export default function RoomPostModal({
   userId,
+  cohortId,
   onClose,
 }: {
   userId: string;
+  cohortId: string;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -37,6 +39,7 @@ export default function RoomPostModal({
       author_id: userId,
       content: content.trim(),
       post_type: "cohort",
+      cohort_id: cohortId,
       room_type: type,
       is_anonymous: anon,
       local_hour: new Date().getHours(),

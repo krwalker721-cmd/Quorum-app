@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 const REPORT_REASONS = ["spam", "inappropriate", "harassment", "misinformation", "other"];
@@ -15,6 +16,7 @@ export default function PostMenu({
   canDelete?: boolean;
   onDeleted?: () => void;
 }) {
+  const isAdmin = useIsAdmin();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function doDelete() {
@@ -99,20 +101,22 @@ export default function PostMenu({
           className="absolute right-0 top-full mt-1 z-30 min-w-[180px] border"
           style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
         >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen(false);
-              setNominateModal(true);
-              setDone(false);
-              setReason("");
-            }}
-            className="block w-full text-left font-mono lowercase text-[0.7rem] text-text-muted hover:text-text-primary px-3 py-2"
-          >
-            nominate to vault
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(false);
+                setNominateModal(true);
+                setDone(false);
+                setReason("");
+              }}
+              className="block w-full text-left font-mono lowercase text-[0.7rem] text-text-muted hover:text-text-primary px-3 py-2"
+            >
+              nominate to vault
+            </button>
+          )}
           <button
             type="button"
             onClick={(e) => {
