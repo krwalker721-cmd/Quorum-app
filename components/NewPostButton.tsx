@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { ROOM_TYPE_COLOR, ROOM_TYPE_LABEL } from "@/lib/stage";
@@ -25,9 +25,38 @@ export default function NewPostButton({
   const [anon, setAnon] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Cohort membership — null while loading, [] when in no cohorts.
+  const [myCohortIds, setMyCohortIds] = useState<string[] | null>(null);
+  const inNoCohort = myCohortIds !== null && myCohortIds.length === 0;
+
+  // On modal open, check whether the user belongs to any cohort. If not, the
+  // cohort destination is disabled and we force the post to pulse.
+  useEffect(() => {
+    if (!open || myCohortIds !== null) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("cohort_members")
+        .select("cohort_id")
+        .eq("user_id", userId);
+      if (cancelled) return;
+      const ids = (data ?? []).map((r) => r.cohort_id).filter(Boolean) as string[];
+      setMyCohortIds(ids);
+      if (ids.length === 0) setPostType("pulse");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, userId, myCohortIds]);
 
   async function submit() {
     if (!content.trim()) return;
+    // Guard: cohort posts require membership (mirrors the server-side RLS).
+    if (postType === "cohort" && (myCohortIds?.length ?? 0) === 0) {
+      setErr("join a cohort to post here.");
+      return;
+    }
     setBusy(true);
     setErr(null);
     const supabase = createClient();
@@ -43,6 +72,8 @@ export default function NewPostButton({
       payload.tag = null;
     } else {
       payload.tag = tag;
+      // Attach to the user's (first) cohort so it lands in a real cohort room.
+      payload.cohort_id = myCohortIds?.[0] ?? null;
     }
     const { error } = await supabase.from("posts").insert(payload);
     setBusy(false);
@@ -180,16 +211,21 @@ export default function NewPostButton({
                 <div className="flex gap-2 mt-1">
                   {(["cohort", "pulse"] as const).map((d) => {
                     const active = postType === d;
+                    const disabled = d === "cohort" && inNoCohort;
                     return (
                       <button
                         key={d}
                         type="button"
-                        onClick={() => setPostType(d)}
+                        onClick={() => !disabled && setPostType(d)}
+                        disabled={disabled}
+                        title={disabled ? "join a cohort to post here" : undefined}
                         className="font-mono lowercase text-[0.7rem] px-3 py-1.5 flex-1 transition-colors"
                         style={{
                           border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
                           color: active ? "#f59e0b" : "var(--text-muted)",
                           background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
+                          opacity: disabled ? 0.35 : 1,
+                          cursor: disabled ? "not-allowed" : "pointer",
                         }}
                       >
                         {d === "cohort" ? "cohort_feed" : "pulse"}
@@ -197,6 +233,11 @@ export default function NewPostButton({
                     );
                   })}
                 </div>
+                {inNoCohort && (
+                  <p className="font-mono lowercase text-text-faint mt-1" style={{ fontSize: "10px" }}>
+                    join a cohort to post here
+                  </p>
+                )}
               </div>
             )}
 

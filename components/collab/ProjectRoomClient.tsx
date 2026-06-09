@@ -65,7 +65,7 @@ function optLabel(o: DecisionOption) {
 export default function ProjectRoomClient({
   currentUserId,
   project,
-  members,
+  members: initialMembers,
   messages: initialMessages,
   docs: initialDocs,
   decisions: initialDecisions,
@@ -96,6 +96,7 @@ export default function ProjectRoomClient({
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
+  const [members, setMembers] = useState<Member[]>(initialMembers);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [docs, setDocs] = useState<Doc[]>(initialDocs);
   const [decisions, setDecisions] = useState<Decision[]>(initialDecisions);
@@ -127,6 +128,57 @@ export default function ProjectRoomClient({
     };
   }, [project.id]);
 
+  // Realtime: membership removals. If I'm removed, bounce me out; otherwise drop
+  // the removed member from the roster live.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`project_members_${project.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "project_members",
+          filter: `project_id=eq.${project.id}`,
+        },
+        (payload) => {
+          const removed = payload.old as { user_id?: string };
+          if (!removed?.user_id) return;
+          if (removed.user_id === currentUserId) {
+            router.replace("/collab?error=removed");
+          } else {
+            setMembers((prev) => prev.filter((m) => m.id !== removed.user_id));
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [project.id, currentUserId, router]);
+
+  async function kickMember(target: Member) {
+    if (
+      !window.confirm(
+        `remove ${target.full_name?.toLowerCase() ?? "this member"} from this project? they will lose access to the project room.`,
+      )
+    ) {
+      return;
+    }
+    const res = await fetch("/api/project/kick", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_id: project.id, user_id: target.id }),
+    });
+    if (res.ok) {
+      setMembers((prev) => prev.filter((m) => m.id !== target.id));
+    } else {
+      const j = await res.json().catch(() => ({}));
+      window.alert(j?.error ?? "could not remove member");
+    }
+  }
+
   return (
     <>
       {/* Sub header bar */}
@@ -155,6 +207,7 @@ export default function ProjectRoomClient({
         </div>
         <HandshakeProjectButton
           currentUserId={currentUserId}
+          projectId={project.id}
           projectTitle={project.title}
           members={members.filter((m) => m.id !== currentUserId)}
         />
@@ -271,7 +324,7 @@ export default function ProjectRoomClient({
             <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-3">members</p>
             <div className="space-y-2">
               {members.map((m) => (
-                <div key={m.id} className="flex items-center gap-3">
+                <div key={m.id} className="group/member flex items-center gap-3">
                   <Avatar
                     name={m.full_name}
                     stage={m.stage}
@@ -286,6 +339,16 @@ export default function ProjectRoomClient({
                       <p className="font-mono lowercase text-[0.6rem] text-text-faint">{m.role}</p>
                     )}
                   </div>
+                  {isOwner && m.id !== currentUserId && (
+                    <button
+                      onClick={() => kickMember(m)}
+                      title={`remove ${m.full_name?.toLowerCase() ?? "member"}`}
+                      aria-label="remove member"
+                      className="font-mono text-[0.75rem] px-1 text-text-faint opacity-0 group-hover/member:opacity-100 hover:text-red-400 transition-all"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -303,6 +366,7 @@ export default function ProjectRoomClient({
             </p>
             <HandshakeProjectButton
               currentUserId={currentUserId}
+              projectId={project.id}
               projectTitle={project.title}
               members={members.filter((m) => m.id !== currentUserId)}
               variant="link"
@@ -358,11 +422,13 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
 
 function HandshakeProjectButton({
   currentUserId,
+  projectId,
   projectTitle,
   members,
   variant = "button",
 }: {
   currentUserId: string;
+  projectId: string;
   projectTitle: string;
   members: Member[];
   variant?: "button" | "link";
@@ -382,6 +448,7 @@ function HandshakeProjectButton({
         recipientId={target.id}
         recipientName={target.full_name}
         defaultAgreement={`re: ${projectTitle}\n\n`}
+        projectId={projectId}
       />
     </div>
   );

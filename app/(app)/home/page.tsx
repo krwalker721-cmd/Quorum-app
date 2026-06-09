@@ -4,6 +4,7 @@ import StatStrip from "@/components/StatStrip";
 import Feed from "@/components/Feed";
 import WeeklyCheckin from "@/components/widgets/WeeklyCheckin";
 import YourProjects from "@/components/widgets/YourProjects";
+import RecentHandshakes from "@/components/widgets/RecentHandshakes";
 import ActiveNow from "@/components/widgets/ActiveNow";
 import FeedbackPrompt from "@/components/widgets/FeedbackPrompt";
 import CohortNetwork from "@/components/viz/CohortNetwork";
@@ -27,7 +28,7 @@ export default async function HomePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, stage, tier, trust_score")
+    .select("id, full_name, stage, tier, trust_score, username")
     .eq("id", user.id)
     .single();
 
@@ -39,10 +40,37 @@ export default async function HomePage() {
 
   const memberList = members ?? [];
 
+  // cohort_fill — real member count of the user's cohort(s), averaged across all
+  // cohorts they belong to, out of COHORT_MAX. 0/12 when in no cohorts.
+  const { data: myCohortRows } = await supabase
+    .from("cohort_members")
+    .select("cohort_id")
+    .eq("user_id", user.id);
+  const myCohortIds = Array.from(
+    new Set((myCohortRows ?? []).map((r) => r.cohort_id).filter(Boolean)),
+  ) as string[];
+
+  let cohortFill = 0;
+  if (myCohortIds.length > 0) {
+    const { data: cohortMemberRows } = await supabase
+      .from("cohort_members")
+      .select("cohort_id, user_id")
+      .in("cohort_id", myCohortIds);
+    const perCohort = new Map<string, Set<string>>();
+    for (const r of cohortMemberRows ?? []) {
+      if (!r.cohort_id || !r.user_id) continue;
+      if (!perCohort.has(r.cohort_id)) perCohort.set(r.cohort_id, new Set());
+      perCohort.get(r.cohort_id)!.add(r.user_id);
+    }
+    const sizes = myCohortIds.map((id) => perCohort.get(id)?.size ?? 0);
+    cohortFill = Math.round(sizes.reduce((a, b) => a + b, 0) / sizes.length);
+  }
+
   // Posts with author hydrated
   const { data: postsRaw } = await supabase
     .from("posts")
-    .select("id, content, tag, is_anonymous, post_type, reply_count, created_at, author_id, local_hour")
+    .select("id, content, tag, is_anonymous, post_type, cohort_id, reply_count, created_at, author_id, local_hour")
+    .is("parent_post_id", null)
     .order("created_at", { ascending: false })
     .limit(40);
 
@@ -118,8 +146,9 @@ export default async function HomePage() {
         members={memberList.length}
         activeNow={1}
         posts7d={posts7d ?? 0}
-        cohortFill={memberList.length}
+        cohortFill={cohortFill}
         cohortMax={COHORT_MAX}
+        cohortIds={myCohortIds}
         trustScore={profile?.trust_score ?? 0}
       />
 
@@ -137,6 +166,7 @@ export default async function HomePage() {
         <aside className="space-y-4">
           <WeeklyCheckin userId={user.id} />
           <YourProjects userId={user.id} />
+          <RecentHandshakes userId={user.id} username={profile?.username ?? null} />
           <ActiveNow members={memberList.filter((m) => m.id !== user.id)} currentUserId={user.id} />
           <FeedbackPrompt />
         </aside>

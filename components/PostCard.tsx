@@ -1,8 +1,11 @@
+"use client";
+
 import Avatar from "@/components/Avatar";
 import { TAG_COLOR, ROOM_TYPE_COLOR, timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
 import BookmarkButton from "@/components/BookmarkButton";
 import PostMenu from "@/components/PostMenu";
+import ReplyThread from "@/components/ReplyThread";
 
 export type PostWithAuthor = {
   id: string;
@@ -12,6 +15,7 @@ export type PostWithAuthor = {
   room_type?: string | null;
   is_anonymous: boolean;
   post_type: string;
+  cohort_id?: string | null;
   reply_count: number;
   created_at: string;
   local_hour?: number | null;
@@ -33,10 +37,16 @@ export default function PostCard({
   post,
   currentUserId,
   onDeleted,
+  expanded = false,
+  onToggleReplies,
 }: {
   post: PostWithAuthor;
   currentUserId?: string | null;
   onDeleted?: (postId: string) => void;
+  // When provided, the reply count + "reply →" become controls that expand the
+  // thread inline. Omit (e.g. profile listing) to render an inert reply count.
+  expanded?: boolean;
+  onToggleReplies?: (postId: string) => void;
 }) {
   const anon = post.is_anonymous;
   const tagColor = post.tag ? TAG_COLOR[post.tag] ?? "#6e7681" : "#6e7681";
@@ -166,9 +176,27 @@ export default function PostCard({
 
       <footer className="flex items-center justify-between mt-3">
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-             {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
-          </span>
+          <div className="flex items-center gap-3">
+            {onToggleReplies ? (
+              <button
+                onClick={() => onToggleReplies(post.id)}
+                className="reply-btn"
+                style={{ fontSize: "0.65rem" }}
+              >
+                {String(post.reply_count ?? 0).padStart(2, "0")}{" "}
+                {post.reply_count === 1 ? "reply" : "replies"}
+              </button>
+            ) : (
+              <span className="font-mono lowercase text-[0.65rem] text-text-faint">
+                {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
+              </span>
+            )}
+            {onToggleReplies && (
+              <button onClick={() => onToggleReplies(post.id)} className="reply-btn">
+                reply →
+              </button>
+            )}
+          </div>
           {(isDecision || isBlocker) && (
             <span
               className="font-mono lowercase tracking-wider"
@@ -213,6 +241,16 @@ export default function PostCard({
           )}
         </div>
       </footer>
+
+      {onToggleReplies && expanded && (
+        <ReplyThread
+          postId={post.id}
+          postType={post.post_type}
+          cohortId={post.cohort_id ?? null}
+          currentUserId={currentUserId}
+          onCollapse={() => onToggleReplies(post.id)}
+        />
+      )}
     </article>
   );
 }

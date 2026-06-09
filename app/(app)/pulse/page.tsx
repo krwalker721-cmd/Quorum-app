@@ -31,9 +31,10 @@ export default async function PulsePage() {
     supabase
       .from("posts")
       .select(
-        "id, content, tag, room_type, is_anonymous, post_type, reply_count, created_at, author_id, local_hour",
+        "id, content, tag, room_type, is_anonymous, post_type, cohort_id, reply_count, created_at, author_id, local_hour",
       )
       .eq("post_type", "pulse")
+      .is("parent_post_id", null)
       .order("created_at", { ascending: false })
       .limit(PAGE * 2), // pull a wider window so smart-ordering has material
     supabase.from("cohort_members").select("cohort_id").eq("user_id", user.id),

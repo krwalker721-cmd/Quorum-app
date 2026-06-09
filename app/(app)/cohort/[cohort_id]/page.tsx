@@ -45,11 +45,12 @@ export default async function CohortRoomPage({
   // to the selection screen with an error.
   const { data: membership } = await supabase
     .from("cohort_members")
-    .select("cohort_id")
+    .select("cohort_id, is_creator")
     .eq("user_id", user.id)
     .eq("cohort_id", cohortId)
     .maybeSingle();
   if (!membership) redirect("/cohort?error=not_member");
+  const isCreator = (membership as any).is_creator === true;
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -119,6 +120,7 @@ export default async function CohortRoomPage({
     )
     .eq("post_type", "cohort")
     .eq("cohort_id", cohortId)
+    .is("parent_post_id", null)
     .order("created_at", { ascending: false })
     .limit(80);
 
@@ -159,6 +161,7 @@ export default async function CohortRoomPage({
         myCohorts={[{ id: cohortId, name: roomName }]}
         showBreadcrumb={myCohortCount > 1}
         rosterFlags={rosterFlags}
+        isCreator={isCreator}
       />
     </>
   );

@@ -12,8 +12,12 @@ export default function Feed({
   currentUserId?: string;
 }) {
   const [posts, setPosts] = useState<PostWithAuthor[]>(initial);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const onDeleted = (id: string) =>
     setPosts((prev) => prev.filter((p) => p.id !== id));
+  // Only one post can be expanded at a time.
+  const onToggleReplies = (id: string) =>
+    setExpandedId((cur) => (cur === id ? null : id));
 
   useEffect(() => {
     const supabase = createClient();
@@ -23,14 +27,31 @@ export default function Feed({
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "posts" },
         async (payload) => {
-          const row = payload.new as PostWithAuthor & { author_id: string };
+          const row = payload.new as PostWithAuthor & {
+            author_id: string;
+            parent_post_id?: string | null;
+          };
+          // Replies (parent_post_id set) bump the parent's count instead of
+          // appearing as their own top-level card.
+          if (row.parent_post_id) {
+            setPosts((prev) =>
+              prev.map((p) =>
+                p.id === row.parent_post_id
+                  ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
+                  : p,
+              ),
+            );
+            return;
+          }
           // Hydrate author info
           const { data: author } = await supabase
             .from("profiles")
             .select("full_name, stage, username")
             .eq("id", row.author_id)
             .single();
-          setPosts((prev) => [{ ...row, author }, ...prev]);
+          setPosts((prev) =>
+            prev.find((p) => p.id === row.id) ? prev : [{ ...row, author }, ...prev],
+          );
         }
       )
       .subscribe();
@@ -59,6 +80,8 @@ export default function Feed({
                 post={p}
                 currentUserId={currentUserId}
                 onDeleted={onDeleted}
+                expanded={expandedId === p.id}
+                onToggleReplies={onToggleReplies}
               />
             ))
           )}
@@ -79,6 +102,8 @@ export default function Feed({
                 post={p}
                 currentUserId={currentUserId}
                 onDeleted={onDeleted}
+                expanded={expandedId === p.id}
+                onToggleReplies={onToggleReplies}
               />
             ))
           )}

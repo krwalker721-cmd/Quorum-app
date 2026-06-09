@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import { createClient } from "@/lib/supabase/client";
@@ -11,6 +12,7 @@ import InviteModal from "@/components/cohort/InviteModal";
 import FounderAgreements from "@/components/cohort/FounderAgreements";
 import LeaveCohortButton from "@/components/cohort/LeaveCohortButton";
 import PostMenu from "@/components/PostMenu";
+import ReplyThread from "@/components/ReplyThread";
 import Link from "next/link";
 import { isAnniversary, type RosterFlags } from "@/lib/recognition";
 
@@ -66,13 +68,14 @@ const TYPE_STYLE: Record<
 export default function CohortRoomClient({
   currentUserId,
   cohortId,
-  members,
+  members: initialMembers,
   checkinByUserJson,
   posts: initialPosts,
   roomName,
   myCohorts,
   showBreadcrumb = false,
   rosterFlags,
+  isCreator = false,
 }: {
   currentUserId: string;
   cohortId: string;
@@ -83,11 +86,17 @@ export default function CohortRoomClient({
   myCohorts: { id: string; name: string }[];
   showBreadcrumb?: boolean;
   rosterFlags: Record<string, RosterFlags>;
+  isCreator?: boolean;
 }) {
+  const router = useRouter();
   const online = usePresence();
+  const [members, setMembers] = useState<Member[]>(initialMembers);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [postOpen, setPostOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const onToggleReplies = (id: string) =>
+    setExpandedId((cur) => (cur === id ? null : id));
 
   const supabase = useMemo(() => createClient(), []);
   const checkins = checkinByUserJson;
@@ -115,12 +124,28 @@ export default function CohortRoomClient({
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "posts" },
         async (payload) => {
-          const row = payload.new as Post & { author_id: string };
+          const row = payload.new as Post & {
+            author_id: string;
+            parent_post_id?: string | null;
+          };
           // Only posts that belong to THIS cohort room.
           if (row.post_type !== "cohort") return;
           if (row.cohort_id !== cohortId) return;
+          // A reply bumps the parent's count instead of becoming a new card.
+          if (row.parent_post_id) {
+            setPosts((prev) =>
+              prev.map((p) =>
+                p.id === row.parent_post_id
+                  ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
+                  : p,
+              ),
+            );
+            return;
+          }
           const author = authorMap.get(row.author_id) ?? null;
-          setPosts((prev) => [{ ...row, author }, ...prev]);
+          setPosts((prev) =>
+            prev.find((p) => p.id === row.id) ? prev : [{ ...row, author }, ...prev],
+          );
         }
       )
       .subscribe();
@@ -128,6 +153,56 @@ export default function CohortRoomClient({
       supabase.removeChannel(channel);
     };
   }, [supabase, authorMap, cohortId]);
+
+  // Realtime: membership removals. If I'm removed from this cohort, bounce me to
+  // the cohort selection screen; otherwise drop the member from the roster live.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`cohort_members:${cohortId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "cohort_members",
+          filter: `cohort_id=eq.${cohortId}`,
+        },
+        (payload) => {
+          const removed = payload.old as { user_id?: string };
+          if (!removed?.user_id) return;
+          if (removed.user_id === currentUserId) {
+            router.replace("/cohort");
+          } else {
+            setMembers((prev) => prev.filter((m) => m.id !== removed.user_id));
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, cohortId, currentUserId, router]);
+
+  async function kickMember(target: Member) {
+    if (
+      !window.confirm(
+        `remove ${target.full_name?.toLowerCase() ?? "this member"} from this cohort? they will be reassigned to another cohort.`,
+      )
+    ) {
+      return;
+    }
+    const res = await fetch("/api/cohort/kick", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cohort_id: cohortId, user_id: target.id }),
+    });
+    if (res.ok) {
+      setMembers((prev) => prev.filter((m) => m.id !== target.id));
+    } else {
+      const j = await res.json().catch(() => ({}));
+      window.alert(j?.error ?? "could not remove member");
+    }
+  }
 
   return (
     <>
@@ -164,7 +239,7 @@ export default function CohortRoomClient({
               return (
                 <div
                   key={m.id}
-                  className="flex items-center gap-2 px-2 py-2"
+                  className="group/roster flex items-center gap-2 px-2 py-2"
                 >
                   <div className="relative">
                     <Avatar
@@ -218,6 +293,16 @@ export default function CohortRoomClient({
                       )}
                     </div>
                   </div>
+                  {isCreator && m.id !== currentUserId && (
+                    <button
+                      onClick={() => kickMember(m)}
+                      title={`remove ${m.full_name?.toLowerCase() ?? "member"}`}
+                      aria-label="remove member"
+                      className="font-mono text-[0.75rem] px-1 text-text-faint opacity-0 group-hover/roster:opacity-100 hover:text-red-400 transition-all"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -433,13 +518,31 @@ export default function CohortRoomClient({
                     <p className="text-text-secondary text-[0.92rem] leading-relaxed whitespace-pre-wrap">
                       {p.content}
                     </p>
-                    {ts?.needsReply && (
-                      <p
-                        className="font-mono lowercase text-[0.65rem] mt-3"
-                        style={{ color: ts.color }}
-                      >
-                        respond
-                      </p>
+                    <div className="flex items-center gap-3 mt-3">
+                      <button onClick={() => onToggleReplies(p.id)} className="reply-btn">
+                        {String(p.reply_count ?? 0).padStart(2, "0")}{" "}
+                        {p.reply_count === 1 ? "reply" : "replies"}
+                      </button>
+                      <button onClick={() => onToggleReplies(p.id)} className="reply-btn">
+                        reply →
+                      </button>
+                      {ts?.needsReply && (
+                        <span
+                          className="font-mono lowercase text-[0.65rem]"
+                          style={{ color: ts.color }}
+                        >
+                          respond
+                        </span>
+                      )}
+                    </div>
+                    {expandedId === p.id && (
+                      <ReplyThread
+                        postId={p.id}
+                        postType="cohort"
+                        cohortId={cohortId}
+                        currentUserId={currentUserId}
+                        onCollapse={() => onToggleReplies(p.id)}
+                      />
                     )}
                   </article>
                 );

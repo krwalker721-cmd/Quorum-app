@@ -1320,3 +1320,129 @@ create policy "sessions_insert_own"
 create policy "sessions_read_own"
   on public.sessions for select
   using (auth.uid() = user_id);
+
+-- ============================================================================
+-- replies, handshake privacy, kicks (see migration 006). All idempotent so a
+-- fresh schema.sql run lands the same state as applying the migration.
+-- ============================================================================
+
+-- CHANGE 3 — cohort post creation validation
+drop policy if exists "authenticated_insert_posts" on public.posts;
+drop policy if exists "Users can create posts" on public.posts;
+create policy "Users can create posts" on public.posts
+  for insert with check (
+    auth.uid() = author_id
+    and (
+      post_type = 'pulse'
+      or (
+        post_type = 'cohort'
+        and cohort_id in (select public.my_cohort_ids())
+      )
+    )
+  );
+
+-- CHANGE 1 — replies on posts (parent_post_id + reply_count sync + notify)
+alter table public.posts
+  add column if not exists parent_post_id uuid references public.posts(id) on delete cascade;
+create index if not exists posts_parent_post_id_idx on public.posts (parent_post_id);
+
+create or replace function public.posts_reply_count_sync()
+returns trigger language plpgsql security definer as $$
+begin
+  if (tg_op = 'INSERT') and new.parent_post_id is not null then
+    update public.posts set reply_count = coalesce(reply_count, 0) + 1
+      where id = new.parent_post_id;
+  elsif (tg_op = 'DELETE') and old.parent_post_id is not null then
+    update public.posts set reply_count = greatest(coalesce(reply_count, 0) - 1, 0)
+      where id = old.parent_post_id;
+  end if;
+  return null;
+end; $$;
+
+drop trigger if exists posts_reply_count_trigger on public.posts;
+create trigger posts_reply_count_trigger
+  after insert or delete on public.posts
+  for each row execute function public.posts_reply_count_sync();
+
+create or replace function public.posts_reply_notify()
+returns trigger language plpgsql security definer as $$
+declare
+  parent_author uuid;
+  replier_name text;
+begin
+  if new.parent_post_id is null then return new; end if;
+  select author_id into parent_author from public.posts where id = new.parent_post_id;
+  if parent_author is null or parent_author = new.author_id then return new; end if;
+  if new.is_anonymous then
+    replier_name := 'someone';
+  else
+    select coalesce(full_name, username, 'someone') into replier_name
+      from public.profiles where id = new.author_id;
+  end if;
+  insert into public.notifications (user_id, kind, message, payload)
+  values (
+    parent_author,
+    'reply',
+    coalesce(replier_name, 'someone') || ' replied to your post',
+    jsonb_build_object('post_id', new.parent_post_id, 'reply_id', new.id, 'post_type', new.post_type)
+  );
+  return new;
+end; $$;
+
+drop trigger if exists posts_reply_notify_trigger on public.posts;
+create trigger posts_reply_notify_trigger
+  after insert on public.posts
+  for each row execute function public.posts_reply_notify();
+
+-- CHANGE 2 — handshake privacy + project scoping
+drop policy if exists "handshakes_read_party" on public.handshakes;
+drop policy if exists "Users can view handshakes" on public.handshakes;
+drop policy if exists "Users can view own handshakes" on public.handshakes;
+create policy "Users can view own handshakes" on public.handshakes
+  for select using (auth.uid() = initiator_id or auth.uid() = recipient_id);
+alter table public.handshakes
+  add column if not exists project_id uuid references public.projects(id) on delete set null;
+
+-- CHANGE 5 — kick from projects and cohorts
+drop policy if exists "Project creators can remove members" on public.project_members;
+create policy "Project creators can remove members" on public.project_members
+  for delete using (
+    auth.uid() = (select owner_id from public.projects where id = project_members.project_id)
+    and user_id != auth.uid()
+  );
+
+alter table public.cohort_members add column if not exists is_creator boolean default false;
+update public.cohort_members cm
+  set is_creator = true
+  where cm.joined_at = (
+    select min(joined_at) from public.cohort_members where cohort_id = cm.cohort_id
+  );
+
+create or replace function public.my_creator_cohort_ids()
+returns setof uuid language sql stable security definer set search_path = public as $$
+  select cohort_id from public.cohort_members
+  where user_id = auth.uid() and is_creator = true;
+$$;
+
+drop policy if exists "Cohort creators can remove members" on public.cohort_members;
+create policy "Cohort creators can remove members" on public.cohort_members
+  for delete using (
+    user_id != auth.uid()
+    and cohort_id in (select public.my_creator_cohort_ids())
+  );
+
+alter table public.project_members replica identity full;
+alter table public.cohort_members replica identity full;
+
+do $$ begin
+  alter publication supabase_realtime add table public.project_members;
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.cohort_members;
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.notifications;
+exception when duplicate_object then null;
+end $$;

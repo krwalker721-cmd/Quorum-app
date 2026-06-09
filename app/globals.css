@@ -378,6 +378,39 @@ label {
 .seg.on  { background: #f59e0b; }
 .seg.mid { background: rgba(245,158,11,0.35); }
 
+/* ─── Replies / post threads ──────────────────────────────────────────── */
+.reply-thread {
+  border-top: 1px solid #21262d;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.reply-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  margin-left: 16px;
+}
+.reply-input-area {
+  margin-left: 16px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reply-btn {
+  font-size: 9px;
+  color: #8b949e;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+.reply-btn:hover { color: #f59e0b; }
+
 /* ─── Buttons ─────────────────────────────────────────────────────────── */
 .btn-primary {
   background: rgba(245, 158, 11, 0.12);

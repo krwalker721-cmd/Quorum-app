@@ -1,3 +1,5 @@
+import CohortFillStat from "@/components/CohortFillStat";
+
 function SegmentedBar({ filled, total = 12 }: { filled: number; total?: number }) {
   return (
     <div className="flex gap-0.5 items-center">
@@ -32,6 +34,7 @@ export default function StatStrip({
   posts7d,
   cohortFill,
   cohortMax,
+  cohortIds,
   trustScore,
 }: {
   members: number;
@@ -39,6 +42,7 @@ export default function StatStrip({
   posts7d: number;
   cohortFill: number;
   cohortMax: number;
+  cohortIds: string[];
   trustScore: number;
 }) {
   return (
@@ -46,11 +50,7 @@ export default function StatStrip({
       <Stat label="members" value={members} />
       <Stat label="active_now" value={activeNow} />
       <Stat label="posts_7d" value={posts7d} />
-      <Stat
-        label="cohort_fill"
-        value={`${cohortFill}/${cohortMax}`}
-        bar={{ filled: Math.min(cohortFill, cohortMax), total: cohortMax }}
-      />
+      <CohortFillStat cohortIds={cohortIds} initialFill={cohortFill} cohortMax={cohortMax} />
       <Stat
         label="trust_score"
         value={trustScore}

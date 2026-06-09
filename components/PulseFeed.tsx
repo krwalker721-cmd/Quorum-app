@@ -43,6 +43,10 @@ export default function PulseFeed({
   const [posts, setPosts] = useState<PostWithAuthor[]>(() => sortSmart(initial, peerIds));
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(initial.length < PAGE);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Only one post can be expanded at a time.
+  const onToggleReplies = (id: string) =>
+    setExpandedId((cur) => (cur === id ? null : id));
 
   const filtered = useMemo(() => {
     if (!tagFilter) return posts;
@@ -57,29 +61,34 @@ export default function PulseFeed({
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "posts", filter: "post_type=eq.pulse" },
         async (payload) => {
-          const row = payload.new as PostWithAuthor & { author_id: string };
+          const row = payload.new as PostWithAuthor & {
+            author_id: string;
+            parent_post_id?: string | null;
+          };
+          // A reply (parent_post_id set) bumps the parent's count + marks active
+          // rather than appearing as its own pulse card.
+          if (row.parent_post_id) {
+            setPosts((prev) =>
+              sortSmart(
+                prev.map((p) =>
+                  p.id === row.parent_post_id
+                    ? { ...p, reply_count: (p.reply_count ?? 0) + 1, isActive: true }
+                    : p,
+                ),
+                peerIds,
+              ),
+            );
+            return;
+          }
           const { data: author } = await supabase
             .from("profiles")
             .select("full_name, stage, username, created_at")
             .eq("id", row.author_id)
             .single();
-          setPosts((prev) => sortSmart([{ ...row, author }, ...prev], peerIds));
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "post_replies" },
-        (payload) => {
-          const row = payload.new as { post_id: string; author_id: string; created_at: string };
           setPosts((prev) =>
-            sortSmart(
-              prev.map((p) =>
-                p.id === row.post_id
-                  ? { ...p, reply_count: (p.reply_count ?? 0) + 1, isActive: true }
-                  : p,
-              ),
-              peerIds,
-            ),
+            prev.find((p) => p.id === row.id)
+              ? prev
+              : sortSmart([{ ...row, author }, ...prev], peerIds),
           );
         },
       )
@@ -102,9 +111,10 @@ export default function PulseFeed({
     const { data: rows } = await supabase
       .from("posts")
       .select(
-        "id, content, tag, room_type, is_anonymous, post_type, reply_count, created_at, author_id, local_hour",
+        "id, content, tag, room_type, is_anonymous, post_type, cohort_id, reply_count, created_at, author_id, local_hour",
       )
       .eq("post_type", "pulse")
+      .is("parent_post_id", null)
       .lt("created_at", oldest)
       .order("created_at", { ascending: false })
       .limit(PAGE);
@@ -172,6 +182,8 @@ export default function PulseFeed({
             post={p}
             currentUserId={currentUserId}
             onDeleted={(id) => setPosts((prev) => prev.filter((x) => x.id !== id))}
+            expanded={expandedId === p.id}
+            onToggleReplies={onToggleReplies}
           />
         ))
       )}

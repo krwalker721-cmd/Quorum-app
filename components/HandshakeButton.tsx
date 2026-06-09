@@ -9,11 +9,13 @@ export default function HandshakeButton({
   recipientId,
   recipientName,
   defaultAgreement = "",
+  projectId = null,
 }: {
   currentUserId: string;
   recipientId: string;
   recipientName: string | null;
   defaultAgreement?: string;
+  projectId?: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -32,6 +34,7 @@ export default function HandshakeButton({
       recipient_id: recipientId,
       agreement: agreement.trim(),
       date,
+      ...(projectId ? { project_id: projectId } : {}),
     });
     setBusy(false);
     if (error) {
