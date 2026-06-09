@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import { createClient } from "@/lib/supabase/client";
 import { usePresence } from "@/components/PresenceProvider";
-import { timeAgo } from "@/lib/stage";
+import { timeAgo, TAG_COLOR } from "@/lib/stage";
 import RoomPostModal from "@/components/cohort/RoomPostModal";
 import InviteModal from "@/components/cohort/InviteModal";
 import FounderAgreements from "@/components/cohort/FounderAgreements";
 import LeaveCohortButton from "@/components/cohort/LeaveCohortButton";
 import PostMenu from "@/components/PostMenu";
-import ReplyThread from "@/components/ReplyThread";
 import Link from "next/link";
 import { isAnniversary, type RosterFlags } from "@/lib/recognition";
 
@@ -65,6 +64,32 @@ const TYPE_STYLE: Record<
   blocker: { color: "#f59e0b", label: "blocker" },
 };
 
+function isDifferentDay(a: string, b: string): boolean {
+  const da = new Date(a);
+  const db = new Date(b);
+  return (
+    da.getFullYear() !== db.getFullYear() ||
+    da.getMonth() !== db.getMonth() ||
+    da.getDate() !== db.getDate()
+  );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const yest = new Date();
+  yest.setDate(today.getDate() - 1);
+  const sameDay = (x: Date, y: Date) =>
+    x.getFullYear() === y.getFullYear() &&
+    x.getMonth() === y.getMonth() &&
+    x.getDate() === y.getDate();
+  if (sameDay(d, today)) return "today";
+  if (sameDay(d, yest)) return "yesterday";
+  return d
+    .toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    .toLowerCase();
+}
+
 export default function CohortRoomClient({
   currentUserId,
   cohortId,
@@ -94,9 +119,9 @@ export default function CohortRoomClient({
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [postOpen, setPostOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const onToggleReplies = (id: string) =>
-    setExpandedId((cur) => (cur === id ? null : id));
+  const [messageText, setMessageText] = useState("");
+  const [posting, setPosting] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const supabase = useMemo(() => createClient(), []);
   const checkins = checkinByUserJson;
@@ -202,6 +227,40 @@ export default function CohortRoomClient({
       const j = await res.json().catch(() => ({}));
       window.alert(j?.error ?? "could not remove member");
     }
+  }
+
+  // Chronological order for the chat floor (oldest → newest).
+  const chronological = useMemo(
+    () =>
+      [...posts].sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      ),
+    [posts],
+  );
+
+  // Auto-scroll to the newest message when the count changes.
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [chronological.length]);
+
+  const me = authorMap.get(currentUserId) ?? null;
+
+  async function handlePost() {
+    const trimmed = messageText.trim();
+    if (!trimmed || posting) return;
+    setPosting(true);
+    const { error } = await supabase.from("posts").insert({
+      author_id: currentUserId,
+      content: trimmed,
+      post_type: "cohort",
+      cohort_id: cohortId,
+      is_anonymous: false,
+      local_hour: new Date().getHours(),
+    });
+    setPosting(false);
+    if (!error) setMessageText("");
+    else window.alert(error.message.toLowerCase());
   }
 
   return (
@@ -419,134 +478,176 @@ export default function CohortRoomClient({
             </div>
           </section>
 
-          {/* ZONE 2 — Discussion floor */}
-          <section className="flex-1 px-6 py-5">
-            <div className="flex items-center justify-between mb-4">
+          {/* ZONE 2 — Discussion floor (group chat) */}
+          <section className="flex-1 px-6 py-5 discussion-floor">
+            <div className="flex items-center justify-between mb-2">
               <p className="font-mono lowercase text-[0.7rem] text-text-faint tracking-wider">
                 discussion_floor
               </p>
-              <button
-                onClick={() => setPostOpen(true)}
-                className="btn-primary"
-              >
+              <button onClick={() => setPostOpen(true)} className="btn-primary">
                 + post to room
               </button>
             </div>
 
-            <div className="space-y-3 max-w-3xl">
-              {posts.length === 0 && (
-                <p className="font-mono lowercase text-xs text-text-faint">
+            <div className="bubbles-container max-w-3xl">
+              {chronological.length === 0 && (
+                <p className="font-mono lowercase text-xs text-text-faint py-4">
                   no posts in the room yet. open the conversation.
                 </p>
               )}
-              {posts.map((p) => {
+              {chronological.map((p, index) => {
+                const isMine = p.author_id === currentUserId;
+                const isAnon = p.is_anonymous;
                 const ts = p.room_type ? TYPE_STYLE[p.room_type] : null;
-                const borderLeft = ts ? `3px solid ${ts.color}` : undefined;
+                const tagColor = p.tag ? TAG_COLOR[p.tag] ?? "#6e7681" : null;
                 const authorFlags = p.author_id ? rosterFlags[p.author_id] : null;
-                const hour =
-                  p.local_hour ?? new Date(p.created_at).getUTCHours();
-                const lateNight = hour >= 0 && hour < 4;
+                const author = isMine ? me : p.author;
+                const showDateSep =
+                  index === 0 ||
+                  isDifferentDay(
+                    chronological[index - 1].created_at,
+                    p.created_at,
+                  );
                 return (
-                  <article
-                    key={p.id}
-                    className={`relative group p-4 border${p.movedTheRoom ? " moved-room-pulse" : ""}`}
-                    style={{
-                      background: ts?.bg ?? "var(--card-elev)",
-                      borderColor: "var(--border)",
-                      borderLeft,
-                      boxShadow: lateNight
-                        ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
-                        : undefined,
-                    }}
-                  >
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <PostMenu
-                        postId={p.id}
-                        canDelete={!!p.author_id && p.author_id === currentUserId}
-                        onDeleted={() =>
-                          setPosts((prev) => prev.filter((x) => x.id !== p.id))
-                        }
-                      />
-                    </div>
-                    <header className="flex items-center gap-3 mb-2">
-                      {p.is_anonymous ? (
-                        <div
-                          className="w-8 h-8 flex items-center justify-center font-mono text-[0.6rem] lowercase"
-                          style={{
-                            background: "var(--card)",
-                            color: "var(--text-faint)",
-                            borderRadius: "50%",
-                          }}
-                        >
-                          ??
-                        </div>
-                      ) : (
-                        <Avatar
-                          name={p.author?.full_name}
-                          stage={p.author?.stage}
-                          username={p.author?.username}
-                          size={32}
-                          depthRing={!!authorFlags?.depthRing}
-                          anniversary={
-                            authorFlags?.anniversary ??
-                            isAnniversary(p.author?.created_at ?? null)
-                          }
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-mono lowercase text-xs text-text-primary truncate">
-                          {p.is_anonymous
-                            ? "anonymous"
-                            : p.author?.full_name?.toLowerCase() ?? "—"}
-                        </p>
-                        <p className="font-mono lowercase text-[0.6rem] text-text-faint">
-                          {timeAgo(p.created_at)} ago
-                        </p>
+                  <div key={p.id}>
+                    {showDateSep && (
+                      <div className="date-separator">
+                        <span>{formatDate(p.created_at)}</span>
                       </div>
-                      {ts && (
-                        <span
-                          className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-                          style={{
-                            border: `1px solid ${ts.color}`,
-                            color: ts.color,
-                          }}
-                        >
-                          {ts.label}
-                        </span>
+                    )}
+                    <div className={`bubble-row ${isMine ? "mine" : "theirs"}`}>
+                      {!isMine && (
+                        <div className="bubble-avatar-wrap">
+                          {isAnon ? (
+                            <div
+                              className="flex items-center justify-center font-mono text-[0.55rem] lowercase"
+                              style={{
+                                width: 30,
+                                height: 30,
+                                background: "var(--card)",
+                                color: "var(--text-faint)",
+                                borderRadius: "50%",
+                              }}
+                            >
+                              ??
+                            </div>
+                          ) : (
+                            <Avatar
+                              name={author?.full_name}
+                              stage={author?.stage}
+                              username={author?.username}
+                              size={30}
+                              depthRing={!!authorFlags?.depthRing}
+                              anniversary={
+                                authorFlags?.anniversary ??
+                                isAnniversary(author?.created_at ?? null)
+                              }
+                            />
+                          )}
+                          {!isAnon && p.author_id && online.has(p.author_id) && (
+                            <span aria-hidden className="presence-dot" />
+                          )}
+                        </div>
                       )}
-                    </header>
-                    <p className="text-text-secondary text-[0.92rem] leading-relaxed whitespace-pre-wrap">
-                      {p.content}
-                    </p>
-                    <div className="flex items-center gap-3 mt-3">
-                      <button onClick={() => onToggleReplies(p.id)} className="reply-btn">
-                        {String(p.reply_count ?? 0).padStart(2, "0")}{" "}
-                        {p.reply_count === 1 ? "reply" : "replies"}
-                      </button>
-                      <button onClick={() => onToggleReplies(p.id)} className="reply-btn">
-                        reply →
-                      </button>
-                      {ts?.needsReply && (
-                        <span
-                          className="font-mono lowercase text-[0.65rem]"
-                          style={{ color: ts.color }}
+
+                      <div className="bubble-content-wrap relative group">
+                        {!isMine && (
+                          <div className="bubble-meta-top">
+                            {isAnon ? (
+                              <span className="bubble-name anon">anonymous</span>
+                            ) : (
+                              <>
+                                <span className="bubble-name">
+                                  {author?.full_name?.toLowerCase() ?? "—"}
+                                </span>
+                                <StagePill stage={author?.stage ?? null} />
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {isMine && (
+                          <div className="absolute right-0 -top-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <PostMenu
+                              postId={p.id}
+                              canDelete
+                              onDeleted={() =>
+                                setPosts((prev) =>
+                                  prev.filter((x) => x.id !== p.id),
+                                )
+                              }
+                            />
+                          </div>
+                        )}
+
+                        <div
+                          className={`bubble ${isMine ? "bubble-mine" : "bubble-theirs"}${isAnon ? " bubble-anon" : ""}`}
                         >
-                          respond
-                        </span>
+                          <p className="bubble-text">{p.content}</p>
+                          <div className="bubble-footer">
+                            <span className="bubble-time">
+                              {timeAgo(p.created_at)} ago
+                            </span>
+                            {ts && (
+                              <span
+                                className="bubble-tag"
+                                style={{ color: ts.color }}
+                              >
+                                {ts.label}
+                              </span>
+                            )}
+                            {p.tag && tagColor && (
+                              <span
+                                className="bubble-tag"
+                                style={{ color: tagColor }}
+                              >
+                                {p.tag}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {isMine && (
+                        <div className="bubble-avatar-wrap">
+                          <Avatar
+                            name={me?.full_name}
+                            stage={me?.stage}
+                            username={me?.username}
+                            size={30}
+                          />
+                        </div>
                       )}
                     </div>
-                    {expandedId === p.id && (
-                      <ReplyThread
-                        postId={p.id}
-                        postType="cohort"
-                        cohortId={cohortId}
-                        currentUserId={currentUserId}
-                        onCollapse={() => onToggleReplies(p.id)}
-                      />
-                    )}
-                  </article>
+                  </div>
                 );
               })}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Quick message input — structured posts still use "+ post to room" */}
+            <div className="cohort-input-bar max-w-3xl">
+              <Avatar name={me?.full_name} stage={me?.stage} size={28} />
+              <textarea
+                className="cohort-message-input"
+                placeholder="message the room..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handlePost();
+                  }
+                }}
+                rows={1}
+              />
+              <button
+                className="cohort-send-btn"
+                onClick={handlePost}
+                disabled={!messageText.trim() || posting}
+              >
+                →
+              </button>
             </div>
           </section>
         </div>

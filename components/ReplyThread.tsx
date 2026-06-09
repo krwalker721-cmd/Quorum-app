@@ -30,12 +30,14 @@ export default function ReplyThread({
   cohortId,
   currentUserId,
   onCollapse,
+  variant = "attached",
 }: {
   postId: string;
   postType: string;
   cohortId: string | null;
   currentUserId?: string | null;
   onCollapse: () => void;
+  variant?: "attached" | "inline";
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [replies, setReplies] = useState<Reply[]>([]);
@@ -138,8 +140,8 @@ export default function ReplyThread({
   }
 
   return (
-    <div className="reply-thread">
-      <div className="flex items-center justify-between mb-2">
+    <div className={`reply-thread ${variant}`}>
+      <div className="reply-thread-head">
         <p className="font-mono lowercase text-[0.6rem] text-text-faint">
           {loading
             ? "loading replies…"
@@ -153,10 +155,10 @@ export default function ReplyThread({
       </div>
 
       {replies.map((r) => (
-        <div key={r.id} className="reply-card flex items-start gap-2">
+        <div key={r.id} className="reply-row">
           {r.is_anonymous ? (
             <div
-              className="w-7 h-7 flex items-center justify-center font-mono text-[0.55rem] lowercase shrink-0"
+              className="w-6 h-6 flex items-center justify-center font-mono text-[0.5rem] lowercase shrink-0"
               style={{ background: "var(--card)", color: "var(--text-faint)", borderRadius: "50%" }}
             >
               ??
@@ -166,7 +168,7 @@ export default function ReplyThread({
               name={r.author?.full_name}
               stage={r.author?.stage}
               username={r.author?.username}
-              size={28}
+              size={24}
             />
           )}
           <div className="min-w-0 flex-1">
@@ -185,53 +187,57 @@ export default function ReplyThread({
         </div>
       ))}
 
-      <div className="reply-input-area">
+      {err && (
+        <p className="font-mono text-[0.65rem] text-red-400 lowercase px-3.5 pt-2">{err}</p>
+      )}
+      <div className="reply-input-row">
         <textarea
-          rows={2}
+          rows={1}
           placeholder="write a reply..."
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full px-2 py-1.5 text-text-primary text-[0.82rem]"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          className="reply-textarea"
         />
-        {err && <p className="font-mono text-[0.65rem] text-red-400 lowercase">{err}</p>}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setAnon((v) => !v)}
-            aria-pressed={anon}
-            className="relative shrink-0"
+        <button
+          type="button"
+          onClick={() => setAnon((v) => !v)}
+          aria-pressed={anon}
+          title="reply anonymously"
+          className="relative shrink-0 self-center"
+          style={{
+            width: 30,
+            height: 16,
+            borderRadius: 9999,
+            background: anon ? "#f59e0b" : "var(--border)",
+            transition: "background 150ms ease",
+          }}
+        >
+          <span
             style={{
-              width: 30,
-              height: 16,
-              borderRadius: 9999,
-              background: anon ? "#f59e0b" : "var(--border)",
-              transition: "background 150ms ease",
+              position: "absolute",
+              top: 2,
+              left: anon ? 16 : 2,
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: "#fff",
+              transition: "left 150ms ease",
             }}
-          >
-            <span
-              style={{
-                position: "absolute",
-                top: 2,
-                left: anon ? 16 : 2,
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                background: "#fff",
-                transition: "left 150ms ease",
-              }}
-            />
-          </button>
-          <span className="font-mono lowercase text-[0.6rem] text-text-faint">reply anonymously</span>
-          <button
-            onClick={submit}
-            disabled={busy || !text.trim()}
-            className="reply-btn ml-auto"
-            style={{ color: text.trim() ? "#f59e0b" : "#8b949e", fontSize: 11 }}
-          >
-            {busy ? "…" : "reply →"}
-          </button>
-        </div>
+          />
+        </button>
+        <button
+          onClick={submit}
+          disabled={busy || !text.trim()}
+          className="reply-submit-btn"
+        >
+          {busy ? "…" : "reply →"}
+        </button>
       </div>
     </div>
   );

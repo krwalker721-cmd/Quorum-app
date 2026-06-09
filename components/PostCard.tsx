@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Avatar from "@/components/Avatar";
 import { TAG_COLOR, ROOM_TYPE_COLOR, timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
+import { usePresence } from "@/components/PresenceProvider";
 import BookmarkButton from "@/components/BookmarkButton";
 import PostMenu from "@/components/PostMenu";
 import ReplyThread from "@/components/ReplyThread";
@@ -53,6 +55,23 @@ export default function PostCard({
   const lateNight = is2amPost(post);
   const moved = !!post.movedTheRoom;
 
+  const online = usePresence();
+  const isOnline = !anon && !!post.author_id && online.has(post.author_id);
+  const [shared, setShared] = useState(false);
+
+  const repliesOpen = !!onToggleReplies && expanded;
+
+  async function handleShare() {
+    try {
+      const url = `${window.location.origin}/pulse#post-${post.id}`;
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 1500);
+    } catch {
+      // clipboard unavailable — no-op
+    }
+  }
+
   const isPulse = post.post_type === "pulse";
   const savedType: "pulse_post" | "cohort_post" = isPulse ? "pulse_post" : "cohort_post";
 
@@ -87,7 +106,7 @@ export default function PostCard({
     : "var(--border-amber)";
 
   const classes = [
-    "group relative border",
+    "post-card-main group relative border",
     isDecision ? "px-4 py-6" : "p-4",
     moved ? "moved-room-pulse" : "",
     isActive && !anon ? "pulse-active-breathe" : "",
@@ -96,6 +115,7 @@ export default function PostCard({
     .join(" ");
 
   return (
+    <div className={`post-card-wrapper${repliesOpen ? " replies-open" : ""}`} id={`post-${post.id}`}>
     <article
       className={classes}
       style={{
@@ -150,14 +170,17 @@ export default function PostCard({
             ??
           </div>
         ) : (
-          <Avatar
-            name={post.author?.full_name}
-            stage={post.author?.stage}
-            username={post.author?.username}
-            size={32}
-            depthRing={!!post.authorDepthRing}
-            anniversary={!!post.authorAnniversary}
-          />
+          <span className="relative inline-block" style={{ lineHeight: 0 }}>
+            <Avatar
+              name={post.author?.full_name}
+              stage={post.author?.stage}
+              username={post.author?.username}
+              size={32}
+              depthRing={!!post.authorDepthRing}
+              anniversary={!!post.authorAnniversary}
+            />
+            {isOnline && <span aria-hidden className="presence-dot" />}
+          </span>
         )}
         <div className="flex-1 min-w-0">
           <p className="font-mono lowercase text-xs text-text-primary truncate">
@@ -196,6 +219,9 @@ export default function PostCard({
                 reply →
               </button>
             )}
+            <button onClick={handleShare} className="reply-btn" title="copy link to post">
+              {shared ? "✓ copied" : "↗ share"}
+            </button>
           </div>
           {(isDecision || isBlocker) && (
             <span
@@ -242,15 +268,17 @@ export default function PostCard({
         </div>
       </footer>
 
-      {onToggleReplies && expanded && (
-        <ReplyThread
-          postId={post.id}
-          postType={post.post_type}
-          cohortId={post.cohort_id ?? null}
-          currentUserId={currentUserId}
-          onCollapse={() => onToggleReplies(post.id)}
-        />
-      )}
     </article>
+    {onToggleReplies && expanded && (
+      <ReplyThread
+        postId={post.id}
+        postType={post.post_type}
+        cohortId={post.cohort_id ?? null}
+        currentUserId={currentUserId}
+        onCollapse={() => onToggleReplies(post.id)}
+        variant="attached"
+      />
+    )}
+    </div>
   );
 }
