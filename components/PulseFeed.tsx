@@ -151,7 +151,7 @@ export default function PulseFeed({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pulse-feed-container">
       {tagFilter && (
         <div
           className="flex items-center justify-between p-3 border"

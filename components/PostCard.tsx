@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Avatar from "@/components/Avatar";
 import { TAG_COLOR, ROOM_TYPE_COLOR, timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
@@ -82,34 +82,35 @@ export default function PostCard({
   const isQuestion = roomType === "question";
   const isActive = !!post.isActive;
 
-  // Left-border treatment — chosen by type, then anonymity, then default.
-  let leftBorder = `1px solid var(--border-amber)`;
-  if (anon) {
-    leftBorder = "2px solid #30363d";
-  } else if (isDecision || isBlocker) {
-    leftBorder = "3px solid rgba(245, 158, 11, 0.75)";
-  } else if (isWin) {
-    leftBorder = "3px solid rgba(34, 197, 94, 0.75)";
-  } else if (isQuestion) {
-    leftBorder = "3px solid rgba(56, 189, 248, 0.75)";
-  }
-  // If active, the left border is overridden by the green pulse class.
-  if (isActive && !anon) {
-    leftBorder = "3px solid rgba(34, 197, 94, 0.6)";
-  }
+  // Permanent type-based left accent. It is chosen purely by post type/tag
+  // (anonymous posts get the neutral accent) and must NEVER fade, animate, or
+  // change on hover — it is the post's permanent identity stripe.
+  const accentKey = anon ? "anonymous" : (post.tag || roomType || post.post_type);
+  const ACCENT: Record<string, string> = {
+    decision: "#f59e0b",
+    win: "#22c55e",
+    blocker: "#f85149",
+    question: "#58a6ff",
+    update: "#30363d",
+    anonymous: "#30363d",
+    mindset: "#22c55e",
+    real_talk: "#f85149",
+  };
+  const accentColor = ACCENT[accentKey ?? ""] ?? "#30363d";
 
-  const decisionBoost = isDecision ? "py-6" : "p-4";
-  const winTint = isWin ? "rgba(34, 197, 94, 0.025)" : "var(--card-elev)";
-
-  const borderColor = isDecision || isBlocker
-    ? "rgba(245, 158, 11, 0.4)"
-    : "var(--border-amber)";
+  // Subtle background tint bleeding inward from the accent edge.
+  const BG_TINT: Record<string, string> = {
+    decision: "rgba(245,158,11,0.04)",
+    win: "rgba(34,197,94,0.04)",
+    blocker: "rgba(248,81,73,0.04)",
+    question: "rgba(88,166,255,0.04)",
+  };
+  const bgTint = BG_TINT[accentKey ?? ""] ?? "transparent";
 
   const classes = [
     "post-card-main group relative border",
     isDecision ? "px-4 py-6" : "p-4",
     moved ? "moved-room-pulse" : "",
-    isActive && !anon ? "pulse-active-breathe" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -119,13 +120,18 @@ export default function PostCard({
     <article
       className={classes}
       style={{
-        background: winTint,
-        borderColor,
-        borderLeft: leftBorder,
+        background: `linear-gradient(90deg, ${bgTint} 0%, #161b22 35%)`,
+        // The left accent is set inline (shorthand → inline border-left-color),
+        // so it always wins over the CSS base/hover border-color rules and can
+        // never fade or change. The framing border-color lives in CSS so hover
+        // can shift the top/right/bottom to the hover color.
+        borderLeft: `3px solid ${accentColor}`,
+        borderRadius: "0 12px 12px 0",
+        "--post-accent-color": accentColor,
         boxShadow: lateNight
           ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
           : undefined,
-      }}
+      } as CSSProperties}
     >
       {/* Top-right indicators — always visible */}
       <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
