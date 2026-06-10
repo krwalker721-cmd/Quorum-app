@@ -57,6 +57,10 @@ export default function PostCard({
 
   const online = usePresence();
   const isOnline = !anon && !!post.author_id && online.has(post.author_id);
+  // Chat-style alignment: your own posts hug the right, everyone else's the
+  // left. Computed per-viewer, so an anonymous post only sits right for its
+  // own author and stays left for everyone else.
+  const isMine = !!post.author_id && post.author_id === currentUserId;
   const [shared, setShared] = useState(false);
 
   const repliesOpen = !!onToggleReplies && expanded;
@@ -116,7 +120,7 @@ export default function PostCard({
     .join(" ");
 
   return (
-    <div className={`post-card-wrapper${repliesOpen ? " replies-open" : ""}`} id={`post-${post.id}`}>
+    <div className={`post-card-wrapper${isMine ? " mine" : ""}${repliesOpen ? " replies-open" : ""}`} id={`post-${post.id}`}>
     <article
       className={classes}
       style={{
