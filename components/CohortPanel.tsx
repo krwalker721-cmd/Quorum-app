@@ -26,8 +26,8 @@ export default function CohortPanel({
     >
       {!collapsed && (
         <p
-          className="font-mono lowercase px-1 mb-2"
-          style={{ fontSize: 7, letterSpacing: "0.12em", color: "var(--text-disabled)", textTransform: "uppercase" }}
+          className="font-mono px-1 mb-2.5"
+          style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", color: "var(--text-muted)", textTransform: "uppercase" }}
         >
           your cohort
         </p>
@@ -55,7 +55,7 @@ export default function CohortPanel({
             );
           }
           return (
-            <div key={m.id} className="flex items-center gap-2 px-1 py-1">
+            <div key={m.id} className="cohort-member-row">
               <div className="relative">
                 <Avatar name={m.full_name} stage={m.stage} username={m.username} size={22} />
                 <span
@@ -63,10 +63,7 @@ export default function CohortPanel({
                   style={{ border: "1.5px solid var(--card)" }}
                 />
               </div>
-              <span
-                className="font-mono lowercase truncate"
-                style={{ fontSize: 10, color: "var(--text-secondary)" }}
-              >
+              <span className="cohort-member-name font-mono lowercase truncate">
                 {m.full_name?.toLowerCase() ?? "—"}
               </span>
             </div>

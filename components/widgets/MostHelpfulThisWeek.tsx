@@ -41,16 +41,18 @@ export default async function MostHelpfulThisWeek() {
 
   return (
     <div
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+      className="side-widget"
+      style={{ "--w-accent": "#22c55e" } as React.CSSProperties}
     >
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
-        most_helpful_this_week
-      </p>
+      <div className="side-widget-head">
+        <span className="side-widget-glyph" aria-hidden>▲</span>
+        <p className="side-widget-label">most_helpful_this_week</p>
+      </div>
       {top.length === 0 ? (
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-          no replies yet this week.
-        </p>
+        <div className="empty-panel compact">
+          <p className="empty-panel-title">no replies yet this week.</p>
+          <p className="empty-panel-sub">answer someone&apos;s question and your name goes here.</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {top.map(([id, count]) => {

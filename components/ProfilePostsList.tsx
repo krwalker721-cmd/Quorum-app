@@ -5,7 +5,12 @@ import PostCard, { type PostWithAuthor } from "@/components/PostCard";
 
 export default function ProfilePostsList({ posts }: { posts: PostWithAuthor[] }) {
   if (!posts || posts.length === 0) {
-    return <p className="font-mono lowercase text-xs text-text-faint">no posts yet.</p>;
+    return (
+      <div className="empty-panel compact">
+        <p className="empty-panel-title">no posts yet.</p>
+        <p className="empty-panel-sub">when they share something with the room, it shows up here.</p>
+      </div>
+    );
   }
   return (
     <>

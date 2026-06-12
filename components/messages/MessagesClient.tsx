@@ -293,10 +293,12 @@ export default function MessagesClient({
         </div>
         <div className="flex-1 overflow-y-auto scroll-thin">
           {conversations.length === 0 && (
-            <div className="px-4 py-6">
-              <p className="font-mono lowercase text-[0.7rem] text-text-faint leading-relaxed">
-                no messages yet — search above to find a founder.
-              </p>
+            <div className="px-3 py-4">
+              <div className="empty-panel compact">
+                <span className="empty-panel-glyph" aria-hidden>✉</span>
+                <p className="empty-panel-title">no conversations yet.</p>
+                <p className="empty-panel-sub">search above to find a founder worth talking to.</p>
+              </div>
             </div>
           )}
           {conversations.map((c) => {
@@ -380,9 +382,14 @@ export default function MessagesClient({
               className="flex-1 overflow-y-auto scroll-thin px-6 py-6 space-y-3"
             >
               {messages.length === 0 && (
-                <p className="font-mono lowercase text-[0.7rem] text-text-faint text-center mt-12">
-                  no messages yet. say hi.
-                </p>
+                <div className="flex flex-col items-center text-center mt-12 gap-1">
+                  <p className="font-sans lowercase text-[0.85rem] text-text-secondary">
+                    this is the start of something.
+                  </p>
+                  <p className="font-mono lowercase text-[0.7rem] text-text-faint">
+                    say hi — founders here actually reply.
+                  </p>
+                </div>
               )}
               {messages.map((m) => {
                 const mine = m.sender_id === currentUserId;
@@ -393,14 +400,15 @@ export default function MessagesClient({
                   >
                     <div className="max-w-[70%]">
                       <div
-                        className="px-3 py-2"
+                        className="px-3.5 py-2.5"
                         style={{
                           background: mine
-                            ? "rgba(245, 158, 11,0.12)"
+                            ? "rgba(245, 158, 11,0.10)"
                             : "var(--card-elev)",
                           border: `1px solid ${
-                            mine ? "rgba(245, 158, 11,0.35)" : "var(--border)"
+                            mine ? "rgba(245, 158, 11,0.25)" : "var(--border)"
                           }`,
+                          borderRadius: mine ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
                           color: "var(--text-primary)",
                         }}
                       >
@@ -447,9 +455,13 @@ export default function MessagesClient({
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center px-6">
-            <p className="font-mono lowercase text-xs text-text-faint text-center">
-              no messages yet — start a conversation from someone&apos;s profile.
-            </p>
+            <div className="empty-panel" style={{ maxWidth: 360, border: "none", background: "transparent" }}>
+              <span className="empty-panel-glyph" aria-hidden>✉</span>
+              <p className="empty-panel-title">your direct lines live here.</p>
+              <p className="empty-panel-sub">
+                pick a conversation on the left, or start one from a founder&apos;s profile.
+              </p>
+            </div>
           </div>
         )}
       </div>

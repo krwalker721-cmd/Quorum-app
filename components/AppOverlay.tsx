@@ -38,7 +38,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
     };
   }, []);
 
-  const sidebarW = collapsed ? 48 : 188;
+  const sidebarW = collapsed ? 48 : 240;
   // Left coordinate strip sits flush against the right edge of the sidebar so
   // it only ever paints inside the main content area, never over the sidebar.
   const coordLeftX = sidebarW;
@@ -83,7 +83,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
               top: COORD_START_TOP + i * COORD_SPACING,
               left: 0,
               fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-              fontSize: 6,
+              fontSize: 7,
               color: "rgba(245, 158, 11, 0.2)",
               letterSpacing: "0.05em",
               lineHeight: 1,
@@ -117,7 +117,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
               top: COORD_START_TOP + i * COORD_SPACING,
               left: 0,
               fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-              fontSize: 6,
+              fontSize: 7,
               color: "rgba(245, 158, 11, 0.12)",
               letterSpacing: "0.05em",
               lineHeight: 1,
@@ -205,7 +205,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
       >
         <span
           style={{
-            fontSize: 6,
+            fontSize: 7,
             color: "rgba(245, 158, 11, 0.35)",
             letterSpacing: "0.1em",
             textTransform: "uppercase",
@@ -222,7 +222,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
         />
         <span
           style={{
-            fontSize: 6,
+            fontSize: 7,
             color: "rgba(245, 158, 11, 0.25)",
             letterSpacing: "0.08em",
           }}
@@ -236,14 +236,14 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
             background: "rgba(245, 158, 11, 0.15)",
           }}
         />
-        <span style={{ fontSize: 6, color: "rgba(245, 158, 11, 0.2)" }}>
+        <span style={{ fontSize: 7, color: "rgba(245, 158, 11, 0.2)" }}>
           {nodeCount} nodes
         </span>
 
         <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 18 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <span className="status-bar-active-dot" />
-            <span style={{ fontSize: 6, color: "rgba(34, 197, 94, 0.5)" }}>
+            <span style={{ fontSize: 7, color: "rgba(34, 197, 94, 0.5)" }}>
               {activeCount} active
             </span>
           </span>
@@ -256,7 +256,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
           />
           <span
             style={{
-              fontSize: 6,
+              fontSize: 7,
               color: "rgba(245, 158, 11, 0.25)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",

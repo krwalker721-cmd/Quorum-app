@@ -2,16 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-
-function SegmentedBar({ filled, total = 12 }: { filled: number; total?: number }) {
-  return (
-    <div className="flex gap-0.5 items-center">
-      {Array.from({ length: total }).map((_, i) => (
-        <span key={i} className={`seg${i < filled ? " on" : ""}`} />
-      ))}
-    </div>
-  );
-}
+import Meter from "@/components/Meter";
 
 /**
  * cohort_fill — real member count of the current user's cohort(s), averaged
@@ -72,7 +63,7 @@ export default function CohortFillStat({
     <div className="stat-item">
       <span className="stat-label font-mono lowercase">cohort_fill</span>
       <span className="stat-value font-mono">{`${fill}/${cohortMax}`}</span>
-      <SegmentedBar filled={Math.min(fill, cohortMax)} total={cohortMax} />
+      <Meter value={Math.min(fill, cohortMax)} max={cohortMax} />
     </div>
   );
 }

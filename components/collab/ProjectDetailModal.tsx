@@ -61,29 +61,24 @@ export default function ProjectDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="modal-overlay fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl border p-6 space-y-4"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+        className="modal-shell w-full max-w-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="font-mono lowercase text-[0.6rem] text-text-faint mb-1">project</p>
-            <h3 className="font-sans text-text-primary text-xl lowercase">{project.title}</h3>
+            <p className="modal-kicker">project</p>
+            <h3 className="modal-title">{project.title}</h3>
           </div>
-          <button
-            onClick={onClose}
-            className="font-mono text-text-faint hover:text-text-primary text-lg"
-            aria-label="close"
-          >
-            ✕
+          <button onClick={onClose} className="modal-close-btn" aria-label="close">
+            esc
           </button>
         </div>
 
+        <div className="modal-shell-body">
         {project.description && (
           <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
             {project.description}
@@ -93,7 +88,7 @@ export default function ProjectDetailModal({
         <div className="flex items-center gap-2 flex-wrap">
           {project.category && (
             <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
               style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
             >
               {project.category}
@@ -101,7 +96,7 @@ export default function ProjectDetailModal({
           )}
           {project.looking_for && (
             <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
               style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
             >
               looking_for: {project.looking_for}
@@ -114,7 +109,7 @@ export default function ProjectDetailModal({
             {project.skills.slice(0, 10).map((s) => (
               <span
                 key={s}
-                className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+                className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
                 style={{
                   background: "rgba(56,189,248,0.12)",
                   color: "#38bdf8",
@@ -148,20 +143,11 @@ export default function ProjectDetailModal({
             )}
           </div>
         </div>
+        </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="modal-shell-foot">
           {isMember ? (
-            <Link
-              href={`/collab/${project.id}`}
-              className="font-mono lowercase text-[0.7rem] px-4 py-2 hover:opacity-90"
-              style={{
-                background: "rgba(245, 158, 11, 0.18)",
-                color: "#f59e0b",
-                border: "1px solid rgba(245, 158, 11, 0.55)",
-                borderRadius: 5,
-                fontWeight: 700,
-              }}
-            >
+            <Link href={`/collab/${project.id}`} className="btn-primary">
               open project →
             </Link>
           ) : existingRequest === "pending" ? (
@@ -173,17 +159,7 @@ export default function ProjectDetailModal({
               request declined
             </span>
           ) : (
-            <button
-              onClick={() => onRequestJoin(project)}
-              className="font-mono lowercase text-[0.7rem] px-4 py-2 hover:opacity-90"
-              style={{
-                background: "rgba(245, 158, 11, 0.18)",
-                color: "#f59e0b",
-                border: "1px solid rgba(245, 158, 11, 0.55)",
-                borderRadius: 5,
-                fontWeight: 700,
-              }}
-            >
+            <button onClick={() => onRequestJoin(project)} className="btn-primary">
               request to join →
             </button>
           )}

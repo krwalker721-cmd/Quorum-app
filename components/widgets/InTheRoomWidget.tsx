@@ -10,12 +10,14 @@ type Member = {
 export default function InTheRoomWidget({ members }: { members: Member[] }) {
   return (
     <div
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+      className="side-widget"
+      style={{ "--w-accent": "#22c55e" } as React.CSSProperties}
     >
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
-        in_the_room
-      </p>
+      <div className="side-widget-head">
+        <span className="side-widget-glyph" aria-hidden>●</span>
+        <p className="side-widget-label">in_the_room</p>
+        {members.length > 0 && <span className="side-widget-meta">{members.length}</span>}
+      </div>
       <InTheRoomGrid members={members} max={12} size={24} showCount />
     </div>
   );

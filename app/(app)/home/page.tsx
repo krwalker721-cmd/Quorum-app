@@ -152,18 +152,18 @@ export default async function HomePage() {
         trustScore={profile?.trust_score ?? 0}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-6 py-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 px-7 py-7">
+        <div className="lg:col-span-2 space-y-8">
           <Feed initial={initialPosts} currentUserId={user.id} />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             <CohortNetwork members={memberList.filter((m) => m.id !== user.id)} />
             <ActivityHeatmap posts7d={posts7d ?? 0} timestamps={heatmapTimestamps} />
             <StageBreakdown counts={stageCounts} />
           </div>
         </div>
 
-        <aside className="space-y-4">
+        <aside className="space-y-5">
           <WeeklyCheckin userId={user.id} />
           <YourProjects userId={user.id} />
           <RecentHandshakes userId={user.id} username={profile?.username ?? null} />

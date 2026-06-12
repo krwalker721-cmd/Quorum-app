@@ -491,9 +491,13 @@ export default function CohortRoomClient({
 
             <div className="bubbles-container max-w-3xl">
               {chronological.length === 0 && (
-                <p className="font-mono lowercase text-xs text-text-faint py-4">
-                  no posts in the room yet. open the conversation.
-                </p>
+                <div className="empty-panel my-4">
+                  <span className="empty-panel-glyph" aria-hidden>◌</span>
+                  <p className="empty-panel-title">the room is quiet.</p>
+                  <p className="empty-panel-sub">
+                    this is your private floor — no performance, no audience. open the conversation.
+                  </p>
+                </div>
               )}
               {chronological.map((p, index) => {
                 const isMine = p.author_id === currentUserId;

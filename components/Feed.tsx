@@ -65,13 +65,17 @@ export default function Feed({
   const pulse = posts.filter((p) => p.post_type === "pulse");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <section>
-        <p className="widget-title font-mono lowercase mb-3">cohort_feed</p>
-        <div className="space-y-3">
+        <p className="widget-title font-mono lowercase">cohort_feed</p>
+        <div className="space-y-4">
           {cohort.length === 0 ? (
-            <div className="widget">
-              <p className="empty-state font-mono lowercase">no posts in your cohort yet.</p>
+            <div className="empty-panel">
+              <span className="empty-panel-glyph" aria-hidden>▢</span>
+              <p className="empty-panel-title">your cohort is quiet right now.</p>
+              <p className="empty-panel-sub">
+                the first post sets the tone — share the decision you&apos;re actually wrestling with.
+              </p>
             </div>
           ) : (
             cohort.map((p) => (
@@ -89,11 +93,15 @@ export default function Feed({
       </section>
 
       <section>
-        <p className="widget-title font-mono lowercase mb-3">pulse</p>
-        <div className="space-y-3">
+        <p className="widget-title font-mono lowercase">pulse</p>
+        <div className="space-y-4">
           {pulse.length === 0 ? (
-            <div className="widget">
-              <p className="empty-state font-mono lowercase">nothing on the pulse yet.</p>
+            <div className="empty-panel">
+              <span className="empty-panel-glyph" aria-hidden>◌</span>
+              <p className="empty-panel-title">nothing on the pulse yet.</p>
+              <p className="empty-panel-sub">
+                when founders across quorum post wins, blockers, and questions, they land here.
+              </p>
             </div>
           ) : (
             pulse.map((p) => (

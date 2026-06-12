@@ -101,15 +101,15 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
       className="weekly-summary-card mx-6 mt-6"
       style={{
         background: "var(--card-elev)",
-        borderRadius: 8,
+        borderRadius: "0 12px 12px 0",
         borderLeft: "3px solid #58a6ff",
-        padding: "20px 24px",
+        padding: "22px 26px",
         boxShadow: "0 0 32px rgba(88, 166, 255, 0.05), 0 0 64px rgba(88, 166, 255, 0.04)",
       }}
     >
       <p
         className="font-sans"
-        style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.5 }}
+        style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.5 }}
       >
         {greeting}
       </p>
@@ -160,7 +160,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
                 >
                   <span
                     className="font-mono"
-                    style={{ fontSize: 18, color: "var(--text-primary)" }}
+                    style={{ fontSize: 20, color: "var(--text-primary)", fontVariantNumeric: "tabular-nums" }}
                   >
                     {stat.value}
                   </span>
@@ -193,7 +193,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
                   </div>
                   <div
                     className="font-sans"
-                    style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.55 }}
+                    style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.55 }}
                   >
                     {h.content}
                   </div>

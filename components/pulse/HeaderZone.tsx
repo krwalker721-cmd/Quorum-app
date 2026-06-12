@@ -97,6 +97,16 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
   const cardBase: React.CSSProperties = {
     background: "var(--bg2, var(--card-elev))",
     borderColor: "rgba(88, 166, 255, 0.22)",
+    borderRadius: "var(--radius-card)",
+    padding: "16px 18px",
+  };
+
+  const cardLabel: React.CSSProperties = {
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    color: "var(--text-muted)",
   };
 
   const topTag = top3[0];
@@ -110,22 +120,22 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {/* Card 1 — founders in the room */}
-      <div className="p-4 border pulse-card-amber-glow" style={cardBase}>
+      <div className="border pulse-card-amber-glow" style={cardBase}>
         <FoundersInRoomCount />
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint mt-2 tracking-wider">
+        <p className="font-mono lowercase mt-2" style={cardLabel}>
           founders in the room right now
         </p>
       </div>
 
       {/* Card 2 — this week's conversation */}
-      <div className="p-4 border" style={cardBase}>
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
-          this week the room is talking about
+      <div className="border" style={cardBase}>
+        <p className="font-mono lowercase mb-3" style={cardLabel}>
+          the room is talking about
         </p>
         {topTag ? (
           <div className="space-y-2">
             <span
-              className="inline-block font-mono lowercase text-sm px-3 py-1.5"
+              className="inline-block font-mono lowercase text-sm px-3 py-1.5 rounded-full"
               style={{
                 background: `${tagColor(topTag[0])}22`,
                 color: tagColor(topTag[0]),
@@ -137,7 +147,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
             <div className="flex flex-wrap gap-2">
               {secondTag && (
                 <span
-                  className="font-mono lowercase text-[0.65rem] px-2 py-0.5 border"
+                  className="font-mono lowercase text-[0.65rem] px-2 py-0.5 border rounded-full"
                   style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
                 >
                   #{secondTag[0]}
@@ -145,7 +155,7 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
               )}
               {thirdTag && (
                 <span
-                  className="font-mono lowercase text-[0.65rem] px-2 py-0.5 border"
+                  className="font-mono lowercase text-[0.65rem] px-2 py-0.5 border rounded-full"
                   style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
                 >
                   #{thirdTag[0]}
@@ -161,16 +171,16 @@ export default async function HeaderZone({ members }: { members: Member[] }) {
       </div>
 
       {/* Card 3 — activity ticker */}
-      <div className="p-4 border" style={cardBase}>
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
+      <div className="border" style={cardBase}>
+        <p className="font-mono lowercase mb-3" style={cardLabel}>
           live activity
         </p>
         <ActivityTicker initialEvents={initialEvents} />
       </div>
 
       {/* Card 4 — who's here */}
-      <div className="p-4 border" style={cardBase}>
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
+      <div className="border" style={cardBase}>
+        <p className="font-mono lowercase mb-3" style={cardLabel}>
           in the room
         </p>
         <InTheRoomGrid members={members} max={12} size={26} />

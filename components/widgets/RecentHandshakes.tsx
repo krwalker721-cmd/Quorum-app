@@ -84,14 +84,18 @@ export default function RecentHandshakes({
 
   return (
     <div
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+      className="side-widget"
+      style={{ "--w-accent": "#a78bfa" } as React.CSSProperties}
     >
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-3">recent_handshakes</p>
-      <div className="space-y-2">
+      <div className="side-widget-head">
+        <span className="side-widget-glyph" aria-hidden>◈</span>
+        <p className="side-widget-label">recent_handshakes</p>
+        <span className="side-widget-meta">{rows.length}</span>
+      </div>
+      <div className="space-y-2.5">
         {rows.map((r) => (
           <div key={r.id} className="flex items-start gap-2">
-            <span className="font-mono text-[0.8rem] shrink-0" style={{ color: "#f59e0b" }} aria-hidden>
+            <span className="font-mono text-[0.8rem] shrink-0" style={{ color: "#a78bfa" }} aria-hidden>
               ◈
             </span>
             <div className="min-w-0 flex-1">
@@ -115,8 +119,8 @@ export default function RecentHandshakes({
       {username && (
         <Link
           href={`/profile/${username}?tab=handshakes`}
-          className="block text-right font-mono lowercase text-[0.65rem] mt-2 hover:underline"
-          style={{ color: "#f59e0b" }}
+          className="block text-right font-mono lowercase text-[0.65rem] mt-3 hover:underline"
+          style={{ color: "#a78bfa" }}
         >
           view all →
         </Link>

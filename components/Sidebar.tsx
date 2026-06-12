@@ -35,17 +35,24 @@ function computeHomeDot(): boolean {
   return true;
 }
 
-const NAV: Array<{ href: string; label: string; dotKey?: NavKey }> = [
-  { href: "/home", label: "home" },
-  { href: "/cohort", label: "cohort", dotKey: "cohort" },
-  { href: "/messages", label: "messages", dotKey: "messages" },
-  { href: "/pulse", label: "pulse", dotKey: "pulse" },
-  { href: "/vault", label: "vault", dotKey: "vault" },
-  { href: "/collab", label: "collab_board", dotKey: "collab" },
-  { href: "/referrals", label: "referrals" },
+type NavItem = { href: string; label: string; glyph: string; dotKey?: NavKey };
+
+const NAV_MAIN: NavItem[] = [
+  { href: "/home", label: "home", glyph: "⌂" },
+  { href: "/cohort", label: "cohort", glyph: "⬡", dotKey: "cohort" },
+  { href: "/messages", label: "messages", glyph: "✉", dotKey: "messages" },
+  { href: "/pulse", label: "pulse", glyph: "∿", dotKey: "pulse" },
+  { href: "/vault", label: "vault", glyph: "◫", dotKey: "vault" },
 ];
 
-const EXPANDED_W = 188;
+const NAV_WORKSPACE: NavItem[] = [
+  { href: "/collab", label: "collab_board", glyph: "⊞", dotKey: "collab" },
+  { href: "/referrals", label: "referrals", glyph: "⇄" },
+];
+
+const NAV: NavItem[] = [...NAV_MAIN, ...NAV_WORKSPACE];
+
+const EXPANDED_W = 240;
 const COLLAPSED_W = 48;
 
 export default function Sidebar({
@@ -116,83 +123,112 @@ export default function Sidebar({
         overflow: "hidden",
       }}
     >
-      {/* Logo area */}
+      {/* Warm amber gradient bleeding down from the logo */}
+      <div className="sidebar-warm-top" aria-hidden />
+
+      {/* Logo area — logo always visible; toggle lives here so it's always in
+          the same predictable spot (top of the rail) in both states */}
       <div
-        className="flex items-center px-3 py-5"
+        className="flex items-center relative"
         style={{
-          gap: 8,
-          justifyContent: collapsed ? "center" : "flex-start",
+          flexDirection: collapsed ? "column" : "row",
+          gap: 10,
+          padding: collapsed ? "16px 0 12px" : "18px 12px 18px 16px",
           borderBottom: "1px solid var(--border-default)",
         }}
       >
         <LogoMark size={22} />
-        <span
-          className="font-sans tracking-tight lowercase sidebar-fade"
-          style={{
-            color: "var(--text-primary)",
-            fontSize: 14,
-            fontWeight: 700,
-            letterSpacing: "-0.5px",
-            opacity: collapsed ? 0 : 1,
-            pointerEvents: collapsed ? "none" : "auto",
-            whiteSpace: "nowrap",
-          }}
+        {!collapsed && (
+          <span
+            className="font-sans tracking-tight lowercase flex-1"
+            style={{
+              color: "var(--text-primary)",
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: "-0.5px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            quorum
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={toggle}
+          className="sidebar-toggle"
+          aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
+          title={collapsed ? "expand" : "collapse"}
         >
-          quorum
-        </span>
+          {mounted && collapsed ? "›" : "‹"}
+        </button>
       </div>
 
       {/* Nav */}
       <nav
-        className="pt-2 flex-1 overflow-y-auto scroll-thin"
-        style={{ paddingLeft: collapsed ? 0 : 8, paddingRight: collapsed ? 0 : 8 }}
+        className="pt-3 flex-1 overflow-y-auto scroll-thin relative"
+        style={{ paddingLeft: collapsed ? 0 : 10, paddingRight: collapsed ? 0 : 10 }}
       >
         {NAV.map((item) => {
           const active =
             pathname === item.href || (item.href !== "/home" && pathname.startsWith(item.href));
-          const firstLetter = item.label.charAt(0);
+          const isFirstWorkspaceItem = item.href === NAV_WORKSPACE[0].href;
+          const hasUnseen =
+            (item.href === "/home" && showHomeDot) ||
+            (!!item.dotKey && dots[item.dotKey] && !active);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={`nav-item font-mono lowercase${active ? " active" : ""}`}
-              style={{
-                fontSize: collapsed ? 11 : 11,
-                justifyContent: collapsed ? "center" : "flex-start",
-                padding: collapsed ? "8px 0" : "6px 10px",
-              }}
-            >
-              {collapsed ? (
-                firstLetter
-              ) : (
-                <>
-                  <span className="nav-dot" />
-                  <span>{item.label}</span>
-                  {item.href === "/home" && showHomeDot && (
-                    <span className="nav-unseen-dot" aria-label="weekly summary available" />
-                  )}
-                  {item.dotKey && dots[item.dotKey] && !active && (
-                    <span className="nav-unseen-dot" aria-label={`new in ${item.label}`} />
-                  )}
-                </>
+            <div key={item.href}>
+              {isFirstWorkspaceItem && !collapsed && (
+                <p className="nav-section-label font-mono">workspace</p>
               )}
-            </Link>
+              {isFirstWorkspaceItem && collapsed && (
+                <div
+                  aria-hidden
+                  style={{
+                    height: 1,
+                    background: "var(--border-default)",
+                    margin: "10px 12px",
+                  }}
+                />
+              )}
+              <Link
+                href={item.href}
+                title={collapsed ? item.label : undefined}
+                className={`nav-item font-mono lowercase${active ? " active" : ""}`}
+                style={{
+                  fontSize: collapsed ? 14 : 12,
+                  justifyContent: collapsed ? "center" : "flex-start",
+                  padding: collapsed ? "8px 0" : undefined,
+                  margin: collapsed ? "0 6px 3px" : undefined,
+                }}
+              >
+                {collapsed ? (
+                  <span
+                    className="relative inline-flex items-center justify-center"
+                    style={{ lineHeight: 1 }}
+                    aria-hidden
+                  >
+                    {item.glyph}
+                    {hasUnseen && (
+                      <span
+                        className="nav-unseen-dot"
+                        style={{ position: "absolute", top: -3, right: -9, marginLeft: 0 }}
+                        aria-label={`new in ${item.label}`}
+                      />
+                    )}
+                  </span>
+                ) : (
+                  <>
+                    <span className="nav-dot" />
+                    <span>{item.label}</span>
+                    {hasUnseen && (
+                      <span className="nav-unseen-dot" aria-label={`new in ${item.label}`} />
+                    )}
+                  </>
+                )}
+              </Link>
+            </div>
           );
         })}
-
-        {/* Collapse toggle */}
-        <div className="flex justify-center mt-3 mb-2" style={{ paddingInline: collapsed ? 0 : 8 }}>
-          <button
-            type="button"
-            onClick={toggle}
-            className="sidebar-toggle"
-            aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
-            title={collapsed ? "expand" : "collapse"}
-          >
-            {mounted ? (collapsed ? "→" : "←") : "←"}
-          </button>
-        </div>
       </nav>
 
       <CohortPanel members={cohort} currentUserId={currentUserId} collapsed={collapsed} />

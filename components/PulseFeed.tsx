@@ -151,11 +151,11 @@ export default function PulseFeed({
   }
 
   return (
-    <div className="space-y-3 pulse-feed-container">
+    <div className="space-y-4 pulse-feed-container">
       {tagFilter && (
         <div
-          className="flex items-center justify-between p-3 border"
-          style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)" }}
+          className="flex items-center justify-between px-4 py-3 border rounded-xl"
+          style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)", maxWidth: 680 }}
         >
           <p className="font-mono lowercase text-[0.7rem] text-text-muted">
             filtered by{" "}
@@ -163,7 +163,7 @@ export default function PulseFeed({
           </p>
           <button
             onClick={clearFilter}
-            className="font-mono lowercase text-[0.65rem] px-2 py-1 border hover:border-amber transition-colors"
+            className="font-mono lowercase text-[0.65rem] px-2.5 py-1 border rounded-lg hover:border-amber transition-colors"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
           >
             clear filter
@@ -172,9 +172,14 @@ export default function PulseFeed({
       )}
 
       {filtered.length === 0 ? (
-        <p className="font-mono lowercase text-xs text-text-faint">
-          nothing here yet for #{tagFilter}.
-        </p>
+        <div className="empty-panel" style={{ maxWidth: 680 }}>
+          <span className="empty-panel-glyph" aria-hidden>#</span>
+          <p className="empty-panel-title">nothing here yet for #{tagFilter}.</p>
+          <p className="empty-panel-sub">try clearing the filter to see the whole room.</p>
+          <button onClick={clearFilter} className="empty-panel-cta">
+            clear filter →
+          </button>
+        </div>
       ) : (
         filtered.map((p) => (
           <PostCard
@@ -193,7 +198,7 @@ export default function PulseFeed({
           <button
             onClick={loadMore}
             disabled={busy}
-            className="font-mono lowercase text-[0.7rem] px-4 py-2 border hover:border-amber transition-colors disabled:opacity-50"
+            className="font-mono lowercase text-[0.7rem] px-4 py-2 border rounded-lg hover:border-amber transition-colors disabled:opacity-50"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
           >
             {busy ? "loading…" : "load more "}

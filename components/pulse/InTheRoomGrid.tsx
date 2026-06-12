@@ -28,9 +28,10 @@ export default function InTheRoomGrid({
 
   if (onlineMembers.length === 0) {
     return (
-      <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-        nobody&apos;s in the room yet.
-      </p>
+      <div className="empty-panel compact">
+        <p className="empty-panel-title">nobody&apos;s in the room right now.</p>
+        <p className="empty-panel-sub">posts left now get read when the room wakes up.</p>
+      </div>
     );
   }
 

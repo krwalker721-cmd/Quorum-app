@@ -85,29 +85,24 @@ export default function NeedDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="modal-overlay fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
       onClick={() => !busy && onClose()}
     >
       <div
-        className="w-full max-w-xl border p-6 space-y-4"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+        className="modal-shell w-full max-w-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="font-mono lowercase text-[0.6rem] text-text-faint mb-1">need</p>
-            <h3 className="font-sans text-text-primary text-xl lowercase">{need.title}</h3>
+            <p className="modal-kicker">ask</p>
+            <h3 className="modal-title">{need.title}</h3>
           </div>
-          <button
-            onClick={onClose}
-            className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
-            aria-label="close"
-          >
-            ✕
+          <button onClick={onClose} className="modal-close-btn" aria-label="close">
+            esc
           </button>
         </div>
 
+        <div className="modal-shell-body">
         <div className="flex items-center gap-2 flex-wrap">
           <Avatar
             name={need.author?.full_name}
@@ -123,7 +118,7 @@ export default function NeedDetailModal({
           </span>
           {need.category && (
             <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto"
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto rounded-full"
               style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
             >
               {need.category}
@@ -131,7 +126,7 @@ export default function NeedDetailModal({
           )}
           {need.looking_for && (
             <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
               style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
             >
               {need.looking_for}
@@ -145,47 +140,41 @@ export default function NeedDetailModal({
           </p>
         )}
 
-        <div className="border-t pt-4 mt-2" style={{ borderColor: "var(--border)" }}>
+        <div className="border-t pt-4" style={{ borderColor: "var(--border)" }}>
           {isOwner ? (
             <p className="font-mono lowercase text-xs text-text-faint">
-              this is your need. use &quot;view applications&quot; on the card to see applicants.
+              this is your ask. use &quot;view applications&quot; on the card to see applicants.
             </p>
           ) : (
             <>
-              <label className="font-mono lowercase text-[0.65rem] text-text-faint">
-                how can you help?
-              </label>
+              <label>how can you help?</label>
               <textarea
                 rows={4}
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
                 placeholder="quick note on how you can help…"
-                className="w-full px-3 py-2 mt-1 text-text-primary"
-                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
                 autoFocus
               />
               {err && <p className="font-mono text-xs text-red-400 lowercase mt-2">{err}</p>}
-              <div className="flex justify-end mt-3">
-                <button
-                  onClick={apply}
-                  disabled={busy || !response.trim()}
-                  className="font-mono lowercase text-[0.7rem] px-4 py-2 hover:opacity-90 disabled:opacity-50"
-                  style={{
-                    background: "rgba(245, 158, 11, 0.18)",
-                    color: "#f59e0b",
-                    border: "1px solid rgba(245, 158, 11, 0.55)",
-                    borderRadius: 5,
-                    boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)",
-                    fontWeight: 700,
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  {busy ? "…" : "apply →"}
-                </button>
-              </div>
             </>
           )}
         </div>
+        </div>
+
+        {!isOwner && (
+          <div className="modal-shell-foot">
+            <button onClick={onClose} className="btn-ghost" disabled={busy}>
+              cancel
+            </button>
+            <button
+              onClick={apply}
+              disabled={busy || !response.trim()}
+              className="btn-primary"
+            >
+              {busy ? "…" : "apply →"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

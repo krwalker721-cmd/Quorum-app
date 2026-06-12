@@ -57,10 +57,6 @@ export default function PostCard({
 
   const online = usePresence();
   const isOnline = !anon && !!post.author_id && online.has(post.author_id);
-  // Chat-style alignment: your own posts hug the right, everyone else's the
-  // left. Computed per-viewer, so an anonymous post only sits right for its
-  // own author and stays left for everyone else.
-  const isMine = !!post.author_id && post.author_id === currentUserId;
   const [shared, setShared] = useState(false);
 
   const repliesOpen = !!onToggleReplies && expanded;
@@ -113,32 +109,29 @@ export default function PostCard({
 
   const classes = [
     "post-card-main group relative border",
-    isDecision ? "px-4 py-6" : "p-4",
+    isDecision ? "px-5 py-7" : "p-5",
     moved ? "moved-room-pulse" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <div className={`post-card-wrapper${isMine ? " mine" : ""}${repliesOpen ? " replies-open" : ""}`} id={`post-${post.id}`}>
+    <div className={`post-card-wrapper${repliesOpen ? " replies-open" : ""}`} id={`post-${post.id}`}>
     <article
       className={classes}
       style={{
-        // Your own posts are mirrored like a chat bubble: the accent stripe,
-        // rounded corners, and inward tint all flip to the right edge. The
-        // accent side is set inline (shorthand → inline border-*-color), so it
-        // always wins over the CSS base/hover border-color and can never fade.
-        background: `linear-gradient(${isMine ? 270 : 90}deg, ${bgTint} 0%, #161b22 35%)`,
-        ...(isMine
-          ? { borderRight: `3px solid ${accentColor}`, borderRadius: "12px 0 0 12px" }
-          : { borderLeft: `3px solid ${accentColor}`, borderRadius: "0 12px 12px 0" }),
+        // The accent stripe is set inline (shorthand → inline border-left-color),
+        // so it always wins over the CSS base/hover border-color and never fades.
+        background: `linear-gradient(90deg, ${bgTint} 0%, var(--bg-surface) 35%)`,
+        borderLeft: `3px solid ${accentColor}`,
+        borderRadius: "0 12px 12px 0",
         boxShadow: lateNight
           ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
           : undefined,
       } as CSSProperties}
     >
-      {/* Top corner indicators — always visible (mirror to the left for own posts) */}
-      <div className={`absolute top-2 ${isMine ? "left-2" : "right-2"} flex items-center gap-2 pointer-events-none`}>
+      {/* Top corner indicators — always visible */}
+      <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
         {(isDecision || isBlocker) && (
           <span
             aria-hidden
@@ -159,7 +152,7 @@ export default function PostCard({
       {/* Hover-only actions — sit just inboard of the indicators */}
       <div
         className="absolute top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-        style={isMine ? { left: 56 } : { right: 56 }}
+        style={{ right: 56 }}
       >
         <BookmarkButton itemType={savedType} itemId={post.id} variant="inline" />
         <PostMenu
@@ -171,7 +164,7 @@ export default function PostCard({
         />
       </div>
 
-      <header className="flex items-center gap-3 mb-2">
+      <header className="flex items-center gap-3 mb-3">
         {anon ? (
           <div
             className="w-8 h-8 flex items-center justify-center font-mono text-[0.6rem] lowercase"
@@ -203,11 +196,14 @@ export default function PostCard({
         </div>
       </header>
 
-      <p className="text-text-secondary text-[0.92rem] leading-relaxed whitespace-pre-wrap">
+      <p
+        className="text-text-primary text-[0.95rem] whitespace-pre-wrap"
+        style={{ lineHeight: 1.65 }}
+      >
         {post.content}
       </p>
 
-      <footer className="flex items-center justify-between mt-3">
+      <footer className="flex items-center justify-between mt-4">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-3">
             {onToggleReplies ? (
@@ -253,7 +249,7 @@ export default function PostCard({
         <div className="flex items-center gap-2">
           {roomType && (
             <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
               style={{
                 border: `1px solid ${ROOM_TYPE_COLOR[roomType] ?? "#6e7681"}`,
                 color: ROOM_TYPE_COLOR[roomType] ?? "#6e7681",
@@ -265,7 +261,7 @@ export default function PostCard({
           )}
           {post.tag && (
             <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
+              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
               style={{
                 border: `1px solid ${tagColor}`,
                 color: tagColor,

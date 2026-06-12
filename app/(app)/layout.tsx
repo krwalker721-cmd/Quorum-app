@@ -87,7 +87,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Sidebar cohort={cohort} currentUserId={user.id} />
           <div
             style={{
-              marginLeft: "var(--sidebar-w, 188px)",
+              marginLeft: "var(--sidebar-w, 240px)",
               paddingBottom: 20,
               transition: "margin-left 0.25s ease",
             }}

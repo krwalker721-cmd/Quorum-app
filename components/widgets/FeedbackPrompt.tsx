@@ -59,15 +59,13 @@ export default function FeedbackPrompt() {
 
   return (
     <div
-      className="border p-4"
-      style={{ background: "var(--card)", borderColor: "var(--border-amber)" }}
+      className="side-widget"
+      style={{ "--w-accent": "#38bdf8" } as React.CSSProperties}
     >
-      <p
-        className="font-mono uppercase text-amber mb-2"
-        style={{ fontSize: "9px", letterSpacing: "0.08em" }}
-      >
-        quick question from the team
-      </p>
+      <div className="side-widget-head">
+        <span className="side-widget-glyph" aria-hidden>✱</span>
+        <p className="side-widget-label">from the team</p>
+      </div>
 
       {done ? (
         <p className="text-text-secondary text-sm">thanks for the response.</p>
@@ -91,8 +89,7 @@ export default function FeedbackPrompt() {
                   key={opt}
                   onClick={() => submit(opt)}
                   disabled={busy}
-                  className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border disabled:opacity-50"
-                  style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                  className="option-chip disabled:opacity-50"
                 >
                   {opt}
                 </button>
@@ -107,8 +104,8 @@ export default function FeedbackPrompt() {
                   key={v}
                   onClick={() => submit(String(v))}
                   disabled={busy}
-                  className="font-mono text-sm w-9 h-9 border disabled:opacity-50"
-                  style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                  className="option-card font-mono text-sm w-9 h-9 disabled:opacity-50"
+                  style={{ color: "var(--text-secondary)", textAlign: "center" }}
                 >
                   {v}
                 </button>
@@ -127,8 +124,7 @@ export default function FeedbackPrompt() {
               <button
                 onClick={() => submit()}
                 disabled={busy || !response.trim()}
-                className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-                style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+                className="btn-primary"
               >
                 {busy ? "sending…" : "send "}
               </button>

@@ -8,19 +8,17 @@ export default function WeeklyCheckin({ userId }: { userId: string }) {
   return (
     <>
       <div
-        className="p-4 border"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)" }}
+        className="side-widget"
+        style={{ "--w-accent": "#f59e0b", borderColor: "var(--border-amber)" } as React.CSSProperties}
       >
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
-          weekly_checkin
-        </p>
-        <p className="text-text-secondary text-sm leading-relaxed">
+        <div className="side-widget-head">
+          <span className="side-widget-glyph" aria-hidden>◆</span>
+          <p className="side-widget-label">weekly_checkin</p>
+        </div>
+        <p className="text-text-primary text-sm leading-relaxed">
           what&apos;s the one decision you&apos;ve been avoiding this week?
         </p>
-        <button
-          onClick={() => setOpen(true)}
-          className="font-mono lowercase text-[0.7rem] text-amber mt-4 hover:underline"
-        >
+        <button onClick={() => setOpen(true)} className="btn-primary mt-4 w-full">
           answer_prompt →
         </button>
       </div>

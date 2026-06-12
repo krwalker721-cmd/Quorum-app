@@ -55,27 +55,27 @@ export default function InviteModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="modal-overlay fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg border p-6 space-y-4"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+        className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <p className="font-mono lowercase text-xs text-text-muted">
-            invite to cohort
-          </p>
-          <button
-            onClick={onClose}
-            className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
-          >
-            close
+        <div className="modal-shell-head">
+          <div className="min-w-0">
+            <p className="modal-kicker">cohort</p>
+            <h2 className="modal-title">invite a founder</h2>
+            <p className="modal-subtitle">
+              cohorts work because everyone was vouched for. invite someone you&apos;d trust with the truth.
+            </p>
+          </div>
+          <button onClick={onClose} className="modal-close-btn">
+            esc
           </button>
         </div>
 
+        <div className="modal-shell-body">
         {cohorts.length === 0 ? (
           <p className="font-mono lowercase text-xs text-text-faint">
             you&apos;re not in any cohorts yet. create one from{" "}
@@ -119,8 +119,7 @@ export default function InviteModal({
                 type="button"
                 onClick={() => generate({ withEmail: false })}
                 disabled={busy || !cohortId}
-                className="font-mono lowercase text-[0.7rem] px-3 py-2 border disabled:opacity-50"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+                className="btn-ghost disabled:opacity-50"
               >
                 copy unique invite link
               </button>
@@ -156,6 +155,7 @@ export default function InviteModal({
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   );

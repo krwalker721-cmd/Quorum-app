@@ -58,27 +58,24 @@ export default function RoomPostModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="modal-overlay fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl border p-6 space-y-5"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+        className="modal-shell w-full max-w-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <p className="font-mono lowercase text-xs text-text-muted">
-            new room post
-          </p>
-          <button
-            onClick={onClose}
-            className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
-          >
-            close
+        <div className="modal-shell-head">
+          <div className="min-w-0">
+            <p className="modal-kicker">cohort room</p>
+            <h2 className="modal-title">new room post</h2>
+          </div>
+          <button onClick={onClose} className="modal-close-btn">
+            esc
           </button>
         </div>
 
+        <div className="modal-shell-body">
         <div>
           <label>type</label>
           <div className="grid grid-cols-2 gap-2 mt-1">
@@ -89,10 +86,10 @@ export default function RoomPostModal({
                   key={t.value}
                   type="button"
                   onClick={() => setType(t.value)}
-                  className="font-mono lowercase text-left px-3 py-2.5 transition-colors"
+                  className="option-card font-mono lowercase px-3 py-2.5"
                   style={{
-                    border: `1px solid ${active ? t.color : "var(--border)"}`,
-                    background: active ? `${t.color}14` : "transparent",
+                    borderColor: active ? t.color : undefined,
+                    background: active ? `${t.color}14` : undefined,
                   }}
                 >
                   <p
@@ -119,7 +116,7 @@ export default function RoomPostModal({
           />
         </div>
 
-        <div className="flex items-start gap-3 pt-1">
+        <div className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => setAnon((v) => !v)}
@@ -157,8 +154,12 @@ export default function RoomPostModal({
         </div>
 
         {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+        </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="modal-shell-foot">
+          <button onClick={onClose} className="btn-ghost" disabled={busy}>
+            cancel
+          </button>
           <button
             onClick={submit}
             disabled={busy || !content.trim()}

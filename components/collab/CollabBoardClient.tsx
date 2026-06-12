@@ -290,7 +290,13 @@ function ProjectsList({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="font-mono lowercase text-xs text-text-faint">no projects yet. be the first to post </p>
+      <div className="empty-panel max-w-3xl">
+        <span className="empty-panel-glyph" aria-hidden>▣</span>
+        <p className="empty-panel-title">no projects on the board yet.</p>
+        <p className="empty-panel-sub">
+          someone has to go first — post what you&apos;re building and who you need.
+        </p>
+      </div>
     );
   }
   return (
@@ -474,7 +480,13 @@ function NeedsList({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="font-mono lowercase text-xs text-text-faint">no needs posted yet.</p>
+      <div className="empty-panel max-w-3xl">
+        <span className="empty-panel-glyph" aria-hidden>◇</span>
+        <p className="empty-panel-title">no asks posted yet.</p>
+        <p className="empty-panel-sub">
+          need an advisor, a contractor, or a second brain? say it here — this room exists to be asked.
+        </p>
+      </div>
     );
   }
   return (

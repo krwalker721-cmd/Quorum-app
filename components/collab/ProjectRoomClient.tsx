@@ -494,7 +494,10 @@ function ThreadTab({
     >
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 scroll-thin" style={{ maxHeight: 600 }}>
         {messages.length === 0 ? (
-          <p className="font-mono lowercase text-xs text-text-faint">no messages yet. say hello.</p>
+          <div className="empty-panel compact">
+            <p className="empty-panel-title">no messages yet.</p>
+            <p className="empty-panel-sub">kick things off — what&apos;s the next move on this project?</p>
+          </div>
         ) : (
           messages.map((m) => {
             if (m.is_system) {

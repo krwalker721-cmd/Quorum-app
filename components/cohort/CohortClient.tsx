@@ -202,9 +202,14 @@ export default function CohortClient({
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-thin px-6 py-6 space-y-3">
               {messages.length === 0 && (
-                <p className="font-mono lowercase text-[0.7rem] text-text-faint text-center mt-12">
-                  no messages yet. say hi.
-                </p>
+                <div className="flex flex-col items-center text-center mt-12 gap-1">
+                  <p className="font-sans lowercase text-[0.85rem] text-text-secondary">
+                    this is the start of something.
+                  </p>
+                  <p className="font-mono lowercase text-[0.7rem] text-text-faint">
+                    say hi — founders here actually reply.
+                  </p>
+                </div>
               )}
               {messages.map((m) => {
                 const mine = m.sender_id === currentUserId;

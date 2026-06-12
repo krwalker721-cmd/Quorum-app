@@ -83,58 +83,55 @@ export default function CheckinModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="modal-overlay fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
       onClick={close}
     >
       <div
-        className="w-full max-w-lg border p-6 space-y-5"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+        className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <p className="font-mono lowercase text-xs text-text-muted">weekly_checkin</p>
-          <button
-            onClick={close}
-            className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
-          >
-            close
+        <div className="modal-shell-head">
+          <div className="min-w-0">
+            <p className="modal-kicker">weekly_checkin</p>
+            <h2 className="modal-title">
+              {done ? "checkin logged " : "a few honest minutes"}
+            </h2>
+            {!done && (
+              <div className="flex items-center gap-2 mt-2.5">
+                {Array.from({ length: TOTAL }).map((_, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      width: i === step ? 20 : 8,
+                      height: 4,
+                      borderRadius: 999,
+                      background: i <= step ? "#f59e0b" : "var(--border)",
+                      transition: "all 200ms ease",
+                    }}
+                  />
+                ))}
+                <span className="font-mono lowercase text-[0.6rem] text-text-faint ml-1">
+                  {step + 1}/{TOTAL}
+                </span>
+              </div>
+            )}
+          </div>
+          <button onClick={close} className="modal-close-btn">
+            esc
           </button>
         </div>
 
-        {!done && (
-          <div className="flex items-center gap-2">
-            {Array.from({ length: TOTAL }).map((_, i) => (
-              <span
-                key={i}
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: i <= step ? "#f59e0b" : "var(--border)",
-                  transition: "background 150ms",
-                }}
-              />
-            ))}
-            <span className="font-mono lowercase text-[0.6rem] text-text-faint ml-2">
-              {step + 1}/{TOTAL}
-            </span>
-          </div>
-        )}
-
         {done ? (
-          <div className="space-y-4">
-            <div>
-              <p className="font-mono lowercase text-[0.7rem] text-amber">checkin_logged </p>
-              <p className="text-text-secondary text-sm mt-2 leading-relaxed">
-                here&apos;s what two of your cohort members shared this week:
-              </p>
-            </div>
+          <>
+          <div className="modal-shell-body">
+            <p className="text-text-secondary text-sm leading-relaxed">
+              here&apos;s what two of your cohort members shared this week:
+            </p>
             <div className="space-y-3">
               {SAMPLE_PEER_CHECKINS.map((c) => (
                 <div
                   key={c.name}
-                  className="p-3 border"
+                  className="p-3.5 border rounded-xl"
                   style={{ background: "var(--card)", borderColor: "var(--border)" }}
                 >
                   <div className="flex items-center justify-between">
@@ -143,24 +140,26 @@ export default function CheckinModal({
                     </p>
                     <span className="font-mono lowercase text-[0.6rem] text-amber">{c.rating}</span>
                   </div>
-                  <p className="text-text-muted text-[0.85rem] mt-2 leading-snug">{c.win}</p>
+                  <p className="text-text-primary text-[0.85rem] mt-2 leading-snug">{c.win}</p>
                 </div>
               ))}
             </div>
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={close}
-                className="btn-primary"
-              >
-                done
-              </button>
-            </div>
           </div>
+          <div className="modal-shell-foot">
+            <button
+              onClick={close}
+              className="btn-primary"
+            >
+              done
+            </button>
+          </div>
+          </>
         ) : (
           <>
+          <div className="modal-shell-body">
             {step === 0 && (
               <div className="space-y-3">
-                <p className="text-text-secondary text-[0.95rem]">
+                <p className="text-text-primary text-[0.95rem]">
                   what&apos;s the biggest business decision you&apos;re facing right now?
                 </p>
                 <textarea
@@ -204,7 +203,7 @@ export default function CheckinModal({
 
             {step === 1 && (
               <div className="space-y-3">
-                <p className="text-text-secondary text-[0.95rem]">how did last week actually go?</p>
+                <p className="text-text-primary text-[0.95rem]">how did last week actually go?</p>
                 <div className="grid grid-cols-2 gap-2">
                   {RATINGS.map((r) => {
                     const active = rating === r;
@@ -212,11 +211,12 @@ export default function CheckinModal({
                       <button
                         key={r}
                         onClick={() => setRating(r)}
-                        className="font-mono lowercase text-xs py-3 transition-colors"
+                        className="option-card font-mono lowercase text-xs py-3"
                         style={{
-                          border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
+                          textAlign: "center",
+                          borderColor: active ? "#f59e0b" : undefined,
                           color: active ? "#f59e0b" : "var(--text-muted)",
-                          background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
+                          background: active ? "rgba(245, 158, 11,0.08)" : undefined,
                         }}
                       >
                         {r}
@@ -229,7 +229,7 @@ export default function CheckinModal({
 
             {step === 2 && (
               <div className="space-y-3">
-                <p className="text-text-secondary text-[0.95rem]">what&apos;s your biggest blocker right now?</p>
+                <p className="text-text-primary text-[0.95rem]">what&apos;s your biggest blocker right now?</p>
                 <textarea
                   rows={4}
                   value={blocker}
@@ -242,7 +242,7 @@ export default function CheckinModal({
 
             {step === 3 && (
               <div className="space-y-3">
-                <p className="text-text-secondary text-[0.95rem]">what would make this week a win?</p>
+                <p className="text-text-primary text-[0.95rem]">what would make this week a win?</p>
                 <textarea
                   rows={4}
                   value={win}
@@ -254,38 +254,38 @@ export default function CheckinModal({
             )}
 
             {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+          </div>
 
-            <div className="flex items-center justify-between pt-2">
+          <div className="modal-shell-foot" style={{ justifyContent: "space-between" }}>
+            <button
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              disabled={step === 0 || busy}
+              className="btn-ghost disabled:opacity-30"
+            >
+               back
+            </button>
+            {step < TOTAL - 1 ? (
               <button
-                onClick={() => setStep((s) => Math.max(0, s - 1))}
-                disabled={step === 0 || busy}
-                className="font-mono lowercase text-xs px-3 py-2 border disabled:opacity-30"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+                onClick={() => setStep((s) => s + 1)}
+                disabled={
+                  (step === 0 && !decision.trim()) ||
+                  (step === 1 && !rating) ||
+                  (step === 2 && !blocker.trim())
+                }
+                className="btn-primary"
               >
-                 back
+                continue
               </button>
-              {step < TOTAL - 1 ? (
-                <button
-                  onClick={() => setStep((s) => s + 1)}
-                  disabled={
-                    (step === 0 && !decision.trim()) ||
-                    (step === 1 && !rating) ||
-                    (step === 2 && !blocker.trim())
-                  }
-                  className="btn-primary"
-                >
-                  continue
-                </button>
-              ) : (
-                <button
-                  onClick={submit}
-                  disabled={!win.trim() || busy}
-                  className="btn-primary"
-                >
-                  {busy ? "..." : "submit "}
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={submit}
+                disabled={!win.trim() || busy}
+                className="btn-primary"
+              >
+                {busy ? "..." : "submit "}
+              </button>
+            )}
+          </div>
           </>
         )}
       </div>

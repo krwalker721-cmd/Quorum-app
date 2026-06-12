@@ -50,36 +50,36 @@ export default function SkillPanel({
         onClick={(e) => e.stopPropagation()}
       >
         <header
-          className="flex items-center justify-between px-5 py-4 border-b shrink-0"
+          className="flex items-center justify-between px-6 py-5 border-b shrink-0"
           style={{ borderColor: "var(--border)" }}
         >
           <div className="min-w-0">
-            <h2 className="font-sans text-text-primary text-2xl lowercase truncate">
+            <p className="modal-kicker">skill</p>
+            <h2 className="font-sans text-text-primary text-2xl lowercase truncate mt-0.5">
               {entry.skill.toLowerCase()}
             </h2>
             <p className="font-mono lowercase text-[0.65rem] text-text-faint mt-1">
               {entry.members.length} founder{entry.members.length === 1 ? "" : "s"}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="close"
-            className="font-mono text-text-faint hover:text-text-primary text-lg leading-none px-2 py-1"
-          >
-            ✕
+          <button onClick={onClose} aria-label="close" className="modal-close-btn">
+            esc
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto scroll-thin px-5 py-4 space-y-2">
+        <div className="flex-1 overflow-y-auto scroll-thin px-6 py-5 space-y-2.5">
           {entry.members.length === 0 ? (
-            <p className="font-mono lowercase text-xs text-text-faint">no founders yet.</p>
+            <div className="empty-panel compact">
+              <p className="empty-panel-title">no founders yet.</p>
+              <p className="empty-panel-sub">add this skill to your profile and you&apos;ll show up here.</p>
+            </div>
           ) : (
             entry.members.map((m) => {
               const online = onlineIds?.has(m.id) ?? false;
               return (
                 <div
                   key={m.id}
-                  className="flex items-start gap-3 p-3 border"
+                  className="flex items-start gap-3 p-3.5 border rounded-xl"
                   style={{ background: "var(--card)", borderColor: "var(--border)" }}
                 >
                   <div className="relative shrink-0">
@@ -115,16 +115,7 @@ export default function SkillPanel({
                   </div>
                   <Link
                     href={`/messages?to=${m.id}`}
-                    className="font-mono lowercase text-[0.65rem] px-3 py-1 hover:opacity-90 self-center shrink-0"
-                    style={{
-                      background: "rgba(245, 158, 11, 0.18)",
-                      color: "#f59e0b",
-                      border: "1px solid rgba(245, 158, 11, 0.55)",
-                      borderRadius: 5,
-                      boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)",
-                      fontWeight: 700,
-                      letterSpacing: "0.02em",
-                    }}
+                    className="btn-primary self-center shrink-0"
                   >
                     dm →
                   </Link>

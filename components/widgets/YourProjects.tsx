@@ -98,19 +98,24 @@ export default function YourProjects({ userId }: { userId: string }) {
 
   return (
     <div
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+      className="side-widget"
+      style={{ "--w-accent": "#58a6ff" } as React.CSSProperties}
     >
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-3">your_projects</p>
+      <div className="side-widget-head">
+        <span className="side-widget-glyph" aria-hidden>▣</span>
+        <p className="side-widget-label">your_projects</p>
+        {totalCount > 0 && <span className="side-widget-meta">{totalCount}</span>}
+      </div>
       {loading ? (
         <p className="font-mono lowercase text-[0.7rem] text-text-faint">loading…</p>
       ) : rows.length === 0 ? (
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-          no active projects.{" "}
-          <Link href="/collab" className="hover:underline" style={{ color: "#f59e0b" }}>
-            start or join one in the collab board.
+        <div className="empty-panel compact">
+          <p className="empty-panel-title">no active projects.</p>
+          <p className="empty-panel-sub">find founders building things you care about.</p>
+          <Link href="/collab" className="empty-panel-cta">
+            open the collab board →
           </Link>
-        </p>
+        </div>
       ) : (
         <div className="space-y-2">
           {rows.map((p) => {
@@ -124,8 +129,10 @@ export default function YourProjects({ userId }: { userId: string }) {
                     localStorage.setItem(VISIT_KEY_PREFIX + p.id, new Date().toISOString());
                   } catch {}
                 }}
-                className="flex items-center gap-2 p-2 border hover:opacity-90 transition-opacity"
+                className="flex items-center gap-2 p-2.5 border rounded-lg transition-colors"
                 style={{ background: "var(--card)", borderColor: "var(--border)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-muted)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -148,7 +155,7 @@ export default function YourProjects({ userId }: { userId: string }) {
                   <div className="flex items-center gap-2 mt-1">
                     {p.category && (
                       <span
-                        className="font-mono lowercase text-[0.55rem] px-1.5 py-0.5"
+                        className="font-mono lowercase text-[0.55rem] px-1.5 py-0.5 rounded-full"
                         style={{ border: `1px solid ${color}`, color }}
                       >
                         {p.category}
@@ -166,7 +173,7 @@ export default function YourProjects({ userId }: { userId: string }) {
             <Link
               href="/collab"
               className="block text-right font-mono lowercase text-[0.65rem] mt-1 hover:underline"
-              style={{ color: "#f59e0b" }}
+              style={{ color: "#58a6ff" }}
             >
               view all {totalCount} →
             </Link>

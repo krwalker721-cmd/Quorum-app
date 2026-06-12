@@ -34,14 +34,19 @@ export default async function TrendingTags() {
 
   return (
     <div
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+      className="side-widget"
+      style={{ "--w-accent": "#38bdf8" } as React.CSSProperties}
     >
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
-        trending_tags
-      </p>
+      <div className="side-widget-head">
+        <span className="side-widget-glyph" aria-hidden>#</span>
+        <p className="side-widget-label">trending_tags</p>
+        {ranked.length > 0 && <span className="side-widget-meta">7d</span>}
+      </div>
       {ranked.length === 0 ? (
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint">no tags yet.</p>
+        <div className="empty-panel compact">
+          <p className="empty-panel-title">no tags trending yet.</p>
+          <p className="empty-panel-sub">tags pick up as the week&apos;s conversations build.</p>
+        </div>
       ) : (
         <div className="flex flex-wrap gap-x-3 gap-y-2 items-baseline">
           {ranked.map(([tag, count], rank) => (

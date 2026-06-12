@@ -44,50 +44,43 @@ export default function RespondModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="modal-overlay fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
       onClick={() => !busy && onClose()}
     >
       <div
-        className="w-full max-w-lg border p-6 space-y-4"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+        className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <p className="font-mono lowercase text-xs text-text-muted">
-            respond to {project.title.toLowerCase()}
-          </p>
-          <button
-            onClick={onClose}
-            className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
-          >
-            close
+        <div className="modal-shell-head">
+          <div className="min-w-0">
+            <p className="modal-kicker">respond</p>
+            <h2 className="modal-title truncate">{project.title.toLowerCase()}</h2>
+            <p className="modal-subtitle">
+              a short note to {project.author?.full_name?.toLowerCase() ?? "the author"} explaining
+              why you&apos;d be a fit. they&apos;ll be notified via dm.
+            </p>
+          </div>
+          <button onClick={onClose} className="modal-close-btn">
+            esc
           </button>
         </div>
 
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-          a short note to {project.author?.full_name?.toLowerCase() ?? "the author"} explaining why you'd be a fit. they'll be notified via dm.
-        </p>
+        <div className="modal-shell-body">
+          <textarea
+            rows={5}
+            autoFocus
+            placeholder="i'd be a good fit because..."
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+          {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+        </div>
 
-        <textarea
-          rows={5}
-          autoFocus
-          placeholder="i'd be a good fit because..."
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          className="w-full px-3 py-2 text-text-primary"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-        />
-
-        {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
-
-        <div className="flex justify-end">
-          <button
-            onClick={submit}
-            disabled={busy}
-            className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
-            style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
-          >
+        <div className="modal-shell-foot">
+          <button onClick={onClose} className="btn-ghost" disabled={busy}>
+            cancel
+          </button>
+          <button onClick={submit} disabled={busy} className="btn-primary">
             {busy ? "..." : "send "}
           </button>
         </div>

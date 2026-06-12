@@ -52,95 +52,96 @@ export default function NewProjectModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="modal-overlay fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
       onClick={() => !busy && onClose()}
     >
       <div
-        className="w-full max-w-lg border p-6 space-y-4"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+        className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <p className="font-mono lowercase text-xs text-text-muted">
-            new {postType === "project" ? "project" : "need"}
-          </p>
-          <button
-            onClick={onClose}
-            className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
-          >
-            close
+        <div className="modal-shell-head">
+          <div className="min-w-0">
+            <p className="modal-kicker">collab_board</p>
+            <h2 className="modal-title">
+              {postType === "project" ? "post a project" : "post an ask"}
+            </h2>
+            <p className="modal-subtitle">
+              {postType === "project"
+                ? "tell the room what you're building and who you need."
+                : "be specific — specific asks get answered."}
+            </p>
+          </div>
+          <button onClick={onClose} className="modal-close-btn">
+            esc
           </button>
         </div>
 
-        <input
-          placeholder="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          autoFocus
-          className="w-full px-3 py-2 font-sans text-text-primary"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-        />
+        <div className="modal-shell-body">
+          <div>
+            <label>title</label>
+            <input
+              placeholder={postType === "project" ? "what are you building?" : "what do you need?"}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+            />
+          </div>
 
-        <textarea
-          rows={4}
-          placeholder="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-3 py-2 text-text-primary"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-        />
+          <div>
+            <label>description</label>
+            <textarea
+              rows={4}
+              placeholder="give it enough detail to act on…"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
 
-        <div>
-          <label className="font-mono lowercase text-[0.65rem] text-text-faint">category</label>
-          <div className="flex flex-wrap gap-2 mt-1">
-            {categories.map((c) => {
-              const active = category === c;
-              return (
+          <div>
+            <label>category</label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {categories.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setCategory(c)}
-                  className="font-mono lowercase text-[0.65rem] px-2 py-1"
-                  style={{
-                    border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
-                    color: active ? "#f59e0b" : "var(--text-muted)",
-                    background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
-                  }}
+                  className={`option-chip${category === c ? " selected" : ""}`}
                 >
                   {c}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
+
+          {postType === "project" && (
+            <div>
+              <label>looking_for</label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {LOOKING_FOR.map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => setLookingFor(l)}
+                    className={`option-chip${lookingFor === l ? " selected" : ""}`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
         </div>
 
-        {postType === "project" && (
-          <div>
-            <label className="font-mono lowercase text-[0.65rem] text-text-faint">looking_for</label>
-            <select
-              value={lookingFor}
-              onChange={(e) => setLookingFor(e.target.value)}
-              className="block mt-1 px-3 py-2 font-mono lowercase text-xs text-text-primary"
-              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-            >
-              {LOOKING_FOR.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
-
-        <div className="flex justify-end">
+        <div className="modal-shell-foot">
+          <button onClick={onClose} className="btn-ghost" disabled={busy}>
+            cancel
+          </button>
           <button
             onClick={submit}
             disabled={busy || !title.trim()}
-            className="font-mono lowercase text-xs px-4 py-2 hover:opacity-90 disabled:opacity-50"
-            style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+            className="btn-primary"
           >
             {busy ? "..." : "post "}
           </button>

@@ -19,15 +19,31 @@ export default function ActiveNow({
 
   return (
     <div
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+      className="side-widget"
+      style={{ "--w-accent": "#22c55e" } as React.CSSProperties}
     >
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider mb-3">
-        active_now
-      </p>
+      <div className="side-widget-head">
+        <span
+          className="rounded-full"
+          aria-hidden
+          style={{
+            width: 7,
+            height: 7,
+            background: onlineMembers.length > 0 ? "#22c55e" : "var(--text-disabled)",
+            boxShadow: onlineMembers.length > 0 ? "0 0 6px rgba(34, 197, 94, 0.6)" : "none",
+          }}
+        />
+        <p className="side-widget-label">active_now</p>
+        {onlineMembers.length > 0 && (
+          <span className="side-widget-meta">{onlineMembers.length}</span>
+        )}
+      </div>
       <div className="space-y-2.5">
         {onlineMembers.length === 0 ? (
-          <p className="font-mono lowercase text-[0.7rem] text-text-faint">nobody&apos;s online.</p>
+          <div className="empty-panel compact">
+            <p className="empty-panel-title">quiet right now.</p>
+            <p className="empty-panel-sub">you&apos;re the first one in the room — leave something for the others to find.</p>
+          </div>
         ) : (
           onlineMembers.map((m, i) => (
             <div key={m.id} className="flex items-center gap-2.5">
