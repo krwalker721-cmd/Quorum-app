@@ -124,21 +124,21 @@ export default function PostCard({
     <article
       className={classes}
       style={{
-        background: `linear-gradient(90deg, ${bgTint} 0%, #161b22 35%)`,
-        // The left accent is set inline (shorthand → inline border-left-color),
-        // so it always wins over the CSS base/hover border-color rules and can
-        // never fade or change. The framing border-color lives in CSS so hover
-        // can shift the top/right/bottom to the hover color.
-        borderLeft: `3px solid ${accentColor}`,
-        borderRadius: "0 12px 12px 0",
-        "--post-accent-color": accentColor,
+        // Your own posts are mirrored like a chat bubble: the accent stripe,
+        // rounded corners, and inward tint all flip to the right edge. The
+        // accent side is set inline (shorthand → inline border-*-color), so it
+        // always wins over the CSS base/hover border-color and can never fade.
+        background: `linear-gradient(${isMine ? 270 : 90}deg, ${bgTint} 0%, #161b22 35%)`,
+        ...(isMine
+          ? { borderRight: `3px solid ${accentColor}`, borderRadius: "12px 0 0 12px" }
+          : { borderLeft: `3px solid ${accentColor}`, borderRadius: "0 12px 12px 0" }),
         boxShadow: lateNight
           ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
           : undefined,
       } as CSSProperties}
     >
-      {/* Top-right indicators — always visible */}
-      <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
+      {/* Top corner indicators — always visible (mirror to the left for own posts) */}
+      <div className={`absolute top-2 ${isMine ? "left-2" : "right-2"} flex items-center gap-2 pointer-events-none`}>
         {(isDecision || isBlocker) && (
           <span
             aria-hidden
@@ -156,10 +156,10 @@ export default function PostCard({
         )}
       </div>
 
-      {/* Hover-only actions — sit to the left of indicators */}
+      {/* Hover-only actions — sit just inboard of the indicators */}
       <div
         className="absolute top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ right: 56 }}
+        style={isMine ? { left: 56 } : { right: 56 }}
       >
         <BookmarkButton itemType={savedType} itemId={post.id} variant="inline" />
         <PostMenu

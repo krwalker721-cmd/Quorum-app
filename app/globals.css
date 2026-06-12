@@ -841,6 +841,12 @@ label {
   margin-left: auto;
   margin-right: 0;
 }
+/* …and are fully mirrored into a right-side chat bubble: the header (avatar +
+ * name) and footer (controls + tags) flip to match the right-side accent. */
+.post-card-wrapper.mine .post-card-main > header { flex-direction: row-reverse; }
+.post-card-wrapper.mine .post-card-main > header > div:last-child { text-align: right; }
+.post-card-wrapper.mine .post-card-main > footer { flex-direction: row-reverse; }
+.post-card-wrapper.mine .post-card-main > footer > div:first-child { align-items: flex-end; }
 
 /* ── Pulse: card with replies attached seamlessly below ─────────────────── */
 .post-card-main {
@@ -850,11 +856,11 @@ label {
   border-radius: 12px;
   transition: border-color 0.15s ease, border-radius 0.15s ease;
 }
-/* Hover shifts the framing border to the hover color, but the permanent
- * left accent (set inline as --post-accent-color) is always preserved. */
+/* Hover shifts the framing border to the hover color. The permanent accent
+ * side (left for others, right for your own posts) is set inline, so inline
+ * specificity keeps it from changing on hover. */
 .post-card-main:hover {
   border-color: #388bfd;
-  border-left-color: var(--post-accent-color);
 }
 .post-card-wrapper.replies-open .post-card-main {
   border-bottom-left-radius: 0;
