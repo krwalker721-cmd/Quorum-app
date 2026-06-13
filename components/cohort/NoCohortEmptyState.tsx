@@ -2,10 +2,7 @@ import Link from "next/link";
 
 export default function NoCohortEmptyState() {
   return (
-    <div
-      className="flex items-center justify-center px-6"
-      style={{ minHeight: "calc(100vh - 56px)" }}
-    >
+    <div className="flex items-center justify-center px-6 app-pane-min">
       <div className="max-w-lg text-center">
         <h1
           className="font-sans lowercase text-text-primary"

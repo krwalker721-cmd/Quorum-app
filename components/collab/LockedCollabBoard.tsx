@@ -1,6 +1,6 @@
 export default function LockedCollabBoard() {
   return (
-    <div className="relative" style={{ minHeight: "calc(100vh - 60px)" }}>
+    <div className="relative app-pane-min">
       {/* Blurred preview behind */}
       <div
         aria-hidden

@@ -156,7 +156,25 @@
   --shadow-raised: 0 4px 16px rgba(0, 0, 0, 0.30);
   --shadow-modal: 0 24px 64px rgba(1, 4, 9, 0.65), 0 4px 16px rgba(1, 4, 9, 0.45);
   --focus-ring: 0 0 0 2px rgba(88, 166, 255, 0.35);
+
+  /* App chrome heights — every full-bleed pane sizes against these so nothing
+   * ever overflows the viewport. Keep in sync with TopBar/CohortNav/AppOverlay. */
+  --topbar-h: 64px;
+  --subnav-h: 40px;     /* cohort nav, breadcrumb bars */
+  --statusbar-h: 20px;  /* fixed QUORUM_OS bar at the bottom */
 }
+
+/* Full-viewport panes (messages, cohort room): exactly fill the space between
+ * the topbar and the status bar — the page itself never scrolls, inner columns
+ * do. The -min variant is for centered empty/locked states. */
+.app-pane,
+.app-pane-min {
+  --pane-h: calc(100dvh - var(--topbar-h) - var(--statusbar-h));
+}
+.app-pane { height: var(--pane-h); overflow: hidden; }
+.app-pane-min { min-height: var(--pane-h); }
+.app-pane.with-subnav { height: calc(var(--pane-h) - var(--subnav-h)); }
+.app-pane.with-subnav-2 { height: calc(var(--pane-h) - var(--subnav-h) * 2); }
 
 /* Every keyboard-focusable thing responds the same way. Mouse clicks don't
  * trigger it (focus-visible), so the ring only shows up when it helps. */
@@ -1241,6 +1259,10 @@ label {
   flex-direction: column;
   flex: 1;
   min-width: 0;
+  /* Scrolls internally inside the fixed-height room pane; the sticky
+   * message input stays pinned to its bottom edge. */
+  min-height: 0;
+  overflow-y: auto;
 }
 .bubbles-container {
   flex: 1;

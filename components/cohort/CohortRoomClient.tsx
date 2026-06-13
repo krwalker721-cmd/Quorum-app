@@ -267,8 +267,12 @@ export default function CohortRoomClient({
     <>
       {showBreadcrumb && (
         <div
-          className="px-6 py-2 border-b"
-          style={{ background: "var(--card)", borderColor: "var(--border)" }}
+          className="px-6 border-b flex items-center"
+          style={{
+            height: "var(--subnav-h, 40px)",
+            background: "var(--card)",
+            borderColor: "var(--border)",
+          }}
         >
           <Link
             href="/cohort"
@@ -279,11 +283,15 @@ export default function CohortRoomClient({
           </Link>
         </div>
       )}
-      <div className="flex" style={{ minHeight: "calc(100vh - 96px)" }}>
+      <div className={`flex app-pane ${showBreadcrumb ? "with-subnav-2" : "with-subnav"}`}>
         {/* LEFT — roster */}
         <aside
-          className="border-r flex flex-col"
-          style={{ width: 260, background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
+          className="border-r flex flex-col shrink-0"
+          style={{
+            width: "clamp(210px, 26%, 260px)",
+            background: "var(--bg-elevated)",
+            borderColor: "var(--border-default)",
+          }}
         >
           <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "var(--border-default)" }}>
             <p className="font-mono lowercase text-[0.65rem] text-text-faint">room</p>

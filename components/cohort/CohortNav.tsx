@@ -14,8 +14,12 @@ export default function CohortNav() {
   const pathname = usePathname();
   return (
     <div
-      className="flex items-center gap-1 px-6 py-2 border-b"
-      style={{ background: "var(--card)", borderColor: "var(--border)" }}
+      className="flex items-center gap-1 px-6 border-b"
+      style={{
+        height: "var(--subnav-h, 40px)",
+        background: "var(--card)",
+        borderColor: "var(--border)",
+      }}
     >
       {ITEMS.map((i) => {
         // "room" stays active on the index and on any scoped /cohort/[id] room,

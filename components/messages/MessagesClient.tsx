@@ -221,11 +221,15 @@ export default function MessagesClient({
   }
 
   return (
-    <div className="flex" style={{ height: "calc(100vh - 56px)" }}>
+    <div className="flex app-pane">
       {/* LEFT — inbox */}
       <div
-        className="flex flex-col border-r"
-        style={{ width: 320, background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
+        className="flex flex-col border-r shrink-0"
+        style={{
+          width: "clamp(230px, 30%, 320px)",
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+        }}
       >
         <div className="px-4 pt-4 pb-2">
           <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">

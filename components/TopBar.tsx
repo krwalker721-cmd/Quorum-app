@@ -30,17 +30,19 @@ export default function TopBar({
     <div
       className="flex items-center justify-between px-6 sticky top-0 z-30"
       style={{
+        // Fixed height so full-bleed pages (messages, cohort room) can size
+        // themselves against a known chrome height. Keep in sync with
+        // --topbar-h in globals.css.
+        height: "var(--topbar-h, 64px)",
         background: "var(--bg-surface)",
         borderBottom: "1px solid var(--border-default)",
-        paddingTop: 14,
-        paddingBottom: 14,
       }}
     >
       <div className="min-w-0">
         {/* Breadcrumb path — terminal-style, quorum is the root */}
         <p
           className="font-mono lowercase truncate"
-          style={{ fontSize: 10, letterSpacing: "0.04em", color: "var(--text-muted)" }}
+          style={{ fontSize: 10, lineHeight: 1.3, letterSpacing: "0.04em", color: "var(--text-muted)" }}
         >
           <span style={{ color: "var(--text-disabled)" }}>quorum</span>
           <span style={{ color: "var(--text-disabled)", margin: "0 4px" }}>/</span>
@@ -49,13 +51,13 @@ export default function TopBar({
         <div className="flex items-baseline gap-3 mt-0.5 min-w-0">
           <h1
             className="font-sans lowercase shrink-0"
-            style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.2px" }}
+            style={{ fontSize: 16, lineHeight: 1.3, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.2px" }}
           >
             {title.replace(/_/g, " ")}
           </h1>
           {context && (
             <span
-              className="font-sans lowercase truncate hidden sm:inline"
+              className="font-sans lowercase truncate hidden lg:inline"
               style={{ fontSize: 12, color: "var(--text-muted)" }}
             >
               {context}
@@ -64,13 +66,16 @@ export default function TopBar({
         </div>
       </div>
       <div className="flex items-center gap-3 shrink-0 pl-4">
-        <ThemeToggle />
-        <span
-          className="tier-badge font-mono uppercase tracking-wider"
-          style={{ letterSpacing: "0.08em" }}
-        >
-          {tier}
-        </span>
+        {/* Secondary chrome collapses away first on narrow viewports */}
+        <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
+          <span
+            className="tier-badge font-mono uppercase tracking-wider"
+            style={{ letterSpacing: "0.08em" }}
+          >
+            {tier}
+          </span>
+        </div>
         <NewPostButton userId={userId} defaultPostType={defaultPostType} />
         <SignOutButton />
       </div>

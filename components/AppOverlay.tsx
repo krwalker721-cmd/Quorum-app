@@ -133,7 +133,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
         className="app-crosshair"
         style={{
           position: "fixed",
-          top: 45,
+          top: 64,
           left: sidebarW,
           width: 20,
           height: 20,
@@ -169,7 +169,7 @@ export default function AppOverlay({ nodeCount }: { nodeCount: number }) {
         className="app-crosshair"
         style={{
           position: "fixed",
-          top: 45,
+          top: 64,
           left: sidebarW,
           width: 4,
           height: 4,

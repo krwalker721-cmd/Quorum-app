@@ -119,11 +119,11 @@ export default function CohortClient({
   }
 
   return (
-    <div className="flex" style={{ height: "calc(100vh - 96px)" }}>
+    <div className="flex app-pane with-subnav">
       {/* LEFT PANEL */}
       <div
-        className="flex flex-col border-r"
-        style={{ width: 240, background: "var(--card)", borderColor: "var(--border)" }}
+        className="flex flex-col border-r shrink-0"
+        style={{ width: "clamp(210px, 28%, 240px)", background: "var(--card)", borderColor: "var(--border)" }}
       >
         <div className="px-4 pt-4 pb-2">
           <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">cohort_members</p>
