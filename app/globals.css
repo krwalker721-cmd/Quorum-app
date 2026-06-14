@@ -1148,8 +1148,10 @@ label {
   width: 100%;
   padding: 24px 28px;
 }
-/* Every post is capped at 680px and hugs the left of the column. */
-.pulse-feed-container .post-card-wrapper {
+/* Every post is capped at 680px and hugs the left of the column. The cap is on
+ * the wrapper (not just .post-card-main) so an attached reply thread matches the
+ * card's width instead of stretching the full column. */
+.post-card-wrapper {
   max-width: 680px;
   margin-right: auto;
 }
