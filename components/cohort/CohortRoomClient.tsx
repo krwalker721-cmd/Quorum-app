@@ -127,6 +127,7 @@ export default function CohortRoomClient({
   const [postOpen, setPostOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(true);
+  const [statsOpen, setStatsOpen] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [posting, setPosting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -155,6 +156,32 @@ export default function CohortRoomClient({
       try {
         localStorage.setItem(
           "quorum-cohort-status-collapsed",
+          next ? "0" : "1",
+        );
+      } catch {
+        // ignore storage failures
+      }
+      return next;
+    });
+  }
+
+  // Hydrate the stats-rail collapse state from localStorage (default open).
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("quorum-cohort-stats-collapsed") === "1") {
+        setStatsOpen(false);
+      }
+    } catch {
+      // ignore storage failures
+    }
+  }, []);
+
+  function toggleStats() {
+    setStatsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(
+          "quorum-cohort-stats-collapsed",
           next ? "0" : "1",
         );
       } catch {
@@ -726,15 +753,33 @@ export default function CohortRoomClient({
         </div>
 
         {/* RIGHT — your stats rail. Fills the space beside the chat on wide
-            screens; hidden below xl where the chat needs the full width. */}
+            screens; hidden below xl where the chat needs the full width.
+            Collapses to a thin strip, mirroring the sidebar. */}
         <aside
-          className="hidden xl:flex flex-col shrink-0 border-l overflow-y-auto scroll-thin"
+          className="hidden xl:flex flex-col shrink-0 border-l overflow-y-auto scroll-thin transition-[width] duration-150"
           style={{
-            width: "clamp(220px, 22%, 280px)",
+            width: statsOpen ? "clamp(220px, 22%, 280px)" : 44,
             background: "var(--bg-elevated)",
             borderColor: "var(--border-default)",
           }}
         >
+          {!statsOpen ? (
+            <button
+              onClick={toggleStats}
+              aria-expanded={false}
+              title="expand your stats"
+              className="flex flex-col items-center gap-3 pt-3 w-full hover:text-amber transition-colors"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <span className="text-[0.8rem]" aria-hidden>‹</span>
+              <span
+                className="font-mono lowercase text-[0.6rem] tracking-wider"
+                style={{ writingMode: "vertical-rl" }}
+              >
+                your_stats
+              </span>
+            </button>
+          ) : (
           <div className="p-4">
             <div
               className="side-widget"
@@ -743,6 +788,15 @@ export default function CohortRoomClient({
               <div className="side-widget-head">
                 <span className="side-widget-glyph">◆</span>
                 <p className="side-widget-label">your_stats</p>
+                <button
+                  onClick={toggleStats}
+                  aria-expanded
+                  title="collapse your stats"
+                  className="ml-auto font-mono text-[0.8rem] leading-none hover:text-amber transition-colors"
+                  style={{ color: "var(--text-faint)" }}
+                >
+                  ›
+                </button>
               </div>
 
               {/* identity */}
@@ -849,6 +903,7 @@ export default function CohortRoomClient({
               )}
             </div>
           </div>
+          )}
         </aside>
       </div>
 
