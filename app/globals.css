@@ -223,7 +223,6 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
   box-shadow: 0 0 0 2px rgba(121, 192, 255, 0.25) !important;
 }
 [data-theme="high-contrast"] .nav-item.active { border-color: var(--accent) !important; }
-[data-theme="high-contrast"] .post-card:hover { border-color: var(--blue) !important; }
 
 /* Text rendering — sharper at small sizes */
 [data-theme="high-contrast"] {
@@ -567,7 +566,7 @@ label {
 }
 .widget, .post-card { padding: 16px 18px; }
 .post-card { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
-.post-card:hover { border-color: #388bfd; box-shadow: var(--shadow-card), 0 4px 16px rgba(0, 0, 0, 0.25); }
+.post-card:hover { box-shadow: var(--shadow-card), 0 4px 16px rgba(0, 0, 0, 0.25); }
 .post-decision  { border-left: 3px solid #f59e0b; border-radius: 0 12px 12px 0; }
 .post-win       { border-left: 3px solid #22c55e; border-radius: 0 12px 12px 0; }
 .post-blocker   { border-left: 3px solid #f85149; border-radius: 0 12px 12px 0; }
@@ -1163,10 +1162,10 @@ label {
   border-radius: 12px;
   transition: border-color 0.15s ease, border-radius 0.15s ease;
 }
-/* Hover shifts the framing border to the hover color. The permanent left
+/* Hover keeps the neutral framing border — no blue outline. The permanent left
  * accent is set inline, so inline specificity keeps it from changing on hover. */
 .post-card-main:hover {
-  border-color: #388bfd;
+  border-color: #21262d;
 }
 .post-card-wrapper.replies-open .post-card-main {
   border-bottom-left-radius: 0;
