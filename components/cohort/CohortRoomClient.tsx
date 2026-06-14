@@ -119,6 +119,7 @@ export default function CohortRoomClient({
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [postOpen, setPostOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [posting, setPosting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -129,6 +130,32 @@ export default function CohortRoomClient({
     () => new Map(members.map((m) => [m.id, m])),
     [members]
   );
+
+  // Hydrate the status-board collapse state from localStorage (default open).
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("quorum-cohort-status-collapsed") === "1") {
+        setStatusOpen(false);
+      }
+    } catch {
+      // ignore storage failures
+    }
+  }, []);
+
+  function toggleStatus() {
+    setStatusOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(
+          "quorum-cohort-status-collapsed",
+          next ? "0" : "1",
+        );
+      } catch {
+        // ignore storage failures
+      }
+      return next;
+    });
+  }
 
   // Mark this cohort as visited so the selection screen's unread badge resets.
   useEffect(() => {
@@ -404,14 +431,30 @@ export default function CohortRoomClient({
         <div className="flex-1 flex flex-col min-w-0">
           {/* ZONE 1 — Status board */}
           <section
-            className="border-b px-6 py-4"
+            className={`border-b px-6 ${statusOpen ? "py-4" : "py-2.5"}`}
             style={{ background: "var(--card)", borderColor: "var(--border)" }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">
+            <div className={`flex items-center justify-between ${statusOpen ? "mb-3" : ""}`}>
+              <button
+                onClick={toggleStatus}
+                aria-expanded={statusOpen}
+                title={statusOpen ? "collapse status board" : "expand status board"}
+                className="flex items-center gap-1.5 font-mono lowercase text-[0.65rem] text-text-faint tracking-wider hover:text-amber transition-colors"
+              >
+                <span
+                  className="inline-block transition-transform"
+                  style={{ transform: statusOpen ? "rotate(90deg)" : "rotate(0deg)" }}
+                  aria-hidden
+                >
+                  ›
+                </span>
                 status_board · this week
-              </p>
+                {!statusOpen && (
+                  <span className="text-text-disabled ml-1">({members.length})</span>
+                )}
+              </button>
             </div>
+            {statusOpen && (
             <div className="flex gap-3 overflow-x-auto scroll-thin pb-1">
               {members.map((m) => {
                 const c = checkins[m.id];
@@ -484,6 +527,7 @@ export default function CohortRoomClient({
                 );
               })}
             </div>
+            )}
           </section>
 
           {/* ZONE 2 — Discussion floor (group chat) */}
