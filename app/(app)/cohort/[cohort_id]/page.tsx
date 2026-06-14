@@ -5,6 +5,7 @@ import CohortNav from "@/components/cohort/CohortNav";
 import CohortRoomClient from "@/components/cohort/CohortRoomClient";
 import {
   loadRosterFlags,
+  loadMemberRoomStats,
   postsMovedTheRoomBatch,
   type RosterFlags,
 } from "@/lib/recognition";
@@ -143,6 +144,14 @@ export default async function CohortRoomPage({
     rosterFlags[m.id] = flagsList[i];
   });
 
+  // The viewer's own stats for the room's right rail.
+  const myStats = await loadMemberRoomStats(
+    supabase,
+    user.id,
+    cohortId,
+    me?.trust_score ?? 0,
+  );
+
   return (
     <>
       <TopBar
@@ -162,6 +171,7 @@ export default async function CohortRoomPage({
         showBreadcrumb={myCohortCount > 1}
         rosterFlags={rosterFlags}
         isCreator={isCreator}
+        myStats={myStats}
       />
     </>
   );

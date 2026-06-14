@@ -12,8 +12,13 @@ import InviteModal from "@/components/cohort/InviteModal";
 import FounderAgreements from "@/components/cohort/FounderAgreements";
 import LeaveCohortButton from "@/components/cohort/LeaveCohortButton";
 import PostMenu from "@/components/PostMenu";
+import Meter from "@/components/Meter";
 import Link from "next/link";
-import { isAnniversary, type RosterFlags } from "@/lib/recognition";
+import {
+  isAnniversary,
+  type RosterFlags,
+  type MemberRoomStats,
+} from "@/lib/recognition";
 
 type Member = {
   id: string;
@@ -101,6 +106,7 @@ export default function CohortRoomClient({
   showBreadcrumb = false,
   rosterFlags,
   isCreator = false,
+  myStats,
 }: {
   currentUserId: string;
   cohortId: string;
@@ -112,6 +118,7 @@ export default function CohortRoomClient({
   showBreadcrumb?: boolean;
   rosterFlags: Record<string, RosterFlags>;
   isCreator?: boolean;
+  myStats: MemberRoomStats;
 }) {
   const router = useRouter();
   const online = usePresence();
@@ -272,6 +279,16 @@ export default function CohortRoomClient({
   }, [chronological.length]);
 
   const me = authorMap.get(currentUserId) ?? null;
+  const myWin = checkins[currentUserId]?.weekly_win ?? null;
+  const statRows: [string, string | number][] = [
+    ["replies given", myStats.repliesGiven],
+    ["handshakes", myStats.handshakes],
+    ["moved the room", myStats.movedTheRoom],
+    [
+      "in cohort",
+      myStats.daysInCohort == null ? "—" : `${myStats.daysInCohort} days`,
+    ],
+  ];
 
   async function handlePost() {
     const trimmed = messageText.trim();
@@ -541,7 +558,7 @@ export default function CohortRoomClient({
               </button>
             </div>
 
-            <div className="bubbles-container max-w-3xl">
+            <div className="bubbles-container max-w-3xl xl:max-w-none">
               {chronological.length === 0 && (
                 <div className="empty-panel my-4">
                   <span className="empty-panel-glyph" aria-hidden>◌</span>
@@ -682,7 +699,7 @@ export default function CohortRoomClient({
             </div>
 
             {/* Quick message input — structured posts still use "+ post to room" */}
-            <div className="cohort-input-bar max-w-3xl">
+            <div className="cohort-input-bar max-w-3xl xl:max-w-none">
               <Avatar name={me?.full_name} stage={me?.stage} size={28} />
               <textarea
                 className="cohort-message-input"
@@ -707,6 +724,132 @@ export default function CohortRoomClient({
             </div>
           </section>
         </div>
+
+        {/* RIGHT — your stats rail. Fills the space beside the chat on wide
+            screens; hidden below xl where the chat needs the full width. */}
+        <aside
+          className="hidden xl:flex flex-col shrink-0 border-l overflow-y-auto scroll-thin"
+          style={{
+            width: "clamp(220px, 22%, 280px)",
+            background: "var(--bg-elevated)",
+            borderColor: "var(--border-default)",
+          }}
+        >
+          <div className="p-4">
+            <div
+              className="side-widget"
+              style={{ "--w-accent": "#22c55e" } as React.CSSProperties}
+            >
+              <div className="side-widget-head">
+                <span className="side-widget-glyph">◆</span>
+                <p className="side-widget-label">your_stats</p>
+              </div>
+
+              {/* identity */}
+              <div className="flex items-center gap-2.5 mb-4">
+                <Avatar
+                  name={me?.full_name}
+                  stage={me?.stage}
+                  username={me?.username}
+                  size={36}
+                />
+                <div className="min-w-0">
+                  <p className="font-mono lowercase text-[0.72rem] text-text-primary truncate">
+                    {me?.full_name?.toLowerCase() ?? "you"}
+                  </p>
+                  <div className="mt-1">
+                    <StagePill stage={me?.stage ?? null} />
+                  </div>
+                </div>
+              </div>
+
+              {/* trust */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-mono lowercase text-[0.6rem] text-text-faint tracking-wider">
+                    trust
+                  </span>
+                  <span className="font-mono text-[0.7rem] text-text-secondary">
+                    {myStats.trustScore}
+                    <span className="text-text-faint"> / 120</span>
+                  </span>
+                </div>
+                <Meter value={myStats.trustScore} max={120} />
+              </div>
+
+              {/* hero tiles */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div
+                  className="p-2.5"
+                  style={{
+                    background: "var(--card-elev)",
+                    borderRadius: "var(--radius-ctl)",
+                  }}
+                >
+                  <p className="font-mono lowercase text-[0.55rem] text-text-faint">
+                    streak
+                  </p>
+                  <p className="text-text-primary text-lg leading-tight mt-0.5">
+                    {myStats.streakWeeks}
+                    <span className="text-[0.6rem] text-text-faint"> wks</span>
+                  </p>
+                </div>
+                <div
+                  className="p-2.5"
+                  style={{
+                    background: "var(--card-elev)",
+                    borderRadius: "var(--radius-ctl)",
+                  }}
+                >
+                  <p className="font-mono lowercase text-[0.55rem] text-text-faint">
+                    posts this week
+                  </p>
+                  <p className="text-text-primary text-lg leading-tight mt-0.5">
+                    {myStats.postsThisWeek}
+                  </p>
+                </div>
+              </div>
+
+              {/* stat list */}
+              <div>
+                {statRows.map(([label, value], i) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between py-2 font-mono lowercase"
+                    style={{
+                      borderBottom:
+                        i < statRows.length - 1
+                          ? "1px solid var(--border-default)"
+                          : "none",
+                    }}
+                  >
+                    <span className="text-[0.68rem] text-text-secondary">
+                      {label}
+                    </span>
+                    <span className="text-[0.72rem] text-text-primary">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* this week's win — only when the viewer has checked in */}
+              {myWin && (
+                <div
+                  className="mt-4 pt-3"
+                  style={{ borderTop: "1px solid var(--border-default)" }}
+                >
+                  <p className="font-mono lowercase text-[0.55rem] text-text-faint mb-1">
+                    this week&apos;s win
+                  </p>
+                  <p className="text-[0.72rem] text-text-secondary leading-snug">
+                    {myWin}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
 
       {postOpen && (

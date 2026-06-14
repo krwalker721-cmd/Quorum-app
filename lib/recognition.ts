@@ -457,6 +457,82 @@ export type RosterFlags = {
   tenureDays: number | null;
 };
 
+// ---------- viewer's own room stats (right rail) ----------
+
+/**
+ * Personal stats for the cohort room's right rail. All counts are the viewer's
+ * own — this is mirror data, never a leaderboard. `trustScore` is passed in
+ * (already loaded from the profile) so we don't re-query it here.
+ */
+export type MemberRoomStats = {
+  trustScore: number;
+  streakWeeks: number;
+  postsThisWeek: number;
+  repliesGiven: number;
+  handshakes: number;
+  movedTheRoom: number;
+  daysInCohort: number | null;
+};
+
+export async function loadMemberRoomStats(
+  supabase: SupabaseClient,
+  userId: string,
+  cohortId: string,
+  trustScore: number,
+): Promise<MemberRoomStats> {
+  const weekStartMs = startOfISOWeek(new Date()).getTime();
+
+  const myPostsP = supabase
+    .from("posts")
+    .select("id, created_at")
+    .eq("author_id", userId)
+    .eq("post_type", "cohort")
+    .eq("cohort_id", cohortId)
+    .is("parent_post_id", null);
+
+  const repliesP = supabase
+    .from("post_replies")
+    .select("id", { count: "exact", head: true })
+    .eq("author_id", userId);
+
+  const joinedP = supabase
+    .from("cohort_members")
+    .select("joined_at")
+    .eq("user_id", userId)
+    .eq("cohort_id", cohortId)
+    .maybeSingle();
+
+  const [streakWeeks, handshakes, myPostsRes, repliesRes, joinedRes] =
+    await Promise.all([
+      getLongestStreak(supabase, userId),
+      getHandshakeCount(supabase, userId),
+      myPostsP,
+      repliesP,
+      joinedP,
+    ]);
+
+  const myPosts = (myPostsRes.data ?? []) as { id: string; created_at: string }[];
+  const movedSet = await postsMovedTheRoomBatch(supabase, myPosts);
+  const postsThisWeek = myPosts.filter(
+    (p) => new Date(p.created_at).getTime() >= weekStartMs,
+  ).length;
+
+  const joinedAt = (joinedRes.data as { joined_at?: string } | null)?.joined_at;
+  const daysInCohort = joinedAt
+    ? Math.max(0, daysBetween(new Date(joinedAt), new Date()))
+    : null;
+
+  return {
+    trustScore,
+    streakWeeks,
+    postsThisWeek,
+    repliesGiven: repliesRes.count ?? 0,
+    handshakes,
+    movedTheRoom: movedSet.size,
+    daysInCohort,
+  };
+}
+
 export async function loadRosterFlags(
   supabase: SupabaseClient,
   member: { id: string; created_at?: string | null },
