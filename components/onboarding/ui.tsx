@@ -81,17 +81,23 @@ export function StepFrame({
 }) {
   return (
     <OnboardingShell currentStep={currentStep} totalSteps={totalSteps}>
-      <div
-        style={{
-          padding: "32px 60px",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          ...bodyStyle,
-        }}
-      >
-        {onBack && <BackButton onBack={onBack} />}
-        {children}
+      {/* Center the content column on wide screens instead of letting it hug the
+       * left edge. The inner column keeps the 32px/60px body padding. */}
+      <div style={{ flex: 1, display: "flex", justifyContent: "center", width: "100%" }}>
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 820,
+            padding: "32px 60px",
+            display: "flex",
+            flexDirection: "column",
+            boxSizing: "border-box",
+            ...bodyStyle,
+          }}
+        >
+          {onBack && <BackButton onBack={onBack} />}
+          {children}
+        </div>
       </div>
     </OnboardingShell>
   );
