@@ -1,74 +1,36 @@
 "use client";
 
 import type { OnboardingStepProps } from "./types";
-import ExplainerLayout, { type ExplainerCardData } from "./ExplainerLayout";
-import { useExplainerUnlock } from "./useExplainerUnlock";
-import { C, hexToRgba, MONO, SANS, STAGE_COLORS, stageLabel } from "./ui";
+import CinematicShell from "./CinematicShell";
+import { useCinematicBeats } from "./useCinematicBeats";
+import { C, hexToRgba, MONO, SANS } from "./ui";
 
-const CARDS: ExplainerCardData[] = [
-  {
-    label: "first impressions",
-    text: "Your profile is how your cohort meets you.",
-    detail:
-      "Before you post a single thing, founders are reading your profile. A specific, honest profile makes people want to engage with you.",
-  },
-  {
-    label: "context unlocks help",
-    text: "The more they know about you, the better the advice.",
-    detail:
-      "Generic advice is useless. When your cohort knows your stage, your business, and your background — their answers are actually relevant to you.",
-  },
-  {
-    label: "builds your reputation",
-    text: "Your trust score grows as you show up.",
-    detail:
-      "Quorum tracks how much you contribute. The more real and consistent you are, the more founders trust what you say — and the more they help you back.",
-  },
-  {
-    label: "be specific",
-    text: "Vague profiles get vague responses.",
-    detail:
-      '"Building a startup" tells nobody anything. "Building a B2B SaaS tool for construction teams at pre-seed" tells your cohort exactly where you are and how they can help.',
-  },
+const BEATS = 3;
+
+const CAPTIONS = [
+  "Your profile is how your cohort <span>meets you</span> before you say a word.",
+  "The more specific you are, the <span>better the help</span> you get.",
+  "Show up consistently. <span>Build trust.</span> Get more back.",
 ];
 
-interface ProfileState {
-  building: string;
-  stage: string | null;
-  bio: string;
-  trust: number;
-  trustLabel: string;
-}
+function ProfileVisual({ beat }: { beat: number }) {
+  const filled = beat >= 1;
+  const trust = beat >= 2 ? 72 : 0;
 
-const BASE: ProfileState = {
-  building: "tell us what you're building",
-  stage: null,
-  bio: "—",
-  trust: 0,
-  trustLabel: "new here",
-};
-
-const OVERRIDES: Array<Partial<ProfileState>> = [
-  { building: "building something new", stage: "pre-seed", bio: "still figuring it out", trust: 15 },
-  { building: "B2B SaaS for construction", bio: "ex-operator turned founder", trust: 40 },
-  { trust: 70, trustLabel: "trusted contributor" },
-  { building: "B2B SaaS for construction teams", bio: "building the tool I always needed", trust: 85 },
-];
-
-function fold(active: number | null): ProfileState {
-  let s = { ...BASE };
-  if (active !== null) {
-    for (let i = 0; i <= active; i++) s = { ...s, ...OVERRIDES[i] };
-  }
-  return s;
-}
-
-function ProfileVisual({ active }: { active: number | null }) {
-  const s = fold(active);
-  const stageColor = s.stage ? STAGE_COLORS[s.stage] ?? C.textMuted : C.textMuted;
+  const dim = (on: boolean) => (on ? C.textSecondary : C.textDisabled);
 
   return (
-    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: 16 }}>
+    <div
+      style={{
+        width: 190,
+        margin: "0 auto",
+        background: C.surface,
+        border: `1px solid ${C.border}`,
+        borderRadius: 4,
+        padding: 16,
+        textAlign: "left",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <div
           style={{
@@ -90,42 +52,70 @@ function ProfileVisual({ active }: { active: number | null }) {
         <div style={{ fontFamily: SANS, fontSize: 13, color: C.textPrimary }}>You</div>
       </div>
 
-      <div style={{ fontFamily: SANS, fontSize: 11, color: C.textSecondary, lineHeight: 1.4, marginBottom: 8 }}>
-        {s.building}
+      <div
+        style={{
+          fontFamily: SANS,
+          fontSize: 11,
+          color: dim(filled),
+          lineHeight: 1.4,
+          marginBottom: 10,
+          transition: "color 300ms ease",
+        }}
+      >
+        {filled ? "B2B SaaS for construction teams" : "what are you building?"}
       </div>
 
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: 10 }}>
         <span
           style={{
             fontFamily: MONO,
             fontSize: 9,
             padding: "2px 8px",
             borderRadius: 3,
-            border: `1px solid ${hexToRgba(stageColor, 0.3)}`,
-            background: hexToRgba(stageColor, 0.06),
-            color: stageColor,
+            border: `1px solid ${filled ? hexToRgba(C.amber, 0.4) : C.border}`,
+            background: filled ? hexToRgba(C.amber, 0.06) : C.surface,
+            color: filled ? C.amber : C.textDisabled,
+            transition: "all 300ms ease",
           }}
         >
-          {s.stage ? stageLabel(s.stage) : "no stage yet"}
+          {filled ? "pre-seed" : "your stage"}
         </span>
       </div>
 
-      <div style={{ fontFamily: SANS, fontSize: 10, color: C.textMuted, lineHeight: 1.4, marginBottom: 14 }}>
-        {s.bio}
+      <div
+        style={{
+          fontFamily: SANS,
+          fontSize: 10,
+          color: dim(filled),
+          lineHeight: 1.4,
+          marginBottom: 14,
+          transition: "color 300ms ease",
+        }}
+      >
+        {filled ? "ex-engineer turned founder" : "one line bio"}
       </div>
 
       <div style={{ height: 3, background: C.border, borderRadius: 2, overflow: "hidden" }}>
         <div
           style={{
             height: "100%",
-            width: `${s.trust}%`,
+            width: `${trust}%`,
             background: C.amber,
-            transition: "width 400ms cubic-bezier(0.22,1,0.36,1)",
+            transition: "width 700ms cubic-bezier(0.22,1,0.36,1)",
           }}
         />
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled, marginTop: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-        trust · {s.trustLabel}
+      <div
+        style={{
+          fontFamily: MONO,
+          fontSize: 9,
+          color: C.textDisabled,
+          marginTop: 6,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+        }}
+      >
+        trust score — {trust}
       </div>
     </div>
   );
@@ -137,20 +127,24 @@ export default function Step04_ProfileExplainer({
   currentStep,
   totalSteps,
 }: OnboardingStepProps) {
-  const unlock = useExplainerUnlock(CARDS.length);
+  const { currentBeat, isComplete, advance } = useCinematicBeats(BEATS);
+  const beat = Math.max(0, currentBeat);
+
   return (
-    <ExplainerLayout
+    <CinematicShell
       currentStep={currentStep}
       totalSteps={totalSteps}
-      onBack={onBack}
-      onNext={onNext}
       eyebrow="// before you build your profile"
-      heading="Why your profile matters."
-      cards={CARDS}
+      beats={BEATS}
+      currentBeat={currentBeat}
+      isComplete={isComplete}
+      caption={currentBeat < 0 ? "" : CAPTIONS[beat]}
+      onAdvance={advance}
       ctaLabel="Got it — build my profile →"
-      unlock={unlock}
-      showDots
-      visual={<ProfileVisual active={unlock.active} />}
-    />
+      onCta={onNext}
+      onStepBack={onBack}
+    >
+      <ProfileVisual beat={beat} />
+    </CinematicShell>
   );
 }

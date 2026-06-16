@@ -1,116 +1,136 @@
 "use client";
 
 import type { OnboardingStepProps } from "./types";
-import ExplainerLayout, { type ExplainerCardData } from "./ExplainerLayout";
-import { useExplainerUnlock } from "./useExplainerUnlock";
-import { C, hexToRgba, MONO } from "./ui";
+import CinematicShell from "./CinematicShell";
+import { useCinematicBeats } from "./useCinematicBeats";
+import { C, hexToRgba, MONO, SANS } from "./ui";
 
-const CARDS: ExplainerCardData[] = [
-  {
-    label: "private by design",
-    text: "12 vetted founders. One closed room.",
-    detail:
-      "No algorithms, no strangers. Every person was hand-selected. What's said here stays here.",
-  },
-  {
-    label: "been where you are",
-    text: "Real advice from people who've lived it.",
-    detail:
-      "Not theory. Founders who made the same mistakes and the same breakthroughs you're about to face.",
-  },
-  {
-    label: "faster decisions",
-    text: "Stop second-guessing. Start moving.",
-    detail:
-      "The biggest thing slowing your business down is decisions made in isolation. Post a problem, get real answers, move faster.",
-  },
-  {
-    label: "compounds over time",
-    text: "The longer you're in, the more valuable it gets.",
-    detail:
-      "Your cohort learns your business. They remember your context, your history, your goals — something no forum or cold advisor can do.",
-  },
+const BEATS = 3;
+
+const CAPTIONS = [
+  "12 founders. <span>One private room.</span>",
+  "People who've <span>already solved</span> what you're about to face.",
+  "Post a problem. <span>Get a real answer.</span> Move faster.",
 ];
 
 const NODE_LABELS = ["MR", "AL", "JP", "SK", "TN", "BK", "CL", "RV"];
-
-const STATES = [
-  { nodes: [0, 1, 2, 3], value: "4 / 8", sub: "founders visible to you" },
-  { nodes: [0, 1, 2, 3, 4, 5, 6, 7], value: "8 / 8", sub: "have been through this" },
-  { nodes: [0, 2, 4, 6], value: "2x", sub: "faster than deciding alone" },
-  { nodes: [0, 1, 2, 3, 4, 5, 6, 7], value: "∞", sub: "context built over time" },
-];
-const BASE = { nodes: [] as number[], value: "0 / 8", sub: "your cohort" };
-
-const CX = 80;
-const CY = 80;
-const R = 56;
+const CX = 95;
+const CY = 95;
+const R = 66;
 const POS = NODE_LABELS.map((_, i) => {
   const a = ((-90 + i * 45) * Math.PI) / 180;
   return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
 });
 
-function CohortVisual({ active }: { active: number | null }) {
-  const st = active === null ? BASE : STATES[active];
-  const on = new Set(st.nodes);
-
+function Ring({ lit }: { lit: boolean }) {
   return (
-    <div>
-      <svg viewBox="0 0 160 160" style={{ width: "100%", display: "block" }} aria-hidden>
-        {/* connector lines */}
-        {POS.map((p, i) => (
-          <line
-            key={`l${i}`}
-            x1={CX}
-            y1={CY}
-            x2={p.x}
-            y2={p.y}
-            stroke={on.has(i) ? hexToRgba(C.amber, 0.35) : C.border}
+    <svg viewBox="0 0 190 190" style={{ width: 190, display: "block", margin: "0 auto" }} aria-hidden>
+      {POS.map((p, i) => (
+        <line
+          key={`l${i}`}
+          x1={CX}
+          y1={CY}
+          x2={p.x}
+          y2={p.y}
+          stroke={lit ? hexToRgba(C.amber, 0.4) : C.border}
+          strokeWidth="1"
+          style={{ transition: "stroke 250ms ease" }}
+        />
+      ))}
+      {POS.map((p, i) => (
+        <g
+          key={`n${i}`}
+          style={{ animation: !lit ? "cinFadeIn 400ms ease both" : undefined, animationDelay: !lit ? `${i * 90}ms` : undefined }}
+        >
+          <circle
+            cx={p.x}
+            cy={p.y}
+            r={15}
+            fill={lit ? hexToRgba(C.amber, 0.08) : C.surface}
+            stroke={lit ? C.amber : C.borderMuted}
             strokeWidth="1"
+            style={{ transition: "all 250ms ease" }}
           />
-        ))}
-        {/* outer nodes */}
-        {POS.map((p, i) => {
-          const lit = on.has(i);
-          return (
-            <g key={`n${i}`}>
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={13}
-                fill={lit ? hexToRgba(C.amber, 0.08) : C.surface}
-                stroke={lit ? C.amber : C.borderMuted}
-                strokeWidth="1"
-                style={{ transition: "all 250ms ease" }}
-              />
-              <text
-                x={p.x}
-                y={p.y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontFamily={MONO}
-                fontSize="7"
-                fill={lit ? C.amber : C.textSecondary}
-              >
-                {NODE_LABELS[i]}
-              </text>
-            </g>
-          );
-        })}
-        {/* center node */}
-        <circle cx={CX} cy={CY} r={18} fill={hexToRgba(C.amber, 0.12)} stroke={C.amber} strokeWidth="1.5" />
-        <text x={CX} y={CY} textAnchor="middle" dominantBaseline="central" fontFamily={MONO} fontSize="8" fill={C.amber}>
-          YOU
-        </text>
-      </svg>
+          <text
+            x={p.x}
+            y={p.y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontFamily={MONO}
+            fontSize="7.5"
+            fill={lit ? C.amber : C.textDisabled}
+          >
+            {NODE_LABELS[i]}
+          </text>
+        </g>
+      ))}
+      <circle cx={CX} cy={CY} r={20} fill={hexToRgba(C.amber, 0.12)} stroke={C.amber} strokeWidth="1.5" />
+      <text x={CX} y={CY} textAnchor="middle" dominantBaseline="central" fontFamily={MONO} fontSize="8.5" fill={C.amber}>
+        YOU
+      </text>
+    </svg>
+  );
+}
 
-      <div style={{ fontFamily: MONO, fontSize: 9, color: C.textDisabled, marginTop: 8 }}>
-        // active connections
+function PostCard() {
+  return (
+    <div style={{ width: 210, margin: "0 auto", textAlign: "left" }}>
+      <div
+        style={{
+          background: C.surface,
+          borderLeft: `2px solid ${C.amber}`,
+          borderRadius: "0 4px 4px 0",
+          padding: "12px 14px",
+        }}
+      >
+        <div style={{ fontFamily: MONO, fontSize: 8, color: C.amber, marginBottom: 8 }}>// decision</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+          <div
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              border: `1px solid ${C.amber}`,
+              background: hexToRgba(C.amber, 0.12),
+              color: C.amber,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: MONO,
+              fontSize: 8,
+            }}
+          >
+            YO
+          </div>
+          <span style={{ fontFamily: MONO, fontSize: 8, color: C.textSecondary }}>you · just now</span>
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 11, color: C.textSecondary, lineHeight: 1.45 }}>
+          Should I raise now or stay lean for 6 more months?
+        </div>
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 18, color: C.amber, marginTop: 2 }}>{st.value}</div>
-      <div style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled, marginTop: 2 }}>{st.sub}</div>
+
+      <div
+        style={{
+          background: C.bg,
+          borderLeft: `1px solid ${C.green}`,
+          padding: "10px 12px",
+          marginLeft: 14,
+          marginTop: 8,
+          animation: "cinCaptionIn 600ms ease 700ms both",
+        }}
+      >
+        <div style={{ fontFamily: SANS, fontSize: 10, color: C.green, lineHeight: 1.45, marginBottom: 6 }}>
+          Faced this at pre-seed. Stay lean until PMF.
+        </div>
+        <div style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled }}>Marcus R. · seed · 2 min ago</div>
+      </div>
     </div>
   );
+}
+
+function CohortVisual({ beat }: { beat: number }) {
+  if (beat >= 2) return <PostCard />;
+  return <Ring lit={beat >= 1} />;
 }
 
 export default function Step08_CohortExplainer({
@@ -119,20 +139,24 @@ export default function Step08_CohortExplainer({
   currentStep,
   totalSteps,
 }: OnboardingStepProps) {
-  const unlock = useExplainerUnlock(CARDS.length);
+  const { currentBeat, isComplete, advance } = useCinematicBeats(BEATS);
+  const beat = Math.max(0, currentBeat);
+
   return (
-    <ExplainerLayout
+    <CinematicShell
       currentStep={currentStep}
       totalSteps={totalSteps}
-      onBack={onBack}
-      onNext={onNext}
       eyebrow="// before you meet them"
-      heading="What is a cohort?"
-      cards={CARDS}
+      beats={BEATS}
+      currentBeat={currentBeat}
+      isComplete={isComplete}
+      caption={currentBeat < 0 ? "" : CAPTIONS[beat]}
+      onAdvance={advance}
       ctaLabel="Got it — show me my cohort →"
-      unlock={unlock}
-      showDots
-      visual={<CohortVisual active={unlock.active} />}
-    />
+      onCta={onNext}
+      onStepBack={onBack}
+    >
+      <CohortVisual beat={beat} />
+    </CinematicShell>
   );
 }

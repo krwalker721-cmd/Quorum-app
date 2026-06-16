@@ -1,109 +1,104 @@
 "use client";
 
 import type { OnboardingStepProps } from "./types";
-import ExplainerLayout, { type ExplainerCardData } from "./ExplainerLayout";
-import { useExplainerUnlock } from "./useExplainerUnlock";
-import { C, MONO } from "./ui";
+import CinematicShell from "./CinematicShell";
+import { useCinematicBeats } from "./useCinematicBeats";
+import { C, hexToRgba, MONO, SANS } from "./ui";
 
-const CARDS: ExplainerCardData[] = [
-  {
-    label: "keeps your cohort in your corner",
-    text: "They can't help if they don't know what's happening.",
-    detail:
-      "A weekly check-in keeps your cohort current on your business. The more they know, the sharper their advice when you need it most.",
-  },
-  {
-    label: "accountability without pressure",
-    text: "Saying what you're going to do makes you do it.",
-    detail:
-      "When founders commit to goals in front of peers who actually care, follow-through goes up. Not because they're watching — because you respect them.",
-  },
-  {
-    label: "compounds your progress",
-    text: "Small weekly wins stack into big momentum.",
-    detail:
-      "Founders who check in consistently move faster. Not because of the check-in itself — because the act of reflecting weekly forces clarity on what actually matters.",
-  },
-  {
-    label: "takes under 3 minutes",
-    text: "Three questions. That's it.",
-    detail:
-      "What did you ship? What are you focused on next? Where are you stuck? Answer those every week and your cohort always knows how to help you.",
-  },
+const BEATS = 3;
+
+const CAPTIONS = [
+  "Three questions. <span>Under 3 minutes.</span> Every week.",
+  "Your cohort stays current. <span>Their advice gets sharper.</span>",
+  "Small weekly wins <span>stack into</span> big momentum.",
 ];
 
-const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
-const STREAKS = ["1 week", "2 weeks", "4 weeks", "4 weeks →"];
+const QUESTIONS = [
+  { label: "// shipped", color: C.green, q: "What did you ship?" },
+  { label: "// next", color: C.amber, q: "What are you focused on?" },
+  { label: "// stuck", color: C.red, q: "Where are you stuck?" },
+];
 
-function weekHeader(): string {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86400000);
-  const week = Math.ceil(dayOfYear / 7);
-  const monthYear = now.toLocaleString("en-US", { month: "long", year: "numeric" }).toLowerCase();
-  return `WEEK_${String(week).padStart(2, "0")} — ${monthYear}`;
+const AVATAR_COLORS = [C.teal, C.amber, C.green];
+
+function QuestionCards({ showAvatars }: { showAvatars: boolean }) {
+  return (
+    <div style={{ width: 196, margin: "0 auto", display: "flex", flexDirection: "column", gap: 8 }}>
+      {QUESTIONS.map((item, i) => (
+        <div
+          key={item.label}
+          style={{
+            background: C.surface,
+            borderLeft: `2px solid ${item.color}`,
+            borderRadius: "0 3px 3px 0",
+            padding: "8px 10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            textAlign: "left",
+            animation: "cinCaptionIn 500ms ease both",
+            animationDelay: `${i * 200}ms`,
+          }}
+        >
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: 8, color: item.color, marginBottom: 4 }}>{item.label}</div>
+            <div style={{ fontFamily: SANS, fontSize: 10, color: C.textSecondary }}>{item.q}</div>
+          </div>
+          {showAvatars && (
+            <div style={{ display: "flex", flexShrink: 0 }}>
+              {AVATAR_COLORS.map((col, k) => (
+                <span
+                  key={col}
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    border: `1px solid ${col}`,
+                    background: hexToRgba(col, 0.18),
+                    marginLeft: k === 0 ? 0 : -5,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
-function CalendarVisual({ active }: { active: number | null }) {
-  // Monday-first index of today (Mon=0 … Sun=6).
-  const todayIdx = (new Date().getDay() + 6) % 7;
-  const streak = active === null ? "—" : STREAKS[active];
+const BAR_HEIGHTS = [34, 52, 70, 86, 100];
 
+function MomentumChart() {
   return (
-    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: 12 }}>
-      <div style={{ fontFamily: MONO, fontSize: 9, color: C.textSecondary, textAlign: "center", marginBottom: 10 }}>
-        {weekHeader()}
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 4 }}>
-        {DAY_LABELS.map((d, i) => (
-          <div key={i} style={{ fontFamily: MONO, fontSize: 7, color: C.textDisabled, textAlign: "center" }}>
-            {d}
-          </div>
+    <div style={{ textAlign: "center" }}>
+      <div style={{ height: 120, display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 12 }}>
+        {BAR_HEIGHTS.map((h, i) => (
+          <div
+            key={i}
+            style={{
+              width: 22,
+              height: `${h}%`,
+              background: C.amber,
+              borderRadius: "2px 2px 0 0",
+              opacity: 0.55 + i * 0.09,
+              animation: "cinCaptionIn 500ms ease both",
+              animationDelay: `${i * 150}ms`,
+            }}
+          />
         ))}
       </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}>
-        {DAY_LABELS.map((_, i) => {
-          let bg: string = C.surface;
-          let color: string = C.border;
-          let glyph = "·";
-          if (i < todayIdx) {
-            bg = C.green;
-            color = C.bg;
-            glyph = "✓";
-          } else if (i === todayIdx) {
-            bg = C.amber;
-            color = C.bg;
-            glyph = "→";
-          }
-          return (
-            <div
-              key={i}
-              style={{
-                aspectRatio: "1 / 1",
-                background: bg,
-                color,
-                borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: MONO,
-                fontSize: 9,
-                border: i > todayIdx ? `1px solid ${C.border}` : "none",
-              }}
-            >
-              {glyph}
-            </div>
-          );
-        })}
-      </div>
-
-      <div style={{ fontFamily: MONO, fontSize: 10, color: C.textDisabled, marginTop: 12 }}>
-        streak: <span style={{ color: C.amber }}>{streak}</span>
+      <div style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled, marginTop: 10, letterSpacing: "0.08em" }}>
+        WEEK_01 → WEEK_05
       </div>
     </div>
   );
+}
+
+function CheckinVisual({ beat }: { beat: number }) {
+  if (beat >= 2) return <MomentumChart />;
+  return <QuestionCards showAvatars={beat >= 1} />;
 }
 
 export default function Step12_CheckinExplainer({
@@ -112,20 +107,24 @@ export default function Step12_CheckinExplainer({
   currentStep,
   totalSteps,
 }: OnboardingStepProps) {
-  const unlock = useExplainerUnlock(CARDS.length);
+  const { currentBeat, isComplete, advance } = useCinematicBeats(BEATS);
+  const beat = Math.max(0, currentBeat);
+
   return (
-    <ExplainerLayout
+    <CinematicShell
       currentStep={currentStep}
       totalSteps={totalSteps}
-      onBack={onBack}
-      onNext={onNext}
       eyebrow="// before your first check-in"
-      heading="Why showing up weekly changes everything."
-      cards={CARDS}
+      beats={BEATS}
+      currentBeat={currentBeat}
+      isComplete={isComplete}
+      caption={currentBeat < 0 ? "" : CAPTIONS[beat]}
+      onAdvance={advance}
       ctaLabel="Got it — do my first check-in →"
-      unlock={unlock}
-      showDots
-      visual={<CalendarVisual active={unlock.active} />}
-    />
+      onCta={onNext}
+      onStepBack={onBack}
+    >
+      <CheckinVisual beat={beat} />
+    </CinematicShell>
   );
 }
