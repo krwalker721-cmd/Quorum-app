@@ -295,22 +295,23 @@ export function PrimaryButton({
       onClick={onClick}
       disabled={disabled || locked}
       style={{
-        background: C.amber,
-        color: C.bg,
+        background: "transparent",
+        color: C.amber,
         fontFamily: MONO,
         fontSize: 12,
         fontWeight: 500,
         letterSpacing: "0.06em",
-        padding: "14px 24px",
-        border: "none",
-        borderRadius: 4,
+        padding: "14px 28px",
+        border: `1px solid ${hexToRgba(C.amber, 0.5)}`,
+        borderRadius: 6,
         cursor: disabled || locked ? "default" : "pointer",
         display: "inline-flex",
         alignItems: "center",
+        justifyContent: "center",
         gap: 10,
         opacity: locked ? 0.3 : disabled ? 0.5 : 1,
         pointerEvents: locked ? "none" : "auto",
-        transition: "opacity 200ms ease",
+        transition: "opacity 200ms ease, background 200ms ease, border-color 200ms ease",
         ...style,
       }}
     >

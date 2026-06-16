@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import OnboardingShell from "./OnboardingShell";
-import { C, MONO } from "./ui";
+import { C, hexToRgba, MONO } from "./ui";
 
 // Shared chrome for the six cinematic explainer screens. The whole content area
 // is the advance affordance (click anywhere); scroll/keyboard are wired by
@@ -207,15 +207,15 @@ export default function CinematicShell({
 }
 
 const ctaStyle: CSSProperties = {
-  background: C.amber,
-  color: C.bg,
+  background: "transparent",
+  color: C.amber,
   fontFamily: MONO,
   fontSize: 12,
   fontWeight: 500,
   letterSpacing: "0.06em",
   padding: "14px 28px",
-  border: "none",
-  borderRadius: 4,
+  border: `1px solid ${hexToRgba(C.amber, 0.5)}`,
+  borderRadius: 6,
   cursor: "pointer",
   animation: "cinFadeIn 500ms ease both",
 };
