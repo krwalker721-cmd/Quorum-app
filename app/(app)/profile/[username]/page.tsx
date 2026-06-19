@@ -6,6 +6,7 @@ import TopBar from "@/components/TopBar";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import TierPill from "@/components/TierPill";
+import ProfileBilling from "@/components/ProfileBilling";
 import ProfilePostsList from "@/components/ProfilePostsList";
 import HandshakeButton from "@/components/HandshakeButton";
 import CohortFingerprint from "@/components/CohortFingerprint";
@@ -532,6 +533,9 @@ export default async function ProfilePage({
                 </div>
               )}
             </div>
+
+            {/* Billing — own profile only */}
+            {isOwner && <ProfileBilling />}
           </>
         ) : tab === "posts" ? (
           <div className="mt-6 space-y-3">

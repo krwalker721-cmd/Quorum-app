@@ -14,6 +14,7 @@ import { PostWithAuthor } from "@/components/PostCard";
 import RecognitionNotices from "@/components/RecognitionNotices";
 import { hasDepthRing, isAnniversary, postsMovedTheRoomBatch } from "@/lib/recognition";
 import WeeklySummaryCard from "@/components/WeeklySummaryCard";
+import UpgradeToast from "@/components/UpgradeToast";
 import { buildWeeklySummary } from "@/lib/weeklySummary";
 
 export const dynamic = "force-dynamic";
@@ -140,6 +141,7 @@ export default async function HomePage() {
   return (
     <>
       <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <UpgradeToast />
       {weeklySummary && <WeeklySummaryCard data={weeklySummary} />}
       <RecognitionNotices notices={(notices ?? []) as any} />
       <StatStrip

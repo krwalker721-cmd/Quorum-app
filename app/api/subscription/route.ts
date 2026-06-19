@@ -36,6 +36,7 @@ export async function GET() {
     cancel_at_period_end: subscription?.cancel_at_period_end || false,
     has_stripe_subscription: !!subscription?.stripe_subscription_id,
     referred_free_month_available: !referredFreeMonthExpired,
+    referred_free_month_expires_at: subscription?.referred_free_month_expires_at || null,
     partner_waitlist: profile?.partner_waitlist || false,
   });
 }

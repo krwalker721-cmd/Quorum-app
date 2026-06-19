@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import LogoMark from "@/components/LogoMark";
 import CohortPanel from "@/components/CohortPanel";
+import SidebarTierBadge from "@/components/SidebarTierBadge";
 import { useNavDots, type NavKey } from "@/components/NotificationsProvider";
 
 const VIEWED_KEY = "last_summary_viewed_week";
@@ -48,6 +49,7 @@ const NAV_MAIN: NavItem[] = [
 const NAV_WORKSPACE: NavItem[] = [
   { href: "/collab", label: "collab_board", glyph: "⊞", dotKey: "collab" },
   { href: "/referrals", label: "referrals", glyph: "⇄" },
+  { href: "/settings", label: "settings", glyph: "⚙" },
 ];
 
 const NAV: NavItem[] = [...NAV_MAIN, ...NAV_WORKSPACE];
@@ -231,6 +233,7 @@ export default function Sidebar({
         })}
       </nav>
 
+      <SidebarTierBadge collapsed={collapsed} />
       <CohortPanel members={cohort} currentUserId={currentUserId} collapsed={collapsed} />
     </aside>
   );
