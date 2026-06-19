@@ -58,7 +58,7 @@ export async function GET(req: Request) {
       .limit(10),
   ]);
 
-  const tierCounts = { free: 0, tier_1: 0, tier_2: 0 };
+  const tierCounts = { free: 0, member: 0, partner: 0 };
   (allProfilesRes.data ?? []).forEach((p: any) => {
     if (p.tier && tierCounts[p.tier as keyof typeof tierCounts] !== undefined) {
       tierCounts[p.tier as keyof typeof tierCounts] += 1;

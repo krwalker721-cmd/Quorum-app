@@ -17,9 +17,12 @@ export async function GET() {
 
   const admin = createAdminClient();
   const audienceFilters = ["all_users"];
+  // Audience tags (tier_1_only / tier_2_only) are stored on feedback_questions
+  // and kept as-is to avoid migrating existing data. member maps to the tier_1
+  // audience, partner to tier_2.
   if (tier === "free") audienceFilters.push("free_only");
-  if (tier === "tier_1") audienceFilters.push("tier_1_only");
-  if (tier === "tier_2") audienceFilters.push("tier_2_only");
+  if (tier === "member") audienceFilters.push("tier_1_only");
+  if (tier === "partner") audienceFilters.push("tier_2_only");
 
   const { data: questions } = await admin
     .from("feedback_questions")

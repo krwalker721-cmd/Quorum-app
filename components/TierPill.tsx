@@ -1,9 +1,9 @@
-export type Tier = "free" | "tier_1" | "tier_2";
+export type Tier = "free" | "member" | "partner";
 
 const TIER_STYLES: Record<Tier, { color: string; label: string }> = {
   free: { color: "#6e7681", label: "free" },
-  tier_1: { color: "#f59e0b", label: "tier_1" },
-  tier_2: { color: "#22c55e", label: "tier_2" },
+  member: { color: "#f59e0b", label: "member" },
+  partner: { color: "#a78bfa", label: "partner" },
 };
 
 export default function TierPill({ tier }: { tier: string | null | undefined }) {

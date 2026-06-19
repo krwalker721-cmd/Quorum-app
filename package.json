@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^6.6.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "@tiptap/extension-character-count": "^3.23.6",
@@ -26,7 +28,8 @@
     "next": "14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "recharts": "^2.15.4"
+    "recharts": "^2.15.4",
+    "stripe": "^22.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.16.10",

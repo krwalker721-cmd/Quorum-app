@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminRequest } from "@/lib/admin/auth";
 import { assignUserToCohort } from "@/lib/cohorts";
+import { initializeUserSubscription } from "@/lib/stripe-helpers";
 
 export async function POST(req: Request) {
   if (!(await verifyAdminRequest(req))) {
@@ -16,6 +17,14 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   const { error } = await admin.from("profiles").update({ status: "approved" }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Start the user's trial. No referral data source exists yet, so isReferred is
+  // false (7-day cold-signup trial). Best-effort — don't fail approval on error.
+  try {
+    await initializeUserSubscription(id, false);
+  } catch (e) {
+    console.error("initializeUserSubscription failed on approve:", e);
+  }
 
   // Auto-assign to a cohort on approval. Don't fail the whole approval if cohort
   // assignment hits a transient error — surface a warning in the response.

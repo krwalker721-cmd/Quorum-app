@@ -23,8 +23,8 @@ const FILTERS = [
   "approved",
   "suspended",
   "tier_free",
-  "tier_1",
-  "tier_2",
+  "tier_member",
+  "tier_partner",
 ] as const;
 
 export default function UsersSection() {
@@ -142,8 +142,8 @@ export default function UsersSection() {
           >
             <option value="">bulk change tier…</option>
             <option value="free">free</option>
-            <option value="tier_1">tier_1</option>
-            <option value="tier_2">tier_2</option>
+            <option value="member">member</option>
+            <option value="partner">partner</option>
           </select>
           <button
             onClick={() => setSelected(new Set())}
@@ -244,8 +244,8 @@ export default function UsersSection() {
                         style={{ width: "auto", padding: "2px 4px" }}
                       >
                         <option value="free">free</option>
-                        <option value="tier_1">t1</option>
-                        <option value="tier_2">t2</option>
+                        <option value="member">member</option>
+                        <option value="partner">partner</option>
                       </select>
                       {u.username && (
                         <a

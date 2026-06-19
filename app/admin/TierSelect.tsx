@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-const OPTIONS = ["free", "tier_1", "tier_2"] as const;
+const OPTIONS = ["free", "member", "partner"] as const;
 type Tier = (typeof OPTIONS)[number];
 
 export default function TierSelect({ id, currentTier }: { id: string; currentTier: string }) {
@@ -38,7 +38,7 @@ export default function TierSelect({ id, currentTier }: { id: string; currentTie
       <div className="flex items-center gap-1">
         {OPTIONS.map((opt) => {
           const active = tier === opt;
-          const color = opt === "free" ? "#6e7681" : opt === "tier_1" ? "#f59e0b" : "#22c55e";
+          const color = opt === "free" ? "#6e7681" : opt === "member" ? "#f59e0b" : "#a78bfa";
           return (
             <button
               key={opt}

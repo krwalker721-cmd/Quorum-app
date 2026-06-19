@@ -35,13 +35,13 @@ export default function LockedCollabBoard() {
           className="max-w-md w-full text-center p-8 border"
           style={{ background: "var(--card-elev)", borderColor: "rgba(88, 166, 255, 0.40)" }}
         >
-          <p className="font-mono lowercase text-[0.65rem] text-text-faint">tier_2 exclusive</p>
+          <p className="font-mono lowercase text-[0.65rem] text-text-faint">partner exclusive</p>
           <h2 className="font-sans text-2xl text-text-primary mt-2 lowercase">collab_board</h2>
           <p className="text-text-muted text-sm mt-4 leading-relaxed">
             the collab board is where founders post projects, find collaborators, and run shared rooms with shared docs and decisions.
           </p>
           <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-6">
-            upgrade to tier_2 to unlock
+            upgrade to partner to unlock
           </p>
           <button
             className="font-mono lowercase text-xs px-4 py-2 mt-4 hover:opacity-90"

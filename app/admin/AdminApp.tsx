@@ -9,10 +9,12 @@ import VaultNominations from "./sections/VaultNominations";
 import Feedback from "./sections/Feedback";
 import PlatformHealth from "./sections/PlatformHealth";
 import Settings from "./sections/Settings";
+import Subscriptions from "./sections/Subscriptions";
 
 type Section =
   | "overview"
   | "users"
+  | "subscriptions"
   | "content"
   | "vault_nominations"
   | "feedback"
@@ -22,6 +24,7 @@ type Section =
 const NAV: { id: Section; label: string }[] = [
   { id: "overview", label: "overview" },
   { id: "users", label: "users" },
+  { id: "subscriptions", label: "subscriptions" },
   { id: "content", label: "content" },
   { id: "vault_nominations", label: "vault_nominations" },
   { id: "feedback", label: "feedback" },
@@ -130,6 +133,7 @@ export default function AdminApp() {
       <main className="flex-1 min-w-0 overflow-x-hidden">
         {section === "overview" && <Overview />}
         {section === "users" && <Users />}
+        {section === "subscriptions" && <Subscriptions />}
         {section === "content" && <Content onReportCountChange={setReportCount} />}
         {section === "vault_nominations" && <VaultNominations />}
         {section === "feedback" && <Feedback />}

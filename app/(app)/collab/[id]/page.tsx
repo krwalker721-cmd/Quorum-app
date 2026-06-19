@@ -24,7 +24,7 @@ export default async function ProjectRoomPage({
     .eq("id", user.id)
     .single();
   const tier = (profile?.tier ?? "free") as string;
-  if (tier !== "tier_2") redirect("/collab");
+  if (tier !== "partner") redirect("/collab");
 
   const { data: project } = await supabase
     .from("projects")

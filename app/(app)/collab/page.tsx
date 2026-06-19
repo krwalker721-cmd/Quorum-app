@@ -27,7 +27,7 @@ export default async function CollabPage({
   const tier = (profile?.tier ?? "free") as string;
   const tierLabel = tier.toUpperCase();
 
-  if (tier !== "tier_2") {
+  if (tier !== "partner") {
     return (
       <>
         <TopBar title="collab_board" tier={tierLabel} userId={user.id} />

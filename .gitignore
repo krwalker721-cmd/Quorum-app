@@ -8,3 +8,6 @@ out
 .vercel
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Claude Code local worktrees & session data
+.claude/

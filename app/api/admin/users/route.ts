@@ -23,8 +23,8 @@ export async function GET(req: Request) {
   else if (filter === "approved") query = query.eq("status", "approved");
   else if (filter === "suspended") query = query.eq("status", "suspended");
   else if (filter === "tier_free") query = query.eq("tier", "free");
-  else if (filter === "tier_1") query = query.eq("tier", "tier_1");
-  else if (filter === "tier_2") query = query.eq("tier", "tier_2");
+  else if (filter === "tier_member") query = query.eq("tier", "member");
+  else if (filter === "tier_partner") query = query.eq("tier", "partner");
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%,username.ilike.%${q}%`);

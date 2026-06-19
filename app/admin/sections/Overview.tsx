@@ -19,7 +19,7 @@ type Overview = {
   activeThisWeek: number;
   postsThisWeek: number;
   newSignupsThisWeek: number;
-  tierCounts: { free: number; tier_1: number; tier_2: number };
+  tierCounts: { free: number; member: number; partner: number };
   signupsSeries: { date: string; count: number }[];
   postsSeries: { date: string; count: number }[];
   checkinsSeries: { date: string; count: number }[];
@@ -159,7 +159,7 @@ function Metric({ label, value, amber }: { label: string; value: number; amber?:
   );
 }
 
-function TierMetric({ counts }: { counts: { free: number; tier_1: number; tier_2: number } }) {
+function TierMetric({ counts }: { counts: { free: number; member: number; partner: number } }) {
   return (
     <div className="border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
       <p className="font-mono lowercase text-[0.6rem] text-text-faint">tier_breakdown</p>
@@ -169,12 +169,12 @@ function TierMetric({ counts }: { counts: { free: number; tier_1: number; tier_2
           <p className="font-mono text-[0.55rem] text-text-faint lowercase">free</p>
         </div>
         <div>
-          <p className="font-mono text-lg text-text-primary">{counts.tier_1}</p>
-          <p className="font-mono text-[0.55rem] text-text-faint lowercase">t1</p>
+          <p className="font-mono text-lg text-text-primary">{counts.member}</p>
+          <p className="font-mono text-[0.55rem] text-text-faint lowercase">member</p>
         </div>
         <div>
-          <p className="font-mono text-lg text-text-primary">{counts.tier_2}</p>
-          <p className="font-mono text-[0.55rem] text-text-faint lowercase">t2</p>
+          <p className="font-mono text-lg text-text-primary">{counts.partner}</p>
+          <p className="font-mono text-[0.55rem] text-text-faint lowercase">partner</p>
         </div>
       </div>
     </div>

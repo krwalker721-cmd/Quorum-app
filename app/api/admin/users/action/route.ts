@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminRequest } from "@/lib/admin/auth";
+import { initializeUserSubscription } from "@/lib/stripe-helpers";
 
-const TIERS = new Set(["free", "tier_1", "tier_2"]);
+const TIERS = new Set(["free", "member", "partner"]);
 
 export async function POST(req: Request) {
   if (!(await verifyAdminRequest(req))) {
@@ -23,6 +24,15 @@ export async function POST(req: Request) {
       .update({ status: "approved" })
       .in("id", ids);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Start each approved user's trial (7-day cold signup; no referral source yet).
+    for (const id of ids) {
+      try {
+        await initializeUserSubscription(id, false);
+      } catch (e) {
+        console.error("initializeUserSubscription failed on approve:", e);
+      }
+    }
     return NextResponse.json({ ok: true });
   }
 

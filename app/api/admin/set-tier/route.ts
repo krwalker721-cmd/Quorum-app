@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminRequest } from "@/lib/admin/auth";
 
-const ALLOWED = new Set(["free", "tier_1", "tier_2"]);
+const ALLOWED = new Set(["free", "member", "partner"]);
 
 export async function POST(req: Request) {
   if (!(await verifyAdminRequest(req))) {
@@ -20,6 +20,9 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   const { error } = await admin.from("profiles").update({ tier }).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Keep the subscriptions row in sync for any existing record (best-effort).
+  await admin.from("subscriptions").update({ tier }).eq("user_id", id);
 
   return NextResponse.json({ ok: true });
 }
