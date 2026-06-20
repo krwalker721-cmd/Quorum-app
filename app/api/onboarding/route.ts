@@ -17,7 +17,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("onboarding_progress")
-    .select("current_step, completed, screen3_answer")
+    .select("current_step, completed, screen3_answer, trial_initialized")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -30,6 +30,7 @@ export async function GET() {
       current_step: 1,
       completed: false,
       screen3_answer: null,
+      trial_initialized: false,
     });
   }
 
@@ -37,6 +38,7 @@ export async function GET() {
     current_step: data.current_step,
     completed: data.completed,
     screen3_answer: data.screen3_answer,
+    trial_initialized: data.trial_initialized ?? false,
   });
 }
 
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
     current_step?: number;
     screen3_answer?: string;
     completed?: boolean;
+    trial_initialized?: boolean;
   };
   try {
     body = await request.json();
@@ -70,6 +73,9 @@ export async function POST(request: Request) {
   if (typeof body.screen3_answer === "string") {
     payload.screen3_answer = body.screen3_answer;
   }
+  if (typeof body.trial_initialized === "boolean") {
+    payload.trial_initialized = body.trial_initialized;
+  }
   if (typeof body.completed === "boolean") {
     payload.completed = body.completed;
     if (body.completed) {
@@ -80,7 +86,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("onboarding_progress")
     .upsert(payload, { onConflict: "user_id" })
-    .select("current_step, completed, screen3_answer, completed_at")
+    .select("current_step, completed, screen3_answer, completed_at, trial_initialized")
     .single();
 
   if (error) {

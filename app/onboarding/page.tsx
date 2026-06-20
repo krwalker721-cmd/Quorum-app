@@ -19,8 +19,11 @@ import Step12_CheckinExplainer from "@/components/onboarding/Step12_CheckinExpla
 import Step13_DoCheckin from "@/components/onboarding/Step13_DoCheckin";
 import Step14_CollabExplainer from "@/components/onboarding/Step14_CollabExplainer";
 import Step15_ExploreCollab from "@/components/onboarding/Step15_ExploreCollab";
+import Step16_JourneySummary from "@/components/onboarding/Step16_JourneySummary";
+import Step17_ReferralSell from "@/components/onboarding/Step17_ReferralSell";
+import Step18_Pricing from "@/components/onboarding/Step18_Pricing";
 
-const TOTAL_STEPS = 15;
+const TOTAL_STEPS = 18;
 
 const STEPS: Record<number, React.ComponentType<OnboardingStepProps>> = {
   1: Step01_HookQuestion,
@@ -38,6 +41,9 @@ const STEPS: Record<number, React.ComponentType<OnboardingStepProps>> = {
   13: Step13_DoCheckin,
   14: Step14_CollabExplainer,
   15: Step15_ExploreCollab,
+  16: Step16_JourneySummary,
+  17: Step17_ReferralSell,
+  18: Step18_Pricing,
 };
 
 export default function OnboardingPage() {
@@ -45,6 +51,24 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [screen3Answer, setScreen3Answer] = useState("");
+
+  // Start the trial on first onboarding load: stamp the flag so this runs once,
+  // then create the trialing subscription (30 days if referred, else 7).
+  const initializeTrial = async () => {
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trial_initialized: true }),
+      });
+      await fetch("/api/subscription/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch {
+      // best-effort — onboarding still proceeds without the trial stamped
+    }
+  };
 
   // On mount, load saved progress. An optional ?step=X query param overrides the
   // saved step for admin/testing, but progress is still saved as the user moves.
@@ -71,6 +95,11 @@ export default function OnboardingPage() {
             setCurrentStep(bypassStep);
           } else if (typeof data.current_step === "number") {
             setCurrentStep(data.current_step);
+          }
+          // First time through: start the trial. Idempotent — the flag guards
+          // re-entry and the initialize endpoint won't reset an existing trial.
+          if (!data.trial_initialized) {
+            void initializeTrial();
           }
         } else if (bypassStep !== null && active) {
           setCurrentStep(bypassStep);

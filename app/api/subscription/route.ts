@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
 
@@ -19,9 +19,23 @@ export async function GET() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("tier, trial_ends_at, partner_waitlist")
+    .select("tier, trial_ends_at, partner_waitlist, referred_by")
     .eq("id", user.id)
     .maybeSingle();
+
+  // Surface the referrer's name so the onboarding pricing screen can credit them
+  // ("Your first month is on [name]"). Read with the service-role client since a
+  // user can't read another user's profile row under RLS.
+  let referrerName: string | null = null;
+  if (profile?.referred_by) {
+    const admin = createAdminClient();
+    const { data: referrer } = await admin
+      .from("profiles")
+      .select("full_name, username")
+      .eq("id", profile.referred_by)
+      .maybeSingle();
+    referrerName = referrer?.full_name || referrer?.username || null;
+  }
 
   // The referred free-month offer is available only until its expiry passes.
   const referredFreeMonthExpired = subscription?.referred_free_month_expires_at
@@ -38,6 +52,7 @@ export async function GET() {
     referred_free_month_available: !referredFreeMonthExpired,
     referred_free_month_expires_at: subscription?.referred_free_month_expires_at || null,
     partner_waitlist: profile?.partner_waitlist || false,
+    referrer_name: referrerName,
   });
 }
 

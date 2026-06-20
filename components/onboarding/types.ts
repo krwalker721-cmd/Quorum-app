@@ -21,4 +21,5 @@ export interface OnboardingPostBody {
   current_step?: number;
   screen3_answer?: string;
   completed?: boolean;
+  trial_initialized?: boolean;
 }
