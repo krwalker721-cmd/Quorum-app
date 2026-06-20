@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminRequest } from "@/lib/admin/auth";
 import { assignUserToCohort } from "@/lib/cohorts";
 import { initializeUserSubscription } from "@/lib/stripe-helpers";
+import { createReferralCode, trackLoginEvent } from "@/lib/referral-helpers";
 
 export async function POST(req: Request) {
   if (!(await verifyAdminRequest(req))) {
@@ -15,15 +16,30 @@ export async function POST(req: Request) {
   }
 
   const admin = createAdminClient();
-  const { error } = await admin.from("profiles").update({ status: "approved" }).eq("id", id);
+  const { data: approved, error } = await admin
+    .from("profiles")
+    .update({ status: "approved" })
+    .eq("id", id)
+    .select("referred_by")
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Start the user's trial. No referral data source exists yet, so isReferred is
-  // false (7-day cold-signup trial). Best-effort — don't fail approval on error.
+  // Start the user's trial. Referred users (referred_by set at signup) get the
+  // 30-day trial + 48h free-month window; cold signups get 7 days. Best-effort.
+  const isReferred = !!approved?.referred_by;
   try {
-    await initializeUserSubscription(id, false);
+    await initializeUserSubscription(id, isReferred);
   } catch (e) {
     console.error("initializeUserSubscription failed on approve:", e);
+  }
+
+  // Generate the user's referral code and seed their first login event (day 1
+  // toward the 3-day activity gate). Best-effort — never block approval.
+  try {
+    await createReferralCode(id);
+    await trackLoginEvent(id);
+  } catch (e) {
+    console.error("referral code / login event setup failed on approve:", e);
   }
 
   // Auto-assign to a cohort on approval. Don't fail the whole approval if cohort

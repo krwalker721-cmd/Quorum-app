@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { syncSubscriptionToSupabase } from "@/lib/stripe-helpers";
+import { activateReferral, churnReferral } from "@/lib/referral-helpers";
 import { createAdminClient } from "@/lib/supabase/server";
 
 // Stripe signature verification needs the raw request body, so this handler must
@@ -68,7 +69,22 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
-        await syncSubscriptionToSupabase(event.data.object);
+        const subscription = event.data.object;
+        await syncSubscriptionToSupabase(subscription);
+
+        // A referred user adding a card (their first subscription) activates the
+        // referral. activateReferral is idempotent, so running it on `updated`
+        // too is harmless. Best-effort — never fail the webhook on this.
+        if (event.type === "customer.subscription.created") {
+          const userId = await userIdForCustomer(subscription.customer as string);
+          if (userId) {
+            try {
+              await activateReferral(userId);
+            } catch (e) {
+              console.error("activateReferral failed:", e);
+            }
+          }
+        }
         break;
       }
 
@@ -85,6 +101,14 @@ export async function POST(req: NextRequest) {
         await supabase.from("profiles").update({ tier: "free" }).eq("id", userId);
 
         await notify(supabase, userId, "subscription_cancelled");
+
+        // If this user was referred, churn their referral so the referrer's
+        // monthly bonus is recalculated. Best-effort.
+        try {
+          await churnReferral(userId);
+        } catch (e) {
+          console.error("churnReferral failed:", e);
+        }
         break;
       }
 

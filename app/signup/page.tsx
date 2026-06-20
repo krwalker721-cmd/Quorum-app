@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +24,25 @@ export default function SignupPage() {
   const [stage, setStage] = useState("idea");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refCode, setRefCode] = useState<string | null>(null);
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+
+  // Capture ?ref=CODE from the URL (read from window to avoid needing a Suspense
+  // boundary for useSearchParams). Persist it in a cookie as a fallback for any
+  // later flow, and validate it to show the welcome banner.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("ref");
+    if (!code) return;
+    setRefCode(code);
+    document.cookie = `referral_code=${code}; path=/; max-age=86400; samesite=lax`;
+
+    fetch(`/api/referrals/validate?code=${encodeURIComponent(code)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.valid) setReferrerName(d.referrerName);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,6 +91,19 @@ export default function SignupPage() {
       return;
     }
 
+    // Record the referral if this signup came through a referral link. The user
+    // is authenticated at this point; the claim route reads them from the session
+    // and creates the referral as 'pending'. Best-effort — never block signup.
+    if (refCode) {
+      try {
+        await fetch("/api/referrals/claim", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: refCode }),
+        });
+      } catch {}
+    }
+
     router.push(WAITLIST_ENABLED ? "/pending" : "/home");
     router.refresh();
   }
@@ -84,6 +116,30 @@ export default function SignupPage() {
           <h1 className="font-mono lowercase text-text-primary text-lg mt-4 tracking-wide">quorum</h1>
           <p className="font-mono lowercase text-text-faint text-xs mt-1">request access</p>
         </div>
+
+        {referrerName && (
+          <div
+            style={{
+              background: "rgba(34,197,94,0.06)",
+              border: "1px solid rgba(34,197,94,0.2)",
+              borderRadius: "4px",
+              padding: "12px 16px",
+              marginBottom: "24px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "JetBrains Mono, monospace",
+                fontSize: "11px",
+                color: "#22c55e",
+                letterSpacing: "0.05em",
+                margin: 0,
+              }}
+            >
+              {referrerName} invited you to Quorum — your first month is on them.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-card border border-border p-6 space-y-4">
           <div>

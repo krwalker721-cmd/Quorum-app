@@ -11,6 +11,14 @@ export type NotificationType =
   | "payment_failed"
   | "payment_succeeded"
   | "subscription_cancelled"
+  // referral types (Session 7)
+  | "referral_pending"
+  | "referral_activated"
+  | "referral_inactive"
+  | "referral_nudge"
+  | "referral_churned"
+  | "referral_reward"
+  | "monthly_bonus_updated"
   // pre-existing collab types
   | "join_request_approved"
   | "join_request_declined"
@@ -30,6 +38,7 @@ const AMBER = "#f59e0b";
 const GREEN = "#22c55e";
 const RED = "#f85149";
 const BLUE = "#58a6ff";
+const MUTED = "#484f58";
 
 const META: Record<string, NotificationMeta> = {
   trial_ending: {
@@ -56,6 +65,45 @@ const META: Record<string, NotificationMeta> = {
     message: "your subscription has been cancelled — you're on the free tier",
     color: RED,
     link: "/pricing",
+  },
+  // Referral notification types (Session 7). All link to /referrals so the user
+  // lands on the full picture. Copy here is the fallback when the stored message
+  // is empty; many referral notifications carry a name-specific message.
+  referral_pending: {
+    message: "someone just joined using your link",
+    color: BLUE,
+    link: "/referrals",
+  },
+  referral_activated: {
+    message: "a referral activated their account — milestone progress updated",
+    color: GREEN,
+    link: "/referrals",
+  },
+  referral_inactive: {
+    message: "a referral is no longer active — monthly bonus recalculated",
+    color: AMBER,
+    link: "/referrals",
+  },
+  referral_nudge: {
+    message:
+      "a referral hasn't activated yet — they have 24 hours to claim their free month",
+    color: AMBER,
+    link: "/referrals",
+  },
+  referral_churned: {
+    message: "a referral cancelled their account",
+    color: MUTED,
+    link: "/referrals",
+  },
+  referral_reward: {
+    message: "you earned a referral reward!",
+    color: AMBER,
+    link: "/referrals",
+  },
+  monthly_bonus_updated: {
+    message: "your monthly referral bonus has been updated",
+    color: AMBER,
+    link: "/referrals",
   },
   // Pre-existing collab notification types.
   join_request_approved: {

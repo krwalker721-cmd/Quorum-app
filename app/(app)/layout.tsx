@@ -6,6 +6,7 @@ import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
 import AppOverlay from "@/components/AppOverlay";
 import TrialBanner from "@/components/TrialBanner";
+import { trackLoginEvent } from "@/lib/referral-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  // Record a login event for the referral 3-day activity gate. Fire-and-forget,
+  // never awaited — the daily upsert dedups, and a failure must never block the
+  // page render.
+  trackLoginEvent(user.id).catch((e) =>
+    console.error("trackLoginEvent failed:", e),
+  );
 
   const { data: profile } = await supabase
     .from("profiles")
