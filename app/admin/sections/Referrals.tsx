@@ -175,6 +175,7 @@ export default function ReferralsSection() {
                           {m}
                         </option>
                       ))}
+                      <option value="monthly_bonus">recalc monthly bonus</option>
                     </select>
                   </td>
                 </tr>

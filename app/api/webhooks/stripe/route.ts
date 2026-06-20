@@ -125,6 +125,38 @@ export async function POST(req: NextRequest) {
 
         const userId = await userIdForCustomer(invoice.customer as string);
         if (!userId) break;
+
+        // Apply any milestone rewards that were recorded while the user had no
+        // active subscription (or whose Stripe application previously failed).
+        // applyMilestoneReward stamps stripe_coupon_id on success, so anything
+        // still null here genuinely hasn't been applied to Stripe yet.
+        const { data: pendingRewards } = await supabase
+          .from("referral_rewards")
+          .select("id, reward_type")
+          .eq("user_id", userId)
+          .eq("active", true)
+          .is("stripe_coupon_id", null)
+          .neq("reward_type", "monthly_bonus");
+
+        if (pendingRewards?.length) {
+          const { applyStripeReward } = await import("@/lib/referral-helpers");
+          for (const reward of pendingRewards) {
+            try {
+              await applyStripeReward(
+                invoice.customer as string,
+                invoice.subscription as string,
+                reward.reward_type,
+              );
+              await supabase
+                .from("referral_rewards")
+                .update({ stripe_coupon_id: "applied" })
+                .eq("id", reward.id);
+            } catch (err) {
+              console.error(`Failed to apply pending reward ${reward.id}:`, err);
+            }
+          }
+        }
+
         await notify(supabase, userId, "payment_succeeded");
         break;
       }

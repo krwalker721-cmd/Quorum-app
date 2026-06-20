@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { stripe } from "@/lib/stripe";
 import {
   checkActivityGates,
   isReferralLinkActive,
@@ -8,6 +9,20 @@ import {
 } from "@/lib/referral-helpers";
 
 export const dynamic = "force-dynamic";
+
+// Monthly-equivalent value of each reward coupon, for the dashboard savings card.
+// Recurring milestone discounts are expressed against the $49 Member price.
+const DISCOUNT_VALUES: Record<string, number> = {
+  QUORUM_MILESTONE_10: 24.5, // 50% of $49
+  QUORUM_MILESTONE_25: 49, // 100% of $49
+  QUORUM_MONTHLY_10: 10,
+  QUORUM_MONTHLY_20: 20,
+  QUORUM_MONTHLY_30: 30,
+};
+
+function calculateCurrentSavings(discountIds: string[]): number {
+  return discountIds.reduce((total, id) => total + (DISCOUNT_VALUES[id] || 0), 0);
+}
 
 // GET — full referral data for the authenticated user. Powers the /referrals
 // dashboard (wired in Session 8).
@@ -76,6 +91,34 @@ export async function GET() {
 
   const tier = profile?.tier ?? "free";
 
+  // Active Stripe discounts currently attached to the user's subscription — the
+  // source of truth for what they're actually saving this month. Read via the
+  // service-role client (subscriptions rows aren't user-readable under RLS).
+  let activeStripeDiscounts: string[] = [];
+  const admin = createAdminClient();
+  const { data: subscriptionData } = await admin
+    .from("subscriptions")
+    .select("stripe_subscription_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (subscriptionData?.stripe_subscription_id) {
+    try {
+      const stripeSub = await stripe.subscriptions.retrieve(
+        subscriptionData.stripe_subscription_id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { expand: ["discounts"] } as any,
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const discounts = ((stripeSub as any).discounts ?? []) as any[];
+      activeStripeDiscounts = discounts
+        .map((d) => d?.coupon?.id)
+        .filter((id): id is string => Boolean(id));
+    } catch (err) {
+      console.error("Failed to fetch Stripe discounts:", err);
+    }
+  }
+
   return NextResponse.json({
     code: codeData?.code ?? null,
     link: referralLink,
@@ -90,5 +133,7 @@ export async function GET() {
     tier,
     referralCap: tier === "free" ? 3 : null,
     referralCapReached: tier === "free" && totalCount >= 3,
+    activeStripeDiscounts,
+    currentSavings: calculateCurrentSavings(activeStripeDiscounts),
   });
 }

@@ -45,6 +45,8 @@ interface ReferralData {
   tier: "free" | "member" | "partner";
   referralCap: number | null;
   referralCapReached: boolean;
+  activeStripeDiscounts?: string[];
+  currentSavings?: number;
 }
 
 // ─── config ──────────────────────────────────────────────────────────────────
@@ -247,6 +249,8 @@ export default function ReferralsDashboard() {
     tier,
     referralCapReached,
   } = data;
+
+  const currentSavings = data.currentSavings ?? 0;
 
   const nextMilestone = MILESTONES.find((m) => m.count > totalCount);
   const milestoneFill = Math.min((totalCount / 25) * 100, 100);
@@ -855,6 +859,38 @@ export default function ReferralsDashboard() {
           })}
         </div>
       </div>
+
+      {/* ─── Section 6b — current savings ───────────────────────────────────── */}
+      {currentSavings > 0 && (
+        <div
+          style={{
+            background: "rgba(34,197,94,0.04)",
+            border: "1px solid rgba(34,197,94,0.15)",
+            borderRadius: 4,
+            padding: "16px 20px",
+            marginBottom: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: 9,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "#22c55e",
+            }}
+          >
+            // your current savings
+          </span>
+          <span style={{ fontFamily: SANS, fontSize: 16, color: "#22c55e" }}>
+            ${currentSavings.toFixed(2)} off this month
+          </span>
+        </div>
+      )}
 
       {/* ─── Section 7 — your referrals ─────────────────────────────────────── */}
       {(gates.allComplete || referrals.length > 0) && (

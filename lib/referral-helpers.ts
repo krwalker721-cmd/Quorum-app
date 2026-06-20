@@ -1,4 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
+import { stripe } from "@/lib/stripe";
+import { applyMonthlyBonusToStripe } from "@/lib/monthly-bonus-stripe";
 
 // Referral data layer (Session 7). These helpers run server-side from the
 // webhook, the signup claim route, the API routes, and scheduled jobs — often
@@ -408,6 +410,17 @@ export async function checkAndApplyMilestoneReward(userId: string): Promise<void
   }
 }
 
+// Value stamped into referral_rewards.stripe_coupon_id once a milestone has been
+// applied to Stripe. One-off credits have no coupon, so they use a sentinel;
+// recurring milestones record their actual coupon id.
+const MILESTONE_APPLIED_MARKER: Record<MilestoneType, string> = {
+  milestone_1: "credit_applied",
+  milestone_3: "credit_applied",
+  milestone_5: "credit_applied",
+  milestone_10: "QUORUM_MILESTONE_10",
+  milestone_25: "QUORUM_MILESTONE_25",
+};
+
 const REWARD_MESSAGES: Record<MilestoneType, string> = {
   milestone_1: "you earned $10 off your next month and the Connector badge!",
   milestone_3: "you earned 1 free month of Member!",
@@ -449,9 +462,17 @@ export async function applyMilestoneReward(
     rewardRecord.expires_at = expires.toISOString();
   }
 
-  await supabase.from("referral_rewards").insert(rewardRecord);
+  const { data: insertedReward } = await supabase
+    .from("referral_rewards")
+    .insert(rewardRecord)
+    .select("id")
+    .single();
 
-  // Stripe wiring is Session 9 — best-effort, never blocks the DB record.
+  // Apply to Stripe — best-effort, never blocks the DB record. On success we
+  // stamp stripe_coupon_id so the invoice.payment_succeeded webhook sweep can
+  // tell applied rewards from genuinely-pending ones (and never re-credits a
+  // one-off milestone). If the user has no subscription yet, the reward stays
+  // pending and that same webhook applies it on their first paid invoice.
   if (subscription?.stripe_subscription_id) {
     try {
       await applyStripeReward(
@@ -459,6 +480,12 @@ export async function applyMilestoneReward(
         subscription.stripe_subscription_id as string,
         rewardType,
       );
+      if (insertedReward?.id) {
+        await supabase
+          .from("referral_rewards")
+          .update({ stripe_coupon_id: MILESTONE_APPLIED_MARKER[rewardType] })
+          .eq("id", insertedReward.id);
+      }
     } catch (err) {
       console.error("Failed to apply Stripe reward:", err);
     }
@@ -478,14 +505,71 @@ export async function applyMilestoneReward(
   });
 }
 
-// Placeholder for Stripe coupon/discount application (Session 9).
+// Apply a milestone reward to Stripe (Session 9).
+//  - milestones 1/3/5 → one-off customer balance credit (shows on next invoice)
+//  - milestones 10/25 → recurring coupon attached to the subscription
+// Throws on Stripe errors so callers can decide whether to mark the DB record as
+// applied. Coupons must already exist (scripts/create-stripe-coupons.ts).
+const MILESTONE_COUPON_IDS: Record<string, string> = {
+  milestone_10: "QUORUM_MILESTONE_10",
+  milestone_25: "QUORUM_MILESTONE_25",
+};
+
+const MILESTONE_CREDIT_CENTS: Record<string, number> = {
+  milestone_1: 1000, // $10
+  milestone_3: 4900, // $49 (1 free month)
+  milestone_5: 9800, // $98 (2 free months)
+};
+
 export async function applyStripeReward(
   customerId: string,
   subscriptionId: string,
   rewardType: string,
 ): Promise<void> {
+  // One-off rewards: apply as a negative customer balance transaction (credit).
+  const creditAmount = MILESTONE_CREDIT_CENTS[rewardType];
+  if (creditAmount) {
+    await stripe.customers.createBalanceTransaction(customerId, {
+      amount: -creditAmount, // negative = credit toward next invoice
+      currency: "usd",
+      description: `Quorum referral reward: ${rewardType}`,
+    });
+    console.log(
+      `[Referral Reward] Applied $${creditAmount / 100} credit to customer ${customerId}`,
+    );
+    return;
+  }
+
+  // Recurring rewards: attach the coupon to the subscription (stacks with others).
+  const couponId = MILESTONE_COUPON_IDS[rewardType];
+  if (!couponId) {
+    console.error(`No coupon mapped for reward type: ${rewardType}`);
+    return;
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(
+    subscriptionId,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { expand: ["discounts"] } as any,
+  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const existingDiscounts = ((subscription as any).discounts ?? []) as any[];
+
+  const alreadyApplied = existingDiscounts.some((d) => d?.coupon?.id === couponId);
+  if (alreadyApplied) {
+    console.log(`[Referral Reward] ${couponId} already on subscription ${subscriptionId}`);
+    return;
+  }
+
+  await stripe.subscriptions.update(subscriptionId, {
+    discounts: [
+      ...existingDiscounts.map((d) => ({ discount: d.id })),
+      { coupon: couponId },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any,
+  });
   console.log(
-    `[Referral Reward] would apply ${rewardType} to customer ${customerId} (sub ${subscriptionId})`,
+    `[Referral Reward] Applied coupon ${couponId} to subscription ${subscriptionId}`,
   );
 }
 
@@ -509,27 +593,40 @@ export async function recalculateMonthlyBonus(userId: string): Promise<void> {
     .maybeSingle();
 
   const prevCount = prev?.milestone_count ?? 0;
-  if (prevCount === activeCount) return; // no change → no churn
+  const changed = prevCount !== activeCount;
 
-  // Retire the old bonus, write a fresh one if still eligible.
-  await supabase
-    .from("referral_rewards")
-    .update({ active: false })
-    .eq("user_id", userId)
-    .eq("reward_type", "monthly_bonus");
+  if (changed) {
+    // Retire the old bonus, write a fresh one if still eligible.
+    await supabase
+      .from("referral_rewards")
+      .update({ active: false })
+      .eq("user_id", userId)
+      .eq("reward_type", "monthly_bonus");
 
-  if (discountAmount > 0) {
-    await supabase.from("referral_rewards").insert({
-      user_id: userId,
-      reward_type: "monthly_bonus",
-      milestone_count: activeCount,
-      active: true,
-    });
+    if (discountAmount > 0) {
+      await supabase.from("referral_rewards").insert({
+        user_id: userId,
+        reward_type: "monthly_bonus",
+        milestone_count: activeCount,
+        active: true,
+      });
+    }
   }
 
-  await notify(supabase, userId, "monthly_bonus_updated", {
-    payload: { active_count: activeCount, discount: discountAmount },
-  });
+  // Always reconcile Stripe (idempotent — skips if the coupon already matches).
+  // This also self-heals a subscription whose last update failed even when the
+  // active count is unchanged. Never let a Stripe hiccup break the DB record.
+  try {
+    await applyMonthlyBonusToStripe(userId, activeCount);
+  } catch (err) {
+    console.error("[Monthly Bonus] Stripe update failed:", err);
+  }
+
+  if (changed) {
+    await notify(supabase, userId, "monthly_bonus_updated", {
+      payload: { active_count: activeCount, discount: discountAmount },
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
