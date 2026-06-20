@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { usePaywall } from "@/hooks/usePaywall";
+import PaywallModal from "@/components/PaywallModal";
 
 type RoomType = "question" | "update" | "decision" | "win" | "blocker";
 
@@ -24,6 +26,7 @@ export default function RoomPostModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { paywallState, checkAndGate, closePaywall } = usePaywall();
   const [type, setType] = useState<RoomType>("update");
   const [content, setContent] = useState("");
   const [anon, setAnon] = useState(false);
@@ -32,6 +35,9 @@ export default function RoomPostModal({
 
   async function submit() {
     if (!content.trim()) return;
+    // Paywall gate — cohort posts are capped on free tier.
+    const allowed = await checkAndGate("cohort_posts");
+    if (!allowed) return;
     setBusy(true);
     setErr(null);
     const supabase = createClient();
@@ -52,6 +58,11 @@ export default function RoomPostModal({
     if (anon) {
       fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
+    fetch("/api/usage/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feature: "cohort_posts" }),
+    }).catch(() => {});
     onClose();
     router.refresh();
   }
@@ -169,6 +180,17 @@ export default function RoomPostModal({
           </button>
         </div>
       </div>
+
+      {paywallState.isOpen && (
+        <PaywallModal
+          isOpen={paywallState.isOpen}
+          onClose={closePaywall}
+          feature={paywallState.feature!}
+          currentUsage={paywallState.currentUsage}
+          limit={paywallState.limit}
+          hadTrial={paywallState.hadTrial}
+        />
+      )}
     </div>
   );
 }

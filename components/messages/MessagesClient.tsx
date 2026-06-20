@@ -5,6 +5,8 @@ import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/stage";
+import { usePaywall } from "@/hooks/usePaywall";
+import PaywallModal from "@/components/PaywallModal";
 
 type Partner = {
   id: string;
@@ -37,6 +39,7 @@ export default function MessagesClient({
   conversations: Conversation[];
   initialPartnerId: string | null;
 }) {
+  const { paywallState, checkAndGate, closePaywall } = usePaywall();
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialPartnerId ?? initialConversations[0]?.partner.id ?? null
@@ -177,6 +180,9 @@ export default function MessagesClient({
 
   async function send() {
     if (!draft.trim() || !selectedId) return;
+    // Paywall gate — DMs are capped on free tier. Check before sending.
+    const allowed = await checkAndGate("messages");
+    if (!allowed) return;
     setSending(true);
     const content = draft.trim();
     setDraft("");
@@ -207,6 +213,12 @@ export default function MessagesClient({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ recipient_id: selectedId }),
+    }).catch(() => {});
+    // Track usage after a successful send (free tier only).
+    fetch("/api/usage/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feature: "messages" }),
     }).catch(() => {});
     // bump preview
     setConversations((prev) => {
@@ -469,6 +481,17 @@ export default function MessagesClient({
           </div>
         )}
       </div>
+
+      {paywallState.isOpen && (
+        <PaywallModal
+          isOpen={paywallState.isOpen}
+          onClose={closePaywall}
+          feature={paywallState.feature!}
+          currentUsage={paywallState.currentUsage}
+          limit={paywallState.limit}
+          hadTrial={paywallState.hadTrial}
+        />
+      )}
     </div>
   );
 }

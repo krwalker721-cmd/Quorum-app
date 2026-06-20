@@ -14,6 +14,8 @@ import LeaveCohortButton from "@/components/cohort/LeaveCohortButton";
 import PostMenu from "@/components/PostMenu";
 import Meter from "@/components/Meter";
 import Link from "next/link";
+import { usePaywall } from "@/hooks/usePaywall";
+import PaywallModal from "@/components/PaywallModal";
 import {
   isAnniversary,
   type RosterFlags,
@@ -122,6 +124,7 @@ export default function CohortRoomClient({
 }) {
   const router = useRouter();
   const online = usePresence();
+  const { paywallState, checkAndGate, closePaywall } = usePaywall();
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [postOpen, setPostOpen] = useState(false);
@@ -320,6 +323,9 @@ export default function CohortRoomClient({
   async function handlePost() {
     const trimmed = messageText.trim();
     if (!trimmed || posting) return;
+    // Paywall gate — cohort messages count toward the cohort_posts cap.
+    const allowed = await checkAndGate("cohort_posts");
+    if (!allowed) return;
     setPosting(true);
     const { error } = await supabase.from("posts").insert({
       author_id: currentUserId,
@@ -330,8 +336,14 @@ export default function CohortRoomClient({
       local_hour: new Date().getHours(),
     });
     setPosting(false);
-    if (!error) setMessageText("");
-    else window.alert(error.message.toLowerCase());
+    if (!error) {
+      setMessageText("");
+      fetch("/api/usage/increment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feature: "cohort_posts" }),
+      }).catch(() => {});
+    } else window.alert(error.message.toLowerCase());
   }
 
   return (
@@ -919,6 +931,16 @@ export default function CohortRoomClient({
           userId={currentUserId}
           cohorts={myCohorts}
           onClose={() => setInviteOpen(false)}
+        />
+      )}
+      {paywallState.isOpen && (
+        <PaywallModal
+          isOpen={paywallState.isOpen}
+          onClose={closePaywall}
+          feature={paywallState.feature!}
+          currentUsage={paywallState.currentUsage}
+          limit={paywallState.limit}
+          hadTrial={paywallState.hadTrial}
         />
       )}
     </>

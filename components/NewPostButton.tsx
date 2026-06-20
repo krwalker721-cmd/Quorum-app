@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { ROOM_TYPE_COLOR, ROOM_TYPE_LABEL } from "@/lib/stage";
+import { usePaywall } from "@/hooks/usePaywall";
+import PaywallModal from "@/components/PaywallModal";
 
 const TAGS = ["decision", "mindset", "hiring", "growth", "real_talk", "ops", "fundraising"];
 const ROOM_TYPES = ["question", "update", "decision", "win", "blocker"] as const;
@@ -16,6 +18,7 @@ export default function NewPostButton({
   defaultPostType?: "cohort" | "pulse";
 }) {
   const router = useRouter();
+  const { paywallState, checkAndGate, closePaywall } = usePaywall();
   const isPulse = defaultPostType === "pulse";
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
@@ -57,6 +60,13 @@ export default function NewPostButton({
       setErr("join a cohort to post here.");
       return;
     }
+    // Paywall gate — check the cap before we attempt the insert.
+    const feature = postType === "pulse" ? "pulse_posts" : "cohort_posts";
+    const allowed = await checkAndGate(feature);
+    if (!allowed) {
+      setOpen(false);
+      return;
+    }
     setBusy(true);
     setErr(null);
     const supabase = createClient();
@@ -84,6 +94,12 @@ export default function NewPostButton({
     if (anon) {
       fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
+    // Track usage after a successful post (free tier only — API no-ops for paid).
+    fetch("/api/usage/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feature: postType === "pulse" ? "pulse_posts" : "cohort_posts" }),
+    }).catch(() => {});
     setContent("");
     setAnon(false);
     setOpen(false);
@@ -289,6 +305,17 @@ export default function NewPostButton({
             </div>
           </div>
         </div>
+      )}
+
+      {paywallState.isOpen && (
+        <PaywallModal
+          isOpen={paywallState.isOpen}
+          onClose={closePaywall}
+          feature={paywallState.feature!}
+          currentUsage={paywallState.currentUsage}
+          limit={paywallState.limit}
+          hadTrial={paywallState.hadTrial}
+        />
       )}
     </>
   );

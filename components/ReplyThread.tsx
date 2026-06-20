@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/stage";
+import { usePaywall } from "@/hooks/usePaywall";
+import PaywallModal from "@/components/PaywallModal";
 
 type Reply = {
   id: string;
@@ -40,6 +42,7 @@ export default function ReplyThread({
   variant?: "attached" | "inline";
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const { paywallState, checkAndGate, closePaywall } = usePaywall();
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -111,6 +114,9 @@ export default function ReplyThread({
   async function submit() {
     const trimmed = text.trim();
     if (!trimmed || !currentUserId) return;
+    // Paywall gate — replies are capped on free tier.
+    const allowed = await checkAndGate("replies");
+    if (!allowed) return;
     setBusy(true);
     setErr(null);
     const { data, error } = await supabase
@@ -133,6 +139,11 @@ export default function ReplyThread({
     }
     setText("");
     setAnon(false);
+    fetch("/api/usage/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feature: "replies" }),
+    }).catch(() => {});
     if (data) {
       const [hydrated] = await hydrate([data as Reply]);
       setReplies((prev) => addUnique(prev, hydrated));
@@ -239,6 +250,17 @@ export default function ReplyThread({
           {busy ? "…" : "reply →"}
         </button>
       </div>
+
+      {paywallState.isOpen && (
+        <PaywallModal
+          isOpen={paywallState.isOpen}
+          onClose={closePaywall}
+          feature={paywallState.feature!}
+          currentUsage={paywallState.currentUsage}
+          limit={paywallState.limit}
+          hadTrial={paywallState.hadTrial}
+        />
+      )}
     </div>
   );
 }

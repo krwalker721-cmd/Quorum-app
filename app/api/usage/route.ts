@@ -48,8 +48,23 @@ export async function GET() {
     .eq("month", month)
     .maybeSingle();
 
+  // Subscription status + trial info, used to gate caps and tailor the paywall.
+  const { data: subscription } = await supabase
+    .from("subscriptions")
+    .select("status, trial_ends_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const status = subscription?.status || "trialing";
+  // hadTrial: a trial existed and has already passed.
+  const hadTrial = subscription?.trial_ends_at
+    ? new Date(subscription.trial_ends_at) < new Date()
+    : false;
+
   return NextResponse.json({
     tier,
+    status,
+    hadTrial,
     month,
     usage: {
       cohort_posts: usage?.cohort_posts || 0,

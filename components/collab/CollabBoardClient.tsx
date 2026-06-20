@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import { usePaywall } from "@/hooks/usePaywall";
+import PaywallModal from "@/components/PaywallModal";
 import { timeAgo } from "@/lib/stage";
 import NewProjectModal from "./NewProjectModal";
 import RespondModal from "./RespondModal";
@@ -106,6 +108,25 @@ export default function CollabBoardClient({
   errorBanner?: string | null;
 }) {
   const router = useRouter();
+  const { paywallState, checkAndGate, closePaywall } = usePaywall();
+  // Whether collab creation is locked for this user (free tier, no active trial).
+  // Drives the read-only indicators and info bar; the actual block runs through
+  // checkAndGate so it stays authoritative.
+  const [collabLocked, setCollabLocked] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/usage")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) {
+          setCollabLocked(d.tier === "free" && d.status !== "trialing");
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [tab, setTab] = useState<Tab>(initialTab);
   const [newOpen, setNewOpen] = useState(false);
   const [newType, setNewType] = useState<"project" | "need">("project");
@@ -128,7 +149,11 @@ export default function CollabBoardClient({
     router.refresh();
   }
 
-  function openNew(type: "project" | "need") {
+  async function openNew(type: "project" | "need") {
+    // Paywall gate — collab creation is a Member feature (free cap is 0, so this
+    // always fires the paywall for free users).
+    const allowed = await checkAndGate("collab_posts");
+    if (!allowed) return;
     setNewType(type);
     setNewOpen(true);
   }
@@ -138,6 +163,21 @@ export default function CollabBoardClient({
   return (
     <>
       <PulseBar initialEvents={initialPulseEvents} />
+      {collabLocked && (
+        <div
+          style={{
+            background: "rgba(88,166,255,0.04)",
+            borderBottom: "1px solid rgba(88,166,255,0.1)",
+            padding: "8px 16px",
+            fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+            fontSize: 10,
+            color: "#484f58",
+            letterSpacing: "0.05em",
+          }}
+        >
+          // collab board is read-only on the free tier — upgrade to post projects, needs, and skills
+        </div>
+      )}
       {errorBanner && bannerVisible && (
         <div
           className="mx-6 mt-3 px-4 py-2 border flex items-center justify-between"
@@ -185,10 +225,42 @@ export default function CollabBoardClient({
         {tab !== "skills" && (
           <button
             onClick={() => openNew(tab === "needs" ? "need" : "project")}
+            title={collabLocked ? "Member feature" : undefined}
             className="font-mono lowercase text-[0.7rem] px-3 py-1.5 mb-2 hover:opacity-90"
-            style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+            style={
+              collabLocked
+                ? {
+                    background: "transparent",
+                    color: "#484f58",
+                    border: "1px solid #21262d",
+                    borderRadius: 5,
+                    fontWeight: 700,
+                    letterSpacing: "0.02em",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }
+                : { background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }
+            }
           >
+            {collabLocked && (
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#484f58"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <rect x="4" y="11" width="16" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+            )}
             + post a {tab === "needs" ? "need" : "project"}
+            {collabLocked && <span style={{ color: "#484f58" }}>// member</span>}
           </button>
         )}
       </div>
@@ -223,7 +295,14 @@ export default function CollabBoardClient({
           userId={currentUserId}
           postType={newType}
           onClose={() => setNewOpen(false)}
-          onCreated={() => router.refresh()}
+          onCreated={() => {
+            fetch("/api/usage/increment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ feature: "collab_posts" }),
+            }).catch(() => {});
+            router.refresh();
+          }}
         />
       )}
       {respondFor && (
@@ -269,6 +348,16 @@ export default function CollabBoardClient({
           currentUserId={currentUserId}
           onClose={() => setJoinRequestFor(null)}
           onSent={() => setJoinRequestFor(null)}
+        />
+      )}
+      {paywallState.isOpen && (
+        <PaywallModal
+          isOpen={paywallState.isOpen}
+          onClose={closePaywall}
+          feature={paywallState.feature!}
+          currentUsage={paywallState.currentUsage}
+          limit={paywallState.limit}
+          hadTrial={paywallState.hadTrial}
         />
       )}
     </>

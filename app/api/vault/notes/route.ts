@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkUsageCap, incrementUsage } from "@/lib/stripe-helpers";
 
 export async function POST() {
   const supabase = createClient();
@@ -8,12 +9,32 @@ export async function POST() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
+  // Server-side cap safety net — the client gates first, but enforce here too so
+  // the API can't be called directly to bypass the free-tier vault note limit.
+  const { allowed, current, limit } = await checkUsageCap(user.id, "vault_notes");
+  if (!allowed) {
+    return NextResponse.json(
+      {
+        error: "Usage limit reached",
+        code: "CAP_EXCEEDED",
+        feature: "vault_notes",
+        current,
+        limit,
+      },
+      { status: 403 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("notes")
     .insert({ user_id: user.id, title: "", content: [{ type: "text", text: "" }], tags: [] })
     .select("id")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Count the new note toward the monthly cap (no-op for paid tiers).
+  await incrementUsage(user.id, "vault_notes");
+
   return NextResponse.json({ id: data.id });
 }
 

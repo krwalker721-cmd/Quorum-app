@@ -7,6 +7,7 @@ import YourProjects from "@/components/widgets/YourProjects";
 import RecentHandshakes from "@/components/widgets/RecentHandshakes";
 import ActiveNow from "@/components/widgets/ActiveNow";
 import FeedbackPrompt from "@/components/widgets/FeedbackPrompt";
+import UsageWidget from "@/components/widgets/UsageWidget";
 import CohortNetwork from "@/components/viz/CohortNetwork";
 import ActivityHeatmap from "@/components/viz/ActivityHeatmap";
 import StageBreakdown from "@/components/viz/StageBreakdown";
@@ -166,6 +167,8 @@ export default async function HomePage() {
         </div>
 
         <aside className="space-y-5">
+          {/* Free-tier only — self-hides for paid tiers */}
+          <UsageWidget />
           <WeeklyCheckin userId={user.id} />
           <YourProjects userId={user.id} />
           <RecentHandshakes userId={user.id} username={profile?.username ?? null} />

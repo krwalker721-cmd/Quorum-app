@@ -11,6 +11,8 @@ import {
 import dynamic from "next/dynamic";
 import NoteEditorBoundary from "./NoteEditorBoundary";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import { usePaywall } from "@/hooks/usePaywall";
+import PaywallModal from "@/components/PaywallModal";
 
 // Tiptap is a client-only library — disable SSR for it entirely to avoid
 // hydration mismatches surfacing as the generic Next.js error overlay.
@@ -42,6 +44,7 @@ export default function NotesTab({
   initialNotes: NoteRow[];
   initialCollections: NoteCollectionRow[];
 }) {
+  const { paywallState, checkAndGate, closePaywall } = usePaywall();
   const [notes, setNotes] = useState<NoteRow[]>(initialNotes);
   const [collections, setCollections] = useState<NoteCollectionRow[]>(initialCollections);
   const [activeId, setActiveId] = useState<string | null>(initialNotes[0]?.id ?? null);
@@ -61,6 +64,12 @@ export default function NotesTab({
   }, [notes, search]);
 
   async function createNote() {
+    // Paywall gate — creating a NEW note is capped on free tier. Editing an
+    // existing note is never gated.
+    const allowed = await checkAndGate("vault_notes");
+    if (!allowed) return;
+    // The POST route enforces the cap and increments usage server-side, so no
+    // separate /api/usage/increment call here (it would double-count).
     const res = await fetch("/api/vault/notes", { method: "POST" });
     if (!res.ok) return;
     const { id } = await res.json();
@@ -247,6 +256,17 @@ export default function NotesTab({
           itemLabel="note"
           onConfirm={() => performDelete(pendingDelete)}
           onClose={() => setPendingDelete(null)}
+        />
+      )}
+
+      {paywallState.isOpen && (
+        <PaywallModal
+          isOpen={paywallState.isOpen}
+          onClose={closePaywall}
+          feature={paywallState.feature!}
+          currentUsage={paywallState.currentUsage}
+          limit={paywallState.limit}
+          hadTrial={paywallState.hadTrial}
         />
       )}
     </div>

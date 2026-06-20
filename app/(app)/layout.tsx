@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
 import AppOverlay from "@/components/AppOverlay";
+import TrialBanner from "@/components/TrialBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .select("id, full_name, stage, status, tier")
     .eq("id", user.id)
     .single();
+
+  // Subscription status + trial info for the trial banner (best-effort).
+  let subStatus = "trialing";
+  let trialEndsAt: string | null = null;
+  try {
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("status, trial_ends_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (sub) {
+      subStatus = sub.status ?? "trialing";
+      trialEndsAt = (sub.trial_ends_at as string | null) ?? null;
+    }
+  } catch {}
 
   if (profile?.status === "suspended") redirect("/suspended");
   if (WAITLIST_ENABLED && profile?.status !== "approved") redirect("/pending");
@@ -92,6 +108,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               transition: "margin-left 0.25s ease",
             }}
           >
+            <TrialBanner
+              trialEndsAt={trialEndsAt}
+              tier={(profile?.tier as "free" | "member" | "partner") ?? "free"}
+              status={subStatus}
+            />
             {children}
           </div>
           <AppOverlay nodeCount={nodeCount} />
