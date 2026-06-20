@@ -10,12 +10,14 @@ import Feedback from "./sections/Feedback";
 import PlatformHealth from "./sections/PlatformHealth";
 import Settings from "./sections/Settings";
 import Subscriptions from "./sections/Subscriptions";
+import PartnerWaitlist from "./sections/PartnerWaitlist";
 import Referrals from "./sections/Referrals";
 
 type Section =
   | "overview"
   | "users"
   | "subscriptions"
+  | "partner_waitlist"
   | "referrals"
   | "content"
   | "vault_nominations"
@@ -27,6 +29,7 @@ const NAV: { id: Section; label: string }[] = [
   { id: "overview", label: "overview" },
   { id: "users", label: "users" },
   { id: "subscriptions", label: "subscriptions" },
+  { id: "partner_waitlist", label: "partner_waitlist" },
   { id: "referrals", label: "referrals" },
   { id: "content", label: "content" },
   { id: "vault_nominations", label: "vault_nominations" },
@@ -137,6 +140,7 @@ export default function AdminApp() {
         {section === "overview" && <Overview />}
         {section === "users" && <Users />}
         {section === "subscriptions" && <Subscriptions />}
+        {section === "partner_waitlist" && <PartnerWaitlist />}
         {section === "referrals" && <Referrals />}
         {section === "content" && <Content onReportCountChange={setReportCount} />}
         {section === "vault_nominations" && <VaultNominations />}

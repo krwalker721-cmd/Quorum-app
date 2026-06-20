@@ -48,8 +48,8 @@ const NAV_MAIN: NavItem[] = [
 
 const NAV_WORKSPACE: NavItem[] = [
   { href: "/collab", label: "collab_board", glyph: "⊞", dotKey: "collab" },
-  { href: "/referrals", label: "referrals", glyph: "⇄" },
-  { href: "/settings", label: "settings", glyph: "⚙" },
+  { href: "/referrals", label: "referrals", glyph: "⇄", dotKey: "referrals" },
+  { href: "/settings", label: "settings", glyph: "⚙", dotKey: "settings" },
 ];
 
 const NAV: NavItem[] = [...NAV_MAIN, ...NAV_WORKSPACE];
@@ -232,6 +232,54 @@ export default function Sidebar({
           );
         })}
       </nav>
+
+      {/* Partner teaser — always-on awareness of the coming tier. Full mini card
+          when expanded; a single purple dot when collapsed. */}
+      {collapsed ? (
+        <Link
+          href="/pricing#partner"
+          title="partner — coming soon"
+          aria-label="partner — coming soon"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "8px 0",
+          }}
+        >
+          <span
+            aria-hidden
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "#a78bfa",
+            }}
+          />
+        </Link>
+      ) : (
+        <Link
+          href="/pricing#partner"
+          style={{
+            display: "block",
+            margin: "8px 12px",
+            padding: "8px 12px",
+            background: "rgba(167,139,250,0.04)",
+            borderRadius: 4,
+            border: "1px solid rgba(167,139,250,0.1)",
+            textDecoration: "none",
+          }}
+        >
+          <p
+            className="font-mono"
+            style={{ fontSize: 8, color: "#a78bfa", marginBottom: 2, letterSpacing: "0.05em" }}
+          >
+            // partner
+          </p>
+          <p className="font-mono" style={{ fontSize: 8, color: "#484f58" }}>
+            coming soon
+          </p>
+        </Link>
+      )}
 
       <SidebarTierBadge collapsed={collapsed} />
       <CohortPanel members={cohort} currentUserId={currentUserId} collapsed={collapsed} />

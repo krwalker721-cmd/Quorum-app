@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PostCard, { PostWithAuthor } from "@/components/PostCard";
 import PulseEmptyState from "@/components/pulse/PulseEmptyState";
+import PulseUpgradeNudge from "@/components/pulse/PulseUpgradeNudge";
 
 const PAGE = 20;
 
@@ -152,6 +153,9 @@ export default function PulseFeed({
 
   return (
     <div className="space-y-4 pulse-feed-container">
+      {/* Free-tier (non-trial) cap nudge — self-hides otherwise. */}
+      <PulseUpgradeNudge />
+
       {tagFilter && (
         <div
           className="flex items-center justify-between px-4 py-3 border rounded-xl"

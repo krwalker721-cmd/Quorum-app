@@ -280,7 +280,12 @@ export default async function ProfilePage({
                 <div className="mt-3 flex items-center gap-3 flex-wrap">
                   <StagePill stage={profile.stage} />
                   {isOwner && <AdvanceStageButton currentStage={profile.stage} />}
-                  {canSeeTier && <TierPill tier={profile.tier} />}
+                  {/* Owner/admin see any tier (incl. free); other viewers only
+                      see member/partner — free is the default and adds no value
+                      as a label on someone else's profile. */}
+                  {(canSeeTier ||
+                    profile.tier === "member" ||
+                    profile.tier === "partner") && <TierPill tier={profile.tier} />}
                   {handshakeCount > 0 && (
                     <span
                       className="font-mono text-[0.8rem]"

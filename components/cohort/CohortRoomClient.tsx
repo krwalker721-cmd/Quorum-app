@@ -16,11 +16,22 @@ import Meter from "@/components/Meter";
 import Link from "next/link";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
+import { useTier } from "@/contexts/TierContext";
 import {
   isAnniversary,
   type RosterFlags,
   type MemberRoomStats,
 } from "@/lib/recognition";
+
+// Cohort-post usage counter color ramps with how close the user is to the cap.
+function usageColor(used: number, limit: number): string {
+  if (limit <= 0) return "#f85149";
+  const pct = (used / limit) * 100;
+  if (pct >= 100) return "#f85149";
+  if (pct >= 81) return "#f59e0b";
+  if (pct >= 51) return "#8b949e";
+  return "#484f58";
+}
 
 type Member = {
   id: string;
@@ -124,7 +135,10 @@ export default function CohortRoomClient({
 }) {
   const router = useRouter();
   const online = usePresence();
+  const { tier, status } = useTier();
   const { paywallState, checkAndGate, closePaywall } = usePaywall();
+  // Free-tier (non-trial) cohort-post usage for the counter above the composer.
+  const [cohortUsage, setCohortUsage] = useState<{ current: number; limit: number } | null>(null);
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [postOpen, setPostOpen] = useState(false);
@@ -141,6 +155,34 @@ export default function CohortRoomClient({
     () => new Map(members.map((m) => [m.id, m])),
     [members]
   );
+
+  const showUsageCounter = tier === "free" && status !== "trialing";
+
+  // Pull cohort-post usage for free-tier (non-trial) users only.
+  useEffect(() => {
+    if (!showUsageCounter) {
+      setCohortUsage(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/usage");
+        const json = await res.json();
+        if (!cancelled) {
+          setCohortUsage({
+            current: json.usage?.cohort_posts ?? 0,
+            limit: json.limits?.cohort_posts ?? 0,
+          });
+        }
+      } catch {
+        // ignore — counter simply won't render
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showUsageCounter]);
 
   // Hydrate the status-board collapse state from localStorage (default open).
   useEffect(() => {
@@ -338,6 +380,7 @@ export default function CohortRoomClient({
     setPosting(false);
     if (!error) {
       setMessageText("");
+      setCohortUsage((u) => (u ? { ...u, current: u.current + 1 } : u));
       fetch("/api/usage/increment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -736,6 +779,23 @@ export default function CohortRoomClient({
               })}
               <div ref={bottomRef} />
             </div>
+
+            {/* Free-tier usage counter — sits just above the composer. */}
+            {showUsageCounter && cohortUsage && cohortUsage.limit > 0 && (
+              <div
+                className="max-w-3xl xl:max-w-none"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
+                  fontSize: 9,
+                  color: usageColor(cohortUsage.current, cohortUsage.limit),
+                  letterSpacing: "0.05em",
+                  padding: "4px 0",
+                  textAlign: "right",
+                }}
+              >
+                {cohortUsage.current} / {cohortUsage.limit} cohort posts this month
+              </div>
+            )}
 
             {/* Quick message input — structured posts still use "+ post to room" */}
             <div className="cohort-input-bar max-w-3xl xl:max-w-none">

@@ -14,6 +14,7 @@ import NeedApplicationsPanel from "./NeedApplicationsPanel";
 import ProjectDetailModal from "./ProjectDetailModal";
 import JoinRequestModal from "./JoinRequestModal";
 import BookmarkButton from "@/components/BookmarkButton";
+import EmptyStateUpgradeLine from "@/components/EmptyStateUpgradeLine";
 import PulseBar, { type PulseEvent } from "./PulseBar";
 import YourWorkspace, { type WorkspaceProject } from "./YourWorkspace";
 import ProjectMenu from "./ProjectMenu";
@@ -385,6 +386,9 @@ function ProjectsList({
         <p className="empty-panel-sub">
           someone has to go first — post what you&apos;re building and who you need.
         </p>
+        <EmptyStateUpgradeLine>
+          Upgrade to Member to post projects, needs, and find co-builders.
+        </EmptyStateUpgradeLine>
       </div>
     );
   }

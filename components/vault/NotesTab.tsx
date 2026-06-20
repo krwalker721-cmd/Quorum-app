@@ -13,6 +13,7 @@ import NoteEditorBoundary from "./NoteEditorBoundary";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
+import EmptyStateUpgradeLine from "@/components/EmptyStateUpgradeLine";
 
 // Tiptap is a client-only library — disable SSR for it entirely to avoid
 // hydration mismatches surfacing as the generic Next.js error overlay.
@@ -412,6 +413,9 @@ function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
             <p className="text-text-muted text-sm leading-relaxed mb-5">
               capture decisions, frameworks, retrospectives — anything worth organizing.
             </p>
+            <EmptyStateUpgradeLine>
+              You have 1 note on the free tier. Upgrade to Member for unlimited.
+            </EmptyStateUpgradeLine>
           </>
         )}
         <button

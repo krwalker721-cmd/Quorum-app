@@ -8,6 +8,7 @@ import VaultStatStrip from "./VaultStatStrip";
 import LibraryTab from "./LibraryTab";
 import NotesTab from "./NotesTab";
 import CommunityWisdomTab from "./CommunityWisdomTab";
+import VaultUpgradeNudge from "./VaultUpgradeNudge";
 import type { NoteRow, NoteCollectionRow } from "@/lib/vault";
 
 export type LibraryItem = {
@@ -151,6 +152,9 @@ export default function VaultPage({
           />
         )}
       </div>
+
+      {/* Free-tier (non-trial) nudge — self-hides for paid and trial users. */}
+      <VaultUpgradeNudge />
     </div>
   );
 }

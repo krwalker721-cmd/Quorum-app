@@ -34,12 +34,17 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const TIERS = ["free", "member", "partner"] as const;
+const STATUSES = ["trialing", "active", "past_due", "canceled"] as const;
 
 export default function SubscriptionsSection() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [tierFilter, setTierFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [nudgingId, setNudgingId] = useState<string | null>(null);
+  const [nudged, setNudged] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,13 +83,35 @@ export default function SubscriptionsSection() {
     }
   }
 
-  const filtered = q
-    ? rows.filter((r) =>
-        [r.username, r.full_name, r.email]
-          .filter(Boolean)
-          .some((v) => v!.toLowerCase().includes(q.toLowerCase())),
-      )
-    : rows;
+  async function sendNudge(userId: string) {
+    setNudgingId(userId);
+    try {
+      const res = await adminFetch("/api/admin/nudge", {
+        method: "POST",
+        body: JSON.stringify({ id: userId }),
+      });
+      if (res.ok) {
+        setNudged((prev) => new Set(prev).add(userId));
+      } else {
+        const j = await res.json().catch(() => ({}));
+        alert(j.error ?? "failed");
+      }
+    } finally {
+      setNudgingId(null);
+    }
+  }
+
+  const filtered = rows.filter((r) => {
+    if (tierFilter !== "all" && r.tier !== tierFilter) return false;
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (q) {
+      const match = [r.username, r.full_name, r.email]
+        .filter(Boolean)
+        .some((v) => v!.toLowerCase().includes(q.toLowerCase()));
+      if (!match) return false;
+    }
+    return true;
+  });
 
   return (
     <SectionShell title="subscriptions">
@@ -95,6 +122,34 @@ export default function SubscriptionsSection() {
           onChange={(e) => setQ(e.target.value)}
           className="md:max-w-sm"
         />
+        <select
+          value={tierFilter}
+          onChange={(e) => setTierFilter(e.target.value)}
+          className="font-mono text-[0.65rem] lowercase"
+          style={{ width: "auto", padding: "4px 8px" }}
+          title="filter by tier"
+        >
+          <option value="all">all tiers</option>
+          {TIERS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="font-mono text-[0.65rem] lowercase"
+          style={{ width: "auto", padding: "4px 8px" }}
+          title="filter by status"
+        >
+          <option value="all">all statuses</option>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
         <button
           onClick={load}
           className="font-mono lowercase text-[0.7rem] px-3 py-2 border"
@@ -118,18 +173,19 @@ export default function SubscriptionsSection() {
               <th className="text-left px-3 py-2">period_end</th>
               <th className="text-left px-3 py-2">stripe_customer</th>
               <th className="text-left px-3 py-2">change_tier</th>
+              <th className="text-left px-3 py-2">nudge</th>
             </tr>
           </thead>
           <tbody>
             {loading && rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-6 font-mono text-xs text-text-faint">
+                <td colSpan={8} className="px-3 py-6 font-mono text-xs text-text-faint">
                   loading…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-6 font-mono text-xs text-text-faint">
+                <td colSpan={8} className="px-3 py-6 font-mono text-xs text-text-faint">
                   no subscriptions
                 </td>
               </tr>
@@ -178,6 +234,24 @@ export default function SubscriptionsSection() {
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      onClick={() => sendNudge(r.user_id)}
+                      disabled={nudgingId === r.user_id || nudged.has(r.user_id)}
+                      className="font-mono lowercase text-[0.6rem] px-2 py-1 border disabled:opacity-50"
+                      style={{
+                        borderColor: "var(--border)",
+                        color: nudged.has(r.user_id) ? "#22c55e" : "#f59e0b",
+                      }}
+                      title="send an upgrade nudge notification"
+                    >
+                      {nudged.has(r.user_id)
+                        ? "sent ✓"
+                        : nudgingId === r.user_id
+                          ? "…"
+                          : "send nudge"}
+                    </button>
                   </td>
                 </tr>
               ))

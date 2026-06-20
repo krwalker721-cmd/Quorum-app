@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/stage";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
+import { useTier } from "@/contexts/TierContext";
+import EmptyStateUpgradeLine from "@/components/EmptyStateUpgradeLine";
 
 type Partner = {
   id: string;
@@ -39,7 +42,11 @@ export default function MessagesClient({
   conversations: Conversation[];
   initialPartnerId: string | null;
 }) {
+  const router = useRouter();
+  const { tier, status } = useTier();
   const { paywallState, checkAndGate, closePaywall } = usePaywall();
+  // Monthly message usage — drives the 80%+ nudge bar for free-tier users.
+  const [msgUsage, setMsgUsage] = useState<{ current: number; limit: number } | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialPartnerId ?? initialConversations[0]?.partner.id ?? null
@@ -56,6 +63,39 @@ export default function MessagesClient({
   const supabase = useMemo(() => createClient(), []);
   const selected =
     conversations.find((c) => c.partner.id === selectedId)?.partner ?? null;
+
+  // Free-tier (non-trial) monthly message usage for the 80%+ nudge bar.
+  const showUsageNudge =
+    tier === "free" &&
+    status !== "trialing" &&
+    msgUsage !== null &&
+    msgUsage.limit > 0 &&
+    msgUsage.current / msgUsage.limit >= 0.8;
+
+  useEffect(() => {
+    if (tier !== "free" || status === "trialing") {
+      setMsgUsage(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/usage");
+        const json = await res.json();
+        if (!cancelled) {
+          setMsgUsage({
+            current: json.usage?.messages ?? 0,
+            limit: json.limits?.messages ?? 0,
+          });
+        }
+      } catch {
+        // ignore — bar simply won't render
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tier, status]);
 
   // Founder search — debounced lookup against profiles
   useEffect(() => {
@@ -233,7 +273,44 @@ export default function MessagesClient({
   }
 
   return (
-    <div className="flex app-pane">
+    <div className="flex flex-col app-pane">
+      {showUsageNudge && (
+        <div
+          style={{
+            background: "rgba(245,158,11,0.04)",
+            borderBottom: "1px solid rgba(245,158,11,0.1)",
+            padding: "8px 16px",
+            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
+            fontSize: 10,
+            color: "#484f58",
+            letterSpacing: "0.05em",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span>
+            // {msgUsage!.current} of {msgUsage!.limit} messages used this month
+          </span>
+          <button
+            type="button"
+            onClick={() => router.push("/pricing")}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: 10,
+              letterSpacing: "0.05em",
+              color: "#f59e0b",
+              padding: 0,
+            }}
+          >
+            upgrade for unlimited →
+          </button>
+        </div>
+      )}
+      <div className="flex flex-1 min-h-0">
       {/* LEFT — inbox */}
       <div
         className="flex flex-col border-r shrink-0"
@@ -314,6 +391,9 @@ export default function MessagesClient({
                 <span className="empty-panel-glyph" aria-hidden>✉</span>
                 <p className="empty-panel-title">no conversations yet.</p>
                 <p className="empty-panel-sub">search above to find a founder worth talking to.</p>
+                <EmptyStateUpgradeLine>
+                  You have 3 messages on the free tier this month. Upgrade for unlimited.
+                </EmptyStateUpgradeLine>
               </div>
             </div>
           )}
@@ -480,6 +560,7 @@ export default function MessagesClient({
             </div>
           </div>
         )}
+      </div>
       </div>
 
       {paywallState.isOpen && (

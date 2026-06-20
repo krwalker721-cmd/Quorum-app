@@ -16,6 +16,8 @@ import RecognitionNotices from "@/components/RecognitionNotices";
 import { hasDepthRing, isAnniversary, postsMovedTheRoomBatch } from "@/lib/recognition";
 import WeeklySummaryCard from "@/components/WeeklySummaryCard";
 import UpgradeToast from "@/components/UpgradeToast";
+import HomeWelcomeCard from "@/components/HomeWelcomeCard";
+import PartnerTeaserCard from "@/components/PartnerTeaserCard";
 import { buildWeeklySummary } from "@/lib/weeklySummary";
 
 export const dynamic = "force-dynamic";
@@ -155,6 +157,10 @@ export default async function HomePage() {
         trustScore={profile?.trust_score ?? 0}
       />
 
+      <div className="pt-5">
+        <HomeWelcomeCard />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 px-7 py-7">
         <div className="lg:col-span-2 space-y-8">
           <Feed initial={initialPosts} currentUserId={user.id} />
@@ -169,6 +175,8 @@ export default async function HomePage() {
         <aside className="space-y-5">
           {/* Free-tier only — self-hides for paid tiers */}
           <UsageWidget />
+          {/* Always visible — aspiration for free AND member tiers */}
+          <PartnerTeaserCard />
           <WeeklyCheckin userId={user.id} />
           <YourProjects userId={user.id} />
           <RecentHandshakes userId={user.id} username={profile?.username ?? null} />

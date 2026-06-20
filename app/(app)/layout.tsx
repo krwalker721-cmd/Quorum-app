@@ -6,6 +6,7 @@ import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
 import AppOverlay from "@/components/AppOverlay";
 import TrialBanner from "@/components/TrialBanner";
+import { TierProvider } from "@/contexts/TierContext";
 import { trackLoginEvent } from "@/lib/referral-helpers";
 
 export const dynamic = "force-dynamic";
@@ -107,6 +108,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <PresenceProvider currentUserId={user.id}>
       <NotificationsProvider currentUserId={user.id} cohortId={cohortIdForDots}>
+        <TierProvider>
         <div className="min-h-screen root-layout">
           <Sidebar cohort={cohort} currentUserId={user.id} />
           <div
@@ -125,6 +127,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
           <AppOverlay nodeCount={nodeCount} />
         </div>
+        </TierProvider>
       </NotificationsProvider>
     </PresenceProvider>
   );

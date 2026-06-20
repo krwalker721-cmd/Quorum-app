@@ -46,6 +46,9 @@ export async function GET() {
     tier: profile?.tier || "free",
     status: subscription?.status || "trialing",
     trial_ends_at: profile?.trial_ends_at || subscription?.trial_ends_at || null,
+    // created_at of the subscription row — powers the "first 24h of trial"
+    // welcome card on the home feed.
+    created_at: subscription?.created_at || null,
     current_period_end: subscription?.current_period_end || null,
     cancel_at_period_end: subscription?.cancel_at_period_end || false,
     has_stripe_subscription: !!subscription?.stripe_subscription_id,
