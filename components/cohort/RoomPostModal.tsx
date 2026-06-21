@@ -12,7 +12,7 @@ const TYPES: { value: RoomType; color: string; desc: string }[] = [
   { value: "update", color: "#6e7681", desc: "here's where i'm at" },
   { value: "decision", color: "#f59e0b", desc: "deciding something, thoughts welcome" },
   { value: "win", color: "#22c55e", desc: "something worked" },
-  { value: "blocker", color: "#f59e0b", desc: "stuck on something specific" },
+  { value: "blocker", color: "#f85149", desc: "stuck on something specific" },
 ];
 
 export default function RoomPostModal({

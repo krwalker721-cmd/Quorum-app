@@ -282,6 +282,19 @@ select {
   padding-right: 32px;
 }
 
+/* Checkboxes & radios keep native rendering — accent-color (e.g. note task
+ * lists) only works with native appearance, and they shouldn't inherit the
+ * full-width box styling from the text-input rule above. */
+input[type="checkbox"], input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: auto;
+  width: auto;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+}
+
 input:focus, select:focus, textarea:focus {
   border-color: #58a6ff;
   box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.12);
