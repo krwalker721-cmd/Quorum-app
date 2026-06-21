@@ -119,33 +119,30 @@ export default function ReplyThread({
     if (!allowed) return;
     setBusy(true);
     setErr(null);
-    const { data, error } = await supabase
-      .from("posts")
-      .insert({
-        author_id: currentUserId,
+    // Server route enforces the cap and increments usage after the insert.
+    const res = await fetch("/api/replies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         content: trimmed,
         post_type: postType,
         cohort_id: cohortId ?? null,
         parent_post_id: postId,
         is_anonymous: anon,
         local_hour: new Date().getHours(),
-      })
-      .select("id, author_id, content, is_anonymous, created_at")
-      .single();
+      }),
+    });
     setBusy(false);
-    if (error) {
-      setErr(error.message.toLowerCase());
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setErr((d.error || "failed to reply").toLowerCase());
       return;
     }
+    const { reply } = await res.json();
     setText("");
     setAnon(false);
-    fetch("/api/usage/increment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ feature: "replies" }),
-    }).catch(() => {});
-    if (data) {
-      const [hydrated] = await hydrate([data as Reply]);
+    if (reply) {
+      const [hydrated] = await hydrate([reply as Reply]);
       setReplies((prev) => addUnique(prev, hydrated));
     }
   }

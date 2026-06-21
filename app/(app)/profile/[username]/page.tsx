@@ -289,7 +289,7 @@ export default async function ProfilePage({
                   {handshakeCount > 0 && (
                     <span
                       className="font-mono text-[0.8rem]"
-                      style={{ color: "#f59e0b" }}
+                      style={{ color: "#8b949e" }}
                       aria-label={`${handshakeCount} handshakes`}
                     >
                        {handshakeCount}

@@ -79,7 +79,7 @@ const TYPE_STYLE: Record<
     needsReply: true,
   },
   win: { color: "#22c55e", label: "win" },
-  blocker: { color: "#f59e0b", label: "blocker" },
+  blocker: { color: "#f85149", label: "blocker" },
 };
 
 function isDifferentDay(a: string, b: string): boolean {
@@ -369,24 +369,26 @@ export default function CohortRoomClient({
     const allowed = await checkAndGate("cohort_posts");
     if (!allowed) return;
     setPosting(true);
-    const { error } = await supabase.from("posts").insert({
-      author_id: currentUserId,
-      content: trimmed,
-      post_type: "cohort",
-      cohort_id: cohortId,
-      is_anonymous: false,
-      local_hour: new Date().getHours(),
+    // Server route enforces the cap and increments usage after the insert.
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: trimmed,
+        post_type: "cohort",
+        cohort_id: cohortId,
+        is_anonymous: false,
+        local_hour: new Date().getHours(),
+      }),
     });
     setPosting(false);
-    if (!error) {
+    if (res.ok) {
       setMessageText("");
       setCohortUsage((u) => (u ? { ...u, current: u.current + 1 } : u));
-      fetch("/api/usage/increment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feature: "cohort_posts" }),
-      }).catch(() => {});
-    } else window.alert(error.message.toLowerCase());
+    } else {
+      const data = await res.json().catch(() => ({}));
+      window.alert((data.error || "failed to post").toLowerCase());
+    }
   }
 
   return (

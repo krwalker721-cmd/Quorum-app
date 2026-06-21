@@ -69,7 +69,6 @@ export default function NewPostButton({
     }
     setBusy(true);
     setErr(null);
-    const supabase = createClient();
     const payload: Record<string, any> = {
       author_id: userId,
       content: content.trim(),
@@ -85,21 +84,21 @@ export default function NewPostButton({
       // Attach to the user's (first) cohort so it lands in a real cohort room.
       payload.cohort_id = myCohortIds?.[0] ?? null;
     }
-    const { error } = await supabase.from("posts").insert(payload);
+    // Server route enforces the cap and increments usage after the insert.
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
     setBusy(false);
-    if (error) {
-      setErr(error.message.toLowerCase());
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErr((data.error || "failed to create post").toLowerCase());
       return;
     }
     if (anon) {
       fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
-    // Track usage after a successful post (free tier only — API no-ops for paid).
-    fetch("/api/usage/increment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ feature: postType === "pulse" ? "pulse_posts" : "cohort_posts" }),
-    }).catch(() => {});
     setContent("");
     setAnon(false);
     setOpen(false);

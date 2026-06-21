@@ -237,13 +237,14 @@ export default function MessagesClient({
         created_at: new Date().toISOString(),
       },
     ]);
-    const { error } = await supabase.from("messages").insert({
-      sender_id: currentUserId,
-      recipient_id: selectedId,
-      content,
+    // Server route enforces the cap and increments usage after the insert.
+    const res = await fetch("/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, recipient_id: selectedId }),
     });
     setSending(false);
-    if (error) {
+    if (!res.ok) {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setDraft(content);
       return;
@@ -253,12 +254,6 @@ export default function MessagesClient({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ recipient_id: selectedId }),
-    }).catch(() => {});
-    // Track usage after a successful send (free tier only).
-    fetch("/api/usage/increment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ feature: "messages" }),
     }).catch(() => {});
     // bump preview
     setConversations((prev) => {

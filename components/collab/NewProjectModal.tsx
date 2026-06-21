@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 const PROJECT_CATEGORIES = ["growth", "fundraising", "hiring", "product", "ops"];
 const NEED_CATEGORIES = ["quick_ask", "need"];
 const LOOKING_FOR = ["co-thinker", "technical", "design", "sales-growth", "advisor"];
 
 export default function NewProjectModal({
-  userId,
   postType,
   onClose,
   onCreated,
@@ -29,20 +27,24 @@ export default function NewProjectModal({
     if (!title.trim()) return;
     setBusy(true);
     setErr(null);
-    const supabase = createClient();
-    const { error } = await supabase.from("projects").insert({
-      owner_id: userId,
-      title: title.trim(),
-      name: title.trim(),
-      description: description.trim() || null,
-      category,
-      looking_for: postType === "project" ? lookingFor : null,
-      status: "open",
-      post_type: postType,
+    // Server route enforces the collab cap and increments usage after the insert.
+    const res = await fetch("/api/collab", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: title.trim(),
+        name: title.trim(),
+        description: description.trim() || null,
+        category,
+        looking_for: postType === "project" ? lookingFor : null,
+        status: "open",
+        post_type: postType,
+      }),
     });
     setBusy(false);
-    if (error) {
-      setErr(error.message.toLowerCase());
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErr((data.error || "failed to create").toLowerCase());
       return;
     }
     onCreated();

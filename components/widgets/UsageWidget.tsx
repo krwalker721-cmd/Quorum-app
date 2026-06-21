@@ -18,6 +18,7 @@ const ROWS: { key: Feature; label: string }[] = [
 
 interface UsageData {
   tier: string;
+  status: string;
   usage: Record<string, number>;
   limits: Record<string, number>;
 }
@@ -92,8 +93,9 @@ export default function UsageWidget() {
     );
   }
 
-  // Only free tier sees this widget.
-  if (!data || data.tier !== "free") return null;
+  // Only free tier sees this widget — and never during an active trial, when
+  // caps don't apply.
+  if (!data || data.tier !== "free" || data.status === "trialing") return null;
 
   // Show the upgrade CTA when any tracked feature is at 80%+ usage.
   const anyHigh = ROWS.some(({ key }) => {
@@ -188,7 +190,7 @@ export default function UsageWidget() {
         );
       })}
 
-      {anyHigh && (
+      {anyHigh && data.tier === "free" && data.status !== "trialing" && (
         <button
           onClick={() => router.push("/pricing")}
           style={{

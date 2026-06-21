@@ -131,7 +131,7 @@ function ReportedPosts({ onCount }: { onCount?: (n: number) => void }) {
             <button
               onClick={() => act(r.id, "remove")}
               className="font-mono text-[0.65rem] lowercase px-3 py-1.5"
-              style={{ background: "#ef4444", color: "#000" }}
+              style={{ background: "#f85149", color: "#e6edf3" }}
             >
               remove post
             </button>

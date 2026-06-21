@@ -366,7 +366,7 @@ function DeleteModal({
             onClick={() => onConfirm(typed)}
             disabled={typed !== user.username}
             className="font-mono lowercase text-[0.7rem] px-3 py-1.5 disabled:opacity-50"
-            style={{ background: "#ef4444", color: "#000" }}
+            style={{ background: "#f85149", color: "#e6edf3" }}
           >
             delete permanently
           </button>

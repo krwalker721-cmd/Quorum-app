@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import type { OnboardingStepProps } from "./types";
 import { C, Eyebrow, GhostButton, Heading, MONO, MonoHint, SANS, StepFrame } from "./ui";
 
@@ -73,23 +72,12 @@ function CollabCard({ card, onPick }: { card: CollabCardData; onPick: (href: str
   );
 }
 
-export default function Step15_ExploreCollab({ onBack, currentStep, totalSteps }: OnboardingStepProps) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-
-  async function complete(target: string) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await fetch("/api/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: true, current_step: totalSteps }),
-      });
-    } catch {
-      // best-effort — still route the founder into the app
-    }
-    router.push(target);
+export default function Step15_ExploreCollab({ onNext, onBack, currentStep, totalSteps }: OnboardingStepProps) {
+  // Step 15 is the last climax screen — it only advances. Completion is handled
+  // by page.tsx when the flow reaches step 18, so the conclusion screens
+  // (16, 17, 18) aren't skipped.
+  function advance() {
+    onNext();
   }
 
   return (
@@ -100,12 +88,12 @@ export default function Step15_ExploreCollab({ onBack, currentStep, totalSteps }
 
       <div style={{ maxWidth: 520, display: "flex", flexDirection: "column", gap: 12 }}>
         {CARDS.map((card) => (
-          <CollabCard key={card.title} card={card} onPick={complete} />
+          <CollabCard key={card.title} card={card} onPick={advance} />
         ))}
       </div>
 
       <div style={{ maxWidth: 520, display: "flex", justifyContent: "center", marginTop: 20 }}>
-        <GhostButton onClick={() => complete("/collab")}>explore on my own →</GhostButton>
+        <GhostButton onClick={advance}>explore on my own →</GhostButton>
       </div>
     </StepFrame>
   );

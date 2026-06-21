@@ -297,11 +297,7 @@ export default function CollabBoardClient({
           postType={newType}
           onClose={() => setNewOpen(false)}
           onCreated={() => {
-            fetch("/api/usage/increment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ feature: "collab_posts" }),
-            }).catch(() => {});
+            // Usage is incremented server-side by /api/collab.
             router.refresh();
           }}
         />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTier } from "@/contexts/TierContext";
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -200,6 +201,7 @@ function ErrorState() {
 
 export default function ReferralsDashboard() {
   const router = useRouter();
+  const { status } = useTier();
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -330,7 +332,7 @@ export default function ReferralsDashboard() {
       </div>
 
       {/* ─── Section 2 — free tier cap notice ───────────────────────────────── */}
-      {tier === "free" && (
+      {tier === "free" && status !== "trialing" && (
         <div
           style={{
             background: "rgba(34,197,94,0.06)",

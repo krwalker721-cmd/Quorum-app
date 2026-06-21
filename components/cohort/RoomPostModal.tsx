@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
@@ -40,29 +39,28 @@ export default function RoomPostModal({
     if (!allowed) return;
     setBusy(true);
     setErr(null);
-    const supabase = createClient();
-    const { error } = await supabase.from("posts").insert({
-      author_id: userId,
-      content: content.trim(),
-      post_type: "cohort",
-      cohort_id: cohortId,
-      room_type: type,
-      is_anonymous: anon,
-      local_hour: new Date().getHours(),
+    // Server route enforces the cap and increments usage after the insert.
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: content.trim(),
+        post_type: "cohort",
+        cohort_id: cohortId,
+        room_type: type,
+        is_anonymous: anon,
+        local_hour: new Date().getHours(),
+      }),
     });
     setBusy(false);
-    if (error) {
-      setErr(error.message.toLowerCase());
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErr((data.error || "failed to post").toLowerCase());
       return;
     }
     if (anon) {
       fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
-    fetch("/api/usage/increment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ feature: "cohort_posts" }),
-    }).catch(() => {});
     onClose();
     router.refresh();
   }

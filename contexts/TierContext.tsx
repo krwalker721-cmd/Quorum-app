@@ -9,6 +9,18 @@ import {
   type ReactNode,
 } from "react";
 
+/**
+ * TierContext provides tier and subscription status app-wide.
+ *
+ * APPROVED direct /api/subscription callers (do not need to use useTier):
+ * - components/SettingsBilling.tsx — needs POST for portal session
+ * - components/ProfileBilling.tsx — needs POST for portal session
+ * - components/PaywallModal.tsx — needs POST for checkout action
+ * - app/(app)/layout.tsx — server-side bootstrap
+ * - components/onboarding/Step18_Pricing.tsx — onboarding checkout context
+ *
+ * All other components must use useTier() from this context.
+ */
 export type Tier = "free" | "member" | "partner";
 
 interface TierData {
