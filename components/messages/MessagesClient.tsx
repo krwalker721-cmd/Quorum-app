@@ -325,10 +325,10 @@ export default function MessagesClient({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="search founders to message..."
-            className="w-full font-mono lowercase text-[0.7rem] px-2.5 py-1.5"
+            className="w-full font-mono lowercase text-[0.7rem] px-2.5 py-1.5 placeholder:text-text-muted"
             style={{
               background: "var(--card)",
-              border: "1px solid var(--border-default)",
+              border: "1px solid #30363d",
               color: "var(--text-primary)",
               outline: "none",
               borderRadius: 4,

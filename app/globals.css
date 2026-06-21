@@ -1158,9 +1158,22 @@ label {
   transition: all 0.1s;
 }
 
-.toolbar-btn:hover { background: #21262d; color: #e6edf3; }
-.toolbar-btn.active { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.toolbar-btn:hover { background: rgba(255,255,255,0.06); color: #e6edf3; }
+.toolbar-btn.active { background: #21262d; color: #e6edf3; }
 .toolbar-divider { width: 1px; height: 16px; background: #21262d; margin: 0 4px; }
+
+/* Manage-billing / upgrade CTA — readable at rest, amber on hover to signal a
+   billing action. Styled via class so the :hover state isn't overridden by
+   inline styles. */
+.billing-manage-btn {
+  background: transparent;
+  border: 1px solid #30363d;
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.billing-manage-btn:hover { border-color: #f59e0b; color: #f59e0b; }
 
 /* ============================================================================
  * Conversation redesign — pulse card + attached replies, cohort chat bubbles

@@ -492,7 +492,7 @@ function PricingBody() {
               // partner
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-disabled)" }}>$99</span>
+              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>$99</span>
               <span className="font-sans" style={{ fontSize: 16, color: "var(--text-disabled)" }}>/month</span>
             </div>
             <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 20px" }}>
@@ -501,7 +501,7 @@ function PricingBody() {
             <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {PARTNER_FEATURES.map((f) => (
-                <Feature key={f} label={f} color="var(--text-disabled)" bullet="var(--border-muted)" />
+                <Feature key={f} label={f} color="var(--text-muted)" bullet="var(--border-muted)" />
               ))}
             </ul>
             <p className="font-mono" style={{ fontSize: 10, color: "var(--text-disabled)", margin: "20px 0 12px" }}>

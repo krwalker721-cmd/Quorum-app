@@ -37,7 +37,11 @@ export default function PulseUpgradeNudge() {
   }, [tier, status]);
 
   if (tier !== "free" || status === "trialing") return null;
-  if (!usage || usage.limit <= 0 || usage.current < usage.limit) return null;
+  // Show as soon as they've used at least one pulse post this month — with only
+  // a 2-post cap, waiting until the cap leaves no room for early awareness.
+  if (!usage || usage.limit <= 0 || usage.current < 1) return null;
+
+  const pct = Math.min(100, Math.round((usage.current / usage.limit) * 100));
 
   return (
     <div
@@ -54,7 +58,7 @@ export default function PulseUpgradeNudge() {
         className="font-mono"
         style={{ fontSize: 10, color: "#484f58" }}
       >
-        // {usage.current} of {usage.limit} pulse posts used
+        // {usage.current} of {usage.limit} pulse posts used this month
       </p>
       <div
         style={{
@@ -65,7 +69,7 @@ export default function PulseUpgradeNudge() {
           overflow: "hidden",
         }}
       >
-        <div style={{ height: "100%", width: "100%", background: "#f59e0b", borderRadius: 2 }} />
+        <div style={{ height: "100%", width: `${pct}%`, background: "#f59e0b", borderRadius: 2 }} />
       </div>
       <button
         type="button"

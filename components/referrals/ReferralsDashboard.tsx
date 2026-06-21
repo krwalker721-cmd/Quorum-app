@@ -138,20 +138,6 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function CheckIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M5 13l4 4L19 7"
-        stroke="#ffffff"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 // ─── loading + error ─────────────────────────────────────────────────────────
 
 function SkeletonBlock({ width, height, style }: { width: string | number; height: number; style?: React.CSSProperties }) {
@@ -296,8 +282,6 @@ export default function ReferralsDashboard() {
       done: gates.engagedWithPulse,
     },
   ];
-  // a step is "active" when it's not done but the previous step is done (or it's first)
-  const firstIncomplete = steps.findIndex((s) => !s.done);
 
   return (
     <div style={{ padding: "24px", maxWidth: 760, margin: "0 auto" }}>
@@ -418,98 +402,76 @@ export default function ReferralsDashboard() {
             </span>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 0, maxWidth: 560 }}>
-            {steps.map((step, i) => {
-              const isActive = !step.done && i === firstIncomplete;
-              const iconBg = step.done
-                ? "#22c55e"
-                : isActive
-                ? "rgba(245,158,11,0.12)"
-                : "#161b22";
-              const iconBorder = step.done
-                ? "none"
-                : isActive
-                ? "1px solid #f59e0b"
-                : "1px solid #21262d";
-              const numColor = isActive ? "#f59e0b" : "#484f58";
-              const labelColor = step.done
-                ? "#22c55e"
-                : isActive
-                ? "#f59e0b"
-                : "#484f58";
-              const connectorColor = step.done ? "#22c55e" : "#21262d";
-              return (
+          <>
+            {/* The three gates are independent — they can be completed in any
+                order. Rendered as standalone cards (no connector line) so the
+                layout doesn't imply a sequence. */}
+            <p
+              style={{
+                fontFamily: MONO,
+                fontSize: 9,
+                color: "#484f58",
+                letterSpacing: "0.06em",
+                marginBottom: 10,
+              }}
+            >
+              // complete all three in any order
+            </p>
+            <div style={{ maxWidth: 560 }}>
+              {steps.map((step) => (
                 <div
                   key={step.n}
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    flex: 1,
-                    position: "relative",
+                    background: "#161b22",
+                    border: `1px solid ${step.done ? "rgba(34,197,94,0.3)" : "#21262d"}`,
+                    borderLeft: `2px solid ${step.done ? "#22c55e" : "#21262d"}`,
+                    borderRadius: "0 4px 4px 0",
+                    padding: "12px 14px",
+                    marginBottom: 8,
                   }}
                 >
-                  {/* connector to next step (drawn from right half of this icon) */}
-                  {i < steps.length - 1 && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 15,
-                        left: "50%",
-                        width: "100%",
-                        height: 2,
-                        background: connectorColor,
-                        zIndex: 0,
-                      }}
-                    />
-                  )}
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      background: iconBg,
-                      border: iconBorder,
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      zIndex: 1,
-                      fontFamily: MONO,
-                      fontSize: 12,
-                      color: numColor,
+                      justifyContent: "space-between",
                     }}
                   >
-                    {step.done ? <CheckIcon /> : step.n}
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: step.done ? "#22c55e" : "#484f58",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {step.label}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: step.done ? "#22c55e" : "#484f58",
+                      }}
+                    >
+                      {step.done ? "✓ done" : "// pending"}
+                    </span>
                   </div>
                   <p
                     style={{
-                      fontFamily: MONO,
-                      fontSize: 9,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      color: labelColor,
-                      marginTop: 10,
-                      textAlign: "center",
-                    }}
-                  >
-                    {step.label}
-                  </p>
-                  <p
-                    style={{
                       fontFamily: SANS,
-                      fontSize: 11,
+                      fontSize: 12,
                       color: "#6e7681",
-                      marginTop: 3,
-                      textAlign: "center",
-                      maxWidth: 120,
+                      marginTop: 4,
                     }}
                   >
                     {step.sub}
                   </p>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

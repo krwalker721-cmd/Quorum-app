@@ -36,21 +36,39 @@ function fmtDate(ts: string | null): string {
   });
 }
 
+// Whole days remaining until `ts` (0 once it's in the past).
+function daysLeft(ts: string | null): number {
+  if (!ts) return 0;
+  const diff = new Date(ts).getTime() - Date.now();
+  if (diff <= 0) return 0;
+  return Math.ceil(diff / 86_400_000);
+}
+
 function statusLine(sub: Sub): { text: string; color: string } {
   if (sub.cancel_at_period_end) {
-    return { text: `Cancels ${fmtDate(sub.current_period_end)}`, color: "var(--text-disabled)" };
+    return { text: `Cancels ${fmtDate(sub.current_period_end)}`, color: "#484f58" };
   }
   switch (sub.status) {
-    case "trialing":
-      return { text: `Trial ends ${fmtDate(sub.trial_ends_at)}`, color: "var(--accent)" };
+    case "trialing": {
+      const d = daysLeft(sub.trial_ends_at);
+      // An expired trial must read as expired — never a stale future-tense
+      // "trial ends" with a past date sitting next to "Unlimited".
+      if (d <= 0) {
+        return { text: "Trial expired — you're on the free tier", color: "#484f58" };
+      }
+      return { text: `Trial ends in ${d} ${d === 1 ? "day" : "days"}`, color: "var(--accent)" };
+    }
     case "active":
+      if (sub.tier === "free") {
+        return { text: "Free tier", color: "#484f58" };
+      }
       return { text: `Active — next billing ${fmtDate(sub.current_period_end)}`, color: "#22c55e" };
     case "past_due":
       return { text: "Payment failed — update your card", color: "#f85149" };
     case "canceled":
-      return { text: "Subscription canceled", color: "var(--text-disabled)" };
+      return { text: "Subscription cancelled", color: "#484f58" };
     default:
-      return { text: "Free plan", color: "var(--text-secondary)" };
+      return { text: "Free tier", color: "#484f58" };
   }
 }
 
@@ -171,14 +189,9 @@ export default function SettingsBilling() {
           disabled={portalLoading}
           className="font-mono billing-manage-btn"
           style={{
-            background: "var(--bg-surface)",
-            border: "1px solid var(--border-default)",
-            color: "var(--text-secondary)",
             fontSize: 11,
             letterSpacing: "0.06em",
             padding: "12px 20px",
-            borderRadius: 4,
-            cursor: "pointer",
             width: "100%",
             textAlign: "left",
             marginTop: 20,

@@ -49,6 +49,7 @@ const NAV_MAIN: NavItem[] = [
 const NAV_WORKSPACE: NavItem[] = [
   { href: "/collab", label: "collab_board", glyph: "⊞", dotKey: "collab" },
   { href: "/referrals", label: "referrals", glyph: "⇄", dotKey: "referrals" },
+  { href: "/profile/me", label: "profile", glyph: "◉" },
   { href: "/settings", label: "settings", glyph: "⚙", dotKey: "settings" },
 ];
 

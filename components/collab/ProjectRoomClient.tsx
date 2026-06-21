@@ -492,14 +492,25 @@ function ThreadTab({
       className="flex flex-col border"
       style={{ background: "var(--card-elev)", borderColor: "var(--border)", minHeight: 500 }}
     >
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 scroll-thin" style={{ maxHeight: 600 }}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 scroll-thin flex flex-col" style={{ maxHeight: 600 }}>
         {messages.length === 0 ? (
-          <div className="empty-panel compact">
-            <p className="empty-panel-title">no messages yet.</p>
-            <p className="empty-panel-sub">kick things off — what&apos;s the next move on this project?</p>
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <p
+              className="font-mono"
+              style={{
+                fontSize: 11,
+                color: "#484f58",
+                letterSpacing: "0.06em",
+                textAlign: "center",
+                padding: "40px 20px",
+              }}
+            >
+              // no messages yet — start the conversation
+            </p>
           </div>
         ) : (
-          messages.map((m) => {
+          <div className="space-y-3 mt-auto">
+            {messages.map((m) => {
             if (m.is_system) {
               return (
                 <p
@@ -541,7 +552,8 @@ function ThreadTab({
                 </div>
               </div>
             );
-          })
+            })}
+          </div>
         )}
       </div>
       <div className="border-t p-3 flex items-center gap-2" style={{ borderColor: "var(--border)" }}>

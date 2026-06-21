@@ -22,18 +22,29 @@ function fmtDate(ts: string | null): string {
   });
 }
 
+function daysLeft(ts: string | null): number {
+  if (!ts) return 0;
+  const diff = new Date(ts).getTime() - Date.now();
+  if (diff <= 0) return 0;
+  return Math.ceil(diff / 86_400_000);
+}
+
 function statusText(sub: Sub | null): string {
   if (!sub) return "Loading…";
   if (sub.cancel_at_period_end) return `Cancels ${fmtDate(sub.current_period_end)}`;
   switch (sub.status) {
-    case "trialing":
-      return `Trial ends ${fmtDate(sub.trial_ends_at)}`;
+    case "trialing": {
+      const d = daysLeft(sub.trial_ends_at);
+      if (d <= 0) return "Trial expired — you're on the free tier";
+      return `Trial ends in ${d} ${d === 1 ? "day" : "days"}`;
+    }
     case "active":
+      if (sub.tier === "free") return "Free tier";
       return `Active — next billing ${fmtDate(sub.current_period_end)}`;
     case "past_due":
       return "Payment failed — update your card";
     case "canceled":
-      return "Subscription canceled";
+      return "Subscription cancelled";
     default:
       return "Free plan — read everything, post within limits";
   }
@@ -104,16 +115,11 @@ export default function ProfileBilling() {
       <button
         onClick={handleManageBilling}
         disabled={loading}
-        className="font-mono"
+        className="font-mono billing-manage-btn"
         style={{
-          background: "transparent",
-          border: "1px solid var(--border-default)",
-          borderRadius: 4,
-          color: "var(--text-secondary)",
           fontSize: 11,
           letterSpacing: "0.06em",
           padding: "10px 16px",
-          cursor: "pointer",
           width: "100%",
           textAlign: "left",
           opacity: loading ? 0.7 : 1,

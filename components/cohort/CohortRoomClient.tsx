@@ -540,7 +540,7 @@ export default function CohortRoomClient({
                 onClick={toggleStatus}
                 aria-expanded={statusOpen}
                 title={statusOpen ? "collapse status board" : "expand status board"}
-                className="flex items-center gap-1.5 font-mono lowercase text-[0.65rem] text-text-faint tracking-wider hover:text-amber transition-colors"
+                className="flex items-center gap-1.5 font-mono lowercase text-[0.65rem] text-text-secondary tracking-wider hover:text-amber transition-colors"
               >
                 <span
                   className="inline-block transition-transform"
@@ -645,7 +645,6 @@ export default function CohortRoomClient({
             <div className="bubbles-container max-w-3xl xl:max-w-none">
               {chronological.length === 0 && (
                 <div className="empty-panel my-4">
-                  <span className="empty-panel-glyph" aria-hidden>◌</span>
                   <p className="empty-panel-title">the room is quiet.</p>
                   <p className="empty-panel-sub">
                     this is your private floor — no performance, no audience. open the conversation.
@@ -782,8 +781,9 @@ export default function CohortRoomClient({
               <div ref={bottomRef} />
             </div>
 
-            {/* Free-tier usage counter — sits just above the composer. */}
-            {showUsageCounter && cohortUsage && cohortUsage.limit > 0 && (
+            {/* Free-tier usage counter — sits just above the composer. Shows
+                once they've made at least one cohort post this month. */}
+            {showUsageCounter && cohortUsage && cohortUsage.limit > 0 && cohortUsage.current >= 1 && (
               <div
                 className="max-w-3xl xl:max-w-none"
                 style={{

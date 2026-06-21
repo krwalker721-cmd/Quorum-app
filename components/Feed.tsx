@@ -71,7 +71,6 @@ export default function Feed({
         <div className="space-y-4">
           {cohort.length === 0 ? (
             <div className="empty-panel">
-              <span className="empty-panel-glyph" aria-hidden>▢</span>
               <p className="empty-panel-title">your cohort is quiet right now.</p>
               <p className="empty-panel-sub">
                 the first post sets the tone — share the decision you&apos;re actually wrestling with.
