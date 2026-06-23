@@ -16,6 +16,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // New users must finish onboarding before reaching any app page. Fail open
+  // (skip the gate) if the table can't be read — e.g. the migration hasn't been
+  // applied yet — so a read error can never lock a user out of the app. NOTE:
+  // redirect() throws, so it must live outside the try/catch.
+  let onboardingComplete = true;
+  try {
+    const { data: ob } = await supabase
+      .from("onboarding_progress")
+      .select("completed")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    onboardingComplete = Boolean(ob?.completed);
+  } catch {
+    onboardingComplete = true;
+  }
+  if (!onboardingComplete) redirect("/onboarding");
+
   // Record a login event for the referral 3-day activity gate. Fire-and-forget,
   // never awaited — the daily upsert dedups, and a failure must never block the
   // page render.
