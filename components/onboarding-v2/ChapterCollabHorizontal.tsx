@@ -171,7 +171,7 @@ export function ChapterCollabHorizontal({ onComplete }: { onComplete: () => void
   });
 
   return (
-    <Chapter ref={ref} id="chapter-12" heightVh={350}>
+    <Chapter ref={ref} id="chapter-12" label="the board" heightVh={350}>
       <StickyStage center={false} style={{ position: "sticky" }}>
         {/* Horizontal track */}
         <motion.div

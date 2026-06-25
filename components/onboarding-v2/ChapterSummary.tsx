@@ -222,7 +222,7 @@ export function ChapterSummary() {
   ];
 
   return (
-    <Chapter ref={ref} id="chapter-13" heightVh={300}>
+    <Chapter ref={ref} id="chapter-13" label="what you built" heightVh={300}>
       <StickyStage style={{ overflow: "visible" }}>
         <motion.div
           style={{

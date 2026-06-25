@@ -1,16 +1,46 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, AnimatePresence, useTransform } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
 import { Chapter, StickyStage, useChapterScroll } from "./sticky";
 import { C, MONO, SANS, hexToRgba } from "./theme";
 
 const QUESTION =
   "Have you ever wanted a room full of founders who have the same mindset as you — and have already solved the problems you're about to face?";
 
-// Chapter 1 — the opening question. Words land one by one when the chapter is
-// reached; conversation bubbles fade in on scroll; tapping either replies and
-// reveals Quorum's "then keep scrolling" before the scroll cue.
+// Each word rises and brightens across its own slice of the chapter's scroll —
+// the opening sentence literally assembles itself under the user's thumb instead
+// of firing once on view. Reversible, scrubbed, never a whileInView fade.
+function Word({
+  children,
+  progress,
+  start,
+}: {
+  children: string;
+  progress: MotionValue<number>;
+  start: number;
+}) {
+  // Floor keeps the opening sentence legible at rest (no "broken render" first
+  // paint); each word still brightens and lifts as it passes under the scroll.
+  const opacity = useTransform(progress, [start, start + 0.05], [0.5, 1]);
+  const y = useTransform(progress, [start, start + 0.05], [10, 0]);
+  return (
+    <motion.span
+      style={{ opacity, y, display: "inline-block", marginRight: "0.28em", willChange: "transform" }}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+// Chapter 1 — the opening question. Words assemble against scroll; conversation
+// bubbles fade in; tapping either replies and reveals Quorum's "then keep
+// scrolling" before the scroll cue. The whole scene recedes as you scroll out.
 export function ChapterQuestion() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useChapterScroll(ref);
@@ -19,14 +49,20 @@ export function ChapterQuestion() {
   const [replied, setReplied] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  // Bubbles fade in across 0.3–0.4 of the chapter's scroll.
-  const bubblesOpacity = useTransform(scrollYProgress, [0.3, 0.4], [0, 1]);
-  const bubblesY = useTransform(scrollYProgress, [0.3, 0.4], [20, 0]);
+  // Words assemble across 0.04–0.42 of the chapter's scroll, staggered by index.
+  const wordStart = (i: number) => 0.05 + (i / words.length) * 0.34;
+
+  // Bubbles fade in across 0.42–0.52, once the sentence has assembled.
+  const bubblesOpacity = useTransform(scrollYProgress, [0.42, 0.52], [0, 1]);
+  const bubblesY = useTransform(scrollYProgress, [0.42, 0.52], [20, 0]);
+
+  // Exit recede.
+  const exitOpacity = useTransform(scrollYProgress, [0.82, 0.99], [1, 0]);
+  const exitScale = useTransform(scrollYProgress, [0.82, 0.99], [1, 1.05]);
 
   function reply() {
     if (replied) return;
     setReplied(true);
-    // The scroll cue follows once Quorum's reply has settled.
     setTimeout(() => setShowHint(true), 1000);
   }
 
@@ -58,16 +94,19 @@ export function ChapterQuestion() {
   );
 
   return (
-    <Chapter ref={ref} id="chapter-1" heightVh={300}>
+    <Chapter ref={ref} id="chapter-1" label="the question" heightVh={320}>
       <StickyStage>
-        <div
+        <motion.div
           style={{
+            opacity: exitOpacity,
+            scale: exitScale,
             width: "100%",
             maxWidth: 640,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             gap: 24,
+            willChange: "opacity, transform",
           }}
         >
           <p
@@ -82,16 +121,9 @@ export function ChapterQuestion() {
             }}
           >
             {words.map((w, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                style={{ display: "inline-block", marginRight: "0.28em" }}
-              >
+              <Word key={i} progress={scrollYProgress} start={wordStart(i)}>
                 {w}
-              </motion.span>
+              </Word>
             ))}
           </p>
 
@@ -167,7 +199,7 @@ export function ChapterQuestion() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </StickyStage>
     </Chapter>
   );

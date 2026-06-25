@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ActionChapter } from "./actionChapter";
+import { Stagger, StaggerItem } from "./flair";
 import { C, SANS, darkTextarea, AmberButton, SkipLink, FieldLabel } from "./theme";
 
 // Chapter 11 — the weekly check-in. Inserts into check_ins with colored accents
@@ -60,7 +61,7 @@ export function ChapterCheckin({ onComplete }: { onComplete: () => void }) {
   ];
 
   return (
-    <ActionChapter id="chapter-11" context="// show up every week">
+    <ActionChapter id="chapter-11" label="weekly rhythm" context="// show up every week">
       <p
         style={{
           fontFamily: SANS,
@@ -73,26 +74,27 @@ export function ChapterCheckin({ onComplete }: { onComplete: () => void }) {
         Three questions. Under 3 minutes. Every week.
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <Stagger style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {blocks.map((b) => (
-          <div
-            key={b.label}
-            style={{
-              background: C.surface,
-              border: `1px solid ${C.border}`,
-              borderLeft: `2px solid ${b.accent}`,
-              borderRadius: "0 4px 4px 0",
-              padding: "14px 16px",
-            }}
-          >
-            <FieldLabel>{b.label}</FieldLabel>
-            <textarea
-              value={b.value}
-              onChange={(e) => b.set(e.target.value)}
-              placeholder={b.placeholder}
-              style={{ ...darkTextarea, minHeight: 60 }}
-            />
-          </div>
+          <StaggerItem key={b.label}>
+            <div
+              style={{
+                background: C.surface,
+                border: `1px solid ${C.border}`,
+                borderLeft: `2px solid ${b.accent}`,
+                borderRadius: "0 4px 4px 0",
+                padding: "14px 16px",
+              }}
+            >
+              <FieldLabel>{b.label}</FieldLabel>
+              <textarea
+                value={b.value}
+                onChange={(e) => b.set(e.target.value)}
+                placeholder={b.placeholder}
+                style={{ ...darkTextarea, minHeight: 60 }}
+              />
+            </div>
+          </StaggerItem>
         ))}
         <div style={{ marginTop: 8 }}>
           <AmberButton onClick={submit} disabled={saving}>
@@ -100,7 +102,7 @@ export function ChapterCheckin({ onComplete }: { onComplete: () => void }) {
           </AmberButton>
           <SkipLink onClick={onComplete}>skip for now →</SkipLink>
         </div>
-      </div>
+      </Stagger>
     </ActionChapter>
   );
 }

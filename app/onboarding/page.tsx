@@ -6,11 +6,15 @@ import { createClient } from "@/lib/supabase/client";
 import { C } from "@/components/onboarding-v2/theme";
 import type { CohortData, CohortMember } from "@/components/onboarding-v2/types";
 
+import { OnboardingScrollProvider } from "@/components/onboarding-v2/scroll";
+import { Atmosphere } from "@/components/onboarding-v2/Atmosphere";
+import { ProgressSpine, type Identity } from "@/components/onboarding-v2/ProgressSpine";
+import { ChapterOpening } from "@/components/onboarding-v2/ChapterOpening";
 import { ChapterQuestion } from "@/components/onboarding-v2/ChapterQuestion";
 import { ChapterBarGraph } from "@/components/onboarding-v2/ChapterBarGraph";
-import { ChapterBridge } from "@/components/onboarding-v2/ChapterBridge";
-import { ChapterPivot } from "@/components/onboarding-v2/ChapterPivot";
+import { ChapterManifesto } from "@/components/onboarding-v2/ChapterManifesto";
 import { ChapterIntroduction } from "@/components/onboarding-v2/ChapterIntroduction";
+import { ChapterIntro } from "@/components/onboarding-v2/ChapterIntro";
 import { ChapterFounderNames } from "@/components/onboarding-v2/ChapterFounderNames";
 import { ChapterProfile } from "@/components/onboarding-v2/ChapterProfile";
 import { ChapterSkills } from "@/components/onboarding-v2/ChapterSkills";
@@ -38,6 +42,15 @@ export default function OnboardingPage() {
   const [cohort, setCohort] = useState<CohortData | null>(null);
   const [cohortId, setCohortId] = useState<string | null>(null);
   const restored = useRef(false);
+
+  // The founder identity the ProgressSpine renders — fills in as the user builds
+  // themselves into the room across the action chapters.
+  const [identity, setIdentity] = useState<Identity>({
+    name: null,
+    stage: null,
+    skillCount: 0,
+    cohortName: null,
+  });
 
   // Mount: trial init (once), prefetch cohort, restore scroll position.
   useEffect(() => {
@@ -183,28 +196,108 @@ export default function OnboardingPage() {
         // on every chapter (no pin, animations fire after scrolling past). `clip`
         // still suppresses horizontal scroll without creating a scroll container.
         overflowX: "clip",
-        backgroundImage:
-          "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
+        position: "relative",
       }}
     >
-      <ChapterQuestion />
-      <ChapterBarGraph />
-      <ChapterBridge />
-      <ChapterPivot />
-      <ChapterIntroduction />
-      <ChapterFounderNames />
+      <OnboardingScrollProvider>
+      {/* The living background — rides document scroll behind everything. */}
+      <Atmosphere />
+      {/* The persistent HUD — progress rail, chapter counter, founder card. */}
+      <ProgressSpine identity={identity} />
 
-      <ChapterProfile onComplete={() => markComplete(7)} />
-      <ChapterSkills onComplete={() => markComplete(8)} />
-      <ChapterCohort cohort={cohort} onComplete={() => markComplete(9)} />
-      <ChapterFirstPost cohortId={cohortId} onComplete={() => markComplete(10)} />
-      <ChapterCheckin onComplete={() => markComplete(11)} />
-      <ChapterCollabHorizontal onComplete={() => markComplete(12)} />
+      {/* Content sits above the fixed atmosphere. */}
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {/* Cold open. */}
+        <ChapterOpening />
 
-      <ChapterSummary />
-      <ChapterReferral />
-      <ChapterPricing onComplete={completeOnboarding} />
+        {/* Act I — the case. */}
+        <ChapterQuestion />
+        <ChapterBarGraph />
+        <ChapterManifesto />
+        <ChapterIntroduction />
+        <ChapterFounderNames />
+
+        {/* Act II — build yourself into the room. Each step gets its own intro
+            slide that says what it is before you fill it in. */}
+        <ChapterIntro
+          id="intro-profile"
+          index="06"
+          title="Your profile"
+          blurb="Before anything else, your cohort needs to know who you are and what you're building."
+          accent={C.green}
+          motif="profile"
+        />
+        <ChapterProfile
+          onComplete={() => markComplete(7)}
+          onIdentity={(d) => setIdentity((p) => ({ ...p, name: d.name, stage: d.stage }))}
+        />
+
+        <ChapterIntro
+          id="intro-skills"
+          index="07"
+          title="Your strengths"
+          blurb="Skills are how founders find each other here — name what you're great at, so the right people reach out."
+          accent={C.amber}
+          motif="skills"
+        />
+        <ChapterSkills
+          onComplete={() => markComplete(8)}
+          onIdentity={(skillCount) => setIdentity((p) => ({ ...p, skillCount }))}
+        />
+
+        <ChapterIntro
+          id="intro-cohort"
+          index="08"
+          title="Your cohort"
+          blurb="Twelve founders at your stage, matched to you. This is the room you'll actually grow with."
+          accent={C.blue}
+          motif="cohort"
+        />
+        <ChapterCohort
+          cohort={cohort}
+          onComplete={() => {
+            markComplete(9);
+            setIdentity((p) => ({ ...p, cohortName: cohort?.cohortName ?? p.cohortName }));
+          }}
+        />
+
+        <ChapterIntro
+          id="intro-post"
+          index="09"
+          title="Your first post"
+          blurb="A post puts something real in front of your cohort — a decision, a question, a blocker, a win."
+          accent={C.amber}
+          motif="post"
+        />
+        <ChapterFirstPost cohortId={cohortId} onComplete={() => markComplete(10)} />
+
+        <ChapterIntro
+          id="intro-checkin"
+          index="10"
+          title="The weekly check-in"
+          blurb="Every week, three short questions. It's the rhythm that keeps your cohort close and honest."
+          accent={C.green}
+          motif="checkin"
+        />
+        <ChapterCheckin onComplete={() => markComplete(11)} />
+
+        <ChapterCollabHorizontal onComplete={() => markComplete(12)} />
+
+        {/* Act III — the payoff + the decision. */}
+        <ChapterSummary />
+
+        <ChapterIntro
+          id="intro-referral"
+          index="13"
+          title="Bring founders in"
+          blurb="Refer founders you rate. The more you bring in, the less you pay — and the stronger the room gets."
+          accent={C.amber}
+          motif="referral"
+        />
+        <ChapterReferral />
+        <ChapterPricing onComplete={completeOnboarding} />
+      </div>
+      </OnboardingScrollProvider>
     </div>
   );
 }

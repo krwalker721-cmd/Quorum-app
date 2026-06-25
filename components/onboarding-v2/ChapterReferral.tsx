@@ -97,7 +97,7 @@ export function ChapterReferral() {
   const b3Y = useTransform(scrollYProgress, [0.68, 0.82], [30, 0]);
 
   return (
-    <Chapter ref={ref} id="chapter-14" heightVh={400}>
+    <Chapter ref={ref} id="chapter-14" label="grow it" heightVh={400}>
       <StickyStage>
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <Beat opacity={b1Opacity} y={b1Y}>

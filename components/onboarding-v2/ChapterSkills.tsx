@@ -21,7 +21,13 @@ const DEFAULT_SKILLS = [
 ];
 
 // Chapter 8 — the skills action card. Saves the selected set to profiles.skills.
-export function ChapterSkills({ onComplete }: { onComplete: () => void }) {
+export function ChapterSkills({
+  onComplete,
+  onIdentity,
+}: {
+  onComplete: () => void;
+  onIdentity?: (skillCount: number) => void;
+}) {
   const [extra, setExtra] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [custom, setCustom] = useState("");
@@ -60,11 +66,16 @@ export function ChapterSkills({ onComplete }: { onComplete: () => void }) {
     } catch {
       // best-effort
     }
+    onIdentity?.(selected.size);
     onComplete();
   }
 
   return (
-    <ActionChapter id="chapter-8" context="// what do you bring to this room?">
+    <ActionChapter
+      id="chapter-8"
+      label="your strengths"
+      context="// what do you bring to this room?"
+    >
       <div
         style={{
           background: C.surface,

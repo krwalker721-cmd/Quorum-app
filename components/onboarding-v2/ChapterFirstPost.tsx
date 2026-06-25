@@ -52,7 +52,12 @@ export function ChapterFirstPost({
   }
 
   return (
-    <ActionChapter id="chapter-10" context="// your cohort is waiting on this" contextColor={C.amber}>
+    <ActionChapter
+      id="chapter-10"
+      label="first post"
+      context="// your cohort is waiting on this"
+      contextColor={C.amber}
+    >
       <p
         style={{
           fontFamily: SANS,

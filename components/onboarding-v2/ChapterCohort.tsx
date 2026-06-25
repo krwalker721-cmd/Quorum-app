@@ -50,7 +50,7 @@ export function ChapterCohort({
   const cardRange = (i: number): [number, number] => [0.25 + i * 0.1, 0.35 + i * 0.1];
 
   return (
-    <Chapter ref={ref} id="chapter-9" heightVh={300}>
+    <Chapter ref={ref} id="chapter-9" label="your cohort" heightVh={300}>
       <StickyStage style={{ overflow: "visible" }}>
         <motion.div
           style={{

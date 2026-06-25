@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ActionChapter } from "./actionChapter";
+import { Stagger, StaggerItem } from "./flair";
 import {
   C,
   MONO,
@@ -25,7 +26,13 @@ const STAGES = [
 
 // Chapter 7 — the profile action card. Best-effort write to profiles; advancing
 // the flow always wins over a failed save.
-export function ChapterProfile({ onComplete }: { onComplete: () => void }) {
+export function ChapterProfile({
+  onComplete,
+  onIdentity,
+}: {
+  onComplete: () => void;
+  onIdentity?: (d: { name: string | null; stage: string | null }) => void;
+}) {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [building, setBuilding] = useState("");
@@ -54,11 +61,17 @@ export function ChapterProfile({ onComplete }: { onComplete: () => void }) {
     } catch {
       // best-effort — advancing matters more than the write succeeding
     }
+    const fullName = `${first.trim()} ${last.trim()}`.trim();
+    onIdentity?.({ name: fullName || null, stage: stage || null });
     onComplete();
   }
 
   return (
-    <ActionChapter id="chapter-7" context="// first — let your cohort know who you are">
+    <ActionChapter
+      id="chapter-7"
+      label="your profile"
+      context="// first — let your cohort know who you are"
+    >
       <div
         style={{
           background: C.surface,
@@ -69,8 +82,8 @@ export function ChapterProfile({ onComplete }: { onComplete: () => void }) {
         }}
       >
         <CardHeader>// build your profile</CardHeader>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ display: "flex", gap: 16 }}>
+        <Stagger style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <StaggerItem style={{ display: "flex", gap: 16 }}>
             <div style={{ flex: 1 }}>
               <FieldLabel>first name</FieldLabel>
               <input
@@ -89,9 +102,9 @@ export function ChapterProfile({ onComplete }: { onComplete: () => void }) {
                 style={darkInput}
               />
             </div>
-          </div>
+          </StaggerItem>
 
-          <div>
+          <StaggerItem>
             <FieldLabel>what are you building?</FieldLabel>
             <input
               value={building}
@@ -99,9 +112,9 @@ export function ChapterProfile({ onComplete }: { onComplete: () => void }) {
               placeholder="e.g. a platform for founders..."
               style={darkInput}
             />
-          </div>
+          </StaggerItem>
 
-          <div>
+          <StaggerItem>
             <FieldLabel>stage</FieldLabel>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {STAGES.map((s) => {
@@ -129,9 +142,9 @@ export function ChapterProfile({ onComplete }: { onComplete: () => void }) {
                 );
               })}
             </div>
-          </div>
+          </StaggerItem>
 
-          <div>
+          <StaggerItem>
             <FieldLabel>one line bio</FieldLabel>
             <textarea
               value={bio}
@@ -139,8 +152,8 @@ export function ChapterProfile({ onComplete }: { onComplete: () => void }) {
               placeholder="e.g. ex-engineer turned founder, building the tool I always needed..."
               style={{ ...darkTextarea, minHeight: 72 }}
             />
-          </div>
-        </div>
+          </StaggerItem>
+        </Stagger>
 
         <div style={{ marginTop: 24 }}>
           <AmberButton onClick={save} disabled={saving}>

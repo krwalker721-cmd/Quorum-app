@@ -15,6 +15,7 @@ export function ChapterPricing({
   return (
     <section
       id="chapter-15"
+      data-chapter="choose"
       style={{
         minHeight: "100vh",
         width: "100%",

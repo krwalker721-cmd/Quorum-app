@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useTransform, type MotionValue } from "framer-motion";
 import { Chapter, StickyStage, useChapterScroll } from "./sticky";
+import { useOnboardingScroll } from "./scroll";
 import { C, MONO, SANS } from "./theme";
 
 // Depth drives size, opacity and drift speed — closer founders (depth 1) are
@@ -31,13 +32,30 @@ const FOUNDERS: Founder[] = [
 ];
 
 const DRIFT = { 1: -120, 2: -60, 3: -30 } as const;
+// Nearer founders react more to the pointer (stronger parallax).
+const PARALLAX = { 1: 34, 2: 20, 3: 11 } as const;
 const NAME_SIZE = { 1: 11, 2: 10, 3: 9 } as const;
 const OUTCOME_SIZE = { 1: 14, 2: 13, 3: 11 } as const;
 const OUTCOME_COLOR = { 1: C.textPrimary, 2: C.textSecondary, 3: C.textMuted } as const;
 const PEAK_OPACITY = { 1: 0.9, 2: 0.6, 3: 0.35 } as const;
 
-function FounderItem({ f, progress }: { f: Founder; progress: MotionValue<number> }) {
-  const x = useTransform(progress, [0, 1], [0, DRIFT[f.depth]]);
+function FounderItem({
+  f,
+  progress,
+  pointerX,
+  pointerY,
+}: {
+  f: Founder;
+  progress: MotionValue<number>;
+  pointerX: MotionValue<number>;
+  pointerY: MotionValue<number>;
+}) {
+  // Scroll drift + pointer parallax, weighted by depth.
+  const x = useTransform(
+    [progress, pointerX] as [MotionValue<number>, MotionValue<number>],
+    ([p, px]: number[]) => p * DRIFT[f.depth] + px * PARALLAX[f.depth],
+  );
+  const y = useTransform(pointerY, [-1, 1], [-PARALLAX[f.depth] * 0.6, PARALLAX[f.depth] * 0.6]);
   const opacity = useTransform(
     progress,
     [f.appearAt, f.appearAt + 0.08, f.disappearAt - 0.1, f.disappearAt],
@@ -49,6 +67,7 @@ function FounderItem({ f, progress }: { f: Founder; progress: MotionValue<number
       style={{
         position: "absolute",
         x,
+        y,
         opacity,
         top: `${f.top}%`,
         left: `${f.left}%`,
@@ -98,13 +117,20 @@ function FounderItem({ f, progress }: { f: Founder; progress: MotionValue<number
 export function ChapterFounderNames() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useChapterScroll(ref);
+  const { pointerX, pointerY } = useOnboardingScroll();
 
   return (
-    <Chapter ref={ref} id="chapter-6" heightVh={300}>
+    <Chapter ref={ref} id="chapter-6" label="the room" heightVh={300}>
       <StickyStage center={false} style={{ position: "sticky" }}>
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           {FOUNDERS.map((f) => (
-            <FounderItem key={f.name} f={f} progress={scrollYProgress} />
+            <FounderItem
+              key={f.name}
+              f={f}
+              progress={scrollYProgress}
+              pointerX={pointerX}
+              pointerY={pointerY}
+            />
           ))}
         </div>
       </StickyStage>

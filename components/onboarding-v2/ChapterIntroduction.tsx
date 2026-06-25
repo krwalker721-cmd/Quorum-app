@@ -2,7 +2,7 @@
 
 import { useRef, type ReactNode } from "react";
 import { motion, useTransform, type MotionValue } from "framer-motion";
-import { Chapter, StickyStage, useChapterScroll } from "./sticky";
+import { Chapter, StickyStage, useChapterScroll, GhostNumber } from "./sticky";
 import { C, MONO, SANS } from "./theme";
 
 // A beat absolutely centered in the sticky stage; its opacity/lift are driven by
@@ -51,8 +51,9 @@ export function ChapterIntroduction() {
   const dividerOpacity = useTransform(scrollYProgress, [0.85, 0.95], [0, 1]);
 
   return (
-    <Chapter ref={ref} id="chapter-5" heightVh={400}>
+    <Chapter ref={ref} id="chapter-5" label="quorum" heightVh={400}>
       <StickyStage>
+        <GhostNumber value="04" progress={scrollYProgress} align="left" />
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <Beat opacity={beat1Opacity} y={beat1Y}>
             <p
