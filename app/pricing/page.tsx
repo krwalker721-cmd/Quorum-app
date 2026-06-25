@@ -174,44 +174,148 @@ function useCountdown(expiresAt: string | null): string {
 }
 
 // ─── Shared bits ─────────────────────────────────────────────────────────────
-const FREE_FEATURES = [
-  "Read everything — always",
-  "Weekly check-in — always",
-  "3 cohort posts per month",
-  "2 pulse posts per month",
-  "5 replies per month",
-  "3 messages per month",
-  "1 vault note",
-  "No collab board access",
+type Feat = { name: string; desc: string };
+
+const FREE_FEATURES: Feat[] = [
+  { name: "Read everything", desc: "See all posts, cohort activity, and vault content" },
+  { name: "Weekly check-in", desc: "Show your cohort where you are each week" },
+  { name: "3 cohort posts / month", desc: "Post decisions, wins, or blockers to your cohort" },
+  { name: "2 pulse posts / month", desc: "Share with the broader Quorum network" },
+  { name: "5 replies / month", desc: "Engage with posts across the platform" },
+  { name: "3 messages / month", desc: "Direct message other founders" },
+  { name: "1 vault note", desc: "Save one note in your personal vault" },
+  { name: "3 referrals max", desc: "Invite up to 3 founders to join" },
 ];
-const MEMBER_FEATURES = [
-  "Everything in Free",
-  "Unlimited cohort posting",
-  "Unlimited pulse posts",
-  "Unlimited replies",
-  "Unlimited messages",
-  "Unlimited vault notes",
-  "Full collab board access",
-  "Unlimited referrals",
-  "7 day free trial",
+const MEMBER_FEATURES: Feat[] = [
+  { name: "Everything in Free", desc: "All free tier features included" },
+  { name: "Unlimited cohort posting", desc: "Post as much as you need to your cohort" },
+  { name: "Unlimited pulse posts", desc: "Share freely with the whole network" },
+  { name: "Unlimited replies", desc: "Engage with every conversation" },
+  { name: "Unlimited messages", desc: "DM any founder, any time" },
+  { name: "Unlimited vault notes", desc: "Full rich editor, unlimited storage" },
+  { name: "Full collab board", desc: "Post projects, needs, and find hires" },
+  { name: "Unlimited referrals", desc: "Invite as many founders as you want" },
+  { name: "7 day free trial", desc: "Full access, no card required to start" },
 ];
-const PARTNER_FEATURES = [
-  "Everything in Member",
-  "Private Partner-only feed",
-  "Curated cohort of established founders",
-  "Deal flow and introductions",
-  "Senior founder network",
-  "Priority support",
+const PARTNER_FEATURES: Feat[] = [
+  { name: "Everything in Member", desc: "Full Member access included" },
+  { name: "Private Partner feed", desc: "Exclusive feed for established founders doing real revenue" },
+  { name: "Senior founder network", desc: "Curated cohort of founders who've been there" },
+  { name: "Deal flow & introductions", desc: "Warm intros and opportunities from within the network" },
+  { name: "Priority support", desc: "Direct access when you need it" },
 ];
 
-function Feature({ label, color, bullet }: { label: string; color: string; bullet: string }) {
+const PRODUCT_BLOCKS = [
+  {
+    color: "#f59e0b",
+    title: "Your Cohort",
+    desc: "A private group of 12 vetted founders with the same drive as you. Real talk, real problems, real answers — no noise.",
+  },
+  {
+    color: "#58a6ff",
+    title: "The Pulse Feed",
+    desc: "A network-wide feed where founders share decisions, wins, blockers, and questions. The honest version of LinkedIn.",
+  },
+  {
+    color: "#22c55e",
+    title: "The Collab Board",
+    desc: "Post projects, find co-builders, list needs, and hire from a network you already trust. Work gets done here.",
+  },
+  {
+    color: "#a78bfa",
+    title: "The Vault",
+    desc: "Save resources, write notes with a full rich editor, and access community wisdom nominated by the best founders in the network.",
+  },
+];
+
+// Feature comparison rows. Values render as ✓ / limited text / — / "soon".
+const COMPARISON_ROWS: { feature: string; free: string; member: string; partner: string }[] = [
+  { feature: "Cohort access", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Read all content", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Weekly check-in", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Cohort posts", free: "3/mo", member: "✓", partner: "✓" },
+  { feature: "Pulse posts", free: "2/mo", member: "✓", partner: "✓" },
+  { feature: "Replies", free: "5/mo", member: "✓", partner: "✓" },
+  { feature: "Messages", free: "3/mo", member: "✓", partner: "✓" },
+  { feature: "Vault notes", free: "1", member: "✓", partner: "✓" },
+  { feature: "Collab board", free: "—", member: "✓", partner: "✓" },
+  { feature: "Referrals", free: "3 max", member: "✓", partner: "✓" },
+  { feature: "7 day trial", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Partner feed", free: "—", member: "—", partner: "soon" },
+  { feature: "Senior network", free: "—", member: "—", partner: "soon" },
+  { feature: "Deal flow", free: "—", member: "—", partner: "soon" },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "Can I cancel anytime?",
+    a: "Yes — cancel from your settings page at any time. You keep access until the end of your billing period.",
+  },
+  {
+    q: "What happens when my trial ends?",
+    a: "You drop to the free tier automatically. No surprise charges. Upgrade whenever you're ready.",
+  },
+  {
+    q: "How do referrals work?",
+    a: "Share your invite link. When someone joins and activates their account, you earn rewards — from $10 off to a free year of Member.",
+  },
+];
+
+function ComparisonValue({ value }: { value: string }) {
+  let color = "#8b949e";
+  if (value === "✓") color = "#22c55e";
+  else if (value === "—") color = "#30363d";
+  else if (value === "soon") color = "#a78bfa";
   return (
-    <li
-      className="font-sans"
-      style={{ fontSize: 13, color, display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}
+    <span className="font-mono" style={{ fontSize: 11, color, textAlign: "center" }}>
+      {value}
+    </span>
+  );
+}
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      onClick={() => setOpen((v) => !v)}
+      style={{
+        background: "#161b22",
+        border: "1px solid #21262d",
+        borderRadius: 4,
+        padding: "16px 20px",
+        marginBottom: 8,
+        cursor: "pointer",
+      }}
     >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <span className="font-sans" style={{ fontSize: 14, color: "#e6edf3" }}>
+          {q}
+        </span>
+        <span className="font-mono" style={{ fontSize: 12, color: "#484f58" }}>
+          {open ? "−" : "+"}
+        </span>
+      </div>
+      {open && (
+        <p className="font-sans" style={{ fontSize: 13, color: "#8b949e", marginTop: 10, lineHeight: 1.6 }}>
+          {a}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Feature({ feat, nameColor, descColor, bullet }: { feat: Feat; nameColor: string; descColor: string; bullet: string }) {
+  return (
+    <li style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 12 }}>
       <span style={{ color: bullet, lineHeight: 1.4 }}>•</span>
-      <span>{label}</span>
+      <span>
+        <span className="font-sans" style={{ fontSize: 13, color: nameColor, display: "block" }}>
+          {feat.name}
+        </span>
+        <span className="font-sans" style={{ fontSize: 12, color: descColor, display: "block", lineHeight: 1.4 }}>
+          {feat.desc}
+        </span>
+      </span>
     </li>
   );
 }
@@ -306,13 +410,33 @@ function PricingBody() {
         padding: "60px 40px",
       }}
     >
-      <div style={{ maxWidth: 800, margin: "0 auto" }}>
+      <div style={{ maxWidth: 860, margin: "0 auto" }}>
+        {/* Back button */}
+        <button
+          onClick={() => router.back()}
+          style={{
+            background: "transparent",
+            border: "none",
+            fontFamily: "JetBrains Mono, monospace",
+            fontSize: 11,
+            color: "#484f58",
+            letterSpacing: "0.06em",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginBottom: 40,
+          }}
+        >
+          ← back
+        </button>
+
         {/* Header */}
         <p
           className="font-mono uppercase"
           style={{ fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em", textAlign: "center", marginBottom: 14 }}
         >
-          // choose your plan
+          // pricing
         </p>
         <h1
           className="font-sans"
@@ -326,6 +450,33 @@ function PricingBody() {
         >
           Start free. Upgrade when Quorum changes how you build.
         </p>
+
+        {/* What is Quorum */}
+        <div
+          style={{
+            background: "#161b22",
+            border: "1px solid #21262d",
+            borderRadius: 4,
+            padding: 32,
+            marginBottom: 48,
+          }}
+        >
+          <h2 className="font-sans" style={{ fontSize: 20, fontWeight: 500, color: "#e6edf3", marginBottom: 16 }}>
+            What is Quorum?
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
+            {PRODUCT_BLOCKS.map((b) => (
+              <div key={b.title} style={{ borderLeft: `2px solid ${b.color}`, padding: "0 0 0 16px" }}>
+                <p className="font-sans" style={{ fontSize: 14, fontWeight: 500, color: "#e6edf3", marginBottom: 6 }}>
+                  {b.title}
+                </p>
+                <p className="font-sans" style={{ fontSize: 13, color: "#6e7681", lineHeight: 1.6 }}>
+                  {b.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Referred banner */}
         {referred && (
@@ -369,7 +520,7 @@ function PricingBody() {
             <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {FREE_FEATURES.map((f) => (
-                <Feature key={f} label={f} color="var(--text-muted)" bullet="var(--border-muted)" />
+                <Feature key={f.name} feat={f} nameColor="var(--text-secondary)" descColor="var(--text-disabled)" bullet="var(--border-muted)" />
               ))}
             </ul>
             {tier === "free" ? (
@@ -438,7 +589,7 @@ function PricingBody() {
             <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {MEMBER_FEATURES.map((f) => (
-                <Feature key={f} label={f} color="var(--text-secondary)" bullet="var(--accent)" />
+                <Feature key={f.name} feat={f} nameColor="var(--text-secondary)" descColor="var(--text-disabled)" bullet="var(--accent)" />
               ))}
             </ul>
             <button
@@ -501,7 +652,7 @@ function PricingBody() {
             <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {PARTNER_FEATURES.map((f) => (
-                <Feature key={f} label={f} color="var(--text-muted)" bullet="var(--border-muted)" />
+                <Feature key={f.name} feat={f} nameColor="var(--text-disabled)" descColor="var(--text-disabled)" bullet="var(--border-muted)" />
               ))}
             </ul>
             <p className="font-mono" style={{ fontSize: 10, color: "var(--text-disabled)", margin: "20px 0 12px" }}>
@@ -553,6 +704,69 @@ function PricingBody() {
             No worries — your free trial is still active.
           </p>
         )}
+
+        {/* Feature comparison chart */}
+        <div
+          style={{
+            background: "#161b22",
+            border: "1px solid #21262d",
+            borderRadius: 4,
+            overflow: "hidden",
+            marginTop: 48,
+            marginBottom: 48,
+          }}
+        >
+          <div
+            className="font-mono uppercase"
+            style={{
+              background: "#1c2128",
+              padding: "14px 20px",
+              display: "grid",
+              gridTemplateColumns: "2fr 1fr 1fr 1fr",
+              fontSize: 10,
+              letterSpacing: "0.08em",
+            }}
+          >
+            <span style={{ color: "#484f58" }}>Feature</span>
+            <span style={{ color: "#8b949e", textAlign: "center" }}>Free</span>
+            <span style={{ color: "#f59e0b", textAlign: "center" }}>Member</span>
+            <span style={{ color: "#a78bfa", textAlign: "center" }}>Partner</span>
+          </div>
+          {COMPARISON_ROWS.map((row, i) => (
+            <div
+              key={row.feature}
+              style={{
+                padding: "12px 20px",
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr 1fr 1fr",
+                borderTop: "1px solid #21262d",
+                alignItems: "center",
+                background: i % 2 === 0 ? "#161b22" : "rgba(255,255,255,0.01)",
+              }}
+            >
+              <span className="font-sans" style={{ fontSize: 13, color: "#8b949e" }}>
+                {row.feature}
+              </span>
+              <span style={{ textAlign: "center" }}>
+                <ComparisonValue value={row.free} />
+              </span>
+              <span style={{ textAlign: "center" }}>
+                <ComparisonValue value={row.member} />
+              </span>
+              <span style={{ textAlign: "center" }}>
+                <ComparisonValue value={row.partner} />
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* FAQ */}
+        <p className="font-mono" style={{ fontSize: 10, color: "#484f58", letterSpacing: "0.1em", marginBottom: 12 }}>
+          // common questions
+        </p>
+        {FAQ_ITEMS.map((item) => (
+          <FaqItem key={item.q} q={item.q} a={item.a} />
+        ))}
       </div>
 
       {/* Downgrade confirmation modal */}

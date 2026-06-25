@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import LogoMark from "@/components/LogoMark";
+import Avatar from "@/components/Avatar";
 import CohortPanel from "@/components/CohortPanel";
 import SidebarTierBadge from "@/components/SidebarTierBadge";
 import { useNavDots, type NavKey } from "@/components/NotificationsProvider";
@@ -38,22 +39,17 @@ function computeHomeDot(): boolean {
 
 type NavItem = { href: string; label: string; glyph: string; dotKey?: NavKey };
 
-const NAV_MAIN: NavItem[] = [
+// Strict nav order. Profile and settings are intentionally absent — profile is
+// reached via the avatar block at the bottom, settings from the profile page.
+const NAV: NavItem[] = [
   { href: "/home", label: "home", glyph: "⌂" },
   { href: "/cohort", label: "cohort", glyph: "⬡", dotKey: "cohort" },
-  { href: "/messages", label: "messages", glyph: "✉", dotKey: "messages" },
   { href: "/pulse", label: "pulse", glyph: "∿", dotKey: "pulse" },
-  { href: "/vault", label: "vault", glyph: "◫", dotKey: "vault" },
-];
-
-const NAV_WORKSPACE: NavItem[] = [
   { href: "/collab", label: "collab_board", glyph: "⊞", dotKey: "collab" },
+  { href: "/vault", label: "vault", glyph: "◫", dotKey: "vault" },
+  { href: "/messages", label: "messages", glyph: "✉", dotKey: "messages" },
   { href: "/referrals", label: "referrals", glyph: "⇄", dotKey: "referrals" },
-  { href: "/profile/me", label: "profile", glyph: "◉" },
-  { href: "/settings", label: "settings", glyph: "⚙", dotKey: "settings" },
 ];
-
-const NAV: NavItem[] = [...NAV_MAIN, ...NAV_WORKSPACE];
 
 const EXPANDED_W = 240;
 const COLLAPSED_W = 48;
@@ -61,11 +57,14 @@ const COLLAPSED_W = 48;
 export default function Sidebar({
   cohort,
   currentUserId,
+  currentUser,
 }: {
   cohort: { id: string; full_name: string | null; stage: string | null; username: string | null }[];
   currentUserId: string;
+  currentUser?: { full_name: string | null; stage: string | null; username: string | null };
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { dots } = useNavDots();
   const [showHomeDot, setShowHomeDot] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -174,25 +173,11 @@ export default function Sidebar({
         {NAV.map((item) => {
           const active =
             pathname === item.href || (item.href !== "/home" && pathname.startsWith(item.href));
-          const isFirstWorkspaceItem = item.href === NAV_WORKSPACE[0].href;
           const hasUnseen =
             (item.href === "/home" && showHomeDot) ||
             (!!item.dotKey && dots[item.dotKey] && !active);
           return (
             <div key={item.href}>
-              {isFirstWorkspaceItem && !collapsed && (
-                <p className="nav-section-label font-mono">workspace</p>
-              )}
-              {isFirstWorkspaceItem && collapsed && (
-                <div
-                  aria-hidden
-                  style={{
-                    height: 1,
-                    background: "var(--border-default)",
-                    margin: "10px 12px",
-                  }}
-                />
-              )}
               <Link
                 href={item.href}
                 title={collapsed ? item.label : undefined}
@@ -281,6 +266,49 @@ export default function Sidebar({
           </p>
         </Link>
       )}
+
+      {/* Current-user block — the only way into your own profile now that the
+          nav item is gone. Whole block routes to /profile/me. */}
+      <div
+        onClick={() => router.push("/profile/me")}
+        title="View your profile"
+        role="link"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") router.push("/profile/me");
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: collapsed ? "center" : "flex-start",
+          gap: collapsed ? 0 : 10,
+          padding: collapsed ? "10px 0" : "10px 14px",
+          borderTop: "1px solid var(--border-default)",
+          cursor: "pointer",
+        }}
+      >
+        <Avatar
+          name={currentUser?.full_name ?? null}
+          stage={currentUser?.stage ?? null}
+          size={26}
+        />
+        {!collapsed && (
+          <div style={{ minWidth: 0 }}>
+            <p
+              className="font-mono lowercase truncate"
+              style={{ fontSize: 12, color: "var(--text-primary)", lineHeight: 1.2 }}
+            >
+              {currentUser?.full_name?.toLowerCase() ?? "your profile"}
+            </p>
+            <p
+              className="font-mono lowercase"
+              style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.04em" }}
+            >
+              view profile →
+            </p>
+          </div>
+        )}
+      </div>
 
       <SidebarTierBadge collapsed={collapsed} />
       <CohortPanel members={cohort} currentUserId={currentUserId} collapsed={collapsed} />

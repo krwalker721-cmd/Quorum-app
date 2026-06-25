@@ -163,7 +163,7 @@ export default async function HomePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 px-7 py-7">
         <div className="lg:col-span-2 space-y-8">
-          <Feed initial={initialPosts} currentUserId={user.id} />
+          <Feed initial={initialPosts} currentUserId={user.id} cap={2} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             <CohortNetwork members={memberList.filter((m) => m.id !== user.id)} />

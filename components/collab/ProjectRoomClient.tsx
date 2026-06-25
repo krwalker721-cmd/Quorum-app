@@ -489,33 +489,57 @@ function ThreadTab({
 
   return (
     <div
-      className="flex flex-col border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border)", minHeight: 500 }}
+      className="flex flex-col"
+      style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 4, minHeight: 500 }}
     >
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 scroll-thin flex flex-col" style={{ maxHeight: 600 }}>
+      {/* Thread container — mirrors the cohort room chat */}
+      <div
+        ref={scrollRef}
+        className="scroll-thin"
+        style={{
+          background: "#0d1117",
+          flex: 1,
+          overflowY: "auto",
+          padding: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          maxHeight: 600,
+        }}
+      >
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center">
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
             <p
-              className="font-mono"
               style={{
+                fontFamily: "JetBrains Mono, monospace",
                 fontSize: 11,
                 color: "#484f58",
                 letterSpacing: "0.06em",
-                textAlign: "center",
-                padding: "40px 20px",
               }}
             >
-              // no messages yet — start the conversation
+              // no messages yet
+            </p>
+            <p style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: 13, color: "#6e7681" }}>
+              Start the conversation.
             </p>
           </div>
         ) : (
-          <div className="space-y-3 mt-auto">
-            {messages.map((m) => {
+          messages.map((m) => {
             if (m.is_system) {
               return (
                 <p
                   key={m.id}
-                  className="font-mono lowercase text-[0.65rem] text-text-faint italic text-center"
+                  className="font-mono lowercase italic text-center"
+                  style={{ fontSize: "0.65rem", color: "#484f58", alignSelf: "center" }}
                 >
                   {m.content} · {timeAgo(m.created_at)} ago
                 </p>
@@ -524,39 +548,43 @@ function ThreadTab({
             const mine = m.sender_id === currentUserId;
             const sender = memberMap.get(m.sender_id);
             return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} gap-2`}>
+              <div
+                key={m.id}
+                style={{
+                  background: mine ? "rgba(245,158,11,0.06)" : "#161b22",
+                  border: `1px solid ${mine ? "rgba(245,158,11,0.12)" : "#21262d"}`,
+                  borderRadius: mine ? "12px 4px 4px 12px" : "4px 12px 12px 4px",
+                  padding: "10px 14px",
+                  maxWidth: "70%",
+                  alignSelf: mine ? "flex-end" : "flex-start",
+                }}
+              >
                 {!mine && (
-                  <Avatar
-                    name={sender?.full_name}
-                    stage={sender?.stage}
-                    username={sender?.username}
-                    size={26}
-                  />
-                )}
-                <div
-                  className="max-w-[72%] px-3 py-2"
-                  style={{
-                    background: mine ? "rgba(245, 158, 11,0.12)" : "var(--card)",
-                    border: `1px solid ${mine ? "rgba(245, 158, 11,0.35)" : "var(--border)"}`,
-                  }}
-                >
-                  {!mine && (
-                    <p className="font-mono lowercase text-[0.6rem] text-text-faint">
-                      {sender?.full_name?.toLowerCase() ?? "—"}
-                    </p>
-                  )}
-                  <p className="text-text-primary text-sm whitespace-pre-wrap leading-snug">{m.content}</p>
-                  <p className="font-mono lowercase text-[0.55rem] text-text-faint mt-1">
-                    {timeAgo(m.created_at)} ago
+                  <p className="font-mono lowercase" style={{ fontSize: "0.6rem", color: "#484f58" }}>
+                    {sender?.full_name?.toLowerCase() ?? "—"}
                   </p>
-                </div>
+                )}
+                <p style={{ color: "#e6edf3", fontSize: 14, whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                  {m.content}
+                </p>
+                <p className="font-mono lowercase" style={{ fontSize: "0.55rem", color: "#484f58", marginTop: 4 }}>
+                  {timeAgo(m.created_at)} ago
+                </p>
               </div>
             );
-            })}
-          </div>
+          })
         )}
       </div>
-      <div className="border-t p-3 flex items-center gap-2" style={{ borderColor: "var(--border)" }}>
+      <div
+        style={{
+          borderTop: "1px solid #21262d",
+          padding: "12px 16px",
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          background: "#161b22",
+        }}
+      >
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -566,17 +594,48 @@ function ThreadTab({
               send();
             }
           }}
-          placeholder="message…"
-          className="flex-1 px-3 py-2 text-text-primary"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+          placeholder="message..."
+          style={{
+            flex: 1,
+            background: "#0d1117",
+            border: "1px solid #21262d",
+            borderRadius: 4,
+            color: "#e6edf3",
+            fontFamily: "Space Grotesk, sans-serif",
+            fontSize: 14,
+            padding: "10px 14px",
+            outline: "none",
+            colorScheme: "dark",
+            WebkitAppearance: "none",
+          }}
         />
         <button
           onClick={send}
           disabled={busy || !text.trim()}
-          className="font-mono lowercase text-[0.7rem] px-4 py-2 hover:opacity-90 disabled:opacity-50"
-          style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+          aria-label="send message"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "#f59e0b",
+            border: "none",
+            cursor: busy || !text.trim() ? "default" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            opacity: busy || !text.trim() ? 0.5 : 1,
+          }}
         >
-          send
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M13 1L1 7L6 8M13 1L7 13L6 8M13 1L6 8"
+              stroke="#0d1117"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
       </div>
     </div>

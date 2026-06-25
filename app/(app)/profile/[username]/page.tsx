@@ -320,6 +320,24 @@ export default async function ProfilePage({
                   </Link>
                 </div>
               )}
+              {isOwner && (
+                <Link
+                  href="/settings"
+                  className="shrink-0 hover:opacity-80"
+                  style={{
+                    fontFamily: "JetBrains Mono, monospace",
+                    fontSize: 10,
+                    color: "#484f58",
+                    letterSpacing: "0.06em",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  ⚙ settings →
+                </Link>
+              )}
             </div>
           </div>
         </div>

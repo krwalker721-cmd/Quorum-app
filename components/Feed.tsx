@@ -1,16 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PostCard, { PostWithAuthor } from "@/components/PostCard";
 
 export default function Feed({
   initial,
   currentUserId,
+  cap,
 }: {
   initial: PostWithAuthor[];
   currentUserId?: string;
+  // When set, each section shows at most `cap` posts with a "more" link to the
+  // full feed (used on the home dashboard to keep it skimmable).
+  cap?: number;
 }) {
+  const router = useRouter();
   const [posts, setPosts] = useState<PostWithAuthor[]>(initial);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const onDeleted = (id: string) =>
@@ -64,6 +70,23 @@ export default function Feed({
   const cohort = posts.filter((p) => p.post_type === "cohort");
   const pulse = posts.filter((p) => p.post_type === "pulse");
 
+  const cohortShown = typeof cap === "number" ? cohort.slice(0, cap) : cohort;
+  const pulseShown = typeof cap === "number" ? pulse.slice(0, cap) : pulse;
+  const cohortMore = cohort.length - cohortShown.length;
+  const pulseMore = pulse.length - pulseShown.length;
+
+  const moreLinkStyle: React.CSSProperties = {
+    fontFamily: "JetBrains Mono, monospace",
+    fontSize: 11,
+    color: "#484f58",
+    letterSpacing: "0.06em",
+    cursor: "pointer",
+    padding: "12px 0",
+    textAlign: "center",
+    borderTop: "1px solid #21262d",
+    marginTop: 8,
+  };
+
   return (
     <div className="space-y-8">
       <section>
@@ -77,7 +100,7 @@ export default function Feed({
               </p>
             </div>
           ) : (
-            cohort.map((p) => (
+            cohortShown.map((p) => (
               <PostCard
                 key={p.id}
                 post={p}
@@ -87,6 +110,16 @@ export default function Feed({
                 onToggleReplies={onToggleReplies}
               />
             ))
+          )}
+          {cohortMore > 0 && (
+            <div
+              onClick={() => router.push("/cohort")}
+              style={moreLinkStyle}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#8b949e")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#484f58")}
+            >
+              {cohortMore} more {cohortMore === 1 ? "post" : "posts"} in your cohort →
+            </div>
           )}
         </div>
       </section>
@@ -103,7 +136,7 @@ export default function Feed({
               </p>
             </div>
           ) : (
-            pulse.map((p) => (
+            pulseShown.map((p) => (
               <PostCard
                 key={p.id}
                 post={p}
@@ -113,6 +146,16 @@ export default function Feed({
                 onToggleReplies={onToggleReplies}
               />
             ))
+          )}
+          {pulseMore > 0 && (
+            <div
+              onClick={() => router.push("/pulse")}
+              style={moreLinkStyle}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#8b949e")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#484f58")}
+            >
+              {pulseMore} more {pulseMore === 1 ? "post" : "posts"} in the pulse feed →
+            </div>
           )}
         </div>
       </section>

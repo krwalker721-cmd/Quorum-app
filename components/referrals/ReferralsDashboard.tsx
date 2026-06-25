@@ -3,20 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTier } from "@/contexts/TierContext";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
 interface ReferralData {
   code: string | null;
   link: string | null;
-  linkActive: boolean;
-  linkActiveReason?: string;
-  gates: {
-    profileComplete: boolean;
-    returnedThreeDays: boolean;
-    engagedWithPulse: boolean;
-    allComplete: boolean;
-  };
   totalCount: number;
   activeCount: number;
   monthlyBonus: number;
@@ -35,14 +28,6 @@ interface ReferralData {
       stage: string | null;
     } | null;
   }>;
-  rewards: Array<{
-    id: string;
-    reward_type: string;
-    milestone_count: number | null;
-    applied_at: string;
-    expires_at: string | null;
-    active: boolean;
-  }>;
   tier: "free" | "member" | "partner";
   referralCap: number | null;
   referralCapReached: boolean;
@@ -53,15 +38,12 @@ interface ReferralData {
 // ─── config ──────────────────────────────────────────────────────────────────
 
 const MILESTONES = [
-  { count: 1, reward: "$10 off next month + Connector badge", type: "milestone_1" },
-  { count: 3, reward: "1 free month of Member", type: "milestone_3" },
-  { count: 5, reward: "2 free months of Member", type: "milestone_5" },
-  { count: 10, reward: "50% off for 6 months", type: "milestone_10" },
-  { count: 25, reward: "Member free for 1 year", type: "milestone_25" },
+  { count: 1, reward: "$10 off next month + Connector badge" },
+  { count: 3, reward: "1 free month of Member" },
+  { count: 5, reward: "2 free months of Member" },
+  { count: 10, reward: "50% off for 6 months" },
+  { count: 25, reward: "Member free for 1 year" },
 ];
-
-// marker positions as a percentage of the 25-referral track
-const MILESTONE_MARKERS = [4, 12, 20, 40, 100];
 
 const statusStyles = {
   active: {
@@ -157,12 +139,22 @@ function SkeletonBlock({ width, height, style }: { width: string | number; heigh
 
 function LoadingState() {
   return (
-    <div style={{ padding: "24px", maxWidth: 760, margin: "0 auto" }}>
+    <div style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
       <style>{`@keyframes shimmer { 0% { opacity: 0.4 } 50% { opacity: 0.7 } 100% { opacity: 0.4 } }`}</style>
       <SkeletonBlock width={200} height={32} style={{ marginBottom: 24 }} />
-      {[0, 1, 2, 3].map((i) => (
-        <SkeletonBlock key={i} width="100%" height={80} style={{ marginBottom: 16 }} />
-      ))}
+      <SkeletonBlock width="100%" height={96} style={{ marginBottom: 24 }} />
+      <div style={{ display: "flex", gap: 24 }}>
+        <div style={{ flex: 1.4 }}>
+          {[0, 1, 2].map((i) => (
+            <SkeletonBlock key={i} width="100%" height={80} style={{ marginBottom: 16 }} />
+          ))}
+        </div>
+        <div style={{ flex: 1 }}>
+          {[0, 1].map((i) => (
+            <SkeletonBlock key={i} width="100%" height={120} style={{ marginBottom: 16 }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -183,6 +175,14 @@ function ErrorState() {
   );
 }
 
+// ─── how it works ────────────────────────────────────────────────────────────
+
+const HOW_IT_WORKS = [
+  { n: 1, title: "Share your link", sub: "They sign up and join Quorum" },
+  { n: 2, title: "They activate", sub: "They add a card within 48 hours" },
+  { n: 3, title: "You earn", sub: "Rewards unlock as milestones hit" },
+];
+
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function ReferralsDashboard() {
@@ -192,6 +192,8 @@ export default function ReferralsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Whether the user has made at least one post — the sole gate on the link.
+  const [hasPosted, setHasPosted] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -216,98 +218,66 @@ export default function ReferralsDashboard() {
     };
   }, []);
 
+  // The link activates once the user has posted at least once (cohort or pulse).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { count } = await supabase
+        .from("posts")
+        .select("*", { count: "exact", head: true })
+        .eq("author_id", user.id);
+      if (!cancelled) setHasPosted((count || 0) > 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const linkActive = hasPosted && !(data?.referralCapReached ?? false);
+
   const handleCopy = useCallback(() => {
-    if (!data?.link || data.referralCapReached) return;
+    if (!data?.link || !linkActive) return;
     navigator.clipboard.writeText(data.link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [data]);
+  }, [data, linkActive]);
 
   if (loading) return <LoadingState />;
   if (error || !data) return <ErrorState />;
 
-  const {
-    code,
-    link,
-    gates,
-    totalCount,
-    activeCount,
-    monthlyBonus,
-    referrals,
-    tier,
-    referralCapReached,
-  } = data;
+  const { link, totalCount, activeCount, monthlyBonus, referrals, tier, referralCapReached } = data;
 
   const currentSavings = data.currentSavings ?? 0;
-
   const nextMilestone = MILESTONES.find((m) => m.count > totalCount);
-  const milestoneFill = Math.min((totalCount / 25) * 100, 100);
 
   const sortedReferrals = [...referrals].sort((a, b) => {
-    const orderDiff =
-      (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
+    const orderDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
     if (orderDiff !== 0) return orderDiff;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   const conversionPct = totalCount > 0 ? (activeCount / totalCount) * 100 : 0;
 
-  // monthly bonus tier rows
-  const bonusTierIndex =
-    activeCount >= 5 ? 2 : activeCount >= 3 ? 1 : activeCount >= 1 ? 0 : -1;
+  const bonusTierIndex = activeCount >= 5 ? 2 : activeCount >= 3 ? 1 : activeCount >= 1 ? 0 : -1;
   const bonusRows = [
     { label: "1-2 active referrals", value: "$10 off / month" },
     { label: "3-4 active referrals", value: "$20 off / month" },
     { label: "5+ active referrals", value: "$30 off / month" },
   ];
 
-  // activity gate steps
-  const steps = [
-    {
-      n: 1,
-      label: "complete profile",
-      sub: "stage, bio, and skills filled out",
-      done: gates.profileComplete,
-    },
-    {
-      n: 2,
-      label: "return 3 days",
-      sub: "log in on 3 separate days",
-      done: gates.returnedThreeDays,
-    },
-    {
-      n: 3,
-      label: "engage with pulse",
-      sub: "post or reply to a pulse post",
-      done: gates.engagedWithPulse,
-    },
-  ];
-
   return (
-    <div style={{ padding: "24px", maxWidth: 760, margin: "0 auto" }}>
-      {/* ─── Section 1 — header ─────────────────────────────────────────────── */}
+    <div style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
+      {/* ─── header ─────────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 24 }}>
-        <p
-          style={{
-            fontFamily: MONO,
-            fontSize: 10,
-            letterSpacing: "0.08em",
-            color: "#6e7681",
-            marginBottom: 6,
-          }}
-        >
+        <p style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", color: "#6e7681", marginBottom: 6 }}>
           // referrals
         </p>
-        <h1
-          style={{
-            fontFamily: SANS,
-            fontSize: 28,
-            fontWeight: 500,
-            color: "#e6edf3",
-            margin: 0,
-            lineHeight: 1.2,
-          }}
-        >
+        <h1 style={{ fontFamily: SANS, fontSize: 28, fontWeight: 500, color: "#e6edf3", margin: 0, lineHeight: 1.2 }}>
           referrals
         </h1>
         <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", marginTop: 4 }}>
@@ -315,7 +285,7 @@ export default function ReferralsDashboard() {
         </p>
       </div>
 
-      {/* ─── Section 2 — free tier cap notice ───────────────────────────────── */}
+      {/* ─── free tier cap notice ───────────────────────────────────────────── */}
       {tier === "free" && status !== "trialing" && (
         <div
           style={{
@@ -331,36 +301,18 @@ export default function ReferralsDashboard() {
           }}
         >
           <div>
-            <p
-              style={{
-                fontFamily: MONO,
-                fontSize: 9,
-                textTransform: "uppercase",
-                color: "#22c55e",
-                marginBottom: 4,
-                letterSpacing: "0.08em",
-              }}
-            >
+            <p style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#22c55e", marginBottom: 4, letterSpacing: "0.08em" }}>
               // free tier
             </p>
             <p style={{ fontFamily: SANS, fontSize: 13, color: "#8b949e", marginBottom: 6 }}>
-              You can refer up to 3 founders on the free tier. Upgrade to Member for
-              unlimited referrals.
+              You can refer up to 3 founders on the free tier. Upgrade to Member for unlimited referrals.
             </p>
-            <p style={{ fontFamily: MONO, fontSize: 10, color: "#22c55e" }}>
-              {totalCount} of 3 referrals used
-            </p>
+            <p style={{ fontFamily: MONO, fontSize: 10, color: "#22c55e" }}>{totalCount} of 3 referrals used</p>
           </div>
           {referralCapReached && (
             <span
               onClick={() => router.push("/pricing")}
-              style={{
-                fontFamily: MONO,
-                fontSize: 11,
-                color: "#22c55e",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
+              style={{ fontFamily: MONO, fontSize: 11, color: "#22c55e", cursor: "pointer", whiteSpace: "nowrap" }}
             >
               Upgrade for unlimited →
             </span>
@@ -368,510 +320,137 @@ export default function ReferralsDashboard() {
         </div>
       )}
 
-      {/* ─── Section 3 — activity gate track ────────────────────────────────── */}
-      <div style={{ marginBottom: 32 }}>
-        <p
-          style={{
-            fontFamily: MONO,
-            fontSize: 10,
-            textTransform: "uppercase",
-            color: "#f59e0b",
-            letterSpacing: "0.12em",
-            marginBottom: 6,
-          }}
-        >
-          // earn your invite link
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: 13, color: "#8b949e", marginBottom: 20 }}>
-          quorum stays valuable because everyone in it earns their place. complete these
-          steps to unlock your referral link.
-        </p>
-
-        {gates.allComplete ? (
-          <div
-            style={{
-              background: "rgba(34,197,94,0.06)",
-              border: "1px solid rgba(34,197,94,0.2)",
-              borderRadius: 4,
-              padding: "12px 16px",
-              marginBottom: 20,
-            }}
-          >
-            <span style={{ fontFamily: MONO, fontSize: 11, color: "#22c55e" }}>
-              // your referral link is now active
-            </span>
-          </div>
-        ) : (
-          <>
-            {/* The three gates are independent — they can be completed in any
-                order. Rendered as standalone cards (no connector line) so the
-                layout doesn't imply a sequence. */}
-            <p
-              style={{
-                fontFamily: MONO,
-                fontSize: 9,
-                color: "#484f58",
-                letterSpacing: "0.06em",
-                marginBottom: 10,
-              }}
-            >
-              // complete all three in any order
-            </p>
-            <div style={{ maxWidth: 560 }}>
-              {steps.map((step) => (
-                <div
-                  key={step.n}
-                  style={{
-                    background: "#161b22",
-                    border: `1px solid ${step.done ? "rgba(34,197,94,0.3)" : "#21262d"}`,
-                    borderLeft: `2px solid ${step.done ? "#22c55e" : "#21262d"}`,
-                    borderRadius: "0 4px 4px 0",
-                    padding: "12px 14px",
-                    marginBottom: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: MONO,
-                        fontSize: 10,
-                        color: step.done ? "#22c55e" : "#484f58",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {step.label}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: MONO,
-                        fontSize: 9,
-                        color: step.done ? "#22c55e" : "#484f58",
-                      }}
-                    >
-                      {step.done ? "✓ done" : "// pending"}
-                    </span>
-                  </div>
-                  <p
-                    style={{
-                      fontFamily: SANS,
-                      fontSize: 12,
-                      color: "#6e7681",
-                      marginTop: 4,
-                    }}
-                  >
-                    {step.sub}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* ─── Section 4 — referral link ──────────────────────────────────────── */}
-      {gates.allComplete && (
+      {/* ─── prominent refer CTA ────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 24 }}>
         <div
           style={{
             background: "#161b22",
             border: "1px solid #21262d",
             borderRadius: 4,
-            padding: 20,
-            marginBottom: 20,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                textTransform: "uppercase",
-                color: "#484f58",
-              }}
-            >
-              // your invite link
-            </span>
-            {referralCapReached && (
-              <span style={{ fontFamily: MONO, fontSize: 9, color: "#f85149" }}>
-                // link paused — cap reached
-              </span>
-            )}
-          </div>
-
-          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-            <input
-              readOnly
-              value={link ?? ""}
-              style={{
-                flex: 1,
-                background: "#0d1117",
-                border: "1px solid #21262d",
-                borderRadius: 4,
-                padding: "10px 14px",
-                fontFamily: MONO,
-                fontSize: 12,
-                color: "#8b949e",
-                letterSpacing: "0.04em",
-                cursor: "default",
-                userSelect: "all",
-                opacity: referralCapReached ? 0.4 : 1,
-                pointerEvents: referralCapReached ? "none" : "auto",
-              }}
-            />
-            <button
-              onClick={handleCopy}
-              disabled={referralCapReached}
-              style={{
-                background: referralCapReached ? "#21262d" : "#f59e0b",
-                color: referralCapReached ? "#484f58" : "#0d1117",
-                fontFamily: MONO,
-                fontSize: 11,
-                letterSpacing: "0.06em",
-                padding: "10px 18px",
-                border: "none",
-                borderRadius: 4,
-                cursor: referralCapReached ? "default" : "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {referralCapReached ? "link paused" : copied ? "copied ✓" : "copy link →"}
-            </button>
-          </div>
-
-          <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 10 }}>
-            // your code: {code}
-          </p>
-
-          <div
-            style={{
-              marginTop: 14,
-              borderTop: "1px solid #21262d",
-              paddingTop: 14,
-            }}
-          >
-            <p style={{ fontFamily: SANS, fontSize: 12, color: "#6e7681" }}>
-              Founders who join with your link get a 30-day trial and their first month
-              free when they add a card.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Section 5 — milestones ─────────────────────────────────────────── */}
-      <div style={{ marginBottom: 20 }}>
-        <p
-          style={{
-            fontFamily: MONO,
-            fontSize: 10,
-            textTransform: "uppercase",
-            color: "#f59e0b",
-            letterSpacing: "0.12em",
-            marginBottom: 6,
-          }}
-        >
-          // referral milestones
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: 13, color: "#8b949e", marginBottom: 20 }}>
-          every founder you bring who stays active builds the network and earns you
-          access.
-        </p>
-
-        {/* progress bar with markers */}
-        <div style={{ position: "relative", maxWidth: 560, marginBottom: 24, height: 12 }}>
-          <div
-            style={{
-              position: "absolute",
-              top: 4,
-              left: 0,
-              width: "100%",
-              height: 4,
-              background: "#21262d",
-              borderRadius: 2,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: 4,
-              left: 0,
-              width: `${milestoneFill}%`,
-              height: 4,
-              background: "#f59e0b",
-              borderRadius: 2,
-            }}
-          />
-          {MILESTONES.map((m, i) => {
-            const done = totalCount >= m.count;
-            const isTarget = nextMilestone?.count === m.count;
-            const size = isTarget ? 12 : 10;
-            const markerBg = done ? "#22c55e" : isTarget ? "#f59e0b" : "#21262d";
-            return (
-              <div
-                key={m.count}
-                style={{
-                  position: "absolute",
-                  left: `${MILESTONE_MARKERS[i]}%`,
-                  top: 6,
-                  transform: "translate(-50%, -50%)",
-                  width: size,
-                  height: size,
-                  borderRadius: "50%",
-                  background: markerBg,
-                  border: !done && !isTarget ? "1px solid #30363d" : "none",
-                  boxShadow: isTarget ? "0 0 0 3px rgba(245,158,11,0.2)" : "none",
-                  zIndex: 1,
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* milestone cards */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {MILESTONES.map((m) => {
-            const done = totalCount >= m.count;
-            const isTarget = !done && nextMilestone?.count === m.count;
-            const isFuture = !done && !isTarget;
-
-            const badgeStyle: React.CSSProperties = done
-              ? {
-                  background: "rgba(34,197,94,0.1)",
-                  color: "#22c55e",
-                  border: "1px solid rgba(34,197,94,0.2)",
-                }
-              : isTarget
-              ? {
-                  background: "rgba(245,158,11,0.1)",
-                  color: "#f59e0b",
-                  border: "1px solid rgba(245,158,11,0.2)",
-                }
-              : { background: "#21262d", color: "#484f58", border: "1px solid #30363d" };
-
-            return (
-              <div
-                key={m.count}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  background: isTarget ? "rgba(245,158,11,0.02)" : "#161b22",
-                  border: "1px solid #21262d",
-                  borderLeft: done
-                    ? "2px solid #22c55e"
-                    : isTarget
-                    ? "2px solid #f59e0b"
-                    : "1px solid #21262d",
-                  borderRadius: 4,
-                  padding: "14px 16px",
-                  opacity: isFuture ? 0.6 : 1,
-                }}
-              >
-                <span
-                  style={{
-                    ...badgeStyle,
-                    fontFamily: MONO,
-                    fontSize: 11,
-                    padding: "4px 10px",
-                    borderRadius: 3,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {done ? `${m.count} ✓` : m.count}
-                </span>
-                <span
-                  style={{
-                    fontFamily: SANS,
-                    fontSize: 13,
-                    color: "#8b949e",
-                    marginLeft: 12,
-                  }}
-                >
-                  {m.reward}
-                </span>
-                <span style={{ marginLeft: "auto", whiteSpace: "nowrap" }}>
-                  {done ? (
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: "#22c55e" }}>
-                      reward applied
-                    </span>
-                  ) : isTarget ? (
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: "#f59e0b" }}>
-                      {totalCount} / {m.count}
-                    </span>
-                  ) : (
-                    <span style={{ fontFamily: MONO, fontSize: 11, color: "#30363d" }}>—</span>
-                  )}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ─── Section 6 — monthly active bonus ───────────────────────────────── */}
-      <div
-        style={{
-          background: "#161b22",
-          border: "1px solid #21262d",
-          borderRadius: 4,
-          padding: 20,
-          marginBottom: 20,
-        }}
-      >
-        <div
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-        >
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              textTransform: "uppercase",
-              color: "#484f58",
-            }}
-          >
-            // monthly active bonus
-          </span>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: "#484f58" }}>
-            resets {getResetDate()}
-          </span>
-        </div>
-
-        <div style={{ marginTop: 12, marginBottom: 16 }}>
-          {monthlyBonus > 0 ? (
-            <>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontFamily: SANS, fontSize: 32, color: "#f59e0b" }}>
-                  ${monthlyBonus}
-                </span>
-                <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>
-                  off this month
-                </span>
-              </div>
-              <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 4 }}>
-                // {activeCount} active referrals
-              </p>
-            </>
-          ) : (
-            <>
-              <p style={{ fontFamily: MONO, fontSize: 11, color: "#484f58" }}>
-                // no active referrals this month
-              </p>
-              <p style={{ fontFamily: SANS, fontSize: 12, color: "#6e7681", marginTop: 4 }}>
-                Get 1 active referral to earn $10 off every month.
-              </p>
-            </>
-          )}
-        </div>
-
-        <div style={{ marginTop: 12, borderTop: "1px solid #21262d", paddingTop: 12 }}>
-          {bonusRows.map((row, i) => {
-            const isActiveTier = i === bonusTierIndex;
-            return (
-              <div
-                key={row.label}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "6px 0",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: SANS,
-                    fontSize: 12,
-                    color: isActiveTier ? "#f59e0b" : "#484f58",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  {isActiveTier && (
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "#f59e0b",
-                        display: "inline-block",
-                      }}
-                    />
-                  )}
-                  {row.label}
-                </span>
-                <span
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: 11,
-                    color: isActiveTier ? "#f59e0b" : "#484f58",
-                  }}
-                >
-                  {row.value}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ─── Section 6b — current savings ───────────────────────────────────── */}
-      {currentSavings > 0 && (
-        <div
-          style={{
-            background: "rgba(34,197,94,0.04)",
-            border: "1px solid rgba(34,197,94,0.15)",
-            borderRadius: 4,
-            padding: "16px 20px",
-            marginBottom: 20,
+            padding: 24,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 16,
+            gap: 20,
           }}
         >
-          <span
+          <div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                color: "#f59e0b",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginBottom: 6,
+              }}
+            >
+              // your invite link
+            </div>
+            <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", margin: 0 }}>
+              Bring someone who belongs here. Get rewarded when they stay.
+            </p>
+          </div>
+          <button
+            onClick={handleCopy}
+            disabled={!linkActive}
             style={{
+              background: linkActive ? "#f59e0b" : "#21262d",
+              color: linkActive ? "#0d1117" : "#484f58",
               fontFamily: MONO,
-              fontSize: 9,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              color: "#22c55e",
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: "0.06em",
+              padding: "12px 24px",
+              border: "none",
+              borderRadius: 4,
+              cursor: linkActive ? "pointer" : "default",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
-            // your current savings
-          </span>
-          <span style={{ fontFamily: SANS, fontSize: 16, color: "#22c55e" }}>
-            ${currentSavings.toFixed(2)} off this month
-          </span>
+            {referralCapReached ? "link paused" : copied ? "copied ✓" : "copy invite link →"}
+          </button>
         </div>
-      )}
-
-      {/* ─── Section 7 — your referrals ─────────────────────────────────────── */}
-      {(gates.allComplete || referrals.length > 0) && (
-        <div>
+        {!hasPosted && (
           <p
             style={{
               fontFamily: MONO,
               fontSize: 10,
-              textTransform: "uppercase",
               color: "#484f58",
-              letterSpacing: "0.1em",
-              marginBottom: 6,
+              letterSpacing: "0.05em",
+              textAlign: "right",
+              marginTop: 6,
             }}
           >
+            // make your first post to activate
+          </p>
+        )}
+      </div>
+
+      {/* ─── two-column layout ──────────────────────────────────────────────── */}
+      <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+        {/* LEFT */}
+        <div style={{ flex: "1.4", minWidth: 0 }}>
+          {/* referral link display */}
+          <div
+            style={{
+              background: "#0d1117",
+              border: `1px solid ${linkActive ? "#30363d" : "#21262d"}`,
+              borderRadius: 4,
+              padding: "10px 14px",
+              fontFamily: MONO,
+              fontSize: 12,
+              color: linkActive ? "#8b949e" : "#484f58",
+              letterSpacing: "0.04em",
+              marginBottom: 24,
+              opacity: linkActive ? 1 : 0.5,
+              userSelect: linkActive ? "all" : "none",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {link || "quorum.app/signup?ref=••••••"}
+          </div>
+
+          {/* how it works */}
+          <p style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.1em", marginBottom: 12 }}>
+            // how it works
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+            {HOW_IT_WORKS.map((step) => (
+              <div key={step.n} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: "50%",
+                    background: "rgba(245,158,11,0.12)",
+                    border: "1px solid rgba(245,158,11,0.3)",
+                    color: "#f59e0b",
+                    fontFamily: MONO,
+                    fontSize: 11,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {step.n}
+                </div>
+                <div>
+                  <p style={{ fontFamily: SANS, fontSize: 13, color: "#e6edf3", margin: 0 }}>{step.title}</p>
+                  <p style={{ fontFamily: SANS, fontSize: 12, color: "#6e7681", margin: 0 }}>{step.sub}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* your referrals */}
+          <p style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.1em", marginBottom: 6 }}>
             // your referrals
           </p>
-
           {referrals.length === 0 ? (
             <div
               style={{
@@ -882,48 +461,29 @@ export default function ReferralsDashboard() {
                 textAlign: "center",
               }}
             >
-              <p style={{ fontFamily: MONO, fontSize: 11, color: "#484f58", marginBottom: 8 }}>
-                // no referrals yet
-              </p>
+              <p style={{ fontFamily: MONO, fontSize: 11, color: "#484f58", marginBottom: 8 }}>// no referrals yet</p>
               <p style={{ fontFamily: SANS, fontSize: 13, color: "#6e7681" }}>
                 Share your link with founders who belong in this room.
               </p>
             </div>
           ) : (
             <>
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginBottom: 6 }}>
-                  {activeCount} of {totalCount} referrals became active members
-                </p>
-                <div
-                  style={{
-                    height: 3,
-                    background: "#21262d",
-                    borderRadius: 2,
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: `${conversionPct}%`,
-                      background: "#22c55e",
-                    }}
-                  />
-                </div>
+              <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginBottom: 6 }}>
+                {activeCount} of {totalCount} referrals became active
+              </p>
+              <div style={{ height: 3, background: "#21262d", borderRadius: 2, overflow: "hidden", marginBottom: 16 }}>
+                <div style={{ height: "100%", width: `${conversionPct}%`, background: "#22c55e" }} />
               </div>
-
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {sortedReferrals.map((r) => {
-                  const status = r.status;
-                  const name =
-                    r.referred?.full_name || r.referred?.username || "founder";
+                  const s = r.status;
+                  const name = r.referred?.full_name || r.referred?.username || "founder";
                   const username = r.referred?.username ?? "unknown";
                   const initial = (name[0] || "?").toUpperCase();
                   const avatarStyle: React.CSSProperties =
-                    status === "active"
+                    s === "active"
                       ? { background: "rgba(34,197,94,0.12)", color: "#22c55e" }
-                      : status === "pending"
+                      : s === "pending"
                       ? { background: "rgba(245,158,11,0.12)", color: "#f59e0b" }
                       : { background: "#21262d", color: "#484f58" };
                   return (
@@ -938,15 +498,7 @@ export default function ReferralsDashboard() {
                         padding: "14px 16px",
                       }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 12,
-                          alignItems: "center",
-                          flex: 1,
-                          minWidth: 0,
-                        }}
-                      >
+                      <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0 }}>
                         <div
                           style={{
                             width: 32,
@@ -972,33 +524,21 @@ export default function ReferralsDashboard() {
                               whiteSpace: "nowrap",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
+                              margin: 0,
                             }}
                           >
                             {name}
                           </p>
-                          <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58" }}>
-                            @{username}
+                          <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", margin: 0 }}>
+                            joined {relativeDate(r.created_at)}
                           </p>
                         </div>
-                        <span
-                          style={{
-                            fontFamily: MONO,
-                            fontSize: 10,
-                            color: "#484f58",
-                            marginLeft: 12,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          joined {relativeDate(r.created_at)}
-                        </span>
                       </div>
-                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        {status === "pending" && (
-                          <span style={{ fontFamily: MONO, fontSize: 9, color: "#f59e0b" }}>
-                            // awaiting card
-                          </span>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
+                        {s === "pending" && (
+                          <span style={{ fontFamily: MONO, fontSize: 9, color: "#f59e0b" }}>// hasn&apos;t activated yet</span>
                         )}
-                        <StatusPill status={status} />
+                        <StatusPill status={s} />
                       </div>
                     </div>
                   );
@@ -1007,7 +547,102 @@ export default function ReferralsDashboard() {
             </>
           )}
         </div>
-      )}
+
+        {/* RIGHT (sticky) */}
+        <div style={{ flex: "1", position: "sticky", top: 24, minWidth: 0 }}>
+          {/* milestones */}
+          <p style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", color: "#f59e0b", letterSpacing: "0.12em", marginBottom: 10 }}>
+            // referral milestones
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {MILESTONES.map((m) => {
+              const done = totalCount >= m.count;
+              const isTarget = !done && nextMilestone?.count === m.count;
+              return (
+                <div
+                  key={m.count}
+                  style={{
+                    background: "#161b22",
+                    border: "1px solid #21262d",
+                    borderLeft: `2px solid ${done ? "#22c55e" : isTarget ? "#f59e0b" : "#21262d"}`,
+                    borderRadius: "0 4px 4px 0",
+                    padding: "12px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 11, color: done ? "#22c55e" : isTarget ? "#f59e0b" : "#8b949e" }}>
+                      {m.count} {m.count === 1 ? "referral" : "referrals"}
+                    </span>
+                    <p style={{ fontFamily: SANS, fontSize: 11, color: "#6e7681", margin: "2px 0 0" }}>{m.reward}</p>
+                  </div>
+                  <span style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
+                    {done ? (
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: "#22c55e" }}>✓ earned</span>
+                    ) : isTarget ? (
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: "#f59e0b" }}>
+                        {totalCount}/{m.count}
+                      </span>
+                    ) : (
+                      <span style={{ fontFamily: MONO, fontSize: 11, color: "#30363d" }}>—</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* monthly bonus */}
+          <div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 4, padding: 16, marginTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.08em" }}>
+                // monthly bonus
+              </span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: "#484f58" }}>resets {getResetDate()}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}>
+              <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>${monthlyBonus}</span>
+              <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>off this month</span>
+            </div>
+            <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 4 }}>// {activeCount} active referrals</p>
+
+            <div style={{ marginTop: 12, borderTop: "1px solid #21262d", paddingTop: 12 }}>
+              {bonusRows.map((row, i) => {
+                const isActiveTier = i === bonusTierIndex;
+                return (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0" }}>
+                    <span style={{ fontFamily: SANS, fontSize: 12, color: isActiveTier ? "#f59e0b" : "#484f58" }}>{row.label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 11, color: isActiveTier ? "#f59e0b" : "#484f58" }}>{row.value}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* current savings */}
+          {currentSavings > 0 && (
+            <div
+              style={{
+                background: "rgba(34,197,94,0.04)",
+                border: "1px solid rgba(34,197,94,0.15)",
+                borderRadius: 4,
+                padding: "16px 20px",
+                marginTop: 16,
+              }}
+            >
+              <p style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: "#22c55e", marginBottom: 6 }}>
+                // your current savings
+              </p>
+              <p style={{ fontFamily: SANS, fontSize: 16, color: "#22c55e", margin: 0 }}>
+                ${currentSavings.toFixed(2)} off this month
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

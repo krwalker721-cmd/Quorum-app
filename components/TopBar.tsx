@@ -1,6 +1,7 @@
 import ThemeToggle from "@/components/ThemeToggle";
 import NewPostButton from "@/components/NewPostButton";
 import SignOutButton from "@/components/SignOutButton";
+import TopBarTierLink from "@/components/TopBarTierLink";
 
 // One quiet line of context per page so the topbar orients you instead of
 // just naming the route. Falls back to nothing for unmapped pages.
@@ -65,16 +66,11 @@ export default function TopBar({
           )}
         </div>
       </div>
-      <div className="flex items-center gap-3 shrink-0 pl-4">
+      <div className="flex items-center gap-2 shrink-0 pl-4">
         {/* Secondary chrome collapses away first on narrow viewports */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2">
+          <TopBarTierLink tier={tier} />
           <ThemeToggle />
-          <span
-            className="tier-badge font-mono uppercase tracking-wider"
-            style={{ letterSpacing: "0.08em" }}
-          >
-            {tier}
-          </span>
         </div>
         <NewPostButton userId={userId} defaultPostType={defaultPostType} />
         <SignOutButton />

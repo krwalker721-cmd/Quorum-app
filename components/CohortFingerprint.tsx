@@ -1,17 +1,18 @@
 import type { Fingerprint } from "@/lib/recognition";
 
-const SEGMENTS: { key: keyof Fingerprint; color: string }[] = [
-  { key: "question", color: "#38bdf8" },
-  { key: "update", color: "#6e7681" },
+// Axis order around the pentagon. Each axis is one post kind; the shape is the
+// proportion of the user's posts in that kind.
+const TYPES: { key: Exclude<keyof Fingerprint, "total">; color: string }[] = [
   { key: "decision", color: "#f59e0b" },
   { key: "win", color: "#22c55e" },
-  { key: "blocker", color: "#a78bfa" },
+  { key: "blocker", color: "#f85149" },
+  { key: "question", color: "#58a6ff" },
+  { key: "update", color: "#8b949e" },
 ];
 
 /**
- * A subtle, abstract radial shape. Each post-type contributes one petal whose
- * length is proportional to its share of the user's cohort posts.
- * Not numbers. Not a chart. A shape that changes over time.
+ * A pentagon radar chart. Each axis represents a post kind; the plotted shape is
+ * drawn from the proportion of each kind in the user's posting history.
  */
 export default function CohortFingerprint({
   fp,
@@ -27,58 +28,61 @@ export default function CohortFingerprint({
       </p>
     );
   }
-  const cx = size / 2;
-  const cy = size / 2;
-  const baseR = size * 0.16; // inner radius
-  const maxR = size * 0.42; // outermost reach
-  const n = SEGMENTS.length;
-  const points: string[] = [];
-  for (let i = 0; i < n; i++) {
-    const seg = SEGMENTS[i];
-    const share = (fp[seg.key] as number) / fp.total;
-    const r = baseR + (maxR - baseR) * share;
-    const theta = (i / n) * Math.PI * 2 - Math.PI / 2;
-    const x = cx + Math.cos(theta) * r;
-    const y = cy + Math.sin(theta) * r;
-    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
-  }
-  const polyPoints = points.join(" ");
+
+  const center = size / 2;
+  const maxRadius = size * 0.42;
+  const n = TYPES.length;
+
+  const points = TYPES.map((t, i) => {
+    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    const ratio = (fp[t.key] as number) / fp.total;
+    // minimum 2px so the shape is always visible even for a single axis
+    const radius = Math.max(ratio * maxRadius, 2);
+    return {
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle),
+      color: t.color,
+    };
+  });
+
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ") + " Z";
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      aria-hidden
-    >
-      <defs>
-        <radialGradient id="fp-fill" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="rgba(245, 158, 11,0.18)" />
-          <stop offset="100%" stopColor="rgba(245, 158, 11,0.02)" />
-        </radialGradient>
-      </defs>
-      {/* faint outer ring as visual anchor */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={maxR}
-        fill="none"
-        stroke="rgba(245, 158, 11,0.10)"
-        strokeDasharray="2 3"
-      />
-      <polygon
-        points={polyPoints}
-        fill="url(#fp-fill)"
-        stroke="rgba(245, 158, 11,0.55)"
-        strokeWidth={1}
-      />
-      {SEGMENTS.map((s, i) => {
-        const share = (fp[s.key] as number) / fp.total;
-        const r = baseR + (maxR - baseR) * share;
-        const theta = (i / n) * Math.PI * 2 - Math.PI / 2;
-        const x = cx + Math.cos(theta) * r;
-        const y = cy + Math.sin(theta) * r;
-        return <circle key={s.key} cx={x} cy={y} r={2} fill={s.color} />;
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
+      {/* concentric pentagon guides */}
+      {[0.25, 0.5, 0.75, 1].map((scale) => {
+        const guide = TYPES.map((_, i) => {
+          const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+          return `${(center + maxRadius * scale * Math.cos(angle)).toFixed(1)},${(
+            center + maxRadius * scale * Math.sin(angle)
+          ).toFixed(1)}`;
+        });
+        return <polygon key={scale} points={guide.join(" ")} fill="none" stroke="#21262d" strokeWidth={1} />;
       })}
+
+      {/* axis spokes */}
+      {TYPES.map((_, i) => {
+        const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+        return (
+          <line
+            key={i}
+            x1={center}
+            y1={center}
+            x2={center + maxRadius * Math.cos(angle)}
+            y2={center + maxRadius * Math.sin(angle)}
+            stroke="#21262d"
+            strokeWidth={1}
+          />
+        );
+      })}
+
+      {/* the fingerprint shape */}
+      <path d={pathD} fill="rgba(245,158,11,0.08)" stroke="#f59e0b" strokeWidth={1.5} strokeLinejoin="round" />
+
+      {/* data points */}
+      {points.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={3} fill={p.color} />
+      ))}
     </svg>
   );
 }

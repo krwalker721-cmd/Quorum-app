@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, stage, status, tier")
+    .select("id, full_name, stage, status, tier, username")
     .eq("id", user.id)
     .single();
 
@@ -127,7 +127,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <NotificationsProvider currentUserId={user.id} cohortId={cohortIdForDots}>
         <TierProvider>
         <div className="min-h-screen root-layout">
-          <Sidebar cohort={cohort} currentUserId={user.id} />
+          <Sidebar
+            cohort={cohort}
+            currentUserId={user.id}
+            currentUser={{
+              full_name: profile?.full_name ?? null,
+              stage: profile?.stage ?? null,
+              username: (profile as { username?: string | null } | null)?.username ?? null,
+            }}
+          />
           <div
             style={{
               marginLeft: "var(--sidebar-w, 240px)",

@@ -1805,3 +1805,19 @@ label {
   letter-spacing: 0.04em;
 }
 
+
+/* ─── Appearance preferences (Settings → Appearance) ──────────────────── */
+/* Font-size scaling applied to the root element. `default` is the baseline. */
+html.font-size-small  { font-size: 14px; }
+html.font-size-default { font-size: 16px; }
+html.font-size-large  { font-size: 18px; }
+
+/* Reduce-motion opt-in toggle — neutralizes transitions/animations app-wide. */
+html.prefers-reduced-motion *,
+html.prefers-reduced-motion *::before,
+html.prefers-reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}

@@ -151,7 +151,10 @@ export type Fingerprint = {
   total: number;
 };
 
-/** Distribution across the 5 room_type post kinds. */
+/** Distribution across the 5 room_type post kinds. room_type is carried by the
+ *  user's posts that classify themselves (decision/win/blocker/question/update);
+ *  we count across ALL of the user's posts — restricting to post_type="cohort"
+ *  here only ever matched empty room_types, so the shape never appeared. */
 export async function getCohortFingerprint(
   supabase: SupabaseClient,
   userId: string,
@@ -160,7 +163,6 @@ export async function getCohortFingerprint(
     .from("posts")
     .select("room_type")
     .eq("author_id", userId)
-    .eq("post_type", "cohort")
     .not("room_type", "is", null);
   const fp: Fingerprint = {
     question: 0,
