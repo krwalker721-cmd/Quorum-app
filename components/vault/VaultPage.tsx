@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import VaultHeader from "./VaultHeader";
-import VaultStatStrip from "./VaultStatStrip";
 import LibraryTab from "./LibraryTab";
 import NotesTab from "./NotesTab";
 import CommunityWisdomTab from "./CommunityWisdomTab";
 import VaultUpgradeNudge from "./VaultUpgradeNudge";
+import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import TerminalFooter from "@/components/ui/TerminalFooter";
 import type { NoteRow, NoteCollectionRow } from "@/lib/vault";
 
 export type LibraryItem = {
@@ -120,12 +120,18 @@ export default function VaultPage({
 
   return (
     <div className="px-6 py-6 max-w-6xl mx-auto">
-      <VaultHeader />
-      <VaultStatStrip
-        savedByCommunity={liveStats.savedByCommunity}
-        notesWritten={liveStats.notesWritten}
-        wisdomPreserved={liveStats.wisdomPreserved}
-      />
+      {/* Compact header — one context line instead of the old h1 + stat strip
+          (the topbar already names the page). */}
+      <header className="mb-1">
+        <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>vault</h1>
+        <p
+          className="font-mono"
+          style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 4, letterSpacing: "0.03em" }}
+        >
+          {liveStats.savedByCommunity} saved · {liveStats.notesWritten}{" "}
+          {liveStats.notesWritten === 1 ? "note" : "notes"} · {liveStats.wisdomPreserved} wisdom
+        </p>
+      </header>
 
       <Tabs tab={tab} setTab={setTab} />
 
@@ -155,6 +161,7 @@ export default function VaultPage({
 
       {/* Free-tier (non-trial) nudge — self-hides for paid and trial users. */}
       <VaultUpgradeNudge />
+      <TerminalFooter />
     </div>
   );
 }
@@ -164,29 +171,19 @@ function Tabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
     () => [
       { id: "library", label: "library" },
       { id: "notes", label: "notes" },
-      { id: "community_wisdom", label: "community_wisdom" },
+      { id: "community_wisdom", label: "community wisdom" },
     ],
     [],
   );
   return (
-    <div className="flex items-center gap-2 mt-5 border-b" style={{ borderColor: "var(--border)" }}>
-      {list.map((t) => {
-        const active = tab === t.id;
-        return (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className="font-mono lowercase text-[0.72rem] px-3 py-2 transition-colors"
-            style={{
-              color: active ? "var(--text-primary)" : "var(--text-faint)",
-              borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
-            }}
-          >
+    <div className="mt-5">
+      <TabPillRow>
+        {list.map((t) => (
+          <TabPill key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
             {t.label}
-          </button>
-        );
-      })}
+          </TabPill>
+        ))}
+      </TabPillRow>
     </div>
   );
 }

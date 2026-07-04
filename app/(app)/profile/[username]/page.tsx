@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminUnlocked } from "@/app/admin/session";
 import TopBar from "@/components/TopBar";
 import Avatar from "@/components/Avatar";
+import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import TerminalFooter from "@/components/ui/TerminalFooter";
 import StagePill from "@/components/cohort/StagePill";
 import TierPill from "@/components/TierPill";
 import ProfileBilling from "@/components/ProfileBilling";
@@ -258,8 +260,8 @@ export default async function ProfilePage({
       <section className="max-w-3xl mx-auto px-6 py-10">
         {/* Header card */}
         <div
-          className="p-6 border flex items-start gap-5"
-          style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+          className="p-6 flex items-start gap-5"
+          style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12 }}
         >
           <Avatar
             name={profile.full_name}
@@ -313,10 +315,10 @@ export default async function ProfilePage({
                   />
                   <Link
                     href={`/messages?to=${profile.id}`}
-                    className="font-mono lowercase text-[0.7rem] px-3 py-2 hover:opacity-90 whitespace-nowrap"
-                    style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+                    className="font-mono lowercase text-[0.7rem] px-3.5 py-2 hover:opacity-90 whitespace-nowrap"
+                    style={{ background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))", color: "#1a1204", border: "none", borderRadius: 8, fontWeight: 500 }}
                   >
-                    + message
+                    message →
                   </Link>
                 </div>
               )}
@@ -343,67 +345,37 @@ export default async function ProfilePage({
         </div>
 
         {/* Tabs */}
-        <div
-          className="mt-6 flex items-center gap-1 border-b"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <Link
-            href={`/profile/${profile.username}`}
-            className="font-mono lowercase text-[0.7rem] px-3 py-2"
-            style={{
-              color: tab === "about" ? "#f59e0b" : "var(--text-muted)",
-              borderBottom: tab === "about" ? "2px solid #f59e0b" : "2px solid transparent",
-            }}
-          >
-            about
-          </Link>
-          <Link
-            href={`/profile/${profile.username}?tab=posts`}
-            className="font-mono lowercase text-[0.7rem] px-3 py-2"
-            style={{
-              color: tab === "posts" ? "#f59e0b" : "var(--text-muted)",
-              borderBottom: tab === "posts" ? "2px solid #f59e0b" : "2px solid transparent",
-            }}
-          >
-            posts
-          </Link>
-          <Link
-            href={`/profile/${profile.username}?tab=handshakes`}
-            className="font-mono lowercase text-[0.7rem] px-3 py-2 flex items-center gap-1.5"
-            style={{
-              color: tab === "handshakes" ? "#f59e0b" : "var(--text-muted)",
-              borderBottom: tab === "handshakes" ? "2px solid #f59e0b" : "2px solid transparent",
-            }}
-          >
-            handshakes
-            {handshakes.length > 0 && (
-              <span
-                className="font-mono text-[0.6rem] px-1.5 rounded-full"
-                style={{
-                  background: "rgba(245, 158, 11, 0.15)",
-                  color: "#f59e0b",
-                }}
-              >
-                {handshakes.length}
-              </span>
-            )}
-          </Link>
+        <div className="mt-6">
+          <TabPillRow>
+            <TabPill active={tab === "about"} href={`/profile/${profile.username}`}>
+              about
+            </TabPill>
+            <TabPill active={tab === "posts"} href={`/profile/${profile.username}?tab=posts`}>
+              posts
+            </TabPill>
+            <TabPill active={tab === "handshakes"} href={`/profile/${profile.username}?tab=handshakes`}>
+              handshakes
+              {handshakes.length > 0 && (
+                <span style={{ color: "#f8c56a", marginLeft: 6 }}>{handshakes.length}</span>
+              )}
+            </TabPill>
+          </TabPillRow>
         </div>
 
         {tab === "about" ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-card border border-border p-5">
+              <div className="bg-card border border-border rounded-xl p-5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint">building</p>
                 <p className="text-text-secondary text-sm mt-2">
                   {profile.what_they_are_building ?? "—"}
                 </p>
               </div>
-              <div className="bg-card border border-border p-5">
+              <div className="bg-card border border-border rounded-xl p-5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint">trust_score</p>
                 <p className="font-mono text-amber text-sm mt-2">{profile.trust_score ?? 0}</p>
               </div>
-              <div className="bg-card border border-border p-5">
+              <div className="bg-card border border-border rounded-xl p-5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint">joined</p>
                 <p className="font-mono lowercase text-text-secondary text-sm mt-2">
                   {formatDate(profile.created_at)}
@@ -412,7 +384,7 @@ export default async function ProfilePage({
             </div>
 
             {/* Cohort fingerprint — abstract shape from post type distribution */}
-            <div className="bg-card border border-border p-5 mt-6 flex items-center gap-6">
+            <div className="bg-card border border-border rounded-xl p-5 mt-6 flex items-center gap-6">
               <div className="shrink-0">
                 <CohortFingerprint fp={fingerprint} />
               </div>
@@ -435,7 +407,7 @@ export default async function ProfilePage({
 
             {/* Private mirror — owner only */}
             {isOwner && (
-              <div className="bg-card border border-border p-5 mt-6 space-y-2.5">
+              <div className="bg-card border border-border rounded-xl p-5 mt-6 space-y-2.5">
                 <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2">
                   mirror
                 </p>
@@ -468,7 +440,7 @@ export default async function ProfilePage({
             )}
 
             {/* Cohorts */}
-            <div className="bg-card border border-border p-5 mt-6">
+            <div className="bg-card border border-border rounded-xl p-5 mt-6">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint">cohorts</p>
               {cohorts.length === 0 ? (
                 <p className="font-mono lowercase text-xs text-text-faint mt-3">
@@ -491,7 +463,7 @@ export default async function ProfilePage({
             </div>
 
             {/* Skills */}
-            <div className="bg-card border border-border p-5 mt-6">
+            <div className="bg-card border border-border rounded-xl p-5 mt-6">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint">skills</p>
               {isOwner ? (
                 <SkillsEditor userId={profile.id} skills={skills} />
@@ -519,7 +491,7 @@ export default async function ProfilePage({
             </div>
 
             {/* Project contributions */}
-            <div className="bg-card border border-border p-5 mt-6">
+            <div className="bg-card border border-border rounded-xl p-5 mt-6">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint">contributions</p>
               {projects.length === 0 ? (
                 <p className="font-mono lowercase text-xs text-text-faint mt-3">
@@ -530,7 +502,7 @@ export default async function ProfilePage({
                   {projects.map((p) => (
                     <div
                       key={p.id}
-                      className="p-3 border flex items-start justify-between gap-4"
+                      className="p-3 border rounded-lg flex items-start justify-between gap-4"
                       style={{ borderColor: "var(--border)", background: "var(--card-elev)" }}
                     >
                       <div className="min-w-0">
@@ -559,6 +531,7 @@ export default async function ProfilePage({
 
             {/* Billing — own profile only */}
             {isOwner && <ProfileBilling />}
+            <TerminalFooter />
           </>
         ) : tab === "posts" ? (
           <div className="mt-6 space-y-3">
@@ -567,7 +540,7 @@ export default async function ProfilePage({
         ) : (
           <div className="mt-6">
             {handshakes.length === 0 ? (
-              <div className="bg-card border border-border p-6">
+              <div className="bg-card border border-border rounded-xl p-6">
                 <p className="font-mono lowercase text-xs text-text-faint">
                   no handshakes logged yet. use ◈ to record agreements with founders you trust.
                 </p>
@@ -582,7 +555,7 @@ export default async function ProfilePage({
                   return (
                     <div
                       key={h.id}
-                      className="p-4 border flex items-start gap-3"
+                      className="p-4 border rounded-lg flex items-start gap-3"
                       style={{
                         borderColor: "rgba(245, 158, 11,0.25)",
                         background: "var(--card-elev)",

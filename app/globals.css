@@ -1435,19 +1435,17 @@ label {
 
 /* ── Project intro cards ─────────────────────────────────────────────────── */
 .project-intro-card {
-  border: 1px solid #21262d;
-  border-left: 3px solid #58a6ff;
-  border-radius: 0 12px 12px 0;
+  border: 0.5px solid #21262d;
+  border-radius: 12px;
   overflow: hidden;
   max-width: 680px;
   width: 100%;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   transition: border-color 0.15s;
-  background: linear-gradient(90deg, rgba(88, 166, 255, 0.03) 0%, #161b22 30%);
+  background: #161b22;
 }
 .project-intro-card:hover {
-  border-color: #388bfd;
-  border-left-color: #58a6ff;
+  border-color: #30363d;
   cursor: pointer;
 }
 .project-card-header {
@@ -1593,18 +1591,16 @@ label {
 /* ── Need cards ──────────────────────────────────────────────────────────── */
 .need-card {
   background: #161b22;
-  border: 1px solid #21262d;
-  border-left: 3px solid #a78bfa;
-  border-radius: 0 12px 12px 0;
+  border: 0.5px solid #21262d;
+  border-radius: 12px;
   overflow: hidden;
   max-width: 680px;
   width: 100%;
-  margin-bottom: 18px;
-  background: linear-gradient(90deg, rgba(167, 139, 250, 0.03) 0%, #161b22 30%);
+  margin-bottom: 12px;
   transition: border-color 0.15s;
   cursor: pointer;
 }
-.need-card:hover { border-color: #388bfd; border-left-color: #a78bfa; }
+.need-card:hover { border-color: #30363d; }
 .need-card-header {
   display: flex;
   align-items: center;

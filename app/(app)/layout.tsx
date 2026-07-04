@@ -4,7 +4,6 @@ import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
-import AppOverlay from "@/components/AppOverlay";
 import TrialBanner from "@/components/TrialBanner";
 import { TierProvider } from "@/contexts/TierContext";
 import { trackLoginEvent } from "@/lib/referral-helpers";
@@ -91,25 +90,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
   } catch {}
 
-  const { data: cohortRaw } = await supabase
-    .from("profiles")
-    .select("id, full_name, stage, username")
-    .eq("status", "approved")
-    .order("created_at", { ascending: true })
-    .limit(20);
-
-  const cohort = cohortRaw ?? [];
-
-  // Total approved nodes for the status bar — best-effort.
-  let nodeCount = cohort.length;
-  try {
-    const { count } = await supabase
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "approved");
-    if (typeof count === "number") nodeCount = count;
-  } catch {}
-
   // Pick the first cohort the user is a member of (used to scope cohort dot).
   let cohortIdForDots: string | null = null;
   try {
@@ -128,8 +108,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <TierProvider>
         <div className="min-h-screen root-layout">
           <Sidebar
-            cohort={cohort}
-            currentUserId={user.id}
             currentUser={{
               full_name: profile?.full_name ?? null,
               stage: profile?.stage ?? null,
@@ -150,7 +128,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             />
             {children}
           </div>
-          <AppOverlay nodeCount={nodeCount} />
         </div>
         </TierProvider>
       </NotificationsProvider>

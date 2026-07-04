@@ -19,6 +19,9 @@ import PulseBar, { type PulseEvent } from "./PulseBar";
 import YourWorkspace, { type WorkspaceProject } from "./YourWorkspace";
 import ProjectMenu from "./ProjectMenu";
 import StagePill from "@/components/cohort/StagePill";
+import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import GradientButton from "@/components/ui/GradientButton";
+import TerminalFooter from "@/components/ui/TerminalFooter";
 
 type Author = { id: string; full_name: string | null; stage: string | null; username: string | null };
 
@@ -199,74 +202,45 @@ export default function CollabBoardClient({
           </button>
         </div>
       )}
-      {/* Tabs row */}
-      <div
-        className="flex items-center justify-between px-6 pt-4 border-b"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <div className="flex items-center gap-1">
-          {(["projects", "needs", "skills"] as const).map((t) => {
-            const active = tab === t;
-            const label = t === "skills" ? "skills_index" : t;
-            return (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className="font-mono lowercase text-[0.7rem] px-3 py-2"
-                style={{
-                  color: active ? "#f59e0b" : "var(--text-muted)",
-                  borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
+      {/* Header + tabs row */}
+      <div style={{ padding: "18px 24px 0", maxWidth: 1180 }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>collab board</h1>
+            <p className="font-mono" style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 3, letterSpacing: "0.03em" }}>
+              {tab === "projects"
+                ? "projects looking for builders"
+                : tab === "needs"
+                  ? "founders asking for help"
+                  : "who can help with what"}
+            </p>
+          </div>
+          {tab !== "skills" && (
+            <GradientButton
+              variant="ghost"
+              onClick={() => openNew(tab === "needs" ? "need" : "project")}
+              style={collabLocked ? { opacity: 0.55 } : undefined}
+            >
+              {collabLocked && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="4" y="11" width="16" height="10" rx="2" />
+                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+              )}
+              + new {tab === "needs" ? "need" : "project"}
+            </GradientButton>
+          )}
         </div>
-        {tab !== "skills" && (
-          <button
-            onClick={() => openNew(tab === "needs" ? "need" : "project")}
-            title={collabLocked ? "Member feature" : undefined}
-            className="font-mono lowercase text-[0.7rem] px-3 py-1.5 mb-2 hover:opacity-90"
-            style={
-              collabLocked
-                ? {
-                    background: "transparent",
-                    color: "#484f58",
-                    border: "1px solid #21262d",
-                    borderRadius: 5,
-                    fontWeight: 700,
-                    letterSpacing: "0.02em",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }
-                : { background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }
-            }
-          >
-            {collabLocked && (
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#484f58"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <rect x="4" y="11" width="16" height="10" rx="2" />
-                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-              </svg>
-            )}
-            + post a {tab === "needs" ? "need" : "project"}
-            {collabLocked && <span style={{ color: "#484f58" }}>// member</span>}
-          </button>
-        )}
+        <TabPillRow>
+          {(["projects", "needs", "skills"] as const).map((t) => (
+            <TabPill key={t} active={tab === t} onClick={() => setTab(t)}>
+              {t}
+            </TabPill>
+          ))}
+        </TabPillRow>
       </div>
 
-      <div className="px-6 py-6">
+      <div style={{ padding: "18px 24px 8px", maxWidth: 1180 }}>
         {tab === "projects" && (
           <>
             <YourWorkspace projects={workspaceProjects} />
@@ -289,6 +263,7 @@ export default function CollabBoardClient({
           />
         )}
         {tab === "skills" && <SkillsIndex entries={skillIndex} onOpen={setSkillFor} />}
+        <TerminalFooter />
       </div>
 
       {newOpen && (

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import { ITEM_TYPE_COLOR, shortTimeAgo } from "@/lib/vault";
+import { TabPill, TabPillRow } from "@/components/ui/TabPill";
 import type { LibraryItem } from "./VaultPage";
 
 type Filter = "all" | "pulse_posts" | "cohort_posts" | "projects";
@@ -37,24 +38,14 @@ export default function LibraryTab({
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {(Object.keys(FILTER_LABEL) as Filter[]).map((f) => {
-          const active = filter === f;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className="font-mono lowercase text-[0.65rem] px-3 py-1.5 border transition-colors"
-              style={{
-                borderColor: active ? "#f59e0b" : "var(--border)",
-                color: active ? "#f59e0b" : "var(--text-faint)",
-                background: active ? "rgba(245, 158, 11,0.06)" : "transparent",
-              }}
-            >
-              {FILTER_LABEL[f]}
-            </button>
-          );
-        })}
+      <div className="mb-4">
+        <TabPillRow>
+          {(Object.keys(FILTER_LABEL) as Filter[]).map((f) => (
+            <TabPill key={f} active={filter === f} onClick={() => setFilter(f)}>
+              {FILTER_LABEL[f].replace(/_/g, " ")}
+            </TabPill>
+          ))}
+        </TabPillRow>
       </div>
 
       {filtered.length === 0 ? (
@@ -104,8 +95,8 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
 
   return (
     <article
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)" }}
+      className="p-4"
+      style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12 }}
     >
       <header className="flex items-center gap-3 mb-3">
         {origin?.author ? (
@@ -135,9 +126,9 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
         </div>
         <span
           className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-          style={{ border: `1px solid ${color}`, color }}
+          style={{ border: `0.5px solid ${color}`, color, borderRadius: 10 }}
         >
-          {item.item_type}
+          {item.item_type.replace(/_/g, " ")}
         </span>
       </header>
 
@@ -149,7 +140,10 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
         {fullPreviewHidden && "…"}
       </p>
 
-      <div className="mt-3">
+      <div
+        className="mt-3 pl-3"
+        style={{ borderLeft: "2px solid var(--accent)" }}
+      >
         {editing ? (
           <textarea
             value={note}
@@ -159,7 +153,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
             placeholder="add a note about why you saved this..."
             rows={2}
             className="w-full bg-transparent border p-2 text-text-secondary text-[0.85rem] focus:outline-none focus:border-amber"
-            style={{ borderColor: "var(--border)" }}
+            style={{ borderColor: "var(--border)", borderRadius: 8 }}
           />
         ) : (
           <button

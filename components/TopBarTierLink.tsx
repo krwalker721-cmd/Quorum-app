@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import TierPill from "@/components/TierPill";
 
 // Topbar element that shows the user's current tier and routes to /pricing.
-// Free/partner users see an "upgrade →" affordance; members see just the pill
-// (still clickable so they can manage billing).
+// Free users see an "upgrade →" affordance; members and partners see just the
+// pill (still clickable so they can manage billing — partner is the top tier).
 export default function TopBarTierLink({ tier }: { tier: string }) {
   const router = useRouter();
   const normalized = (tier || "free").toLowerCase();
-  const isMember = normalized === "member";
+  const isPaid = normalized === "member" || normalized === "partner";
 
-  if (isMember) {
+  if (isPaid) {
     return (
       <div
         onClick={() => router.push("/pricing")}

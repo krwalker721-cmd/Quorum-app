@@ -67,9 +67,11 @@ export const ITEM_TYPE_LABEL: Record<SavedItemType, string> = {
   project: "project",
 };
 
+// Source-kind accents (redesign): pulse post = teal, cohort post = green,
+// project = purple. Keeps amber reserved for the primary accent.
 export const ITEM_TYPE_COLOR: Record<SavedItemType, string> = {
-  pulse_post: "#f59e0b",
-  cohort_post: "#38bdf8",
+  pulse_post: "#38bdf8",
+  cohort_post: "#22c55e",
   project: "#a78bfa",
 };
 

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ROOM_TYPE_COLOR, ROOM_TYPE_LABEL } from "@/lib/stage";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
+import Avatar from "@/components/Avatar";
 
 const TAGS = ["decision", "mindset", "hiring", "growth", "real_talk", "ops", "fundraising"];
 const ROOM_TYPES = ["question", "update", "decision", "win", "blocker"] as const;
@@ -13,9 +14,14 @@ const ROOM_TYPES = ["question", "update", "decision", "win", "blocker"] as const
 export default function NewPostButton({
   userId,
   defaultPostType = "cohort",
+  variant = "button",
+  currentUserName,
 }: {
   userId: string;
   defaultPostType?: "cohort" | "pulse";
+  // "button" = the topbar pill; "composer" = the wide feed composer pill.
+  variant?: "button" | "composer";
+  currentUserName?: string | null;
 }) {
   const router = useRouter();
   const { paywallState, checkAndGate, closePaywall } = usePaywall();
@@ -107,9 +113,40 @@ export default function NewPostButton({
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="btn-primary">
-        {isPulse ? "+ post to pulse" : "+ post"}
-      </button>
+      {variant === "composer" ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2.5 w-full text-left"
+          style={{
+            padding: "10px 12px",
+            background: "var(--bg-surface)",
+            border: "0.5px solid var(--border-default)",
+            borderRadius: 24,
+          }}
+        >
+          <Avatar name={currentUserName ?? null} size={28} />
+          <span style={{ flex: 1, fontSize: 12, color: "var(--text-muted)" }}>
+            Share what you&apos;re working through…
+          </span>
+          <span
+            className="font-mono"
+            style={{
+              fontSize: 10,
+              fontWeight: 500,
+              background: "linear-gradient(135deg,rgba(245,158,11,.92),rgba(245,158,11,.72))",
+              color: "#1a1204",
+              padding: "6px 14px",
+              borderRadius: 16,
+            }}
+          >
+            post
+          </span>
+        </button>
+      ) : (
+        <button onClick={() => setOpen(true)} className="btn-primary">
+          {isPulse ? "+ post to pulse" : "+ post"}
+        </button>
+      )}
 
       {open && (
         <div

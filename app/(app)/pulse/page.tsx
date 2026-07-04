@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import PulseFeed from "@/components/PulseFeed";
-import HeaderZone from "@/components/pulse/HeaderZone";
+import NewPostButton from "@/components/NewPostButton";
+import PulseFilterTabs from "@/components/pulse/PulseFilterTabs";
 import InTheRoomWidget from "@/components/widgets/InTheRoomWidget";
 import MostHelpfulThisWeek from "@/components/widgets/MostHelpfulThisWeek";
 import TrendingTags from "@/components/widgets/TrendingTags";
+import TerminalFooter from "@/components/ui/TerminalFooter";
 import { PostWithAuthor } from "@/components/PostCard";
 import { hasDepthRing, isAnniversary, postsMovedTheRoomBatch } from "@/lib/recognition";
 
@@ -20,7 +22,7 @@ export default async function PulsePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("tier")
+    .select("tier, full_name")
     .eq("id", user.id)
     .single();
 
@@ -110,6 +112,7 @@ export default async function PulsePage() {
   });
 
   const initial = decorated.slice(0, PAGE);
+  const activeNow = decorated.filter((p) => p.isActive).length;
 
   return (
     <>
@@ -119,22 +122,44 @@ export default async function PulsePage() {
         userId={user.id}
         defaultPostType="pulse"
       />
-      <div className="px-6 py-6">
-        <HeaderZone members={members.filter((m) => m.id !== user.id)} />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+      <div style={{ padding: "18px 24px 8px", maxWidth: 1180 }}>
+        {/* Header line */}
+        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+          <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>pulse</h1>
+          <span className="font-mono" style={{ fontSize: 9, color: activeNow > 0 ? "var(--green)" : "var(--text-muted)" }}>
+            {activeNow > 0 ? `● ${activeNow} active now` : "quiet right now"}
+          </span>
+        </div>
+
+        <div
+          className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4"
+        >
+          <div>
+            {/* Composer pill + filter tabs */}
+            <div style={{ marginBottom: 8 }}>
+              <NewPostButton
+                userId={user.id}
+                defaultPostType="pulse"
+                variant="composer"
+                currentUserName={profile?.full_name ?? null}
+              />
+            </div>
+            <div style={{ margin: "12px 0" }}>
+              <PulseFilterTabs />
+            </div>
             <PulseFeed
               initial={initial}
               cohortPeerIds={peerIds}
               currentUserId={user.id}
             />
           </div>
-          <aside className="space-y-4">
+          <aside className="space-y-3">
             <InTheRoomWidget members={members.filter((m) => m.id !== user.id)} />
             <MostHelpfulThisWeek />
             <TrendingTags />
           </aside>
         </div>
+        <TerminalFooter />
       </div>
     </>
   );

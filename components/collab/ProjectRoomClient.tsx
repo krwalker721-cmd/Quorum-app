@@ -8,6 +8,8 @@ import Avatar from "@/components/Avatar";
 import HandshakeButton from "@/components/HandshakeButton";
 import { timeAgo } from "@/lib/stage";
 import JoinRequestsWidget, { type JoinRequest } from "./JoinRequestsWidget";
+import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import TerminalFooter from "@/components/ui/TerminalFooter";
 
 type Member = {
   id: string;
@@ -104,6 +106,15 @@ export default function ProjectRoomClient({
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
 
+  // Open decisions this user hasn't voted on yet — drives the amber tab badge
+  // and the "DECISION NEEDS YOU" rail tile.
+  const myVotedDecisionIds = new Set(
+    votes.filter((v) => v.user_id === currentUserId).map((v) => v.decision_id),
+  );
+  const openForMe = decisions.filter(
+    (d) => d.status === "open" && !myVotedDecisionIds.has(d.id),
+  );
+
   // Realtime: subscribe to project_messages inserts
   useEffect(() => {
     const supabase = createClient();
@@ -181,28 +192,22 @@ export default function ProjectRoomClient({
 
   return (
     <>
-      {/* Sub header bar */}
+      {/* Sub header bar — breadcrumb */}
       <div
         className="flex items-center justify-between px-6 py-3 border-b"
-        style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+        style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}
       >
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <Link
             href="/collab"
-            className="font-mono lowercase text-[0.7rem] text-text-faint hover:text-text-primary"
+            className="font-mono uppercase hover:text-text-primary"
+            style={{ fontSize: 9, letterSpacing: "0.06em", color: "var(--text-muted)" }}
           >
-             collab_board
+            collab_board
           </Link>
-          <span className="text-text-faint">/</span>
-          <h2 className="font-sans lowercase text-text-primary text-base truncate">{project.title}</h2>
-          <span
-            className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-            style={{
-              border: `1px solid ${project.status === "closed" ? "#6e7681" : "#22c55e"}`,
-              color: project.status === "closed" ? "#6e7681" : "#22c55e",
-            }}
-          >
-            {project.status === "closed" ? "closed" : "active"}
+          <span className="font-mono" style={{ fontSize: 9, color: "var(--text-disabled)" }}>/</span>
+          <span className="font-mono uppercase truncate" style={{ fontSize: 9, letterSpacing: "0.06em", color: "var(--text-secondary)" }}>
+            {project.title}
           </span>
         </div>
         <HandshakeProjectButton
@@ -213,44 +218,44 @@ export default function ProjectRoomClient({
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-6 py-6">
-        <div className="lg:col-span-2 space-y-4">
-          {/* Project info section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ padding: "18px 24px 8px", maxWidth: 1180 }}>
+        <div className="lg:col-span-2 space-y-3">
+          {/* Project header tile */}
           <div
-            className="p-5 border"
-            style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+            style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12, padding: "16px 18px" }}
           >
-            <h1 className="font-sans lowercase text-text-primary text-xl font-bold">{project.title}</h1>
-            {project.description && (
-              <p className="text-text-secondary text-sm mt-3 leading-relaxed whitespace-pre-wrap">
-                {project.description}
-              </p>
-            )}
-            <div className="flex flex-wrap items-center gap-2 mt-4">
-              {members.map((m) => (
-                <Avatar
-                  key={m.id}
-                  name={m.full_name}
-                  stage={m.stage}
-                  username={m.username}
-                  size={24}
-                />
-              ))}
-              <span className="font-mono lowercase text-[0.65rem] text-text-faint ml-2">
-                started {new Date(project.created_at).toLocaleDateString()}
-              </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{project.title}</h1>
               {project.category && (
                 <span
-                  className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto"
-                  style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
+                  className="font-mono lowercase"
+                  style={{ fontSize: 9, border: "0.5px solid rgba(245,158,11,.35)", color: "#f8c56a", padding: "1px 7px", borderRadius: 10 }}
                 >
                   {project.category}
                 </span>
               )}
+              <span className="font-mono" style={{ fontSize: 9, color: project.status === "closed" ? "var(--text-muted)" : "var(--green)" }}>
+                {project.status === "closed" ? "closed" : "● active"}
+              </span>
+            </div>
+            {project.description && (
+              <p className="text-text-secondary text-sm mt-2 leading-relaxed whitespace-pre-wrap">
+                {project.description}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <div className="flex" style={{ gap: 4 }}>
+                {members.map((m) => (
+                  <Avatar key={m.id} name={m.full_name} stage={m.stage} username={m.username} size={24} />
+                ))}
+              </div>
+              <span className="font-mono lowercase text-[0.65rem] text-text-faint ml-1">
+                started {new Date(project.created_at).toLocaleDateString()}
+              </span>
               {project.looking_for && (
                 <span
-                  className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-                  style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+                  className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto"
+                  style={{ border: "0.5px solid var(--border-muted)", color: "var(--text-muted)", borderRadius: 10 }}
                 >
                   {project.looking_for}
                 </span>
@@ -259,25 +264,16 @@ export default function ProjectRoomClient({
           </div>
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 border-b" style={{ borderColor: "var(--border)" }}>
-            {(["thread", "docs", "decisions"] as const).map((t) => {
-              const active = tab === t;
-              const label = t === "docs" ? "shared_docs" : t;
-              return (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className="font-mono lowercase text-[0.7rem] px-3 py-2"
-                  style={{
-                    color: active ? "#f59e0b" : "var(--text-muted)",
-                    borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+          <TabPillRow>
+            {(["thread", "docs", "decisions"] as const).map((t) => (
+              <TabPill key={t} active={tab === t} onClick={() => setTab(t)}>
+                {t}
+                {t === "decisions" && openForMe.length > 0 && (
+                  <span style={{ color: "#f8c56a", marginLeft: 6 }}>{openForMe.length}</span>
+                )}
+              </TabPill>
+            ))}
+          </TabPillRow>
 
           {tab === "thread" && (
             <ThreadTab
@@ -319,9 +315,43 @@ export default function ProjectRoomClient({
         </div>
 
         {/* Right column */}
-        <aside className="space-y-4">
-          <div className="p-4 border" style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}>
-            <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-3">members</p>
+        <aside className="space-y-3">
+          {openForMe.length > 0 && (
+            <div
+              style={{
+                background: "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)",
+                border: "0.5px solid rgba(245,158,11,.3)",
+                borderRadius: 12,
+                padding: "13px 15px",
+              }}
+            >
+              <p className="font-mono uppercase" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#f8c56a", marginBottom: 6 }}>
+                decision needs you
+              </p>
+              <p style={{ fontSize: 12, lineHeight: 1.4, color: "#f5ede0" }}>
+                {openForMe[0].title.toLowerCase()}
+              </p>
+              <button
+                onClick={() => setTab("decisions")}
+                className="font-mono"
+                style={{
+                  marginTop: 10,
+                  fontSize: 11,
+                  fontWeight: 500,
+                  background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
+                  color: "#1a1204",
+                  padding: "6px 13px",
+                  borderRadius: 8,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                cast your vote →
+              </button>
+            </div>
+          )}
+          <div style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12, padding: 16 }}>
+            <p className="font-mono uppercase" style={{ fontSize: 9, letterSpacing: "0.12em", color: "var(--text-muted)", marginBottom: 12 }}>members</p>
             <div className="space-y-2">
               {members.map((m) => (
                 <div key={m.id} className="group/member flex items-center gap-3">
@@ -334,6 +364,12 @@ export default function ProjectRoomClient({
                   <div className="min-w-0 flex-1">
                     <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
                       {m.full_name?.toLowerCase() ?? "—"}
+                      {m.id === project.owner_id && (
+                        <span style={{ color: "#f8c56a", marginLeft: 6 }}>· owner</span>
+                      )}
+                      {m.id === currentUserId && (
+                        <span className="text-text-faint" style={{ marginLeft: 6 }}>· you</span>
+                      )}
                     </p>
                     {m.role && (
                       <p className="font-mono lowercase text-[0.6rem] text-text-faint">{m.role}</p>
@@ -355,11 +391,11 @@ export default function ProjectRoomClient({
           </div>
 
           <div
-            className="p-4 border"
-            style={{ background: "rgba(88, 166, 255, 0.06)", borderColor: "rgba(88, 166, 255, 0.35)" }}
+            className="p-4"
+            style={{ background: "rgba(88, 166, 255, 0.06)", border: "0.5px solid rgba(88, 166, 255, 0.35)", borderRadius: 12 }}
           >
-            <p className="font-mono lowercase text-[0.65rem]" style={{ color: "#58a6ff" }}>
-               log handshake
+            <p className="font-mono uppercase" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#58a6ff" }}>
+              log handshake
             </p>
             <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2">
               capture a commitment scoped to this project.
@@ -388,13 +424,16 @@ export default function ProjectRoomClient({
             memberMap={memberMap}
           />
 
-          <div className="p-4 border" style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}>
+          <div className="p-4" style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12 }}>
             <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-3">progress</p>
             <ProgressRow label="decisions" value={decisions.filter((d) => d.status === "decided").length} total={decisions.length} />
             <ProgressRow label="shared_docs" value={docs.length} />
             <ProgressRow label="messages" value={messages.filter((m) => !m.is_system).length} />
           </div>
         </aside>
+      </div>
+      <div style={{ padding: "0 24px 8px", maxWidth: 1180 }}>
+        <TerminalFooter />
       </div>
     </>
   );
@@ -490,7 +529,7 @@ function ThreadTab({
   return (
     <div
       className="flex flex-col"
-      style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 4, minHeight: 500 }}
+      style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12, minHeight: 500, overflow: "hidden" }}
     >
       {/* Thread container — mirrors the cohort room chat */}
       <div
@@ -617,7 +656,7 @@ function ThreadTab({
             width: 36,
             height: 36,
             borderRadius: "50%",
-            background: "#f59e0b",
+            background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
             border: "none",
             cursor: busy || !text.trim() ? "default" : "pointer",
             display: "flex",
@@ -1015,8 +1054,8 @@ function DecisionsTab({
         return (
           <div
             key={d.id}
-            className="p-4 border"
-            style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+            className="p-4"
+            style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12 }}
           >
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-sans text-text-primary text-sm lowercase">{d.title.toLowerCase()}</h4>

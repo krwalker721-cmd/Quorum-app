@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTier } from "@/contexts/TierContext";
 import { createClient } from "@/lib/supabase/client";
+import TerminalFooter from "@/components/ui/TerminalFooter";
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -129,7 +130,7 @@ function SkeletonBlock({ width, height, style }: { width: string | number; heigh
         width,
         height,
         background: "#21262d",
-        borderRadius: 4,
+        borderRadius: 12,
         animation: "shimmer 1.5s infinite",
         ...style,
       }}
@@ -272,15 +273,12 @@ export default function ReferralsDashboard() {
 
   return (
     <div style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
-      {/* ─── header ─────────────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 24 }}>
-        <p style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", color: "#6e7681", marginBottom: 6 }}>
-          // referrals
-        </p>
-        <h1 style={{ fontFamily: SANS, fontSize: 28, fontWeight: 500, color: "#e6edf3", margin: 0, lineHeight: 1.2 }}>
+      {/* ─── header — compact; the topbar already names the page ────────────── */}
+      <div style={{ marginBottom: 18 }}>
+        <h1 style={{ fontFamily: SANS, fontSize: 16, fontWeight: 500, color: "#e6edf3", margin: 0, lineHeight: 1.2 }}>
           referrals
         </h1>
-        <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", marginTop: 4 }}>
+        <p style={{ fontFamily: MONO, fontSize: 9, color: "#6e7681", marginTop: 4, letterSpacing: "0.03em" }}>
           bring someone who belongs here
         </p>
       </div>
@@ -291,7 +289,7 @@ export default function ReferralsDashboard() {
           style={{
             background: "rgba(34,197,94,0.06)",
             border: "1px solid rgba(34,197,94,0.22)",
-            borderRadius: 4,
+            borderRadius: 12,
             padding: "14px 16px",
             marginBottom: 20,
             display: "flex",
@@ -324,9 +322,9 @@ export default function ReferralsDashboard() {
       <div style={{ marginBottom: 24 }}>
         <div
           style={{
-            background: "#161b22",
-            border: "1px solid #21262d",
-            borderRadius: 4,
+            background: "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)",
+            border: "0.5px solid rgba(245,158,11,.3)",
+            borderRadius: 12,
             padding: 24,
             display: "flex",
             alignItems: "center",
@@ -339,37 +337,42 @@ export default function ReferralsDashboard() {
               style={{
                 fontFamily: MONO,
                 fontSize: 10,
-                color: "#f59e0b",
+                color: "#f8c56a",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 marginBottom: 6,
               }}
             >
-              // your invite link
+              your invite link
             </div>
-            <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", margin: 0 }}>
+            <p style={{ fontFamily: SANS, fontSize: 14, color: "#f5ede0", margin: 0 }}>
               Bring someone who belongs here. Get rewarded when they stay.
+            </p>
+            <p style={{ fontFamily: MONO, fontSize: 11, color: "#8b949e", marginTop: 10, letterSpacing: "0.04em" }}>
+              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>${monthlyBonus} off/mo</span>
             </p>
           </div>
           <button
             onClick={handleCopy}
             disabled={!linkActive}
             style={{
-              background: linkActive ? "#f59e0b" : "#21262d",
-              color: linkActive ? "#0d1117" : "#484f58",
+              background: linkActive
+                ? "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))"
+                : "#21262d",
+              color: linkActive ? "#1a1204" : "#484f58",
               fontFamily: MONO,
               fontSize: 12,
               fontWeight: 500,
               letterSpacing: "0.06em",
               padding: "12px 24px",
               border: "none",
-              borderRadius: 4,
+              borderRadius: 10,
               cursor: linkActive ? "pointer" : "default",
               whiteSpace: "nowrap",
               flexShrink: 0,
             }}
           >
-            {referralCapReached ? "link paused" : copied ? "copied ✓" : "copy invite link →"}
+            {referralCapReached ? "link paused" : copied ? "copied ✓" : "copy link →"}
           </button>
         </div>
         {!hasPosted && (
@@ -397,7 +400,7 @@ export default function ReferralsDashboard() {
             style={{
               background: "#0d1117",
               border: `1px solid ${linkActive ? "#30363d" : "#21262d"}`,
-              borderRadius: 4,
+              borderRadius: 12,
               padding: "10px 14px",
               fontFamily: MONO,
               fontSize: 12,
@@ -456,7 +459,7 @@ export default function ReferralsDashboard() {
               style={{
                 background: "#161b22",
                 border: "1px dashed #30363d",
-                borderRadius: 4,
+                borderRadius: 12,
                 padding: 32,
                 textAlign: "center",
               }}
@@ -494,7 +497,7 @@ export default function ReferralsDashboard() {
                         alignItems: "center",
                         background: "#161b22",
                         border: "1px solid #21262d",
-                        borderRadius: 4,
+                        borderRadius: 12,
                         padding: "14px 16px",
                       }}
                     >
@@ -596,7 +599,7 @@ export default function ReferralsDashboard() {
           </div>
 
           {/* monthly bonus */}
-          <div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 4, padding: 16, marginTop: 16 }}>
+          <div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 12, padding: 16, marginTop: 16 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.08em" }}>
                 // monthly bonus
@@ -628,7 +631,7 @@ export default function ReferralsDashboard() {
               style={{
                 background: "rgba(34,197,94,0.04)",
                 border: "1px solid rgba(34,197,94,0.15)",
-                borderRadius: 4,
+                borderRadius: 12,
                 padding: "16px 20px",
                 marginTop: 16,
               }}
@@ -643,6 +646,7 @@ export default function ReferralsDashboard() {
           )}
         </div>
       </div>
+      <TerminalFooter />
     </div>
   );
 }

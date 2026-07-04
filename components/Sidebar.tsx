@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import LogoMark from "@/components/LogoMark";
 import Avatar from "@/components/Avatar";
-import CohortPanel from "@/components/CohortPanel";
 import SidebarTierBadge from "@/components/SidebarTierBadge";
 import { useNavDots, type NavKey } from "@/components/NotificationsProvider";
+import { useTier } from "@/contexts/TierContext";
 
 const VIEWED_KEY = "last_summary_viewed_week";
 const DISMISS_KEY_PREFIX = "dismissed_weekly_summary:";
@@ -55,17 +55,14 @@ const EXPANDED_W = 240;
 const COLLAPSED_W = 48;
 
 export default function Sidebar({
-  cohort,
-  currentUserId,
   currentUser,
 }: {
-  cohort: { id: string; full_name: string | null; stage: string | null; username: string | null }[];
-  currentUserId: string;
   currentUser?: { full_name: string | null; stage: string | null; username: string | null };
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const { dots } = useNavDots();
+  const { tier } = useTier();
   const [showHomeDot, setShowHomeDot] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -219,9 +216,10 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* Partner teaser — always-on awareness of the coming tier. Full mini card
-          when expanded; a single purple dot when collapsed. */}
-      {collapsed ? (
+      {/* Partner teaser — awareness of the coming tier. Hidden for users
+          already on partner (nothing to tease). Full mini card when expanded;
+          a single purple dot when collapsed. */}
+      {tier === "partner" ? null : collapsed ? (
         <Link
           href="/pricing#partner"
           title="partner — coming soon"
@@ -267,8 +265,12 @@ export default function Sidebar({
         </Link>
       )}
 
+      <SidebarTierBadge collapsed={collapsed} />
+
       {/* Current-user block — the only way into your own profile now that the
-          nav item is gone. Whole block routes to /profile/me. */}
+          nav item is gone. Whole block routes to /profile/me. Kept as the
+          bottom-most element; the cohort roster was removed as clutter (the
+          cohort page owns that job). */}
       <div
         onClick={() => router.push("/profile/me")}
         title="View your profile"
@@ -310,8 +312,6 @@ export default function Sidebar({
         )}
       </div>
 
-      <SidebarTierBadge collapsed={collapsed} />
-      <CohortPanel members={cohort} currentUserId={currentUserId} collapsed={collapsed} />
     </aside>
   );
 }

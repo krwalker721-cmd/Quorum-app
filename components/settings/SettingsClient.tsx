@@ -42,16 +42,16 @@ const SIDEBAR_COLLAPSED_KEY = "quorum-sidebar-collapsed";
 
 const cardStyle: React.CSSProperties = {
   background: "#161b22",
-  border: "1px solid #21262d",
-  borderRadius: 4,
+  border: "0.5px solid #21262d",
+  borderRadius: 12,
   padding: 24,
   marginBottom: 16,
 };
 
 const inputStyle: React.CSSProperties = {
   background: "#0d1117",
-  border: "1px solid #21262d",
-  borderRadius: 4,
+  border: "0.5px solid #30363d",
+  borderRadius: 8,
   color: "#e6edf3",
   fontFamily: SANS,
   fontSize: 14,
@@ -71,15 +71,15 @@ const labelStyle: React.CSSProperties = {
 };
 
 const amberBtn: React.CSSProperties = {
-  background: "#f59e0b",
-  color: "#0d1117",
+  background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
+  color: "#1a1204",
   fontFamily: MONO,
   fontSize: 11,
   fontWeight: 500,
   letterSpacing: "0.06em",
   padding: "9px 16px",
   border: "none",
-  borderRadius: 4,
+  borderRadius: 8,
   cursor: "pointer",
 };
 
@@ -167,7 +167,7 @@ function ConfirmModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 4, padding: 28, maxWidth: 420, width: "100%" }}
+        style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 10, padding: 28, maxWidth: 420, width: "100%" }}
       >
         <h3 style={{ fontFamily: SANS, fontSize: 18, color: "#e6edf3", margin: 0 }}>{heading}</h3>
         <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", marginTop: 10, lineHeight: 1.5 }}>{description}</p>
@@ -190,7 +190,7 @@ function ConfirmModal({
               fontFamily: MONO,
               fontSize: 11,
               padding: "9px 16px",
-              borderRadius: 4,
+              borderRadius: 10,
               cursor: "pointer",
             }}
           >
@@ -206,7 +206,7 @@ function ConfirmModal({
               fontFamily: MONO,
               fontSize: 11,
               padding: "9px 16px",
-              borderRadius: 4,
+              borderRadius: 10,
               cursor: canConfirm ? "pointer" : "default",
               opacity: canConfirm ? 1 : 0.4,
             }}
@@ -252,11 +252,13 @@ export default function SettingsClient({
                 fontFamily: MONO,
                 fontSize: 11,
                 letterSpacing: "0.04em",
-                color: active ? "#e6edf3" : "#8b949e",
-                background: "transparent",
+                color: active ? "#f8c56a" : "#8b949e",
+                background: active ? "rgba(245,158,11,.08)" : "transparent",
                 border: "none",
+                borderRadius: 8,
                 borderLeft: `2px solid ${active ? "#f59e0b" : "transparent"}`,
                 padding: "8px 12px",
+                marginBottom: 2,
                 cursor: "pointer",
               }}
             >
@@ -486,7 +488,7 @@ function AppearanceSection() {
   const themeCard = (selected: boolean, disabled: boolean, label: string): React.CSSProperties => ({
     background: "#161b22",
     border: `1px solid ${selected ? "#f59e0b" : "#21262d"}`,
-    borderRadius: 4,
+    borderRadius: 10,
     padding: 16,
     cursor: disabled ? "default" : "pointer",
     textAlign: "center",
@@ -501,7 +503,7 @@ function AppearanceSection() {
     fontFamily: MONO,
     fontSize: 11,
     padding: "6px 14px",
-    borderRadius: 4,
+    borderRadius: 10,
     border: `1px solid ${active ? "#f59e0b" : "#21262d"}`,
     color: active ? "#f59e0b" : "#8b949e",
     background: "transparent",
@@ -607,7 +609,7 @@ function PrivacySection({ initialVisible }: { initialVisible: boolean }) {
           fontFamily: MONO,
           fontSize: 11,
           padding: "9px 16px",
-          borderRadius: 4,
+          borderRadius: 10,
           cursor: "pointer",
           marginBottom: 16,
         }}
@@ -675,7 +677,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
     fontFamily: MONO,
     fontSize: 11,
     padding: "9px 16px",
-    borderRadius: 4,
+    borderRadius: 10,
     cursor: "pointer",
   };
 

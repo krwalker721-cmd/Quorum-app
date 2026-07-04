@@ -39,6 +39,7 @@ export default function PulseFeed({
   const router = useRouter();
   const params = useSearchParams();
   const tagFilter = params.get("tag");
+  const modeFilter = params.get("filter"); // decisions | blockers | unanswered
 
   const peerIds = useMemo(() => new Set(cohortPeerIds), [cohortPeerIds]);
   const [posts, setPosts] = useState<PostWithAuthor[]>(() => sortSmart(initial, peerIds));
@@ -50,9 +51,13 @@ export default function PulseFeed({
     setExpandedId((cur) => (cur === id ? null : id));
 
   const filtered = useMemo(() => {
-    if (!tagFilter) return posts;
-    return posts.filter((p) => p.room_type === tagFilter || p.tag === tagFilter);
-  }, [posts, tagFilter]);
+    let out = posts;
+    if (tagFilter) out = out.filter((p) => p.room_type === tagFilter || p.tag === tagFilter);
+    if (modeFilter === "decisions") out = out.filter((p) => p.room_type === "decision");
+    else if (modeFilter === "blockers") out = out.filter((p) => p.room_type === "blocker");
+    else if (modeFilter === "unanswered") out = out.filter((p) => (p.reply_count ?? 0) === 0);
+    return out;
+  }, [posts, tagFilter, modeFilter]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -178,7 +183,9 @@ export default function PulseFeed({
       {filtered.length === 0 ? (
         <div className="empty-panel" style={{ maxWidth: 680 }}>
           <span className="empty-panel-glyph" aria-hidden>#</span>
-          <p className="empty-panel-title">nothing here yet for #{tagFilter}.</p>
+          <p className="empty-panel-title">
+            nothing here yet for {tagFilter ? `#${tagFilter}` : modeFilter}.
+          </p>
           <p className="empty-panel-sub">try clearing the filter to see the whole room.</p>
           <button onClick={clearFilter} className="empty-panel-cta">
             clear filter →
@@ -197,7 +204,7 @@ export default function PulseFeed({
         ))
       )}
 
-      {!done && filtered.length > 0 && !tagFilter && (
+      {!done && filtered.length > 0 && !tagFilter && !modeFilter && (
         <div className="pt-2 flex justify-center">
           <button
             onClick={loadMore}

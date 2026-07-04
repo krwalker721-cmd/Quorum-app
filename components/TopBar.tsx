@@ -42,12 +42,12 @@ export default function TopBar({
       <div className="min-w-0">
         {/* Breadcrumb path — terminal-style, quorum is the root */}
         <p
-          className="font-mono lowercase truncate"
-          style={{ fontSize: 10, lineHeight: 1.3, letterSpacing: "0.04em", color: "var(--text-muted)" }}
+          className="font-mono uppercase truncate"
+          style={{ fontSize: 9, lineHeight: 1.3, letterSpacing: "0.06em", color: "var(--text-muted)" }}
         >
           <span style={{ color: "var(--text-disabled)" }}>quorum</span>
           <span style={{ color: "var(--text-disabled)", margin: "0 4px" }}>/</span>
-          <span style={{ color: "var(--text-secondary)" }}>{title}</span>
+          <span style={{ color: "var(--text-secondary)" }}>{title.replace(/_/g, " ")}</span>
         </p>
         <div className="flex items-baseline gap-3 mt-0.5 min-w-0">
           <h1

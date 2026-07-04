@@ -82,11 +82,9 @@ function WorkspaceCard({ project }: { project: WorkspaceProject }) {
       <article
         className="p-5"
         style={{
-          background: "var(--card-elev)",
-          borderLeft: "3px solid #58a6ff",
-          borderTop: "1px solid var(--border)",
-          borderRight: "1px solid var(--border)",
-          borderBottom: "1px solid var(--border)",
+          background: "var(--bg-surface)",
+          border: "0.5px solid var(--border-default)",
+          borderRadius: 12,
         }}
       >
         <header className="flex items-start justify-between gap-3">

@@ -400,9 +400,9 @@ export default function MessagesClient({
                 onClick={() => setSelectedId(c.partner.id)}
                 className="w-full flex items-start gap-3 px-3 py-3 text-left transition-colors border-b"
                 style={{
-                  background: active ? "rgba(88, 166, 255, 0.08)" : "transparent",
-                  borderRight: active ? "2px solid #f59e0b" : "2px solid transparent",
-                  borderColor: "var(--border)",
+                  background: active ? "rgba(245, 158, 11, 0.06)" : "transparent",
+                  borderLeft: active ? "3px solid #f59e0b" : "3px solid transparent",
+                  borderBottom: "0.5px solid var(--border-default)",
                 }}
               >
                 <Avatar
@@ -426,7 +426,7 @@ export default function MessagesClient({
                     {c.unread && (
                       <span
                         className="ml-auto w-2 h-2 rounded-full"
-                        style={{ background: "#f59e0b" }}
+                        style={{ background: "var(--green)" }}
                       />
                     )}
                   </div>
@@ -466,6 +466,16 @@ export default function MessagesClient({
                   </div>
                 </div>
               </div>
+              {selected.username && (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/profile/${selected.username}`)}
+                  className="font-mono"
+                  style={{ fontSize: 10, color: "var(--blue)", whiteSpace: "nowrap" }}
+                >
+                  view profile →
+                </button>
+              )}
             </div>
 
             <div
@@ -494,13 +504,11 @@ export default function MessagesClient({
                         className="px-3.5 py-2.5"
                         style={{
                           background: mine
-                            ? "rgba(245, 158, 11,0.10)"
-                            : "var(--card-elev)",
-                          border: `1px solid ${
-                            mine ? "rgba(245, 158, 11,0.25)" : "var(--border)"
-                          }`,
+                            ? "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))"
+                            : "var(--bg-elevated)",
+                          border: mine ? "none" : "0.5px solid var(--border-default)",
                           borderRadius: mine ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                          color: "var(--text-primary)",
+                          color: mine ? "#1a1204" : "var(--text-primary)",
                         }}
                       >
                         <p className="text-[0.88rem] leading-relaxed whitespace-pre-wrap">
@@ -522,7 +530,7 @@ export default function MessagesClient({
 
             <div
               className="border-t px-6 py-3 flex items-center gap-3"
-              style={{ borderColor: "var(--border)" }}
+              style={{ borderColor: "var(--border-default)" }}
             >
               <input
                 placeholder="message..."
@@ -534,11 +542,32 @@ export default function MessagesClient({
                     send();
                   }
                 }}
+                style={{
+                  flex: 1,
+                  background: "var(--bg-elevated)",
+                  border: "0.5px solid var(--border-default)",
+                  borderRadius: 20,
+                  color: "var(--text-primary)",
+                  fontSize: 13,
+                  padding: "9px 16px",
+                  outline: "none",
+                }}
               />
               <button
                 onClick={send}
                 disabled={sending || !draft.trim()}
-                className="btn-primary whitespace-nowrap"
+                className="font-mono whitespace-nowrap"
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
+                  color: "#1a1204",
+                  padding: "8px 18px",
+                  borderRadius: 16,
+                  border: "none",
+                  cursor: sending || !draft.trim() ? "default" : "pointer",
+                  opacity: sending || !draft.trim() ? 0.5 : 1,
+                }}
               >
                 send
               </button>

@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import Avatar from "@/components/Avatar";
-import { TAG_COLOR, ROOM_TYPE_COLOR, timeAgo } from "@/lib/stage";
+import { timeAgo } from "@/lib/stage";
 import { is2amPost } from "@/lib/recognition";
 import { usePresence } from "@/components/PresenceProvider";
 import BookmarkButton from "@/components/BookmarkButton";
@@ -51,7 +51,6 @@ export default function PostCard({
   onToggleReplies?: (postId: string) => void;
 }) {
   const anon = post.is_anonymous;
-  const tagColor = post.tag ? TAG_COLOR[post.tag] ?? "#6e7681" : "#6e7681";
   const lateNight = is2amPost(post);
   const moved = !!post.movedTheRoom;
 
@@ -78,202 +77,123 @@ export default function PostCard({
   const roomType = post.room_type ?? null;
   const isDecision = roomType === "decision";
   const isBlocker = roomType === "blocker";
-  const isWin = roomType === "win";
   const isQuestion = roomType === "question";
   const isActive = !!post.isActive;
 
-  // Permanent type-based left accent. It is chosen purely by post type/tag
-  // (anonymous posts get the neutral accent) and must NEVER fade, animate, or
-  // change on hover — it is the post's permanent identity stripe.
-  const accentKey = anon ? "anonymous" : (post.tag || roomType || post.post_type);
-  const ACCENT: Record<string, string> = {
-    decision: "#f59e0b",
-    win: "#22c55e",
-    blocker: "#f85149",
-    question: "#58a6ff",
-    update: "#30363d",
-    anonymous: "#30363d",
-    mindset: "#22c55e",
-    real_talk: "#f85149",
-  };
-  const accentColor = ACCENT[accentKey ?? ""] ?? "#30363d";
+  // The one amber "pop" in the feed: an active decision floats up as a gradient
+  // hero tile. Everything else is a calm neutral box (tweet anatomy).
+  const heroDecision = isDecision && isActive;
 
-  // Subtle background tint bleeding inward from the accent edge.
-  const BG_TINT: Record<string, string> = {
-    decision: "rgba(245,158,11,0.04)",
-    win: "rgba(34,197,94,0.04)",
-    blocker: "rgba(248,81,73,0.04)",
-    question: "rgba(88,166,255,0.04)",
-  };
-  const bgTint = BG_TINT[accentKey ?? ""] ?? "transparent";
-
-  const classes = [
-    "post-card-main group relative border",
-    isDecision ? "px-5 py-7" : "p-5",
-    moved ? "moved-room-pulse" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  // Room-type pill treatment: decision = amber ghost, everything else neutral.
+  const pillLabel = roomType ?? post.tag ?? null;
+  const pillColor = isDecision ? "#f8c56a" : "var(--text-secondary)";
+  const pillBorder = isDecision ? "rgba(245,158,11,.35)" : "var(--border-muted)";
 
   return (
     <div className={`post-card-wrapper${repliesOpen ? " replies-open" : ""}`} id={`post-${post.id}`}>
     <article
-      className={classes}
+      className={`group relative${moved ? " moved-room-pulse" : ""}`}
       style={{
-        // The accent stripe is set inline (shorthand → inline border-left-color),
-        // so it always wins over the CSS base/hover border-color and never fades.
-        background: `linear-gradient(90deg, ${bgTint} 0%, var(--bg-surface) 35%)`,
-        borderLeft: `3px solid ${accentColor}`,
-        borderRadius: "0 12px 12px 0",
+        background: heroDecision
+          ? "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)"
+          : "var(--bg-surface)",
+        border: `0.5px solid ${heroDecision ? "rgba(245,158,11,.3)" : "var(--border-default)"}`,
+        borderRadius: "var(--radius-card, 12px)",
+        padding: "14px 15px",
         boxShadow: lateNight
           ? "0 0 22px 1px rgba(245, 158, 11, 0.10), 0 0 4px rgba(245, 158, 11, 0.06)"
           : undefined,
       } as CSSProperties}
     >
-      {/* Top corner indicators — always visible */}
-      <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
-        {(isDecision || isBlocker) && (
-          <span
-            aria-hidden
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(245, 158, 11,0.7)" }}
-          />
-        )}
-        {isActive && !anon && (
-          <span
-            className="font-mono lowercase tracking-wider"
-            style={{ color: "#22c55e", fontSize: "8px" }}
-          >
-            active
-          </span>
-        )}
-      </div>
-
-      {/* Hover-only actions — sit just inboard of the indicators */}
-      <div
-        className="absolute top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ right: 56 }}
-      >
-        <BookmarkButton itemType={savedType} itemId={post.id} variant="inline" />
+      {/* Delete menu — hover only, top-right */}
+      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <PostMenu
           postId={post.id}
-          canDelete={
-            !!currentUserId && !!post.author_id && currentUserId === post.author_id
-          }
+          canDelete={!!currentUserId && !!post.author_id && currentUserId === post.author_id}
           onDeleted={() => onDeleted?.(post.id)}
         />
       </div>
 
-      <header className="flex items-center gap-3 mb-3">
+      <div className="flex gap-2.5">
         {anon ? (
           <div
-            className="w-8 h-8 flex items-center justify-center font-mono text-[0.6rem] lowercase"
-            style={{ background: "var(--card)", color: "var(--text-faint)", borderRadius: "50%" }}
+            className="flex items-center justify-center font-mono text-[0.6rem] lowercase shrink-0"
+            style={{ width: 36, height: 36, background: "var(--bg-elevated)", color: "var(--text-faint)", borderRadius: "50%" }}
           >
             ??
           </div>
         ) : (
-          <span className="relative inline-block" style={{ lineHeight: 0 }}>
+          <span className="relative inline-block shrink-0" style={{ lineHeight: 0 }}>
             <Avatar
               name={post.author?.full_name}
               stage={post.author?.stage}
               username={post.author?.username}
-              size={32}
+              size={36}
               depthRing={!!post.authorDepthRing}
               anniversary={!!post.authorAnniversary}
             />
             {isOnline && <span aria-hidden className="presence-dot" />}
           </span>
         )}
+
         <div className="flex-1 min-w-0">
-          <p className="font-mono lowercase text-xs text-text-primary truncate">
-            {anon ? <span className="text-text-faint">anonymous</span> : post.author?.full_name?.toLowerCase() ?? "—"}
-          </p>
-          <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            {timeAgo(post.created_at)} ago
-            {anon && <span className="ml-2" style={{ fontSize: "9px" }}>· posted anonymously</span>}
-          </p>
-        </div>
-      </header>
-
-      <p
-        className="text-text-primary text-[0.95rem] whitespace-pre-wrap"
-        style={{ lineHeight: 1.65 }}
-      >
-        {post.content}
-      </p>
-
-      <footer className="flex items-center justify-between mt-4">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-3">
-            {onToggleReplies ? (
-              <button
-                onClick={() => onToggleReplies(post.id)}
-                className="reply-btn"
-                style={{ fontSize: "0.65rem" }}
+          {/* Name · stage · time · type pill (tweet header line) */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
+              {anon ? <span style={{ color: "var(--text-faint)" }}>anonymous</span> : post.author?.full_name ?? "—"}
+            </span>
+            <span className="font-mono" style={{ fontSize: 10, color: "var(--text-muted)" }}>
+              {!anon && post.author?.stage ? `· ${post.author.stage} ` : "· "}
+              {timeAgo(post.created_at)}
+            </span>
+            {pillLabel && (
+              <span
+                className="font-mono lowercase"
+                style={{
+                  fontSize: 9,
+                  color: pillColor,
+                  border: `0.5px solid ${pillBorder}`,
+                  padding: "0 6px",
+                  borderRadius: 10,
+                  lineHeight: 1.7,
+                }}
               >
-                {String(post.reply_count ?? 0).padStart(2, "0")}{" "}
-                {post.reply_count === 1 ? "reply" : "replies"}
-              </button>
-            ) : (
-              <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-                {post.reply_count} {post.reply_count === 1 ? "reply" : "replies"}
+                {pillLabel}
               </span>
             )}
-            {onToggleReplies && (
+            {isActive && !anon && (
+              <span className="font-mono" style={{ fontSize: 9, color: "var(--green)" }}>
+                ● active
+              </span>
+            )}
+          </div>
+
+          <p
+            className="whitespace-pre-wrap"
+            style={{ fontSize: 13, lineHeight: 1.5, marginTop: 4, color: "var(--text-primary)" }}
+          >
+            {post.content}
+          </p>
+
+          {/* Action bar */}
+          <div
+            className="flex items-center"
+            style={{ gap: 22, marginTop: 9, fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-muted)" }}
+          >
+            {onToggleReplies ? (
               <button onClick={() => onToggleReplies(post.id)} className="reply-btn">
-                reply →
+                ◌ {post.reply_count ?? 0} {post.reply_count === 1 ? "reply" : "replies"}
               </button>
+            ) : (
+              <span>◌ {post.reply_count ?? 0} {post.reply_count === 1 ? "reply" : "replies"}</span>
             )}
             <button onClick={handleShare} className="reply-btn" title="copy link to post">
-              {shared ? "✓ copied" : "↗ share"}
+              {shared ? "✓ copied" : "↱ share"}
             </button>
+            <BookmarkButton itemType={savedType} itemId={post.id} variant="inline" />
           </div>
-          {(isDecision || isBlocker) && (
-            <span
-              className="font-mono lowercase tracking-wider"
-              style={{ color: "#f59e0b", fontSize: "9px" }}
-            >
-              needs input
-            </span>
-          )}
-          {isQuestion && (
-            <span
-              className="font-mono lowercase tracking-wider"
-              style={{ color: "#38bdf8", fontSize: "9px" }}
-            >
-              needs input
-            </span>
-          )}
         </div>
-        <div className="flex items-center gap-2">
-          {roomType && (
-            <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
-              style={{
-                border: `1px solid ${ROOM_TYPE_COLOR[roomType] ?? "#6e7681"}`,
-                color: ROOM_TYPE_COLOR[roomType] ?? "#6e7681",
-                background: "transparent",
-              }}
-            >
-              {roomType}
-            </span>
-          )}
-          {post.tag && (
-            <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
-              style={{
-                border: `1px solid ${tagColor}`,
-                color: tagColor,
-                background: "transparent",
-              }}
-            >
-              {post.tag}
-            </span>
-          )}
-        </div>
-      </footer>
-
+      </div>
     </article>
     {onToggleReplies && expanded && (
       <ReplyThread

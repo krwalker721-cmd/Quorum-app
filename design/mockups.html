@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quorum redesign — approved mockups</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.31.0/tabler-icons.min.css" />
+<style>
+  :root { --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #010409; color: #e6edf3; font-family: var(--font-sans); padding: 32px; }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1.doc { font-size: 20px; font-weight: 500; }
+  p.doc { color: #8b949e; font-size: 14px; line-height: 1.6; }
+  .screen-label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; color: #f8c56a; margin: 40px 0 10px; text-transform: uppercase; }
+  .screen-note { font-size: 12px; color: #6e7681; margin: 0 0 12px; }
+  .frame { background:#0d1117; border-radius:12px; overflow:hidden; border:0.5px solid #21262d; display:flex; min-height:540px; }
+  .sb { width:118px; background:#161b22; border-right:1px solid #21262d; display:flex; flex-direction:column; flex-shrink:0; }
+  .sb-logo { display:flex; align-items:center; gap:7px; padding:14px 12px; border-bottom:1px solid #21262d; }
+  .sb-mark { width:16px; height:16px; border-radius:4px; background:linear-gradient(135deg,#f59e0b,#b8760a); }
+  .sb-name { font-size:13px; font-weight:700; letter-spacing:-.5px; }
+  .sb-nav { padding:10px 8px; flex:1; }
+  .nav { display:flex; align-items:center; gap:8px; padding:6px 9px; margin-bottom:2px; }
+  .nav .dot { width:5px; height:5px; border-radius:50%; background:#30363d; }
+  .nav span.lbl { font-family:var(--font-mono); font-size:11px; color:#8b949e; }
+  .nav.active { border-radius:7px; background:rgba(245,158,11,.08); }
+  .nav.active .dot { background:#f59e0b; }
+  .nav.active span.lbl { color:#e6edf3; }
+  .nav .dot.purple { background:#a78bfa; }
+  .sb-user { display:flex; align-items:center; gap:8px; padding:10px 11px; border-top:1px solid #21262d; }
+  .av { border-radius:50%; background:#1c2128; color:#8b949e; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); flex-shrink:0; }
+  .col { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-bottom:1px solid #21262d; }
+  .crumb { font-family:var(--font-mono); font-size:9px; color:#6e7681; letter-spacing:.06em; }
+  .ptitle { font-size:14px; font-weight:500; margin-top:1px; }
+  .tb-right { display:flex; align-items:center; gap:8px; }
+  .tier { font-family:var(--font-mono); font-size:9px; color:#a78bfa; border:0.5px solid rgba(167,139,250,.3); padding:3px 7px; border-radius:5px; }
+  .theme { width:18px; height:18px; border-radius:50%; border:0.5px solid #30363d; }
+  .signout { font-family:var(--font-mono); font-size:9px; color:#6e7681; }
+  .post-btn { font-family:var(--font-mono); font-size:9px; color:#f8c56a; background:linear-gradient(135deg, rgba(245,158,11,.2), rgba(245,158,11,.06)); border:0.5px solid rgba(245,158,11,.3); padding:3px 8px; border-radius:6px; }
+  .body { padding:16px 18px; overflow:hidden; }
+  .kicker { font-family:var(--font-mono); letter-spacing:.12em; color:#6e7681; text-transform:uppercase; }
+  .tile { background:#161b22; border:0.5px solid #21262d; border-radius:12px; }
+  .foot { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:9px; color:#30363d; margin-top:16px; padding-top:10px; border-top:0.5px solid #161b22; }
+  .grid { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:12px; }
+  .tabs { display:flex; gap:6px; margin-bottom:14px; font-family:var(--font-mono); font-size:10px; }
+  .tab { color:#8b949e; border:0.5px solid #21262d; padding:5px 14px; border-radius:8px; }
+  .tab.on { color:#f8c56a; background:rgba(245,158,11,.1); border:0.5px solid rgba(245,158,11,.28); }
+  .grad-hero { background:linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%); border:0.5px solid rgba(245,158,11,.3); border-radius:12px; }
+  .grad-solid { background:linear-gradient(135deg, rgba(245,158,11,.9), rgba(245,158,11,.7)); border:none; color:#1a1204; font-weight:500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1 class="doc">Quorum redesign — approved mockups</h1>
+<p class="doc">The pixel reference for the redesign. Build each real page to match its frame below.
+Read <code>REDESIGN-BUILD-GUIDE.md</code> first. One exception: the <b>collab skills tab</b> shown
+here is the flat version — build it as a <b>category → people drill-down</b> instead (see guide §4).
+Frames are shrunk to ~880px wide; on a real 1440px screen everything breathes more.</p>
+
+<!-- ============ SHARED SIDEBAR is repeated per frame; edit once when building ============ -->
+
+<!-- ================= HOME ================= -->
+<div class="screen-label">1 · Home</div>
+<p class="screen-note">Launchpad bento. Kills the old 17-component dump. 6 tiles, one job each.</p>
+<div class="frame">
+  <div class="sb">
+    <div class="sb-logo"><div class="sb-mark"></div><span class="sb-name">quorum</span></div>
+    <div class="sb-nav">
+      <div class="nav active"><span class="dot"></span><span class="lbl">home</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">cohort</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">pulse</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">collab_board</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">vault</span></div>
+      <div class="nav"><span class="dot purple"></span><span class="lbl">messages</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">referrals</span></div>
+    </div>
+    <div class="sb-user"><div class="av" style="width:24px;height:24px;font-size:10px;border:1.5px solid rgba(88,166,255,.5);">KW</div><div style="font-family:var(--font-mono);font-size:10px;color:#8b949e;">keaton</div></div>
+  </div>
+  <div class="col">
+    <div class="topbar"><div><div class="crumb">QUORUM / HOME</div><div class="ptitle">home</div></div>
+      <div class="tb-right"><span class="tier">PARTNER</span><span class="signout">upgrade</span><div class="theme"></div><span class="post-btn">+ post</span><span class="signout">sign out</span></div></div>
+    <div class="body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div><div style="font-size:16px;font-weight:500;">Good to see you, Keaton</div><div style="font-family:var(--font-mono);font-size:9px;color:#6e7681;margin-top:3px;letter-spacing:.03em;">TUE · 4 members · 1 active now · trust 31</div></div>
+      </div>
+      <div class="grid" style="margin-bottom:10px;">
+        <div class="tile" style="padding:2px 14px;">
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:0.5px solid #21262d;"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,rgba(167,139,250,.28),rgba(167,139,250,.06));color:#c9b8ff;display:flex;align-items:center;justify-content:center;"><i class="ti ti-message"></i></div><div style="flex:1;font-size:12px;">2 unread messages</div><span style="font-size:11px;color:#8b949e;">→</span></div>
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:0.5px solid #21262d;"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,rgba(34,197,94,.28),rgba(34,197,94,.06));color:#7ee2a8;display:flex;align-items:center;justify-content:center;"><i class="ti ti-user-plus"></i></div><div style="flex:1;font-size:12px;">2 applied to &ldquo;test project 2&rdquo;</div><span style="font-size:11px;color:#8b949e;">→</span></div>
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 0;"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,rgba(56,189,248,.28),rgba(56,189,248,.06));color:#8fdcff;display:flex;align-items:center;justify-content:center;"><i class="ti ti-bolt"></i></div><div style="flex:1;font-size:12px;">Maya posted a need you can help with</div><span style="font-size:11px;color:#8b949e;">→</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="grad-hero" style="padding:12px 14px;"><div class="kicker" style="font-size:9px;color:#f8c56a;margin-bottom:7px;">WEEKLY CHECK-IN</div><div style="font-size:12px;line-height:1.4;color:#f5ede0;">What decision have you been avoiding?</div><button class="grad-solid" style="margin-top:10px;font-size:11px;padding:6px 13px;border-radius:7px;">answer →</button></div>
+          <div class="tile" style="flex:1;padding:10px 13px;"><div class="kicker" style="font-size:9px;margin-bottom:2px;">YOUR COHORT · 4/12</div>
+            <svg viewBox="0 0 240 72" style="width:100%;height:auto;display:block;"><line x1="120" y1="38" x2="50" y2="18" stroke="#21262d"/><line x1="120" y1="38" x2="195" y2="20" stroke="#21262d"/><line x1="120" y1="38" x2="56" y2="60" stroke="#21262d"/><line x1="120" y1="38" x2="190" y2="58" stroke="#21262d"/><circle cx="50" cy="18" r="10" fill="#1c2128" stroke="#58a6ff" stroke-width="1.3"/><text x="50" y="21" text-anchor="middle" fill="#8b949e" font-size="8" font-family="monospace">JW</text><circle cx="195" cy="20" r="10" fill="#1c2128" stroke="#a78bfa" stroke-width="1.3"/><text x="195" y="23" text-anchor="middle" fill="#8b949e" font-size="8" font-family="monospace">T</text><circle cx="56" cy="60" r="10" fill="#1c2128" stroke="#f59e0b" stroke-width="1.3"/><text x="56" y="63" text-anchor="middle" fill="#8b949e" font-size="8" font-family="monospace">M</text><circle cx="190" cy="58" r="10" fill="#1c2128" stroke="#22c55e" stroke-width="1.3"/><text x="190" y="61" text-anchor="middle" fill="#8b949e" font-size="8" font-family="monospace">A</text><circle cx="120" cy="38" r="14" fill="#1c2128" stroke="#e6edf3" stroke-width="1.3"/><text x="120" y="42" text-anchor="middle" fill="#e6edf3" font-size="9" font-family="monospace">KW</text><circle cx="131" cy="28" r="3" fill="#22c55e" stroke="#161b22" stroke-width="1.3"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="tile" style="padding:9px 14px;margin-bottom:10px;"><div style="display:flex;align-items:center;gap:14px;"><span class="kicker" style="font-size:9px;letter-spacing:.1em;white-space:nowrap;"><i class="ti ti-sparkles" style="color:#38bdf8;"></i> MATCHES YOUR NEEDS</span>
+        <div style="display:flex;gap:16px;flex:1;">
+          <div style="display:flex;align-items:center;gap:7px;"><div class="av" style="width:24px;height:24px;font-size:9px;color:#22c55e;border:1.5px solid rgba(34,197,94,.5);">SK</div><div style="font-size:11px;">Sam K. <span style="color:#6e7681;font-family:var(--font-mono);font-size:9px;">growth</span></div></div>
+          <div style="display:flex;align-items:center;gap:7px;"><div class="av" style="width:24px;height:24px;font-size:9px;color:#58a6ff;border:1.5px solid rgba(88,166,255,.5);">AL</div><div style="font-size:11px;">Ada L. <span style="color:#6e7681;font-family:var(--font-mono);font-size:9px;">design</span></div></div>
+          <div style="display:flex;align-items:center;gap:7px;"><div class="av" style="width:24px;height:24px;font-size:9px;color:#f59e0b;border:1.5px solid rgba(245,158,11,.5);">MR</div><div style="font-size:11px;">Maya R. <span style="color:#6e7681;font-family:var(--font-mono);font-size:9px;">sales</span></div></div>
+        </div><span style="font-size:10px;color:#58a6ff;white-space:nowrap;">browse →</span></div></div>
+      <div class="grid">
+        <div class="tile" style="padding:13px 15px;"><div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px;"><span class="kicker" style="font-size:9px;">RECENT IN PULSE</span><span style="font-size:10px;color:#58a6ff;">all →</span></div>
+          <div style="display:flex;gap:9px;padding-bottom:11px;border-bottom:0.5px solid #21262d;margin-bottom:11px;"><div class="av" style="width:26px;height:26px;font-size:9px;">JT</div><div><div style="font-size:12px;line-height:1.4;">Do I raise now at a lower cap, or wait for more traction?</div><div style="font-family:var(--font-mono);font-size:9px;color:#6e7681;margin-top:4px;"><span style="color:#f59e0b;">DECISION</span> · JORDAN T · 2h · 4</div></div></div>
+          <div style="display:flex;gap:9px;"><div class="av" style="width:26px;height:26px;font-size:9px;">KW</div><div><div style="font-size:12px;line-height:1.4;">Cold-call experience — results after 100 calls?</div><div style="font-family:var(--font-mono);font-size:9px;color:#6e7681;margin-top:4px;">KEATON W · 21d · 0</div></div></div>
+        </div>
+        <div class="tile" style="padding:13px 15px;"><div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px;"><span class="kicker" style="font-size:9px;">YOUR WORK</span><span style="font-size:10px;color:#58a6ff;">board →</span></div>
+          <div style="padding-bottom:10px;border-bottom:0.5px solid #21262d;margin-bottom:10px;"><div style="font-size:12px;">test project 2</div><div style="font-family:var(--font-mono);font-size:9px;color:#6e7681;margin-top:3px;"><span style="color:#22c55e;">2 new applicants</span> · 16d</div></div>
+          <div><div style="font-size:12px;">test project</div><div style="font-family:var(--font-mono);font-size:9px;color:#6e7681;margin-top:3px;">GROWTH · 27d</div></div>
+        </div>
+      </div>
+      <div class="foot"><span>QUORUM_OS V1.0</span><span>SYS:NOMINAL</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PULSE ================= -->
+<div class="screen-label">2 · Pulse (social feed)</div>
+<p class="screen-note">Tweet-style posts, each in its own box. Active decision = amber tile + inline reply thread.</p>
+<div class="frame">
+  <div class="sb">
+    <div class="sb-logo"><div class="sb-mark"></div><span class="sb-name">quorum</span></div>
+    <div class="sb-nav">
+      <div class="nav"><span class="dot"></span><span class="lbl">home</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">cohort</span></div>
+      <div class="nav active"><span class="dot"></span><span class="lbl">pulse</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">collab_board</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">vault</span></div>
+      <div class="nav"><span class="dot purple"></span><span class="lbl">messages</span></div>
+      <div class="nav"><span class="dot"></span><span class="lbl">referrals</span></div>
+    </div>
+    <div class="sb-user"><div class="av" style="width:24px;height:24px;font-size:10px;border:1.5px solid rgba(88,166,255,.5);">KW</div><div style="font-family:var(--font-mono);font-size:10px;color:#8b949e;">keaton</div></div>
+  </div>
+  <div class="col">
+    <div class="topbar"><div><div class="crumb">QUORUM / PULSE</div><div class="ptitle">pulse</div></div>
+      <div class="tb-right"><span class="tier">PARTNER</span><span class="signout">upgrade</span><div class="theme"></div><span class="post-btn">+ post</span><span class="signout">sign out</span></div></div>
+    <div class="body">
+      <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div style="font-size:16px;font-weight:500;">pulse</div><div style="font-family:var(--font-mono);font-size:9px;color:#22c55e;">● 1 active now</div></div>
+      <div class="grid" style="grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#161b22;border:0.5px solid #21262d;border-radius:24px;margin-bottom:8px;"><div class="av" style="width:28px;height:28px;font-size:9px;">KW</div><span style="flex:1;font-size:12px;color:#6e7681;">Share what you're working through…</span><span style="font-family:var(--font-mono);font-size:10px;background:linear-gradient(135deg,rgba(245,158,11,.92),rgba(245,158,11,.72));color:#1a1204;padding:6px 14px;border-radius:16px;font-weight:500;">post</span></div>
+          <div class="tabs" style="margin:12px 0;"><span class="tab on" style="border-radius:14px;">all</span><span class="tab" style="border-radius:14px;">decisions</span><span class="tab" style="border-radius:14px;">blockers</span><span class="tab" style="border-radius:14px;">unanswered</span></div>
+          <div class="grad-hero" style="border-radius:12px;padding:14px 15px;margin-bottom:10px;">
+            <div style="display:flex;gap:10px;"><div class="av" style="width:36px;height:36px;font-size:11px;">JT</div><div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:500;">Jordan Torres</span><span style="font-family:var(--font-mono);font-size:10px;color:#6e7681;">· seed · 2h</span><span style="font-family:var(--font-mono);font-size:9px;color:#f8c56a;border:0.5px solid rgba(245,158,11,.35);padding:0 6px;border-radius:10px;">decision</span></div>
+              <div style="font-size:13px;line-height:1.5;margin-top:4px;">Do I raise now at a lower cap, or wait two quarters and prove more traction? Leaning toward waiting but runway is tight.</div>
+              <div style="display:flex;gap:22px;margin-top:9px;font-family:var(--font-mono);font-size:10px;color:#6e7681;"><span><i class="ti ti-message-circle"></i> 4</span><span><i class="ti ti-arrow-forward-up"></i> share</span><span><i class="ti ti-bookmark"></i></span></div>
+              <div style="margin-top:12px;border-left:2px solid #30363d;padding-left:12px;display:flex;flex-direction:column;gap:11px;">
+                <div style="display:flex;gap:8px;"><div class="av" style="width:26px;height:26px;font-size:9px;">AL</div><div><span style="font-size:12px;font-weight:500;">Ada Lovelace</span> <span style="font-family:var(--font-mono);font-size:9px;color:#6e7681;">· 1h</span><div style="font-size:12px;line-height:1.45;margin-top:2px;color:#d0d7de;">Waited in the same spot — the extra traction doubled our cap. Worth it.</div></div></div>
+                <span style="font-family:var(--font-mono);font-size:10px;color:#58a6ff;">view all 4 replies →</span>
+              </div></div></div>
+          </div>
+          <div class="tile" style="padding:14px 15px;margin-bottom:10px;"><div style="display:flex;gap:10px;"><div class="av" style="width:36px;height:36px;font-size:11px;">AL</div><div style="flex:1;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:500;">Ada Lovelace</span><span style="font-family:var(--font-mono);font-size:10px;color:#6e7681;">· idea · 5h</span><span style="font-family:var(--font-mono);font-size:9px;color:#8b949e;border:0.5px solid #30363d;padding:0 6px;border-radius:10px;">blocker</span></div><div style="font-size:13px;line-height:1.5;margin-top:4px;">Stuck on onboarding drop-off at step 2 — anyone solved a multi-step signup that doesn't bleed users?</div><div style="display:flex;gap:22px;margin-top:9px;font-family:var(--font-mono);font-size:10px;color:#6e7681;"><span><i class="ti ti-message-circle"></i> 1</span><span><i class="ti ti-arrow-forward-up"></i> share</span><span><i class="ti ti-bookmark"></i></span></div></div></div></div>
+          <div class="tile" style="padding:14px 15px;"><div style="display:flex;gap:10px;"><div class="av" style="width:36px;height:36px;font-size:11px;">KW</div><div style="flex:1;"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:13px;font-weight:500;">Keaton Walker</span><span style="font-family:var(--font-mono);font-size:10px;color:#6e7681;">· pre-seed · 21d</span></div><div style="font-size:13px;line-height:1.5;margin-top:4px;">Cold-call experience — what were your results after 100 calls?</div><div style="display:flex;gap:22px;margin-top:9px;font-family:var(--font-mono);font-size:10px;color:#6e7681;"><span><i class="ti ti-message-circle"></i> 0</span><span><i class="ti ti-arrow-forward-up"></i> share</span><span><i class="ti ti-bookmark"></i></span></div></div></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="tile" style="padding:12px 14px;"><div class="kicker" style="font-size:9px;margin-bottom:10px;">IN THE ROOM</div><div style="display:flex;gap:6px;margin-bottom:8px;"><div style="position:relative;"><div class="av" style="width:28px;height:28px;font-size:9px;">JT</div><span style="position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:#22c55e;border:1.5px solid #161b22;"></span></div><div class="av" style="width:28px;height:28px;font-size:9px;">AL</div><div class="av" style="width:28px;height:28px;font-size:9px;">KW</div></div><div style="font-family:var(--font-mono);font-size:10px;color:#6e7681;">1 active now</div></div>
+          <div class="tile" style="padding:12px 14px;"><div class="kicker" style="font-size:9px;margin-bottom:10px;">MOST HELPFUL THIS WEEK</div><div style="display:flex;align-items:center;gap:9px;"><div class="av" style="width:28px;height:28px;font-size:9px;">AL</div><div><div style="font-size:12px;">Ada L.</div><div style="font-family:var(--font-mono);font-size:9px;color:#6e7681;">3 replies marked helpful</div></div></div></div>
+          <div class="tile" style="padding:12px 14px;"><div class="kicker" style="font-size:9px;margin-bottom:10px;">TRENDING TAGS</div><div style="display:flex;flex-wrap:wrap;gap:6px;"><span style="font-family:var(--font-mono);font-size:10px;color:#8b949e;border:0.5px solid #30363d;padding:3px 8px;border-radius:12px;">fundraising</span><span style="font-family:var(--font-mono);font-size:10px;color:#8b949e;border:0.5px solid #30363d;padding:3px 8px;border-radius:12px;">hiring</span><span style="font-family:var(--font-mono);font-size:10px;color:#8b949e;border:0.5px solid #30363d;padding:3px 8px;border-radius:12px;">growth</span></div></div>
+        </div>
+      </div>
+      <div class="foot"><span>QUORUM_OS V1.0</span><span>SYS:NOMINAL</span></div>
+    </div>
+  </div>
+</div>
+
+<p class="doc" style="margin-top:40px;border-top:0.5px solid #21262d;padding-top:20px;">
+The remaining approved screens — <b>collab board (projects / needs / skills), project room,
+messages, vault, referrals, profile</b> — are specified in full in
+<code>REDESIGN-BUILD-GUIDE.md §4</code> with exact layout, tiles, and data. Home and pulse are
+reproduced above as the canonical pixel reference for the shell, tiles, gradient hero, social
+feed, and rail patterns; every other page composes the same primitives. When building, match
+these two frames for the shell/tile/gradient treatment and follow the guide's per-page structure.
+Reminder: build the <b>skills tab as a category → people drill-down</b>, not a flat list.
+</p>
+
+</div>
+</body>
+</html>

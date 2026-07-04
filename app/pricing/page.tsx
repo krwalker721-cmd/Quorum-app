@@ -94,7 +94,7 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--accent)",
-        borderRadius: 4,
+        borderRadius: 12,
         padding: 24,
         marginTop: 16,
       }}
@@ -115,7 +115,7 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
       <div
         style={{
           border: "1px solid var(--border-default)",
-          borderRadius: 4,
+          borderRadius: 12,
           padding: "12px 14px",
           background: "var(--bg-base)",
           marginBottom: 16,
@@ -141,7 +141,7 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
           fontSize: 12,
           letterSpacing: "0.04em",
           padding: "12px 16px",
-          borderRadius: 4,
+          borderRadius: 12,
           border: "none",
           cursor: loading || done ? "default" : "pointer",
           opacity: loading ? 0.7 : 1,
@@ -281,7 +281,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
       style={{
         background: "#161b22",
         border: "1px solid #21262d",
-        borderRadius: 4,
+        borderRadius: 12,
         padding: "16px 20px",
         marginBottom: 8,
         cursor: "pointer",
@@ -456,7 +456,7 @@ function PricingBody() {
           style={{
             background: "#161b22",
             border: "1px solid #21262d",
-            borderRadius: 4,
+            borderRadius: 12,
             padding: 32,
             marginBottom: 48,
           }}
@@ -484,7 +484,7 @@ function PricingBody() {
             style={{
               background: "rgba(34,197,94,0.06)",
               border: "1px solid rgba(34,197,94,0.2)",
-              borderRadius: 4,
+              borderRadius: 12,
               padding: "14px 20px",
               marginBottom: 32,
             }}
@@ -502,7 +502,7 @@ function PricingBody() {
             style={{
               background: "var(--bg-surface)",
               border: "1px solid var(--border-default)",
-              borderRadius: 4,
+              borderRadius: 12,
               padding: 28,
               position: "relative",
             }}
@@ -528,7 +528,7 @@ function PricingBody() {
                 disabled
                 className="font-mono"
                 style={{
-                  width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 4,
+                  width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 12,
                   background: "var(--bg-overlay)", color: "var(--text-disabled)", border: "none",
                   fontSize: 12, cursor: "default",
                 }}
@@ -540,7 +540,7 @@ function PricingBody() {
                 onClick={() => setShowDowngrade(true)}
                 className="font-mono"
                 style={{
-                  width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 4,
+                  width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 12,
                   background: "transparent", color: "var(--text-disabled)",
                   border: "1px solid var(--border-default)", fontSize: 12, cursor: "pointer",
                 }}
@@ -555,7 +555,7 @@ function PricingBody() {
             style={{
               background: "var(--bg-surface)",
               border: "1px solid var(--accent)",
-              borderRadius: 4,
+              borderRadius: 12,
               padding: 28,
               position: "relative",
             }}
@@ -563,7 +563,7 @@ function PricingBody() {
             <div
               style={{
                 position: "absolute", top: 0, left: 0, right: 0, height: 3,
-                background: "var(--accent)", borderRadius: "4px 4px 0 0",
+                background: "var(--accent)", borderRadius: "12px 12px 0 0",
               }}
             />
             <div
@@ -601,10 +601,13 @@ function PricingBody() {
               }}
               className="font-mono"
               style={{
-                width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 4, fontSize: 12,
+                width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 10, fontSize: 12,
+                fontWeight: 500,
                 border: "none",
-                background: memberCta.disabled ? "var(--bg-overlay)" : "var(--accent)",
-                color: memberCta.disabled ? "var(--text-disabled)" : "#0d1117",
+                background: memberCta.disabled
+                  ? "var(--bg-overlay)"
+                  : "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
+                color: memberCta.disabled ? "var(--text-disabled)" : "#1a1204",
                 cursor: memberCta.disabled ? "default" : "pointer",
                 opacity: loadingCheckout || portalLoading ? 0.7 : 1,
               }}
@@ -618,7 +621,7 @@ function PricingBody() {
             style={{
               background: "var(--bg-surface)",
               border: "1px solid rgba(167,139,250,0.2)",
-              borderRadius: 4,
+              borderRadius: 12,
               padding: 28,
               position: "relative",
             }}
@@ -626,7 +629,7 @@ function PricingBody() {
             <div
               style={{
                 position: "absolute", top: 0, left: 0, right: 0, height: 3,
-                background: "#a78bfa", borderRadius: "4px 4px 0 0",
+                background: "#a78bfa", borderRadius: "12px 12px 0 0",
               }}
             />
             <div
@@ -663,7 +666,7 @@ function PricingBody() {
                 disabled
                 className="font-mono"
                 style={{
-                  width: "100%", padding: "12px 16px", borderRadius: 4, fontSize: 12,
+                  width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 12,
                   background: "transparent", color: "var(--text-disabled)",
                   border: "1px solid var(--border-muted)", cursor: "default",
                 }}
@@ -676,7 +679,7 @@ function PricingBody() {
                 disabled={waitlistJoined || waitlistLoading}
                 className="font-mono"
                 style={{
-                  width: "100%", padding: "12px 16px", borderRadius: 4, fontSize: 12,
+                  width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 12,
                   background: "transparent",
                   color: waitlistJoined ? "var(--text-disabled)" : "#a78bfa",
                   border: `1px solid ${waitlistJoined ? "var(--border-muted)" : "#a78bfa"}`,
@@ -710,7 +713,7 @@ function PricingBody() {
           style={{
             background: "#161b22",
             border: "1px solid #21262d",
-            borderRadius: 4,
+            borderRadius: 12,
             overflow: "hidden",
             marginTop: 48,
             marginBottom: 48,
@@ -782,7 +785,7 @@ function PricingBody() {
             onClick={(e) => e.stopPropagation()}
             style={{
               background: "var(--bg-surface)", border: "1px solid var(--border-default)",
-              borderRadius: 4, padding: 28, maxWidth: 420, width: "100%",
+              borderRadius: 12, padding: 28, maxWidth: 420, width: "100%",
             }}
           >
             <p className="font-sans" style={{ fontSize: 18, color: "var(--text-primary)", marginBottom: 8 }}>
@@ -796,7 +799,7 @@ function PricingBody() {
                 onClick={() => setShowDowngrade(false)}
                 className="font-mono"
                 style={{
-                  padding: "10px 16px", borderRadius: 4, fontSize: 12, background: "transparent",
+                  padding: "10px 16px", borderRadius: 12, fontSize: 12, background: "transparent",
                   color: "var(--text-secondary)", border: "1px solid var(--border-default)", cursor: "pointer",
                 }}
               >
@@ -807,7 +810,7 @@ function PricingBody() {
                 disabled={portalLoading}
                 className="font-mono"
                 style={{
-                  padding: "10px 16px", borderRadius: 4, fontSize: 12, background: "var(--accent)",
+                  padding: "10px 16px", borderRadius: 12, fontSize: 12, background: "var(--accent)",
                   color: "#0d1117", border: "none", cursor: "pointer", opacity: portalLoading ? 0.7 : 1,
                 }}
               >
