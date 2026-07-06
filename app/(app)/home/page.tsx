@@ -261,10 +261,10 @@ export default async function HomePage() {
       <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <UpgradeToast />
 
-      <div style={{ padding: "18px 24px 8px", maxWidth: 1180 }}>
+      <div style={{ padding: "14px 24px 8px", maxWidth: 1600 }}>
         {/* Header */}
-        <div className="mb-4">
-          <h1 style={{ fontSize: 18, fontWeight: 500, color: "var(--text-primary)" }}>
+        <div className="mb-3">
+          <h1 style={{ fontSize: 17, fontWeight: 500, color: "var(--text-primary)" }}>
             Good to see you, {firstName}
           </h1>
           <p
@@ -280,14 +280,27 @@ export default async function HomePage() {
           className="grid gap-3 mb-3"
           style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}
         >
-          <Tile kicker="needs you" padding="4px 16px">
+          <Tile kicker="needs you" padding="4px 16px" className="flex flex-col">
             {needsRows.length === 0 ? (
               <div
-                className="flex flex-col items-center justify-center text-center"
-                style={{ minHeight: 96, gap: 6, padding: "12px 0" }}
+                className="flex-1 flex flex-col items-center justify-center text-center"
+                style={{ minHeight: 96, gap: 8, padding: "16px 0" }}
               >
-                <span aria-hidden style={{ fontSize: 18, color: "var(--green)", opacity: 0.7 }}>✓</span>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                <span
+                  aria-hidden
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    fontSize: 20,
+                    color: "var(--green)",
+                    background: "linear-gradient(135deg, rgba(34,197,94,.20), rgba(34,197,94,.05))",
+                  }}
+                >
+                  ✓
+                </span>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                   You&apos;re all caught up.
                 </p>
                 <p className="font-mono" style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.03em" }}>
@@ -329,11 +342,18 @@ export default async function HomePage() {
 
           <div className="flex flex-col gap-2.5">
             <HomeCheckinHero userId={user.id} />
-            <Tile kicker={`your cohort · ${cohortFill}/${COHORT_MAX}`} padding="10px 13px" style={{ flex: 1 }}>
-              <NetworkGraph
-                you={{ full_name: profile?.full_name ?? null }}
-                members={otherMembers.slice(0, 5)}
-              />
+            <Tile
+              kicker={`your cohort · ${cohortFill}/${COHORT_MAX}`}
+              padding="10px 13px"
+              style={{ flex: 1 }}
+              className="flex flex-col justify-center"
+            >
+              <div style={{ maxWidth: 280, width: "100%", margin: "0 auto" }}>
+                <NetworkGraph
+                  you={{ full_name: profile?.full_name ?? null }}
+                  members={otherMembers.slice(0, 5)}
+                />
+              </div>
             </Tile>
           </div>
         </div>
