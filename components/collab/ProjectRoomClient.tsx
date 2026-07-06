@@ -218,7 +218,7 @@ export default function ProjectRoomClient({
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ padding: "18px 24px 8px", maxWidth: 1180 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ padding: "18px 24px 8px", maxWidth: 1600 }}>
         <div className="lg:col-span-2 space-y-3">
           {/* Project header tile */}
           <div
@@ -315,7 +315,10 @@ export default function ProjectRoomClient({
         </div>
 
         {/* Right column */}
-        <aside className="space-y-3">
+        <aside
+          className="space-y-3 scroll-thin"
+          style={{ maxHeight: "calc(100dvh - 186px)", overflowY: "auto" }}
+        >
           {openForMe.length > 0 && (
             <div
               style={{
@@ -432,7 +435,7 @@ export default function ProjectRoomClient({
           </div>
         </aside>
       </div>
-      <div style={{ padding: "0 24px 8px", maxWidth: 1180 }}>
+      <div style={{ padding: "0 24px 8px", maxWidth: 1600 }}>
         <TerminalFooter />
       </div>
     </>
@@ -529,7 +532,17 @@ function ThreadTab({
   return (
     <div
       className="flex flex-col"
-      style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12, minHeight: 500, overflow: "hidden" }}
+      style={{
+        background: "var(--bg-surface)",
+        border: "0.5px solid var(--border-default)",
+        borderRadius: 12,
+        // Fill the space left under the header/tabs so the composer stays in
+        // view without the page scrolling; scrolls internally when long.
+        height: "calc(100dvh - 360px)",
+        minHeight: 300,
+        maxHeight: 640,
+        overflow: "hidden",
+      }}
     >
       {/* Thread container — mirrors the cohort room chat */}
       <div
@@ -538,12 +551,12 @@ function ThreadTab({
         style={{
           background: "#0d1117",
           flex: 1,
+          minHeight: 0,
           overflowY: "auto",
           padding: 16,
           display: "flex",
           flexDirection: "column",
           gap: 12,
-          maxHeight: 600,
         }}
       >
         {messages.length === 0 ? (
