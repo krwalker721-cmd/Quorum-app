@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { assignUserToCohort } from "@/lib/cohorts";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
@@ -101,6 +102,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .maybeSingle();
     cohortIdForDots = (membership?.cohort_id as string | null) ?? null;
   } catch {}
+
+  // Safety net: an onboarding-complete user who somehow has no cohort (completed
+  // before auto-assign shipped, or a transient failure during the completion
+  // write) gets placed on their next sign-in. Reuses the membership lookup above
+  // so there's no extra query in the common case; assignUserToCohort is
+  // idempotent and needs a service-role client to read every cohort. Best-effort.
+  if (!cohortIdForDots) {
+    try {
+      cohortIdForDots = await assignUserToCohort(createAdminClient(), user.id);
+    } catch (e) {
+      console.error("cohort auto-assign failed on sign-in:", e);
+    }
+  }
 
   return (
     <PresenceProvider currentUserId={user.id}>

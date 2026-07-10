@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { assignUserToCohort } from "@/lib/cohorts";
 
 // Onboarding progress for the current user. Backed by the onboarding_progress
 // table (one row per user, RLS-scoped to auth.uid()). The cookie-based server
@@ -91,6 +92,19 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // When onboarding completes, make sure the user is in a cohort. Runs
+  // server-side with a service-role client so it can read every cohort and
+  // insert the membership regardless of RLS. assignUserToCohort is idempotent
+  // (no-ops if the user already has a cohort), so re-posting completed:true is
+  // safe. Best-effort — never fail the completion write over a transient error.
+  if (body.completed === true) {
+    try {
+      await assignUserToCohort(createAdminClient(), user.id);
+    } catch (e) {
+      console.error("cohort auto-assign failed on onboarding complete:", e);
+    }
   }
 
   return NextResponse.json(data);
