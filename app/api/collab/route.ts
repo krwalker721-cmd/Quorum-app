@@ -3,8 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { checkUsageCap, incrementUsage } from "@/lib/stripe-helpers";
 
 // Server-side collab creation (projects and needs both live in the `projects`
-// table, distinguished by post_type). collab_posts is 0 on the free tier, so the
-// cap check here is the authoritative gate — this is a Member-only feature.
+// table, distinguished by post_type). Viewing the board is open to every tier;
+// creation is bounded by the per-tier `collab_posts` usage cap. The cap check
+// below is the authoritative gate (free tier's cap is 0, so free users can
+// browse the board but not post until they upgrade).
 export async function POST(req: NextRequest) {
   const supabase = createClient();
   const {

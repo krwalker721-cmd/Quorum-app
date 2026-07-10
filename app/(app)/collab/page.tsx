@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import CollabBoardClient from "@/components/collab/CollabBoardClient";
-import LockedCollabBoard from "@/components/collab/LockedCollabBoard";
 import type { WorkspaceProject, WorkspaceMember } from "@/components/collab/YourWorkspace";
 import type { PulseEvent } from "@/components/collab/PulseBar";
 
@@ -27,14 +26,9 @@ export default async function CollabPage({
   const tier = (profile?.tier ?? "free") as string;
   const tierLabel = tier.toUpperCase();
 
-  if (tier !== "partner") {
-    return (
-      <>
-        <TopBar title="collab_board" tier={tierLabel} userId={user.id} />
-        <LockedCollabBoard />
-      </>
-    );
-  }
+  // The collab board is open to every tier. Viewing projects, needs, and the
+  // skills index is never paywalled; creating projects/needs is still bounded by
+  // the per-tier `collab_posts` usage cap, enforced in /api/collab.
 
   // Projects (post_type = project)
   const { data: projectsRaw } = await supabase

@@ -154,8 +154,9 @@ export default function CollabBoardClient({
   }
 
   async function openNew(type: "project" | "need") {
-    // Paywall gate — collab creation is a Member feature (free cap is 0, so this
-    // always fires the paywall for free users).
+    // The board itself is open to every tier; only *creating* is capped. This
+    // enforces the collab_posts usage cap (free tier's cap is 0, so the paywall
+    // fires for free users on create — viewing is never gated).
     const allowed = await checkAndGate("collab_posts");
     if (!allowed) return;
     setNewType(type);

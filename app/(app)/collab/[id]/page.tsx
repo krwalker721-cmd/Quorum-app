@@ -24,7 +24,8 @@ export default async function ProjectRoomPage({
     .eq("id", user.id)
     .single();
   const tier = (profile?.tier ?? "free") as string;
-  if (tier !== "partner") redirect("/collab");
+  // No tier gate — a project room is open to any tier. Access is scoped by
+  // project membership below (non-members are redirected out).
 
   const { data: project } = await supabase
     .from("projects")
