@@ -39,10 +39,10 @@ interface ReferralData {
 // ─── config ──────────────────────────────────────────────────────────────────
 
 const MILESTONES = [
-  { count: 1, reward: "$10 off next month + Connector badge" },
+  { count: 1, reward: "1 free month + Connector badge" },
   { count: 3, reward: "1 free month of Member" },
   { count: 5, reward: "2 free months of Member" },
-  { count: 10, reward: "50% off for 6 months" },
+  { count: 10, reward: "3 free months of Member" },
   { count: 25, reward: "Member free for 1 year" },
 ];
 
@@ -264,11 +264,9 @@ export default function ReferralsDashboard() {
 
   const conversionPct = totalCount > 0 ? (activeCount / totalCount) * 100 : 0;
 
-  const bonusTierIndex = activeCount >= 5 ? 2 : activeCount >= 3 ? 1 : activeCount >= 1 ? 0 : -1;
+  const bonusTierIndex = activeCount >= 1 ? 0 : -1;
   const bonusRows = [
-    { label: "1-2 active referrals", value: "$10 off / month" },
-    { label: "3-4 active referrals", value: "$20 off / month" },
-    { label: "5+ active referrals", value: "$30 off / month" },
+    { label: "1+ active referrals", value: "50% off / month" },
   ];
 
   return (
@@ -349,7 +347,7 @@ export default function ReferralsDashboard() {
               Bring someone who belongs here. Get rewarded when they stay.
             </p>
             <p style={{ fontFamily: MONO, fontSize: 11, color: "#8b949e", marginTop: 10, letterSpacing: "0.04em" }}>
-              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>${monthlyBonus} off/mo</span>
+              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>{monthlyBonus}% off/mo</span>
             </p>
           </div>
           <button
@@ -607,7 +605,7 @@ export default function ReferralsDashboard() {
               <span style={{ fontFamily: MONO, fontSize: 9, color: "#484f58" }}>resets {getResetDate()}</span>
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}>
-              <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>${monthlyBonus}</span>
+              <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>{monthlyBonus}%</span>
               <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>off this month</span>
             </div>
             <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 4 }}>// {activeCount} active referrals</p>

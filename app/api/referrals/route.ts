@@ -11,13 +11,10 @@ import {
 export const dynamic = "force-dynamic";
 
 // Monthly-equivalent value of each reward coupon, for the dashboard savings card.
-// Recurring milestone discounts are expressed against the $49 Member price.
+// Recurring discounts are expressed against the $12 Member price.
 const DISCOUNT_VALUES: Record<string, number> = {
-  QUORUM_MILESTONE_10: 24.5, // 50% of $49
-  QUORUM_MILESTONE_25: 49, // 100% of $49
-  QUORUM_MONTHLY_10: 10,
-  QUORUM_MONTHLY_20: 20,
-  QUORUM_MONTHLY_30: 30,
+  QUORUM_MILESTONE_25: 12, // 100% of $12 (free year)
+  QUORUM_MONTHLY_50: 6, // 50% of $12
 };
 
 function calculateCurrentSavings(discountIds: string[]): number {
@@ -79,10 +76,8 @@ export async function GET() {
     .eq("id", user.id)
     .single();
 
-  let monthlyBonus = 0;
-  if (activeCount >= 5) monthlyBonus = 30;
-  else if (activeCount >= 3) monthlyBonus = 20;
-  else if (activeCount >= 1) monthlyBonus = 10;
+  // Flat 50% off per month for anyone with 1+ active referrals (percent value).
+  const monthlyBonus = activeCount >= 1 ? 50 : 0;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
   const referralLink = codeData?.code

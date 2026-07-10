@@ -20,39 +20,40 @@ interface CouponDef {
 
 const coupons: CouponDef[] = [
   // ── Milestone rewards (one-time) ──────────────────────────────────────────
-  // milestones 1/3/5 are applied as one-off customer balance credits, not these
-  // coupons, but we still create them so the catalog is complete and auditable.
-  // Stripe caps coupon `name` at 40 chars, so these are kept short; the coupon
-  // id encodes the exact milestone.
+  // Milestones 1/3/5/10 are applied as one-off customer balance credits, not
+  // these coupons, but we still create them so the catalog is complete and
+  // auditable. Rewards are denominated in free months of Member ($12/mo). Stripe
+  // caps coupon `name` at 40 chars, so these are kept short; the coupon id
+  // encodes the exact milestone.
   {
     id: "QUORUM_MILESTONE_1",
-    amount_off: 1000, // cents
+    amount_off: 1200, // cents — 1 free month
     currency: "usd",
     duration: "once",
-    name: "Quorum Referral - 1 Referral",
+    name: "Quorum Referral - 1 Free Month",
   },
   {
     id: "QUORUM_MILESTONE_3",
-    amount_off: 4900,
+    amount_off: 1200, // 1 free month
     currency: "usd",
     duration: "once",
     name: "Quorum Referral - 1 Free Month",
   },
   {
     id: "QUORUM_MILESTONE_5",
-    amount_off: 9800,
+    amount_off: 2400, // 2 free months
     currency: "usd",
     duration: "once",
     name: "Quorum Referral - 2 Free Months",
   },
-  // ── Milestone rewards (recurring) ─────────────────────────────────────────
   {
     id: "QUORUM_MILESTONE_10",
-    percent_off: 50,
-    duration: "repeating",
-    duration_in_months: 6,
-    name: "Quorum Referral - 50% Off 6 Months",
+    amount_off: 3600, // 3 free months
+    currency: "usd",
+    duration: "once",
+    name: "Quorum Referral - 3 Free Months",
   },
+  // ── Milestone rewards (recurring) ─────────────────────────────────────────
   {
     id: "QUORUM_MILESTONE_25",
     percent_off: 100,
@@ -60,30 +61,14 @@ const coupons: CouponDef[] = [
     duration_in_months: 12,
     name: "Quorum Referral - Free Year",
   },
-  // ── Monthly active-referral bonus (repeating; replaced/removed monthly) ────
+  // ── Monthly active-referral bonus (repeating; removed when 0 active) ───────
+  // Flat 50% off per month for anyone with 1+ active referrals.
   {
-    id: "QUORUM_MONTHLY_10",
-    amount_off: 1000,
-    currency: "usd",
+    id: "QUORUM_MONTHLY_50",
+    percent_off: 50,
     duration: "repeating",
     duration_in_months: 120, // effectively permanent; removed when no longer earned
-    name: "Quorum Monthly Bonus - $10 Off",
-  },
-  {
-    id: "QUORUM_MONTHLY_20",
-    amount_off: 2000,
-    currency: "usd",
-    duration: "repeating",
-    duration_in_months: 120,
-    name: "Quorum Monthly Bonus - $20 Off",
-  },
-  {
-    id: "QUORUM_MONTHLY_30",
-    amount_off: 3000,
-    currency: "usd",
-    duration: "repeating",
-    duration_in_months: 120,
-    name: "Quorum Monthly Bonus - $30 Off",
+    name: "Quorum Monthly Bonus - 50% Off",
   },
 ];
 

@@ -6,10 +6,10 @@ import { Chapter, StickyStage, useChapterScroll } from "./sticky";
 import { C, MONO, SANS, hexToRgba } from "./theme";
 
 const MILESTONES = [
-  { count: "1 →", reward: "$10 off next month" },
+  { count: "1 →", reward: "1 free month" },
   { count: "3 →", reward: "1 free month" },
   { count: "5 →", reward: "2 free months" },
-  { count: "10 →", reward: "50% off 6 months" },
+  { count: "10 →", reward: "3 free months" },
   { count: "25 →", reward: "free for a year" },
 ];
 
@@ -156,7 +156,7 @@ export function ChapterReferral() {
                 // monthly bonus
               </div>
               <div style={{ fontFamily: SANS, fontSize: 11, color: C.textSecondary }}>
-                5+ active referrals → $30 off every month
+                1+ active referrals → 50% off every month
               </div>
             </div>
           </Beat>

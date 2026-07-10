@@ -5,16 +5,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14?target=deno";
 
-const MONTHLY_BONUS_COUPON_IDS = [
-  "QUORUM_MONTHLY_10",
-  "QUORUM_MONTHLY_20",
-  "QUORUM_MONTHLY_30",
-];
+const MONTHLY_BONUS_COUPON_IDS = ["QUORUM_MONTHLY_50"];
 
 function bonusCouponFor(active: number): string | null {
-  if (active >= 5) return "QUORUM_MONTHLY_30";
-  if (active >= 3) return "QUORUM_MONTHLY_20";
-  if (active >= 1) return "QUORUM_MONTHLY_10";
+  if (active >= 1) return "QUORUM_MONTHLY_50";
   return null;
 }
 

@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { stripe } from "./stripe";
 import { createAdminClient } from "@/lib/supabase/server";
 
-// Tier model: free / member / partner. Member maps to the $49 price, Partner to
+// Tier model: free / member / partner. Member maps to the $12 price, Partner to
 // the $99 price (Partner is waitlist-only for now and not yet in checkout).
 export type Tier = "free" | "member" | "partner";
 

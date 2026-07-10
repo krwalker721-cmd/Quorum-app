@@ -3,25 +3,19 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 // Monthly active-referral bonus → Stripe coupon wiring (Session 9).
 //
-// The bonus is recalculated each billing cycle and reflects how many of a
-// referrer's referrals are currently `active`. It's applied as one of three
-// repeating coupons, replaced (never accumulated) as the active count changes,
-// and removed entirely when it drops to zero. It stacks alongside any milestone
-// discounts already on the subscription — we only ever touch the bonus coupon.
+// The bonus is recalculated each billing cycle and reflects whether any of a
+// referrer's referrals are currently `active`. It's a flat 50%-off repeating
+// coupon applied when they have 1+ active referrals and removed entirely when it
+// drops to zero. It stacks alongside any milestone discounts already on the
+// subscription — we only ever touch the bonus coupon.
 
-const MONTHLY_BONUS_COUPONS: Record<number, string> = {
-  10: "QUORUM_MONTHLY_10",
-  20: "QUORUM_MONTHLY_20",
-  30: "QUORUM_MONTHLY_30",
-};
+const MONTHLY_BONUS_COUPON = "QUORUM_MONTHLY_50";
 
-export const MONTHLY_BONUS_COUPON_IDS = Object.values(MONTHLY_BONUS_COUPONS);
+export const MONTHLY_BONUS_COUPON_IDS = [MONTHLY_BONUS_COUPON];
 
 // Map an active-referral count to its bonus coupon (null = no bonus earned).
 function bonusCouponFor(activeReferralCount: number): string | null {
-  if (activeReferralCount >= 5) return MONTHLY_BONUS_COUPONS[30];
-  if (activeReferralCount >= 3) return MONTHLY_BONUS_COUPONS[20];
-  if (activeReferralCount >= 1) return MONTHLY_BONUS_COUPONS[10];
+  if (activeReferralCount >= 1) return MONTHLY_BONUS_COUPON;
   return null;
 }
 

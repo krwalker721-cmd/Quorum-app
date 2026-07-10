@@ -51,7 +51,7 @@ export async function POST() {
 
 // PUT — called after the SetupIntent succeeds client-side. Attaches the saved
 // card, then creates the Member subscription with a 30-day trial (the referred
-// free month). The trial means $0 for month 1, $49 automatic on day 31.
+// free month). The trial means $0 for month 1, $12 automatic on day 31.
 export async function PUT(req: NextRequest) {
   const supabase = createClient();
 

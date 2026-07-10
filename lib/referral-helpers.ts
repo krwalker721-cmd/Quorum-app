@@ -417,15 +417,15 @@ const MILESTONE_APPLIED_MARKER: Record<MilestoneType, string> = {
   milestone_1: "credit_applied",
   milestone_3: "credit_applied",
   milestone_5: "credit_applied",
-  milestone_10: "QUORUM_MILESTONE_10",
+  milestone_10: "credit_applied",
   milestone_25: "QUORUM_MILESTONE_25",
 };
 
 const REWARD_MESSAGES: Record<MilestoneType, string> = {
-  milestone_1: "you earned $10 off your next month and the Connector badge!",
+  milestone_1: "you earned 1 free month of Member and the Connector badge!",
   milestone_3: "you earned 1 free month of Member!",
   milestone_5: "you earned 2 free months of Member!",
-  milestone_10: "you earned 50% off Member for 6 months!",
+  milestone_10: "you earned 3 free months of Member!",
   milestone_25: "you earned Member free for 1 full year!",
 };
 
@@ -451,11 +451,6 @@ export async function applyMilestoneReward(
   };
 
   // Time-limited milestones carry an expiry.
-  if (rewardType === "milestone_10") {
-    const expires = new Date();
-    expires.setMonth(expires.getMonth() + 6);
-    rewardRecord.expires_at = expires.toISOString();
-  }
   if (rewardType === "milestone_25") {
     const expires = new Date();
     expires.setFullYear(expires.getFullYear() + 1);
@@ -506,19 +501,20 @@ export async function applyMilestoneReward(
 }
 
 // Apply a milestone reward to Stripe (Session 9).
-//  - milestones 1/3/5 → one-off customer balance credit (shows on next invoice)
-//  - milestones 10/25 → recurring coupon attached to the subscription
+//  - milestones 1/3/5/10 → one-off customer balance credit (shows on next invoice)
+//  - milestone 25 → recurring coupon attached to the subscription (free year)
 // Throws on Stripe errors so callers can decide whether to mark the DB record as
 // applied. Coupons must already exist (scripts/create-stripe-coupons.ts).
+// Rewards are denominated in free months of Member, valued at the $12/mo price.
 const MILESTONE_COUPON_IDS: Record<string, string> = {
-  milestone_10: "QUORUM_MILESTONE_10",
   milestone_25: "QUORUM_MILESTONE_25",
 };
 
 const MILESTONE_CREDIT_CENTS: Record<string, number> = {
-  milestone_1: 1000, // $10
-  milestone_3: 4900, // $49 (1 free month)
-  milestone_5: 9800, // $98 (2 free months)
+  milestone_1: 1200, // $12 (1 free month)
+  milestone_3: 1200, // $12 (1 free month)
+  milestone_5: 2400, // $24 (2 free months)
+  milestone_10: 3600, // $36 (3 free months)
 };
 
 export async function applyStripeReward(
@@ -578,10 +574,8 @@ export async function recalculateMonthlyBonus(userId: string): Promise<void> {
   const supabase = createAdminClient();
 
   const activeCount = await getActiveReferralCount(userId);
-  let discountAmount = 0;
-  if (activeCount >= 5) discountAmount = 30;
-  else if (activeCount >= 3) discountAmount = 20;
-  else if (activeCount >= 1) discountAmount = 10;
+  // Flat 50% off per month for anyone with 1+ active referrals (no tiers).
+  const discountPercent = activeCount >= 1 ? 50 : 0;
 
   // Read the previous bonus so we only notify on an actual change.
   const { data: prev } = await supabase
@@ -603,7 +597,7 @@ export async function recalculateMonthlyBonus(userId: string): Promise<void> {
       .eq("user_id", userId)
       .eq("reward_type", "monthly_bonus");
 
-    if (discountAmount > 0) {
+    if (discountPercent > 0) {
       await supabase.from("referral_rewards").insert({
         user_id: userId,
         reward_type: "monthly_bonus",
@@ -624,7 +618,7 @@ export async function recalculateMonthlyBonus(userId: string): Promise<void> {
 
   if (changed) {
     await notify(supabase, userId, "monthly_bonus_updated", {
-      payload: { active_count: activeCount, discount: discountAmount },
+      payload: { active_count: activeCount, discount_percent: discountPercent },
     });
   }
 }

@@ -339,7 +339,7 @@ export default function PaywallModal({
             marginBottom: 10,
           }}
         >
-          Upgrade to Member — $49/month →
+          Upgrade to Member — $12/month →
         </button>
 
         {/* Manage billing */}

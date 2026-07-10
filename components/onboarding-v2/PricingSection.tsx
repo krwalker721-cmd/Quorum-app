@@ -402,7 +402,7 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
           {/* ── Member (highlighted) ── */}
           <Card highlight={C.amber} badge="MOST POPULAR">
             <CardTag color={C.amber}>// member</CardTag>
-            <Price amount="$49" color={C.textPrimary} suffixColor={C.textSecondary} />
+            <Price amount="$12" color={C.textPrimary} suffixColor={C.textSecondary} />
             <Tagline>Full access. No limits. No noise.</Tagline>
             <Divider />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>

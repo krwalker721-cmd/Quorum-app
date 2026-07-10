@@ -257,7 +257,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do referrals work?",
-    a: "Share your invite link. When someone joins and activates their account, you earn rewards — from $10 off to a free year of Member.",
+    a: "Share your invite link. When someone joins and activates their account, you earn rewards — from a free month to a free year of Member.",
   },
 ];
 
@@ -580,7 +580,7 @@ function PricingBody() {
               // member
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>$49</span>
+              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>$12</span>
               <span className="font-sans" style={{ fontSize: 16, color: "var(--text-secondary)" }}>/month</span>
             </div>
             <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 20px" }}>
