@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { C } from "@/components/onboarding-v2/theme";
 import type { CohortData, CohortMember } from "@/components/onboarding-v2/types";
 
-import { OnboardingScrollProvider } from "@/components/onboarding-v2/scroll";
+import { OnboardingScrollProvider, useOnboardingScroll } from "@/components/onboarding-v2/scroll";
 import { Atmosphere } from "@/components/onboarding-v2/Atmosphere";
 import { ProgressSpine, type Identity } from "@/components/onboarding-v2/ProgressSpine";
 import { ChapterOpening } from "@/components/onboarding-v2/ChapterOpening";
@@ -27,7 +27,9 @@ import { ChapterReferral } from "@/components/onboarding-v2/ChapterReferral";
 import { ChapterPricing } from "@/components/onboarding-v2/ChapterPricing";
 
 // Saved current_step → chapter anchor, so a returning user lands where they left
-// off. Steps align with the chapter ids for the interactive chapters.
+// off. Steps align with the chapter ids for the interactive chapters — each
+// markComplete(n) fires when the matching chapter-n is finished, so resuming to
+// chapter-n drops the user back on the last chapter they actually completed.
 const STEP_TO_CHAPTER: Record<number, string> = {
   7: "chapter-7",
   8: "chapter-8",
@@ -37,11 +39,33 @@ const STEP_TO_CHAPTER: Record<number, string> = {
   12: "chapter-12",
 };
 
+// Restores the saved scroll position once, from inside the scroll provider so it
+// can drive Lenis's own scrollTo (a native scrollIntoView would be clobbered by
+// Lenis on the next frame). Rendered as a child of OnboardingScrollProvider.
+function ScrollRestorer({ targetId }: { targetId: string | null }) {
+  const { scrollTo } = useOnboardingScroll();
+  const done = useRef(false);
+
+  useEffect(() => {
+    if (!targetId || done.current) return;
+    done.current = true;
+    // A short delay lets the tall chapter runways lay out so the target offset
+    // is final before we jump. Lenis recomputes limits on scrollTo regardless.
+    const t = setTimeout(() => {
+      const el = document.getElementById(targetId);
+      if (el) scrollTo(el);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [targetId, scrollTo]);
+
+  return null;
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [cohort, setCohort] = useState<CohortData | null>(null);
   const [cohortId, setCohortId] = useState<string | null>(null);
-  const restored = useRef(false);
+  const [resumeTargetId, setResumeTargetId] = useState<string | null>(null);
 
   // The founder identity the ProgressSpine renders — fills in as the user builds
   // themselves into the room across the action chapters.
@@ -70,15 +94,12 @@ export default function OnboardingPage() {
             });
             void fetch("/api/subscription/initialize", { method: "POST" });
           }
-          // Restore scroll position on return visits.
-          if (!restored.current && typeof data.current_step === "number" && data.current_step > 1) {
+          // Restore scroll position on return visits. Hand the resolved target
+          // to <ScrollRestorer/>, which drives Lenis from inside the provider —
+          // a native scroll here would be overwritten by Lenis a frame later.
+          if (!data.completed && typeof data.current_step === "number") {
             const target = STEP_TO_CHAPTER[data.current_step];
-            if (target) {
-              restored.current = true;
-              setTimeout(() => {
-                document.getElementById(target)?.scrollIntoView({ behavior: "smooth" });
-              }, 400);
-            }
+            if (target) setResumeTargetId(target);
           }
         }
       } catch {
@@ -200,6 +221,8 @@ export default function OnboardingPage() {
       }}
     >
       <OnboardingScrollProvider>
+      {/* Resumes a returning user to their last completed chapter. */}
+      <ScrollRestorer targetId={resumeTargetId} />
       {/* The living background — rides document scroll behind everything. */}
       <Atmosphere />
       {/* The persistent HUD — progress rail, chapter counter, founder card. */}

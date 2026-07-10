@@ -13,8 +13,10 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import {
@@ -32,6 +34,13 @@ interface ScrollEngine {
   velocity: MotionValue<number>;
   pointerX: MotionValue<number>;
   pointerY: MotionValue<number>;
+  // Programmatic scroll that cooperates with Lenis. Native scrollIntoView is
+  // useless here — Lenis writes its owned scroll position back to the window on
+  // every rAF frame, so a native scroll is reverted a frame later. This routes
+  // through Lenis's own scrollTo (or native scroll when Lenis is disabled for
+  // reduced motion). Safe to call before Lenis has initialised — the request is
+  // queued and replayed once the instance exists.
+  scrollTo: (target: string | HTMLElement, opts?: { immediate?: boolean }) => void;
 }
 
 const Ctx = createContext<ScrollEngine | null>(null);
@@ -62,6 +71,31 @@ export function OnboardingScrollProvider({ children }: { children: ReactNode }) 
   const pointerX = useSpring(pxRaw, { stiffness: 50, damping: 18, mass: 0.6 });
   const pointerY = useSpring(pyRaw, { stiffness: 50, damping: 18, mass: 0.6 });
 
+  // Live Lenis instance (null until the mount effect runs, or permanently null
+  // under reduced motion) plus a one-slot queue so a scrollTo requested before
+  // Lenis exists still lands once it does.
+  const lenisRef = useRef<Lenis | null>(null);
+  const pendingScroll = useRef<{ target: string | HTMLElement; opts?: { immediate?: boolean } } | null>(null);
+
+  const scrollTo = useCallback(
+    (target: string | HTMLElement, opts?: { immediate?: boolean }) => {
+      const lenis = lenisRef.current;
+      if (lenis) {
+        lenis.scrollTo(target, { offset: 0, ...opts });
+        return;
+      }
+      // Reduced motion: no Lenis was ever created, so native scroll is safe (no
+      // rAF loop to fight it). Otherwise queue until Lenis initialises.
+      if (prefersReducedMotion()) {
+        const el = typeof target === "string" ? document.querySelector(target) : target;
+        el?.scrollIntoView({ behavior: opts?.immediate ? "auto" : "smooth" });
+      } else {
+        pendingScroll.current = { target, opts };
+      }
+    },
+    [],
+  );
+
   // Lenis smooth-scroll — a single rAF loop for the whole page. Skipped entirely
   // when the user prefers reduced motion (native scroll then).
   useEffect(() => {
@@ -74,10 +108,18 @@ export function OnboardingScrollProvider({ children }: { children: ReactNode }) 
       smoothWheel: true,
       touchMultiplier: 1.5,
     });
+    lenisRef.current = lenis;
     // Dev-only: expose the instance so programmatic scrolling (and verification)
     // doesn't fight Lenis's owned scroll position.
     if (process.env.NODE_ENV !== "production") {
       (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
+    }
+    // Replay any scroll requested before Lenis was ready (e.g. a resume target
+    // resolved from the network faster than this effect ran).
+    if (pendingScroll.current) {
+      const { target, opts } = pendingScroll.current;
+      pendingScroll.current = null;
+      lenis.scrollTo(target, { offset: 0, ...opts });
     }
     let raf = 0;
     const loop = (t: number) => {
@@ -88,6 +130,7 @@ export function OnboardingScrollProvider({ children }: { children: ReactNode }) 
     return () => {
       cancelAnimationFrame(raf);
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, []);
 
@@ -104,7 +147,7 @@ export function OnboardingScrollProvider({ children }: { children: ReactNode }) 
 
   return (
     <Ctx.Provider
-      value={{ progress, rawProgress: scrollYProgress, velocity, pointerX, pointerY }}
+      value={{ progress, rawProgress: scrollYProgress, velocity, pointerX, pointerY, scrollTo }}
     >
       {children}
     </Ctx.Provider>
@@ -123,5 +166,6 @@ export function useOnboardingScroll(): ScrollEngine {
     velocity: zero,
     pointerX: zero,
     pointerY: zero,
+    scrollTo: () => {},
   };
 }
