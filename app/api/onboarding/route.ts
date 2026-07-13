@@ -18,7 +18,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("onboarding_progress")
-    .select("current_step, completed, screen3_answer, trial_initialized")
+    .select("current_step, completed, screen3_answer, trial_initialized, tour_step, tour_completed")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -32,6 +32,8 @@ export async function GET() {
       completed: false,
       screen3_answer: null,
       trial_initialized: false,
+      tour_step: 0,
+      tour_completed: false,
     });
   }
 
@@ -40,6 +42,8 @@ export async function GET() {
     completed: data.completed,
     screen3_answer: data.screen3_answer,
     trial_initialized: data.trial_initialized ?? false,
+    tour_step: data.tour_step ?? 0,
+    tour_completed: data.tour_completed ?? false,
   });
 }
 
@@ -60,6 +64,8 @@ export async function POST(request: Request) {
     screen3_answer?: string;
     completed?: boolean;
     trial_initialized?: boolean;
+    tour_step?: number;
+    tour_completed?: boolean;
   };
   try {
     body = await request.json();
@@ -77,6 +83,12 @@ export async function POST(request: Request) {
   if (typeof body.trial_initialized === "boolean") {
     payload.trial_initialized = body.trial_initialized;
   }
+  if (typeof body.tour_step === "number") {
+    payload.tour_step = body.tour_step;
+  }
+  if (typeof body.tour_completed === "boolean") {
+    payload.tour_completed = body.tour_completed;
+  }
   if (typeof body.completed === "boolean") {
     payload.completed = body.completed;
     if (body.completed) {
@@ -87,7 +99,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("onboarding_progress")
     .upsert(payload, { onConflict: "user_id" })
-    .select("current_step, completed, screen3_answer, completed_at, trial_initialized")
+    .select("current_step, completed, screen3_answer, completed_at, trial_initialized, tour_step, tour_completed")
     .single();
 
   if (error) {

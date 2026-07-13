@@ -463,7 +463,7 @@ export default async function ProfilePage({
             </div>
 
             {/* Skills */}
-            <div className="bg-card border border-border rounded-xl p-5 mt-6">
+            <div className="bg-card border border-border rounded-xl p-5 mt-6" data-tour-id="profile-edit">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint">skills</p>
               {isOwner ? (
                 <SkillsEditor userId={profile.id} skills={skills} />

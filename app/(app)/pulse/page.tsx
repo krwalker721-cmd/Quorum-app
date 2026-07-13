@@ -136,7 +136,7 @@ export default async function PulsePage() {
         >
           <div>
             {/* Composer pill + filter tabs */}
-            <div style={{ marginBottom: 8 }}>
+            <div style={{ marginBottom: 8 }} data-tour-id="pulse-composer">
               <NewPostButton
                 userId={user.id}
                 defaultPostType="pulse"

@@ -317,7 +317,7 @@ export default function ReferralsDashboard() {
       )}
 
       {/* ─── prominent refer CTA ────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 24 }} data-tour-id="referrals-link">
         <div
           style={{
             background: "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)",
