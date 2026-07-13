@@ -261,7 +261,7 @@ export default async function HomePage() {
       <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <UpgradeToast />
 
-      <div style={{ padding: "14px 24px 8px", maxWidth: 1600 }}>
+      <div style={{ padding: "14px 24px 8px", maxWidth: 1600 }} data-tour-id="home-tiles">
         {/* Header */}
         <div className="mb-3">
           <h1 style={{ fontSize: 17, fontWeight: 500, color: "var(--text-primary)" }}>

@@ -414,6 +414,7 @@ export default function CohortRoomClient({
       <div className={`flex app-pane ${showBreadcrumb ? "with-subnav-2" : "with-subnav"}`}>
         {/* LEFT — roster */}
         <aside
+          data-tour-id="cohort-members"
           className="border-r flex flex-col shrink-0"
           style={{
             width: "clamp(210px, 26%, 260px)",

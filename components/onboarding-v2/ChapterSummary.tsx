@@ -5,7 +5,7 @@ import { motion, useTransform, type MotionValue } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { Chapter, StickyStage, useChapterScroll } from "./sticky";
 import { StagePill } from "./bits";
-import { C, MONO, SANS, hexToRgba, TYPE_COLORS } from "./theme";
+import { C, MONO, SANS, hexToRgba } from "./theme";
 
 interface JourneyData {
   profile: {
@@ -133,8 +133,6 @@ export function ChapterSummary() {
 
   const profile = data?.profile;
   const skills = profile?.skills ?? [];
-  const postType = data?.firstPost?.room_type ?? "";
-  const postColor = TYPE_COLORS[postType] ?? C.border;
 
   const cards: ReactNode[] = [
     <RecapCard key="profile" accent={C.green}>
@@ -181,43 +179,6 @@ export function ChapterSummary() {
       ) : (
         <RecapMuted>// being curated</RecapMuted>
       )}
-    </RecapCard>,
-    <RecapCard key="first-post" accent={data?.firstPost ? postColor : C.border}>
-      <RecapTag color={data?.firstPost ? postColor : C.textDisabled}>// first post</RecapTag>
-      {data?.firstPost ? (
-        <div
-          style={{
-            fontFamily: SANS,
-            fontSize: 12,
-            color: C.textSecondary,
-            lineHeight: 1.5,
-            marginTop: 4,
-          }}
-        >
-          {data.firstPost.content.length > 60
-            ? `${data.firstPost.content.slice(0, 60)}...`
-            : data.firstPost.content}
-        </div>
-      ) : (
-        <RecapMuted>// skipped</RecapMuted>
-      )}
-    </RecapCard>,
-    <RecapCard key="checkin" accent={data?.hasCheckin ? C.green : C.border}>
-      <RecapTag color={data?.hasCheckin ? C.green : C.textDisabled}>// check-in</RecapTag>
-      <div
-        style={{
-          fontFamily: SANS,
-          fontSize: 13,
-          color: data?.hasCheckin ? C.green : C.textDisabled,
-          marginTop: 4,
-        }}
-      >
-        {data?.hasCheckin ? "done" : "skipped"}
-      </div>
-    </RecapCard>,
-    <RecapCard key="collab" accent={C.purple}>
-      <RecapTag color={C.purple}>// collab</RecapTag>
-      <RecapValue>board explored</RecapValue>
     </RecapCard>,
   ];
 

@@ -7,6 +7,7 @@ import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
 import TrialBanner from "@/components/TrialBanner";
 import { TierProvider } from "@/contexts/TierContext";
+import { TourProvider } from "@/contexts/TourContext";
 import { trackLoginEvent } from "@/lib/referral-helpers";
 
 export const dynamic = "force-dynamic";
@@ -21,13 +22,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // applied yet — so a read error can never lock a user out of the app. NOTE:
   // redirect() throws, so it must live outside the try/catch.
   let onboardingComplete = true;
+  let tourStep = 0;
+  let tourCompleted = true; // fail-safe: never surface the tour on a read error
   try {
     const { data: ob } = await supabase
       .from("onboarding_progress")
-      .select("completed")
+      .select("completed, tour_step, tour_completed")
       .eq("user_id", user.id)
       .maybeSingle();
     onboardingComplete = Boolean(ob?.completed);
+    tourStep = (ob?.tour_step as number | null) ?? 0;
+    tourCompleted = Boolean(ob?.tour_completed);
   } catch {
     onboardingComplete = true;
   }
@@ -120,6 +125,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <PresenceProvider currentUserId={user.id}>
       <NotificationsProvider currentUserId={user.id} cohortId={cohortIdForDots}>
         <TierProvider>
+        <TourProvider tourStep={tourStep} tourCompleted={tourCompleted}>
         <div className="min-h-screen root-layout">
           <Sidebar
             currentUser={{
@@ -143,6 +149,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             {children}
           </div>
         </div>
+        </TourProvider>
         </TierProvider>
       </NotificationsProvider>
     </PresenceProvider>
