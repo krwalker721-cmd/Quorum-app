@@ -20,7 +20,9 @@ export default function UpgradeToast() {
     if (upgraded) {
       msg = "// welcome to Member — full access unlocked";
     } else if (params.get("trial") === "activated") {
-      msg = "// your free month is active — you won't be charged until day 31";
+      // The card was saved during an already-running trial (or to claim a
+      // referred free month) — either way nothing is charged until it ends.
+      msg = "// card saved — your access continues when the trial ends";
     }
     if (!msg) return;
 
@@ -31,7 +33,7 @@ export default function UpgradeToast() {
     // Tier just changed — refresh the shared context so pills and nudges across
     // the app update immediately without a page reload, then surface a referral
     // nudge a couple seconds later.
-    if (upgraded) {
+    if (upgraded || params.get("trial") === "activated") {
       refresh();
       timers.push(
         setTimeout(

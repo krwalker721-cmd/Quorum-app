@@ -20,7 +20,7 @@ const DEFAULT_SKILLS = [
   "content", "community", "ai/ml", "b2b saas", "consumer", "hardware",
 ];
 
-// Chapter 8 — the skills action card. Saves the selected set to profiles.skills.
+// Chapter 8 — the experience action card. Saves the selected set to profiles.skills.
 export function ChapterSkills({
   onComplete,
   onIdentity,
@@ -73,7 +73,7 @@ export function ChapterSkills({
   return (
     <ActionChapter
       id="chapter-8"
-      label="your strengths"
+      label="your experience"
       context="// what do you bring to this room?"
     >
       <div
@@ -85,7 +85,7 @@ export function ChapterSkills({
           boxSizing: "border-box",
         }}
       >
-        <CardHeader>// your strengths</CardHeader>
+        <CardHeader>// your experience</CardHeader>
         <div
           style={{
             background: C.surface,
@@ -174,7 +174,7 @@ export function ChapterSkills({
 
         <div style={{ marginTop: 24 }}>
           <AmberButton onClick={save} disabled={saving}>
-            These are my strengths →
+            This is my experience →
           </AmberButton>
           <SkipLink onClick={onComplete}>skip for now →</SkipLink>
         </div>

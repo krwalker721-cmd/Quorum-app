@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { reportPosted } from "@/lib/tour-bus";
 
 const PROJECT_CATEGORIES = ["growth", "fundraising", "hiring", "product", "ops"];
 const NEED_CATEGORIES = ["quick_ask", "need"];
@@ -8,15 +9,18 @@ const LOOKING_FOR = ["co-thinker", "technical", "design", "sales-growth", "advis
 
 export default function NewProjectModal({
   postType,
+  initialTitle = "",
   onClose,
   onCreated,
 }: {
   userId: string;
   postType: "project" | "need";
+  // Pre-typed opener, handed in by the guided tour's sentence starters.
+  initialTitle?: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(postType === "project" ? "growth" : "quick_ask");
   const [lookingFor, setLookingFor] = useState(LOOKING_FOR[0]);
@@ -47,6 +51,8 @@ export default function NewProjectModal({
       setErr((data.error || "failed to create").toLowerCase());
       return;
     }
+    // Let a waiting tour step know the post actually landed.
+    reportPosted("collab-project");
     onCreated();
   }
 

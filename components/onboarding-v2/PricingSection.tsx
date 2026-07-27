@@ -33,6 +33,8 @@ const cardElementOptions = {
 interface Sub {
   tier: "free" | "member" | "partner";
   status: string;
+  trial_ends_at: string | null;
+  has_stripe_subscription: boolean;
   referred_free_month_available: boolean;
   referred_free_month_expires_at: string | null;
   partner_waitlist: boolean;
@@ -106,7 +108,19 @@ function Feature({ label, color, bullet }: { label: string; color: string; bulle
 }
 
 // ─── Embedded card form (referred free-month claim) ──────────────────────────
-function CardForm({ onActivated }: { onActivated: () => void }) {
+function CardForm({
+  onActivated,
+  headline,
+  subline,
+  cta,
+  doneLabel,
+}: {
+  onActivated: () => void;
+  headline: string;
+  subline: string;
+  cta: string;
+  doneLabel: string;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -141,7 +155,7 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
         body: JSON.stringify({ paymentMethodId, customerId: setup.customerId }),
       });
       const subJson = await subRes.json();
-      if (!subRes.ok) throw new Error(subJson.error || "Could not activate your free month.");
+      if (!subRes.ok) throw new Error(subJson.error || "Could not save your card.");
 
       setDone(true);
       setTimeout(onActivated, 1500);
@@ -167,10 +181,10 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
       }}
     >
       <p style={{ fontFamily: SANS, fontSize: 15, color: C.textPrimary, margin: "0 0 6px" }}>
-        Add your card to claim your free month
+        {headline}
       </p>
       <p style={{ fontFamily: MONO, fontSize: 11, color: C.textSecondary, margin: "0 0 18px" }}>
-        You won&apos;t be charged until day 31. Cancel anytime before then.
+        {subline}
       </p>
 
       <div
@@ -206,7 +220,7 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
           opacity: loading ? 0.7 : 1,
         }}
       >
-        {done ? "Free month active ✓" : loading ? "Activating..." : "Activate my free month →"}
+        {done ? doneLabel : loading ? "Saving..." : cta}
       </button>
     </form>
   );
@@ -235,6 +249,23 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
   const referred = !!sub?.referred_free_month_available;
   const referrerName = sub?.referrer_name || "a founder";
   const countdown = useCountdown(sub?.referred_free_month_expires_at ?? null);
+
+  // The trial is granted the moment onboarding starts (see
+  // /api/subscription/initialize) — it is already running by the time anyone
+  // reaches this screen. So this screen reports the trial rather than selling
+  // it, and the card is only ever asked for to keep access *after* it ends.
+  const trialEndsAt = sub?.trial_ends_at ? new Date(sub.trial_ends_at) : null;
+  const trialActive =
+    sub?.status === "trialing" && !!trialEndsAt && trialEndsAt.getTime() > Date.now();
+  const daysLeft = trialEndsAt
+    ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / 86_400_000))
+    : null;
+  const trialEndLabel = trialEndsAt
+    ? trialEndsAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    : "";
+  const isPaid = sub?.tier === "member" || sub?.tier === "partner";
+  // A card is already on file once the Stripe subscription exists.
+  const hasCard = !!sub?.has_stripe_subscription;
 
   async function startCheckout() {
     setLoadingCheckout(true);
@@ -273,10 +304,17 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
     }
   }
 
+  // What the Member button does depends on where the founder actually is:
+  //   • already paying → nothing to do
+  //   • referred, offer live → claim the free month (card, no charge)
+  //   • trial running → optionally add a card now so access doesn't lapse
+  //   • trial over → straight upgrade
   const memberCta = useMemo(() => {
+    if (isPaid && hasCard) return { label: "You're on Member ✓", action: "none" as const };
     if (referred) return { label: "Claim my free month →", action: "claim" as const };
-    return { label: "Start 7-day trial →", action: "checkout" as const };
-  }, [referred]);
+    if (trialActive) return { label: "Add a card to keep access →", action: "claim" as const };
+    return { label: "Upgrade to Member →", action: "checkout" as const };
+  }, [isPaid, hasCard, referred, trialActive]);
 
   return (
     <div
@@ -335,11 +373,13 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
               fontFamily: SANS,
               fontSize: 14,
               color: C.textSecondary,
-              margin: "0 0 28px",
+              margin: "0 0 20px",
               textAlign: "center",
             }}
           >
-            Your 7-day trial is active. Upgrade anytime — or stay free.
+            {trialActive
+              ? "Nothing to pay today — your trial is already running."
+              : "Pick the room you want. You can change it any time."}
           </p>
         )}
       </Reveal>
@@ -361,6 +401,41 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
           }}
         >
           {referrerName} invited you — your first month is free. Offer expires in {countdown}.
+        </div>
+      )}
+
+      {/* Trial state — the trial is already live, so say so plainly with the
+          real clock rather than selling a trial the user has been on since the
+          first screen of onboarding. */}
+      {trialActive && !referred && (
+        <div
+          style={{
+            background: hexToRgba(C.green, 0.06),
+            border: `1px solid ${hexToRgba(C.green, 0.22)}`,
+            borderRadius: 4,
+            padding: "14px 16px",
+            marginBottom: 20,
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              color: C.green,
+              letterSpacing: "0.06em",
+              margin: "0 0 6px",
+            }}
+          >
+            ● trial active
+          </p>
+          <p style={{ fontFamily: SANS, fontSize: 14, color: C.textPrimary, margin: "0 0 4px" }}>
+            You have full Member access for the next {daysLeft}{" "}
+            {daysLeft === 1 ? "day" : "days"}.
+          </p>
+          <p style={{ fontFamily: MONO, fontSize: 10.5, color: C.textSecondary, margin: 0 }}>
+            no card needed · runs through {trialEndLabel} · you won&apos;t be charged
+          </p>
         </div>
       )}
 
@@ -412,13 +487,28 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
             </ul>
             <CardButton
               label={loadingCheckout ? "Loading..." : memberCta.label}
-              disabled={loadingCheckout}
+              disabled={loadingCheckout || memberCta.action === "none"}
               onClick={() => {
+                if (memberCta.action === "none") return;
                 if (memberCta.action === "checkout") startCheckout();
                 else setShowCardForm(true);
               }}
               variant="solid"
             />
+            {trialActive && !referred && memberCta.action === "claim" && (
+              <p
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 9.5,
+                  color: C.textDisabled,
+                  textAlign: "center",
+                  margin: "8px 0 0",
+                  lineHeight: 1.5,
+                }}
+              >
+                optional — first charge {trialEndLabel}
+              </p>
+            )}
           </Card>
 
           {/* ── Partner (coming soon) ── */}
@@ -456,9 +546,21 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
       </Reveal>
 
       {/* Embedded card form for referred claim */}
-      {showCardForm && referred && (
+      {showCardForm && (referred || trialActive) && (
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <CardForm onActivated={() => onComplete("/home?trial=activated")} />
+          <CardForm
+            onActivated={() => onComplete("/home?trial=activated")}
+            headline={
+              referred ? "Add your card to claim your free month" : "Keep your access after the trial"
+            }
+            subline={
+              referred
+                ? "You won't be charged until day 31. Cancel anytime before then."
+                : `You won't be charged until ${trialEndLabel}. Cancel anytime before then.`
+            }
+            cta={referred ? "Activate my free month →" : "Save my card →"}
+            doneLabel={referred ? "Free month active ✓" : "Card saved ✓"}
+          />
         </div>
       )}
 

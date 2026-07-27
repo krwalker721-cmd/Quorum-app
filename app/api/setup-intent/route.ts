@@ -50,8 +50,11 @@ export async function POST() {
 }
 
 // PUT — called after the SetupIntent succeeds client-side. Attaches the saved
-// card, then creates the Member subscription with a 30-day trial (the referred
-// free month). The trial means $0 for month 1, $12 automatic on day 31.
+// card, then creates the Member subscription that starts billing when the
+// user's *existing* trial ends. The trial clock is granted up front by
+// /api/subscription/initialize (7 days normally, 30 for a referred free month),
+// so we honour the date the user has already been shown rather than starting a
+// second, different countdown here.
 export async function PUT(req: NextRequest) {
   const supabase = await createClient();
 
@@ -84,7 +87,24 @@ export async function PUT(req: NextRequest) {
       invoice_settings: { default_payment_method: paymentMethodId },
     });
 
-    const trialEnd = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+    // Persist with the service-role client so reads/writes bypass RLS, matching
+    // the rest of the payments stack.
+    const admin = createAdminClient();
+
+    const { data: existingSub } = await admin
+      .from("subscriptions")
+      .select("trial_ends_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const storedEnd = existingSub?.trial_ends_at
+      ? Math.floor(new Date(existingSub.trial_ends_at).getTime() / 1000)
+      : 0;
+    // Stripe rejects a trial_end less than 48h out, so a trial in its last two
+    // days is nudged to the floor rather than failing the whole activation.
+    const floorEnd = nowSec + 48 * 60 * 60;
+    const trialEnd = Math.max(storedEnd || nowSec + 7 * 24 * 60 * 60, floorEnd);
 
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
@@ -94,9 +114,6 @@ export async function PUT(req: NextRequest) {
       metadata: { supabase_user_id: user.id },
     });
 
-    // Persist with the service-role client so the write bypasses RLS, matching
-    // the rest of the payments stack.
-    const admin = createAdminClient();
     await admin
       .from("subscriptions")
       .update({
@@ -115,7 +132,7 @@ export async function PUT(req: NextRequest) {
   } catch (err) {
     console.error("[setup-intent] failed to create subscription:", err);
     return NextResponse.json(
-      { error: "Could not activate your free month. Please try again." },
+      { error: "Could not save your card. Please try again." },
       { status: 500 },
     );
   }

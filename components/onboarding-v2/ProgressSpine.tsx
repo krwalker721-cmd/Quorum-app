@@ -202,7 +202,7 @@ export function ProgressSpine({ identity }: { identity: Identity }) {
             {identity.cohortName
               ? `// ${identity.cohortName}`
               : identity.skillCount > 0
-                ? `// ${identity.skillCount} strength${identity.skillCount === 1 ? "" : "s"}`
+                ? `// ${identity.skillCount} area${identity.skillCount === 1 ? "" : "s"} of experience`
                 : "// building you in"}
           </span>
         </div>

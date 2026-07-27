@@ -17,6 +17,7 @@ import Link from "next/link";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
 import { useTier } from "@/contexts/TierContext";
+import { onOpenComposer, reportPosted } from "@/lib/tour-bus";
 import {
   isAnniversary,
   type RosterFlags,
@@ -142,6 +143,8 @@ export default function CohortRoomClient({
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [postOpen, setPostOpen] = useState(false);
+  // Sentence starter handed in by the guided tour; seeds RoomPostModal.
+  const [tourDraft, setTourDraft] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
@@ -362,6 +365,14 @@ export default function CohortRoomClient({
     ],
   ];
 
+  // The guided tour can open the room composer with a starter already typed.
+  useEffect(() => {
+    return onOpenComposer("cohort-post", (text) => {
+      setTourDraft(text);
+      setPostOpen(true);
+    });
+  }, []);
+
   async function handlePost() {
     const trimmed = messageText.trim();
     if (!trimmed || posting) return;
@@ -383,6 +394,8 @@ export default function CohortRoomClient({
     });
     setPosting(false);
     if (res.ok) {
+      // Let a waiting tour step know the post actually landed.
+      reportPosted("cohort-post");
       setMessageText("");
       setCohortUsage((u) => (u ? { ...u, current: u.current + 1 } : u));
     } else {
@@ -533,6 +546,7 @@ export default function CohortRoomClient({
         <div className="flex-1 flex flex-col min-w-0">
           {/* ZONE 1 — Status board */}
           <section
+            data-tour-id="cohort-checkins"
             className={`border-b px-6 ${statusOpen ? "py-4" : "py-2.5"}`}
             style={{ background: "var(--card)", borderColor: "var(--border)" }}
           >
@@ -633,7 +647,7 @@ export default function CohortRoomClient({
           </section>
 
           {/* ZONE 2 — Discussion floor (group chat) */}
-          <section className="flex-1 px-6 py-5 discussion-floor">
+          <section data-tour-id="cohort-floor" className="flex-1 px-6 py-5 discussion-floor">
             <div className="flex items-center justify-between mb-2">
               <p className="font-mono lowercase text-[0.7rem] text-text-faint tracking-wider">
                 discussion_floor
@@ -831,6 +845,7 @@ export default function CohortRoomClient({
             screens; hidden below xl where the chat needs the full width.
             Collapses to a thin strip, mirroring the sidebar. */}
         <aside
+          data-tour-id="cohort-stats"
           className="hidden xl:flex flex-col shrink-0 border-l overflow-y-auto scroll-thin transition-[width] duration-150"
           style={{
             width: statsOpen ? "clamp(220px, 22%, 280px)" : 44,
@@ -986,7 +1001,11 @@ export default function CohortRoomClient({
         <RoomPostModal
           userId={currentUserId}
           cohortId={cohortId}
-          onClose={() => setPostOpen(false)}
+          initialContent={tourDraft}
+          onClose={() => {
+            setPostOpen(false);
+            setTourDraft("");
+          }}
         />
       )}
       {inviteOpen && (

@@ -326,6 +326,7 @@ export default async function ProfilePage(
               {isOwner && (
                 <Link
                   href="/settings"
+                  data-tour-id="profile-edit"
                   className="shrink-0 hover:opacity-80"
                   style={{
                     fontFamily: "JetBrains Mono, monospace",
@@ -464,7 +465,7 @@ export default async function ProfilePage(
             </div>
 
             {/* Skills */}
-            <div className="bg-card border border-border rounded-xl p-5 mt-6" data-tour-id="profile-edit">
+            <div className="bg-card border border-border rounded-xl p-5 mt-6" data-tour-id="profile-skills">
               <p className="font-mono lowercase text-[0.65rem] text-text-faint">skills</p>
               {isOwner ? (
                 <SkillsEditor userId={profile.id} skills={skills} />

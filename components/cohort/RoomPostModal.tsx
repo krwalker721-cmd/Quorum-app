@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
+import { reportPosted } from "@/lib/tour-bus";
 
 type RoomType = "question" | "update" | "decision" | "win" | "blocker";
 
@@ -18,16 +19,19 @@ const TYPES: { value: RoomType; color: string; desc: string }[] = [
 export default function RoomPostModal({
   userId,
   cohortId,
+  initialContent = "",
   onClose,
 }: {
   userId: string;
   cohortId: string;
+  // Pre-typed opener, handed in by the guided tour's sentence starters.
+  initialContent?: string;
   onClose: () => void;
 }) {
   const router = useRouter();
   const { paywallState, checkAndGate, closePaywall } = usePaywall();
   const [type, setType] = useState<RoomType>("update");
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(initialContent);
   const [anon, setAnon] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -61,6 +65,8 @@ export default function RoomPostModal({
     if (anon) {
       fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
+    // Let a waiting tour step know the post actually landed.
+    reportPosted("cohort-post");
     onClose();
     router.refresh();
   }

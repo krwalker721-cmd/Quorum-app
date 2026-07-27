@@ -7,6 +7,7 @@ import { ROOM_TYPE_COLOR, ROOM_TYPE_LABEL } from "@/lib/stage";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
 import Avatar from "@/components/Avatar";
+import { onOpenComposer, reportPosted } from "@/lib/tour-bus";
 
 const TAGS = ["decision", "mindset", "hiring", "growth", "real_talk", "ops", "fundraising"];
 const ROOM_TYPES = ["question", "update", "decision", "win", "blocker"] as const;
@@ -59,6 +60,18 @@ export default function NewPostButton({
     };
   }, [open, userId, myCohortIds]);
 
+  // The guided tour can open this composer with a sentence starter already in
+  // the field. Only the wide feed composer answers, so the TopBar's copy of this
+  // button doesn't open a second modal on the same page.
+  useEffect(() => {
+    if (variant !== "composer" || !isPulse) return;
+    return onOpenComposer("pulse-post", (text) => {
+      setContent(text);
+      setPostType("pulse");
+      setOpen(true);
+    });
+  }, [variant, isPulse]);
+
   async function submit() {
     if (!content.trim()) return;
     // Guard: cohort posts require membership (mirrors the server-side RLS).
@@ -105,6 +118,8 @@ export default function NewPostButton({
     if (anon) {
       fetch("/api/recognition/anonymous-post", { method: "POST" }).catch(() => {});
     }
+    // Let a waiting tour step know the post actually landed.
+    reportPosted(postType === "pulse" ? "pulse-post" : "cohort-post");
     setContent("");
     setAnon(false);
     setOpen(false);

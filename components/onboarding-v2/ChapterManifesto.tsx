@@ -5,11 +5,16 @@ import { motion, useTransform } from "framer-motion";
 import { Chapter, StickyStage, useChapterScroll, MaskLine, GhostNumber } from "./sticky";
 import { C, MONO, SANS, hexToRgba } from "./theme";
 
+// The three-part promise, previously a beat of its own in chapter 4. Lives here
+// so the "what you actually get" line lands inside the manifesto's escalation
+// instead of restating it a chapter later.
+const PROMISE = ["Find your people", "Get real advice", "Build together"];
+
 // Chapters 3 — the manifesto. Replaces the two near-identical fade lines
 // (bridge + pivot) with one continuous escalation: a stacked headline wipes up
-// line by line, a rule grows, a clipped sub-line lands, then the pivot statement
-// resolves — all scrubbed against scroll so the meaning builds as you move. The
-// whole stage recedes into the atmosphere on exit.
+// line by line, a rule grows, the three-part promise lands beat by beat, then
+// the pivot statement resolves — all scrubbed against scroll so the meaning
+// builds as you move. The whole stage recedes into the atmosphere on exit.
 export function ChapterManifesto() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useChapterScroll(ref);
@@ -24,7 +29,7 @@ export function ChapterManifesto() {
   const head = "clamp(26px, 5vw, 46px)";
 
   return (
-    <Chapter ref={ref} id="chapter-3" label="the difference" heightVh={340}>
+    <Chapter ref={ref} id="chapter-3" label="the difference" heightVh={390}>
       <StickyStage>
         <GhostNumber value="03" progress={scrollYProgress} align="right" />
         <motion.div
@@ -83,18 +88,60 @@ export function ChapterManifesto() {
             }}
           />
 
+          {/* The three-part promise — its own beat. Each part wipes in on its
+              own, so it reads as a list you can hold rather than one long line. */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "baseline",
+              flexWrap: "wrap",
+              gap: "8px 18px",
+              marginBottom: 26,
+            }}
+          >
+            {PROMISE.map((part, i) => (
+              <div key={part} style={{ display: "flex", alignItems: "baseline", gap: "18px" }}>
+                <div
+                  style={{
+                    fontFamily: SANS,
+                    fontSize: "clamp(14px, 2vw, 18px)",
+                    fontWeight: 500,
+                    color: C.textPrimary,
+                    letterSpacing: "-0.005em",
+                  }}
+                >
+                  <MaskLine
+                    progress={scrollYProgress}
+                    range={[0.42 + i * 0.05, 0.54 + i * 0.05]}
+                  >
+                    {part}
+                  </MaskLine>
+                </div>
+                {i < PROMISE.length - 1 && (
+                  <span
+                    aria-hidden
+                    style={{ fontFamily: MONO, fontSize: 11, color: C.textDisabled }}
+                  >
+                    ·
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
           <div
             style={{
               fontFamily: MONO,
-              fontSize: "clamp(12px, 1.8vw, 15px)",
-              color: C.textSecondary,
-              letterSpacing: "0.04em",
+              fontSize: "clamp(11px, 1.5vw, 13px)",
+              color: C.textMuted,
+              letterSpacing: "0.08em",
               textAlign: "center",
               marginBottom: 22,
             }}
           >
-            <MaskLine progress={scrollYProgress} range={[0.44, 0.58]}>
-              you move faster · you make sharper calls · you stop guessing
+            <MaskLine progress={scrollYProgress} range={[0.56, 0.66]}>
+              all in one place
             </MaskLine>
           </div>
 
@@ -110,7 +157,7 @@ export function ChapterManifesto() {
               margin: "0 auto",
             }}
           >
-            <MaskLine progress={scrollYProgress} range={[0.62, 0.78]}>
+            <MaskLine progress={scrollYProgress} range={[0.72, 0.86]}>
               You&rsquo;ll get there faster — with the right people around you.
             </MaskLine>
           </div>

@@ -16,7 +16,6 @@ import { ChapterIntro } from "@/components/onboarding-v2/ChapterIntro";
 import { ChapterFounderNames } from "@/components/onboarding-v2/ChapterFounderNames";
 import { ChapterProfile } from "@/components/onboarding-v2/ChapterProfile";
 import { ChapterSkills } from "@/components/onboarding-v2/ChapterSkills";
-import { ChapterSummary } from "@/components/onboarding-v2/ChapterSummary";
 import { ChapterReferral } from "@/components/onboarding-v2/ChapterReferral";
 import { ChapterHandoff } from "@/components/onboarding-v2/ChapterHandoff";
 
@@ -168,8 +167,8 @@ export default function OnboardingPage() {
         <ChapterIntro
           id="intro-skills"
           index="07"
-          title="Your strengths"
-          blurb="Skills are how founders find each other here — name what you're great at, so the right people reach out."
+          title="Your experience"
+          blurb="Experience is how founders find each other here — name what you've actually done, so the right people reach out."
           accent={C.amber}
           motif="skills"
         />
@@ -183,13 +182,13 @@ export default function OnboardingPage() {
             in-app guided tour that runs the moment onboarding completes. See
             contexts/TourContext.tsx. */}
 
-        {/* Act III — the payoff + the decision. */}
-        <ChapterSummary />
-
+        {/* Act III — the last ask before the handoff. The journey recap used to
+            sit here; it restated work the founder had just done a screen ago, so
+            it's cut. */}
         <ChapterIntro
           id="intro-referral"
           index="08"
-          title="Bring founders in"
+          title="Referrals"
           blurb="Refer founders you rate. The more you bring in, the less you pay — and the stronger the room gets."
           accent={C.amber}
           motif="referral"

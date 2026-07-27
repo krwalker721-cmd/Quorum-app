@@ -41,8 +41,9 @@ export default function TrialBanner({
   const daysLeft = Math.ceil(msLeft / 86_400_000);
   const expired = msLeft <= 0;
 
-  // Only show when the trial is expired (edge case) or ending within 3 days.
-  if (!expired && daysLeft > 3) return null;
+  // Shown for the whole trial, not just the last few days — a founder should be
+  // able to see at a glance that the trial is running and how long is left.
+  // Urgency (and the red treatment) only kicks in near the end.
 
   function dismiss() {
     setDismissed(true);
@@ -53,15 +54,25 @@ export default function TrialBanner({
     }
   }
 
-  const accent = expired ? "#f85149" : "#f59e0b";
-  const bg = expired ? "rgba(248,81,73,0.06)" : "rgba(245,158,11,0.06)";
+  const ending = !expired && daysLeft <= 3;
+  const accent = expired ? "#f85149" : ending ? "#f59e0b" : "#22c55e";
+  const bg = expired
+    ? "rgba(248,81,73,0.06)"
+    : ending
+      ? "rgba(245,158,11,0.06)"
+      : "rgba(34,197,94,0.05)";
   const border = expired
     ? "1px solid rgba(248,81,73,0.2)"
-    : "1px solid rgba(245,158,11,0.2)";
+    : ending
+      ? "1px solid rgba(245,158,11,0.2)"
+      : "1px solid rgba(34,197,94,0.16)";
+  const dayWord = daysLeft === 1 ? "day" : "days";
   const leftText = expired
     ? "// your trial has ended — you're now on the free tier"
-    : `// your trial ends in ${daysLeft} ${daysLeft === 1 ? "day" : "days"} — upgrade to keep full access`;
-  const ctaText = expired ? "Upgrade to Member →" : "Upgrade now →";
+    : ending
+      ? `// your trial ends in ${daysLeft} ${dayWord} — add a card to keep full access`
+      : `// trial active — full member access for ${daysLeft} more ${dayWord}`;
+  const ctaText = expired ? "Upgrade to Member →" : ending ? "Keep my access →" : "See plans →";
 
   return (
     <div

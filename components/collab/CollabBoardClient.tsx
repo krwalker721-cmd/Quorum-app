@@ -20,6 +20,7 @@ import YourWorkspace, { type WorkspaceProject } from "./YourWorkspace";
 import ProjectMenu from "./ProjectMenu";
 import StagePill from "@/components/cohort/StagePill";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import { onOpenComposer } from "@/lib/tour-bus";
 import GradientButton from "@/components/ui/GradientButton";
 import TerminalFooter from "@/components/ui/TerminalFooter";
 
@@ -132,6 +133,14 @@ export default function CollabBoardClient({
     };
   }, []);
   const [tab, setTab] = useState<Tab>(initialTab);
+  // Keep the tab in step with `?tab=` when the URL changes under us. The guided
+  // tour walks the board by pushing /collab?tab=…, and a client-side nav to the
+  // same route would otherwise keep this state at its original value.
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+  // Sentence starter handed in by the guided tour; seeds NewProjectModal.
+  const [tourDraft, setTourDraft] = useState("");
   const [newOpen, setNewOpen] = useState(false);
   const [newType, setNewType] = useState<"project" | "need">("project");
   const [respondFor, setRespondFor] = useState<ProjectRow | null>(null);
@@ -162,6 +171,16 @@ export default function CollabBoardClient({
     setNewType(type);
     setNewOpen(true);
   }
+
+  // The guided tour can open the project composer with a starter already typed.
+  useEffect(() => {
+    return onOpenComposer("collab-project", (text) => {
+      setTourDraft(text);
+      setTab("projects");
+      setNewType("project");
+      setNewOpen(true);
+    });
+  }, []);
 
   const [bannerVisible, setBannerVisible] = useState(!!errorBanner);
 
@@ -234,16 +253,18 @@ export default function CollabBoardClient({
             </span>
           )}
         </div>
-        <TabPillRow>
-          {(["projects", "needs", "skills"] as const).map((t) => (
-            <TabPill key={t} active={tab === t} onClick={() => setTab(t)}>
-              {t}
-            </TabPill>
-          ))}
-        </TabPillRow>
+        <div data-tour-id="collab-tabs">
+          <TabPillRow>
+            {(["projects", "needs", "skills"] as const).map((t) => (
+              <TabPill key={t} active={tab === t} onClick={() => setTab(t)}>
+                {t}
+              </TabPill>
+            ))}
+          </TabPillRow>
+        </div>
       </div>
 
-      <div style={{ padding: "18px 24px 8px", maxWidth: 1180 }}>
+      <div style={{ padding: "18px 24px 8px", maxWidth: 1180 }} data-tour-id="collab-list">
         {tab === "projects" && (
           <>
             <YourWorkspace projects={workspaceProjects} />
@@ -273,7 +294,11 @@ export default function CollabBoardClient({
         <NewProjectModal
           userId={currentUserId}
           postType={newType}
-          onClose={() => setNewOpen(false)}
+          initialTitle={tourDraft}
+          onClose={() => {
+            setNewOpen(false);
+            setTourDraft("");
+          }}
           onCreated={() => {
             // Usage is incremented server-side by /api/collab.
             router.refresh();
