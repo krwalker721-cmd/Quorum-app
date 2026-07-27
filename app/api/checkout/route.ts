@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
+import { isPlanKey, resolvePlanPrice } from "@/lib/plans";
 
 // POST — create a Stripe Checkout session for the standard (cold signup) flow.
-// The client may pass a priceId, but we default to STRIPE_MEMBER_PRICE_ID so the
-// price never has to be exposed to the browser.
+// The client passes a plan KEY (member / member_annual / founding / partner);
+// the price id is resolved server-side by lib/plans.ts, which also enforces
+// founding-seat availability.
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
@@ -14,17 +16,21 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: { priceId?: string; successUrl?: string; cancelUrl?: string } = {};
+  let body: { plan?: string; successUrl?: string; cancelUrl?: string } = {};
   try {
     body = await req.json();
   } catch {
     // Empty body is fine — we fall back to defaults below.
   }
 
-  const priceId = body.priceId || process.env.STRIPE_MEMBER_PRICE_ID;
-  if (!priceId) {
-    return NextResponse.json({ error: "No price ID configured" }, { status: 400 });
+  // Plan key, not a price id: the founding rate is a finite discounted pool, so
+  // the browser must never get to name the price it pays.
+  const plan = isPlanKey(body.plan) ? body.plan : "member";
+  const resolved = await resolvePlanPrice(plan);
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
+  const priceId = resolved.priceId;
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -50,8 +56,8 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: body.successUrl || `${appUrl}/home?upgraded=true`,
       cancel_url: body.cancelUrl || `${appUrl}/pricing?canceled=true`,
-      metadata: { supabase_user_id: user.id },
-      subscription_data: { metadata: { supabase_user_id: user.id } },
+      metadata: { supabase_user_id: user.id, plan },
+      subscription_data: { metadata: { supabase_user_id: user.id, plan } },
       allow_promotion_codes: true,
     });
 

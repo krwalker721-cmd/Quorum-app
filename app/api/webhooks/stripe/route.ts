@@ -5,6 +5,8 @@ import { stripe } from "@/lib/stripe";
 import { syncSubscriptionToSupabase } from "@/lib/stripe-helpers";
 import { activateReferral, churnReferral } from "@/lib/referral-helpers";
 import { createAdminClient } from "@/lib/supabase/server";
+import { reconcilePendingCredit } from "@/lib/referral-credit";
+import { claimFoundingSeat } from "@/lib/plans";
 
 // Stripe signature verification needs the raw request body, so this handler must
 // run on the Node runtime and read req.text() directly (no body parsing).
@@ -83,6 +85,21 @@ export async function POST(req: NextRequest) {
             } catch (e) {
               console.error("activateReferral failed:", e);
             }
+            // Stamp the founding seat once the subscription actually exists, so
+            // an abandoned checkout can never burn one of the finite seats.
+            if (subscription.metadata?.plan === "founding") {
+              try {
+                await claimFoundingSeat(userId);
+              } catch (e) {
+                console.error("claimFoundingSeat failed:", e);
+              }
+            }
+            // Apply any credit earned before they had a subscription.
+            try {
+              await reconcilePendingCredit(userId);
+            } catch (e) {
+              console.error("reconcilePendingCredit failed:", e);
+            }
           }
         }
         break;
@@ -93,9 +110,17 @@ export async function POST(req: NextRequest) {
         const userId = await userIdForCustomer(subscription.customer as string);
         if (!userId) break;
 
+        // Cancellation starts the grace clock. enforceLapse() releases the
+        // cohort seat once the window runs out; it isn't taken here, because a
+        // member who cancels on day one still has the rest of their period.
         await supabase
           .from("subscriptions")
-          .update({ tier: "free", status: "canceled", stripe_subscription_id: null })
+          .update({
+            tier: "free",
+            status: "canceled",
+            stripe_subscription_id: null,
+            lapsed_at: new Date().toISOString(),
+          })
           .eq("user_id", userId);
 
         await supabase.from("profiles").update({ tier: "free" }).eq("id", userId);
@@ -126,36 +151,10 @@ export async function POST(req: NextRequest) {
         const userId = await userIdForCustomer(invoice.customer as string);
         if (!userId) break;
 
-        // Apply any milestone rewards that were recorded while the user had no
-        // active subscription (or whose Stripe application previously failed).
-        // applyMilestoneReward stamps stripe_coupon_id on success, so anything
-        // still null here genuinely hasn't been applied to Stripe yet.
-        const { data: pendingRewards } = await supabase
-          .from("referral_rewards")
-          .select("id, reward_type")
-          .eq("user_id", userId)
-          .eq("active", true)
-          .is("stripe_coupon_id", null)
-          .neq("reward_type", "monthly_bonus");
-
-        if (pendingRewards?.length) {
-          const { applyStripeReward } = await import("@/lib/referral-helpers");
-          for (const reward of pendingRewards) {
-            try {
-              await applyStripeReward(
-                invoice.customer as string,
-                invoice.subscription as string,
-                reward.reward_type,
-              );
-              await supabase
-                .from("referral_rewards")
-                .update({ stripe_coupon_id: "applied" })
-                .eq("id", reward.id);
-            } catch (err) {
-              console.error(`Failed to apply pending reward ${reward.id}:`, err);
-            }
-          }
-        }
+        // Apply any referral credit earned before the member had a Stripe
+        // customer, or whose grant previously failed. Milestones no longer touch
+        // Stripe at all — they're badges now.
+        await reconcilePendingCredit(userId);
 
         await notify(supabase, userId, "payment_succeeded");
         break;

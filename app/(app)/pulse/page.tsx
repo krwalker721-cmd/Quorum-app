@@ -122,7 +122,7 @@ export default async function PulsePage() {
         userId={user.id}
         defaultPostType="pulse"
       />
-      <div style={{ padding: "18px 24px 8px", maxWidth: 1600 }}>
+      <div className="page-pad" style={{ padding: "18px 24px 8px", maxWidth: 1600 }}>
         {/* Header line */}
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
           <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>pulse</h1>

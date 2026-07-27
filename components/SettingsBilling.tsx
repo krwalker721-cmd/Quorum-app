@@ -54,7 +54,7 @@ function statusLine(sub: Sub): { text: string; color: string } {
       // An expired trial must read as expired — never a stale future-tense
       // "trial ends" with a past date sitting next to "Unlimited".
       if (d <= 0) {
-        return { text: "Trial expired — you're on the free tier", color: "#484f58" };
+        return { text: "Trial ended — add a card to keep your cohort seat", color: "#484f58" };
       }
       return { text: `Trial ends in ${d} ${d === 1 ? "day" : "days"}`, color: "var(--accent)" };
     }

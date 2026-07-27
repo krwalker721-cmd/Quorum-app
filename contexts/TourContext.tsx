@@ -104,6 +104,9 @@ export const TOUR_STEPS: TourStep[] = [
     route: "/cohort",
     match: "/cohort",
     anchor: "cohort-members",
+    // The roster rail is hidden on narrow viewports, same as the stats rail
+    // below — without this the step would wait on an anchor that never appears.
+    optional: true,
     section: "cohort",
     title: "Your cohort",
     body: "The same small group of founders, matched to your stage, every week. These are the people who'll actually know what you're working on.",

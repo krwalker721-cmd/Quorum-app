@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { PRICING } from "@/lib/pricing";
 
 export type PaywallFeature =
   | "cohort_posts"
@@ -207,7 +208,7 @@ export default function PaywallModal({
             marginBottom: 8,
           }}
         >
-          // free tier limit reached
+          // membership required
         </p>
 
         {/* Heading */}
@@ -339,7 +340,7 @@ export default function PaywallModal({
             marginBottom: 10,
           }}
         >
-          Upgrade to Member — $12/month →
+          Become a Member — ${PRICING.member.monthly}/month →
         </button>
 
         {/* Manage billing */}

@@ -10,6 +10,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import TierPill from "@/components/TierPill";
 import { C, MONO, SANS, hexToRgba, Reveal } from "./theme";
+import { PRICING, TRIAL_DAYS } from "@/lib/pricing";
 
 // Publishable key is safe to expose. If it's missing the embedded card form
 // simply won't mount — the cold-signup checkout flow still works without it.
@@ -44,15 +45,15 @@ interface Sub {
 const FREE_FEATURES = [
   "Read everything — always",
   "Weekly check-in — always",
-  "3 cohort posts per month",
-  "2 pulse posts per month",
-  "5 replies per month",
-  "3 messages per month",
+  "Everything in Member",
+  "Rate locked for life",
+  "Founding member badge",
+  "Limited seats",
   "1 vault note",
   "No collab board access",
 ];
 const MEMBER_FEATURES = [
-  "Everything in Free",
+  "Read everything",
   "Unlimited cohort posting",
   "Unlimited pulse posts",
   "Unlimited replies",
@@ -60,7 +61,7 @@ const MEMBER_FEATURES = [
   "Unlimited vault notes",
   "Full collab board access",
   "Unlimited referrals",
-  "7 day free trial",
+  `${TRIAL_DAYS.standard} day free trial`,
 ];
 const PARTNER_FEATURES = [
   "Everything in Member",
@@ -463,7 +464,7 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
           {/* ── Free ── */}
           <Card>
             <CardTag color={C.textDisabled}>// free</CardTag>
-            <Price amount="$0" color={C.textPrimary} suffixColor={C.textDisabled} />
+            <Price amount={`$${PRICING.founding.monthly}`} color={C.textPrimary} suffixColor={C.textDisabled} />
             <Tagline>Get a feel for the room.</Tagline>
             <Divider />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -477,7 +478,7 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
           {/* ── Member (highlighted) ── */}
           <Card highlight={C.amber} badge="MOST POPULAR">
             <CardTag color={C.amber}>// member</CardTag>
-            <Price amount="$12" color={C.textPrimary} suffixColor={C.textSecondary} />
+            <Price amount={`$${PRICING.member.monthly}`} color={C.textPrimary} suffixColor={C.textSecondary} />
             <Tagline>Full access. No limits. No noise.</Tagline>
             <Divider />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -514,7 +515,7 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
           {/* ── Partner (coming soon) ── */}
           <Card highlight={C.purple} badge="COMING SOON">
             <CardTag color={C.purple}>// partner</CardTag>
-            <Price amount="$99" color={C.textDisabled} suffixColor={C.textDisabled} />
+            <Price amount={`$${PRICING.partner.monthly}`} color={C.textDisabled} suffixColor={C.textDisabled} />
             <Tagline>The room where real business happens.</Tagline>
             <Divider />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>

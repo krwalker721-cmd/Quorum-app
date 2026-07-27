@@ -52,7 +52,7 @@ export async function POST() {
 // PUT — called after the SetupIntent succeeds client-side. Attaches the saved
 // card, then creates the Member subscription that starts billing when the
 // user's *existing* trial ends. The trial clock is granted up front by
-// /api/subscription/initialize (7 days normally, 30 for a referred free month),
+// /api/subscription/initialize (30 days normally, 45 for a referred founder),
 // so we honour the date the user has already been shown rather than starting a
 // second, different countdown here.
 export async function PUT(req: NextRequest) {

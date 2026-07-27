@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       .in("id", ids);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Start each approved user's trial (7-day cold signup; no referral source yet).
+    // Start each approved user's trial (standard trial; no referral source yet).
     for (const id of ids) {
       try {
         await initializeUserSubscription(id, false);

@@ -414,7 +414,7 @@ function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
               capture decisions, frameworks, retrospectives — anything worth organizing.
             </p>
             <EmptyStateUpgradeLine>
-              You have 1 note on the free tier. Upgrade to Member for unlimited.
+              Notes are for members. Reactivate to keep writing.
             </EmptyStateUpgradeLine>
           </>
         )}

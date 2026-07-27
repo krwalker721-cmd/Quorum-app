@@ -199,7 +199,7 @@ export default function CollabBoardClient({
             letterSpacing: "0.05em",
           }}
         >
-          // collab board is read-only on the free tier — upgrade to post projects, needs, and skills
+          // collab board is read-only without a membership — reactivate to post projects, needs, and skills
         </div>
       )}
       {errorBanner && bannerVisible && (
@@ -223,7 +223,7 @@ export default function CollabBoardClient({
         </div>
       )}
       {/* Header + tabs row */}
-      <div style={{ padding: "18px 24px 0", maxWidth: 1180 }}>
+      <div className="page-pad" style={{ padding: "18px 24px 0", maxWidth: 1180 }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
           <div>
             <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>collab board</h1>
@@ -264,7 +264,7 @@ export default function CollabBoardClient({
         </div>
       </div>
 
-      <div style={{ padding: "18px 24px 8px", maxWidth: 1180 }} data-tour-id="collab-list">
+      <div className="page-pad" style={{ padding: "18px 24px 8px", maxWidth: 1180 }} data-tour-id="collab-list">
         {tab === "projects" && (
           <>
             <YourWorkspace projects={workspaceProjects} />

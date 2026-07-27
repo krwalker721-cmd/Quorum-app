@@ -61,15 +61,12 @@ const coupons: CouponDef[] = [
     duration_in_months: 12,
     name: "Quorum Referral - Free Year",
   },
-  // ── Monthly active-referral bonus (repeating; removed when 0 active) ───────
-  // Flat 50% off per month for anyone with 1+ active referrals.
-  {
-    id: "QUORUM_MONTHLY_50",
-    percent_off: 50,
-    duration: "repeating",
-    duration_in_months: 120, // effectively permanent; removed when no longer earned
-    name: "Quorum Monthly Bonus - 50% Off",
-  },
+  // NOTE: QUORUM_MONTHLY_50 (the old standing "50% off forever off one
+  // referral" bonus) is intentionally gone. Referral rewards are now customer
+  // balance credit — one month of Member per activated referral — granted in
+  // lib/referral-credit.ts, which needs no coupons at all. Any coupon still
+  // attached to a live subscription is detached by
+  // scripts/retire-monthly-bonus.ts.
 ];
 
 async function createCoupons(): Promise<void> {

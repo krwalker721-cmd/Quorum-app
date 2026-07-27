@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { assignUserToCohort } from "@/lib/cohorts";
+import { enforceLapse, isEligibleForCohortPlacement } from "@/lib/lapse";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
@@ -50,6 +51,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .select("id, full_name, stage, status, tier, username")
     .eq("id", user.id)
     .single();
+
+  // Resolve (and if the grace window has run out, act on) any lapse before the
+  // banner reads subscription state, so both agree on the same render.
+  // Best-effort: a failure here must never keep a member out of the app.
+  let lapse: Awaited<ReturnType<typeof enforceLapse>> = { state: "ok" };
+  try {
+    lapse = await enforceLapse(user.id);
+  } catch (e) {
+    console.error("lapse check failed:", e);
+  }
 
   // Subscription status + trial info for the trial banner (best-effort).
   let subStatus = "trialing";
@@ -113,9 +124,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // write) gets placed on their next sign-in. Reuses the membership lookup above
   // so there's no extra query in the common case; assignUserToCohort is
   // idempotent and needs a service-role client to read every cohort. Best-effort.
+  // NOTE: gated on placement eligibility. A seat released for non-payment must
+  // not be handed straight back by this safety net on the very next page load.
   if (!cohortIdForDots) {
     try {
-      cohortIdForDots = await assignUserToCohort(createAdminClient(), user.id);
+      if (await isEligibleForCohortPlacement(user.id)) {
+        cohortIdForDots = await assignUserToCohort(createAdminClient(), user.id);
+      }
     } catch (e) {
       console.error("cohort auto-assign failed on sign-in:", e);
     }
@@ -135,6 +150,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             }}
           />
           <div
+            className="app-content"
             style={{
               marginLeft: "var(--sidebar-w, 240px)",
               paddingBottom: 20,
@@ -145,6 +161,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               trialEndsAt={trialEndsAt}
               tier={(profile?.tier as "free" | "member" | "partner") ?? "free"}
               status={subStatus}
+              lapse={lapse}
             />
             {children}
           </div>

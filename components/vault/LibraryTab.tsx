@@ -222,7 +222,7 @@ function AmbientSaveFeed() {
   }, []);
 
   return (
-    <div className="absolute inset-0 pointer-events-none opacity-70">
+    <div className="vault-ambient absolute inset-0 pointer-events-none opacity-70">
       {signals.map((s, i) => (
         <div
           key={s.id}

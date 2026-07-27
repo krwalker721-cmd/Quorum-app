@@ -35,7 +35,7 @@ function statusText(sub: Sub | null): string {
   switch (sub.status) {
     case "trialing": {
       const d = daysLeft(sub.trial_ends_at);
-      if (d <= 0) return "Trial expired — you're on the free tier";
+      if (d <= 0) return "Trial ended — add a card to keep your cohort seat";
       return `Trial ends in ${d} ${d === 1 ? "day" : "days"}`;
     }
     case "active":

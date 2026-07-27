@@ -261,7 +261,7 @@ export default async function HomePage() {
       <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <UpgradeToast />
 
-      <div style={{ padding: "14px 24px 8px", maxWidth: 1600 }} data-tour-id="home-tiles">
+      <div className="page-pad" style={{ padding: "14px 24px 8px", maxWidth: 1600 }} data-tour-id="home-tiles">
         {/* Header */}
         <div className="mb-3">
           <h1 style={{ fontSize: 17, fontWeight: 500, color: "var(--text-primary)" }}>
@@ -277,7 +277,7 @@ export default async function HomePage() {
 
         {/* Row 1 — NEEDS YOU (wide) + check-in / cohort rail */}
         <div
-          className="grid gap-3 mb-3"
+          className="grid gap-3 mb-3 stack-md"
           style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}
         >
           <Tile kicker="needs you" padding="4px 16px" className="flex flex-col">
@@ -364,7 +364,7 @@ export default async function HomePage() {
             <MonoKicker style={{ whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
               <span style={{ color: "var(--teal)" }}>✦</span> matches your needs
             </MonoKicker>
-            <div className="flex gap-4 flex-1 min-w-0 overflow-hidden">
+            <div className="flex gap-4 flex-1 min-w-0 overflow-hidden scroll-x-mobile">
               {matchPeople.map((m) => {
                 const c = (m.stage && STAGE_COLOR[m.stage]) || "var(--text-muted)";
                 return (
@@ -400,7 +400,7 @@ export default async function HomePage() {
         </Tile>
 
         {/* Row 3 — RECENT IN PULSE + YOUR WORK */}
-        <div className="grid gap-3" style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}>
+        <div className="grid gap-3 stack-md" style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}>
           <Tile kicker="recent in pulse" right="all →" rightHref="/pulse" padding="13px 15px">
             {recentPosts.length === 0 ? (
               <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>No posts yet.</p>

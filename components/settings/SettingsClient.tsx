@@ -236,9 +236,9 @@ export default function SettingsClient({
   const [section, setSection] = useState<SectionKey>("account");
 
   return (
-    <div style={{ display: "flex", gap: 32, maxWidth: 1040, margin: "0 auto", padding: "40px 24px", alignItems: "flex-start" }}>
+    <div className="settings-shell page-pad" style={{ display: "flex", gap: 32, maxWidth: 1040, margin: "0 auto", padding: "40px 24px", alignItems: "flex-start" }}>
       {/* left nav */}
-      <nav style={{ width: 160, flexShrink: 0, position: "sticky", top: 24 }}>
+      <nav className="settings-nav" style={{ width: 160, flexShrink: 0, position: "sticky", top: 24 }}>
         {SECTIONS.map((s) => {
           const active = section === s.key;
           return (
@@ -356,7 +356,7 @@ function AccountSection({
       {/* name */}
       <div style={{ marginBottom: 20 }}>
         <label style={labelStyle}>full name</label>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="field-row" style={{ display: "flex", gap: 10 }}>
           <input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
           <button onClick={saveName} style={amberBtn}>
             save
@@ -367,7 +367,7 @@ function AccountSection({
       {/* email */}
       <div style={{ marginBottom: 20 }}>
         <label style={labelStyle}>email address</label>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="field-row" style={{ display: "flex", gap: 10 }}>
           <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
           <button onClick={saveEmail} style={amberBtn}>
             update email →
@@ -381,7 +381,7 @@ function AccountSection({
         <label style={labelStyle}>new password</label>
         <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...inputStyle, marginBottom: 10 }} />
         <label style={labelStyle}>confirm new password</label>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="field-row" style={{ display: "flex", gap: 10 }}>
           <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} style={inputStyle} />
           <button onClick={savePassword} style={amberBtn}>
             update password →

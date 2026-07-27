@@ -7,19 +7,10 @@ import {
   getTotalReferralCount,
   getActiveReferralCount,
 } from "@/lib/referral-helpers";
+import { getEarnedCreditMonths } from "@/lib/referral-credit";
+import { PRICING } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
-
-// Monthly-equivalent value of each reward coupon, for the dashboard savings card.
-// Recurring discounts are expressed against the $12 Member price.
-const DISCOUNT_VALUES: Record<string, number> = {
-  QUORUM_MILESTONE_25: 12, // 100% of $12 (free year)
-  QUORUM_MONTHLY_50: 6, // 50% of $12
-};
-
-function calculateCurrentSavings(discountIds: string[]): number {
-  return discountIds.reduce((total, id) => total + (DISCOUNT_VALUES[id] || 0), 0);
-}
 
 // GET — full referral data for the authenticated user. Powers the /referrals
 // dashboard (wired in Session 8).
@@ -76,8 +67,9 @@ export async function GET() {
     .eq("id", user.id)
     .single();
 
-  // Flat 50% off per month for anyone with 1+ active referrals (percent value).
-  const monthlyBonus = activeCount >= 1 ? 50 : 0;
+  // Months of Member earned as credit — one per referral who activated. This
+  // replaced the old standing 50%-off-forever bonus.
+  const creditMonths = await getEarnedCreditMonths(user.id);
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
   const referralLink = codeData?.code
@@ -122,13 +114,11 @@ export async function GET() {
     gates,
     totalCount,
     activeCount,
-    monthlyBonus,
+    creditMonths,
+    creditValue: creditMonths * PRICING.member.monthly,
     referrals: referrals ?? [],
     rewards: rewards ?? [],
     tier,
-    referralCap: tier === "free" ? 3 : null,
-    referralCapReached: tier === "free" && totalCount >= 3,
     activeStripeDiscounts,
-    currentSavings: calculateCurrentSavings(activeStripeDiscounts),
   });
 }

@@ -1,21 +1,31 @@
 import Stripe from "stripe";
 import { stripe } from "./stripe";
 import { createAdminClient } from "@/lib/supabase/server";
+import { TRIAL_DAYS } from "@/lib/pricing";
 
-// Tier model: free / member / partner. Member maps to the $12 price, Partner to
-// the $99 price (Partner is waitlist-only for now and not yet in checkout).
+// Tier model: free / member / partner.
+//
+// IMPORTANT — `free` is a LAPSED state, not a membership. It means "trialed or
+// subscribed once, isn't paying now": read-only, no cohort seat, no writes
+// anywhere. It is deliberately not a tier anyone can sit in and participate
+// from. A cohort seat is scarce and rivalrous — a non-paying member occupying
+// one of twelve chairs degrades the room for the eleven who are paying, which
+// is why there's no metered free rung. See lib/pricing.ts.
 export type Tier = "free" | "member" | "partner";
 
-const FREE_LIMITS = {
-  cohort_posts: 3,
-  pulse_posts: 2,
-  replies: 5,
-  messages: 3,
-  vault_notes: 1,
+// Lapsed accounts can read, and write nothing. Kept as a map (rather than a
+// blanket deny) so the usage plumbing, paywall copy, and admin tooling all keep
+// working unchanged.
+const LAPSED_LIMITS = {
+  cohort_posts: 0,
+  pulse_posts: 0,
+  replies: 0,
+  messages: 0,
+  vault_notes: 0,
   collab_posts: 0,
 } as const;
 
-export type UsageFeature = keyof typeof FREE_LIMITS;
+export type UsageFeature = keyof typeof LAPSED_LIMITS;
 
 // Get or create a Stripe customer for a user. Uses the service-role client so it
 // can persist the customer id regardless of the calling request's auth context.
@@ -89,9 +99,9 @@ export async function checkUsageCap(
     return { allowed: true, current: 0, limit: -1 };
   }
 
-  const limit = FREE_LIMITS[feature];
+  const limit = LAPSED_LIMITS[feature];
 
-  // Collab posts are always blocked on free.
+  // Every write is blocked once lapsed — there is no metered free rung.
   if (limit === 0) {
     return { allowed: false, current: 0, limit: 0 };
   }
@@ -196,15 +206,17 @@ export async function syncSubscriptionToSupabase(
 }
 
 // Initialize a subscription record when a user is approved / starts their trial.
-// Referred users get 30 days; cold signups get 7. Referred users also get a
-// 48-hour window to add a card for a free first month.
+// Everyone gets a trial long enough to live through several weekly check-in
+// cycles; referred founders get a longer one as the invitee half of the referral
+// incentive. Referred users also get a 48-hour window to add a card for a free
+// first month.
 export async function initializeUserSubscription(
   userId: string,
   isReferred: boolean = false,
 ): Promise<void> {
   const supabase = createAdminClient();
 
-  const trialDays = isReferred ? 30 : 7;
+  const trialDays = isReferred ? TRIAL_DAYS.referred : TRIAL_DAYS.standard;
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
 

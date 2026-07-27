@@ -3,14 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserTier, getCurrentMonth, type Tier } from "@/lib/stripe-helpers";
 
 // GET — current month usage and the limits for the authenticated user's tier.
-// A limit of -1 means uncapped.
+// A limit of -1 means uncapped. `free` is the lapsed state: read-only, so every
+// write limit is 0 (see lib/stripe-helpers.ts).
 const LIMITS: Record<Tier, Record<string, number>> = {
   free: {
-    cohort_posts: 3,
-    pulse_posts: 2,
-    replies: 5,
-    messages: 3,
-    vault_notes: 1,
+    cohort_posts: 0,
+    pulse_posts: 0,
+    replies: 0,
+    messages: 0,
+    vault_notes: 0,
     collab_posts: 0,
   },
   member: {

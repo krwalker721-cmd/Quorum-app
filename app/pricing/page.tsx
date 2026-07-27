@@ -9,6 +9,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import { PRICING, FOUNDING_SEATS, TRIAL_DAYS, LAPSE_GRACE_DAYS } from "@/lib/pricing";
 
 // Publishable key is safe to expose. If it's missing the card form simply won't
 // mount — the cold-signup checkout flow still works without it.
@@ -176,18 +177,18 @@ function useCountdown(expiresAt: string | null): string {
 // ─── Shared bits ─────────────────────────────────────────────────────────────
 type Feat = { name: string; desc: string };
 
-const FREE_FEATURES: Feat[] = [
-  { name: "Read everything", desc: "See all posts, cohort activity, and vault content" },
-  { name: "Weekly check-in", desc: "Show your cohort where you are each week" },
-  { name: "3 cohort posts / month", desc: "Post decisions, wins, or blockers to your cohort" },
-  { name: "2 pulse posts / month", desc: "Share with the broader Quorum network" },
-  { name: "5 replies / month", desc: "Engage with posts across the platform" },
-  { name: "3 messages / month", desc: "Direct message other founders" },
-  { name: "1 vault note", desc: "Save one note in your personal vault" },
-  { name: "3 referrals max", desc: "Invite up to 3 founders to join" },
+// Founding rate replaces the old free tier. A cohort seat is one of twelve, so
+// there is no rung that lets someone occupy one without paying — but the room is
+// still filling, and the founding rate prices that honestly.
+const FOUNDING_FEATURES: Feat[] = [
+  { name: "Everything in Member", desc: "Identical access — only the price differs" },
+  { name: "Locked for life", desc: "Your rate never rises, no matter what Member costs later" },
+  { name: "Founding member badge", desc: "Permanent mark that you were here at the start" },
+  { name: "Direct line on what we build", desc: "Founding members shape the roadmap first" },
+  { name: `Limited to ${FOUNDING_SEATS} seats`, desc: "When they're gone, the rate closes for good" },
 ];
 const MEMBER_FEATURES: Feat[] = [
-  { name: "Everything in Free", desc: "All free tier features included" },
+  { name: "Read everything", desc: "Every post, cohort, and vault entry" },
   { name: "Unlimited cohort posting", desc: "Post as much as you need to your cohort" },
   { name: "Unlimited pulse posts", desc: "Share freely with the whole network" },
   { name: "Unlimited replies", desc: "Engage with every conversation" },
@@ -195,7 +196,7 @@ const MEMBER_FEATURES: Feat[] = [
   { name: "Unlimited vault notes", desc: "Full rich editor, unlimited storage" },
   { name: "Full collab board", desc: "Post projects, needs, and find hires" },
   { name: "Unlimited referrals", desc: "Invite as many founders as you want" },
-  { name: "7 day free trial", desc: "Full access, no card required to start" },
+  { name: `${TRIAL_DAYS.standard} day free trial`, desc: "Full access, no card required to start" },
 ];
 const PARTNER_FEATURES: Feat[] = [
   { name: "Everything in Member", desc: "Full Member access included" },
@@ -230,17 +231,18 @@ const PRODUCT_BLOCKS = [
 
 // Feature comparison rows. Values render as ✓ / limited text / — / "soon".
 const COMPARISON_ROWS: { feature: string; free: string; member: string; partner: string }[] = [
-  { feature: "Cohort access", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Cohort seat", free: "✓", member: "✓", partner: "✓" },
   { feature: "Read all content", free: "✓", member: "✓", partner: "✓" },
   { feature: "Weekly check-in", free: "✓", member: "✓", partner: "✓" },
-  { feature: "Cohort posts", free: "3/mo", member: "✓", partner: "✓" },
-  { feature: "Pulse posts", free: "2/mo", member: "✓", partner: "✓" },
-  { feature: "Replies", free: "5/mo", member: "✓", partner: "✓" },
-  { feature: "Messages", free: "3/mo", member: "✓", partner: "✓" },
-  { feature: "Vault notes", free: "1", member: "✓", partner: "✓" },
-  { feature: "Collab board", free: "—", member: "✓", partner: "✓" },
-  { feature: "Referrals", free: "3 max", member: "✓", partner: "✓" },
-  { feature: "7 day trial", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Cohort posts", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Pulse posts", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Replies", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Messages", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Vault notes", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Collab board", free: "✓", member: "✓", partner: "✓" },
+  { feature: "Referrals", free: "✓", member: "✓", partner: "✓" },
+  { feature: `${TRIAL_DAYS.standard} day trial`, free: "✓", member: "✓", partner: "✓" },
+  { feature: "Rate locked for life", free: "✓", member: "—", partner: "—" },
   { feature: "Partner feed", free: "—", member: "—", partner: "soon" },
   { feature: "Senior network", free: "—", member: "—", partner: "soon" },
   { feature: "Deal flow", free: "—", member: "—", partner: "soon" },
@@ -253,11 +255,19 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens when my trial ends?",
-    a: "You drop to the free tier automatically. No surprise charges. Upgrade whenever you're ready.",
+    a: `No surprise charges — we never charge a card you didn't add. Your cohort seat is held for ${LAPSE_GRACE_DAYS} days, and you keep read access to everything you were part of. After that the seat returns to the pool so the room stays full of people who show up.`,
+  },
+  {
+    q: "Why isn't there a free plan?",
+    a: "Because a cohort is twelve seats, and a seat nobody uses costs the eleven founders around it. Charging is what keeps the room worth being in. The trial is a full month — long enough to live through four weekly cycles and decide honestly.",
   },
   {
     q: "How do referrals work?",
-    a: "Share your invite link. When someone joins and activates their account, you earn rewards — from a free month to a free year of Member.",
+    a: "Share your invite link. Every founder who joins and sticks around earns you one free month of Member — automatically credited, with no cap. Bring twelve and the year is on us.",
+  },
+  {
+    q: "Is the founding rate really locked?",
+    a: `Yes. The first ${FOUNDING_SEATS} members pay $${PRICING.founding.monthly}/month for as long as they stay members, even after the standard price rises.`,
   },
 ];
 
@@ -350,13 +360,13 @@ function PricingBody() {
   const referred = !!sub?.referred_free_month_available;
   const countdown = useCountdown(sub?.referred_free_month_expires_at ?? null);
 
-  async function startCheckout() {
+  async function startCheckout(plan: "member" | "member_annual" | "founding" = "member") {
     setLoadingCheckout(true);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ plan }),
       });
       const data = await res.json();
       if (data.url) {
@@ -448,7 +458,7 @@ function PricingBody() {
           className="font-sans"
           style={{ fontSize: 16, color: "var(--text-secondary)", textAlign: "center", marginBottom: 60 }}
         >
-          Start free. Upgrade when Quorum changes how you build.
+          {TRIAL_DAYS.standard} days free. Then a room worth paying for.
         </p>
 
         {/* What is Quorum */}
@@ -464,7 +474,7 @@ function PricingBody() {
           <h2 className="font-sans" style={{ fontSize: 20, fontWeight: 500, color: "#e6edf3", marginBottom: 16 }}>
             What is Quorum?
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
+          <div className="stack-md" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
             {PRODUCT_BLOCKS.map((b) => (
               <div key={b.title} style={{ borderLeft: `2px solid ${b.color}`, padding: "0 0 0 16px" }}>
                 <p className="font-sans" style={{ fontSize: 14, fontWeight: 500, color: "#e6edf3", marginBottom: 6 }}>
@@ -496,8 +506,8 @@ function PricingBody() {
         )}
 
         {/* Tier cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>
-          {/* ── Free ── */}
+        <div className="stack-tiers" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>
+          {/* ── Founding member ── */}
           <div
             style={{
               background: "var(--bg-surface)",
@@ -508,46 +518,35 @@ function PricingBody() {
             }}
           >
             <p className="font-mono uppercase" style={{ fontSize: 9, color: "var(--text-disabled)", marginBottom: 12 }}>
-              // free
+              // founding member
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>$0</span>
+              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>${PRICING.founding.monthly}</span>
               <span className="font-sans" style={{ fontSize: 16, color: "var(--text-disabled)" }}>/month</span>
             </div>
             <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 20px" }}>
-              Get a feel for the room.
+              Full Member access, locked at this rate for life. First {FOUNDING_SEATS} founders only.
             </p>
             <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {FREE_FEATURES.map((f) => (
+              {FOUNDING_FEATURES.map((f) => (
                 <Feature key={f.name} feat={f} nameColor="var(--text-secondary)" descColor="var(--text-disabled)" bullet="var(--border-muted)" />
               ))}
             </ul>
-            {tier === "free" ? (
-              <button
-                disabled
-                className="font-mono"
-                style={{
-                  width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 12,
-                  background: "var(--bg-overlay)", color: "var(--text-disabled)", border: "none",
-                  fontSize: 12, cursor: "default",
-                }}
-              >
-                Current plan
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowDowngrade(true)}
-                className="font-mono"
-                style={{
-                  width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 12,
-                  background: "transparent", color: "var(--text-disabled)",
-                  border: "1px solid var(--border-default)", fontSize: 12, cursor: "pointer",
-                }}
-              >
-                Downgrade to free →
-              </button>
-            )}
+            <button
+              onClick={() => startCheckout("founding")}
+              disabled={loadingCheckout}
+              className="font-mono"
+              style={{
+                width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 12,
+                background: "transparent", color: "var(--text-primary)",
+                border: "1px solid var(--border-default)", fontSize: 12,
+                cursor: loadingCheckout ? "default" : "pointer",
+                opacity: loadingCheckout ? 0.6 : 1,
+              }}
+            >
+              Claim founding rate →
+            </button>
           </div>
 
           {/* ── Member (highlighted) ── */}
@@ -580,12 +579,26 @@ function PricingBody() {
               // member
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>$12</span>
+              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>${PRICING.member.monthly}</span>
               <span className="font-sans" style={{ fontSize: 16, color: "var(--text-secondary)" }}>/month</span>
             </div>
-            <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 20px" }}>
+            <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 8px" }}>
               Full access. No limits. No noise.
             </p>
+            {/* Annual prepay is the main lever against monthly churn, so it gets
+                a real line rather than being buried in checkout. */}
+            <button
+              onClick={() => startCheckout("member_annual")}
+              disabled={loadingCheckout}
+              className="font-mono"
+              style={{
+                background: "transparent", border: "none", padding: 0, marginBottom: 20,
+                fontSize: 11, color: "var(--accent)",
+                cursor: loadingCheckout ? "default" : "pointer", textAlign: "left",
+              }}
+            >
+              or ${PRICING.member.annual}/year — 2 months free →
+            </button>
             <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {MEMBER_FEATURES.map((f) => (
@@ -646,7 +659,7 @@ function PricingBody() {
               // partner
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>$99</span>
+              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>${PRICING.partner.monthly}</span>
               <span className="font-sans" style={{ fontSize: 16, color: "var(--text-disabled)" }}>/month</span>
             </div>
             <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 20px" }}>
@@ -719,6 +732,8 @@ function PricingBody() {
             marginBottom: 48,
           }}
         >
+          <div className="comparison-scroll">
+          <div>
           <div
             className="font-mono uppercase"
             style={{
@@ -731,7 +746,7 @@ function PricingBody() {
             }}
           >
             <span style={{ color: "#484f58" }}>Feature</span>
-            <span style={{ color: "#8b949e", textAlign: "center" }}>Free</span>
+            <span style={{ color: "#8b949e", textAlign: "center" }}>Founding</span>
             <span style={{ color: "#f59e0b", textAlign: "center" }}>Member</span>
             <span style={{ color: "#a78bfa", textAlign: "center" }}>Partner</span>
           </div>
@@ -761,6 +776,8 @@ function PricingBody() {
               </span>
             </div>
           ))}
+          </div>
+          </div>
         </div>
 
         {/* FAQ */}
@@ -789,10 +806,10 @@ function PricingBody() {
             }}
           >
             <p className="font-sans" style={{ fontSize: 18, color: "var(--text-primary)", marginBottom: 8 }}>
-              Downgrade to Free?
+              Cancel your membership?
             </p>
             <p className="font-mono" style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.6 }}>
-              You&apos;ll manage this in the billing portal. Your access stays active until the end of the current period.
+              You&apos;ll manage this in the billing portal. Access stays active until the end of the current period, after which your cohort seat is held for {LAPSE_GRACE_DAYS} days before returning to the pool.
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button

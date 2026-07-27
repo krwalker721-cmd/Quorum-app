@@ -1817,3 +1817,278 @@ html.prefers-reduced-motion *::after {
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
+
+
+/* ============================================================================
+ * Responsive — narrow viewports
+ * ----------------------------------------------------------------------------
+ * The app is designed against a desktop canvas. These rules keep it composed on
+ * phones and tablets rather than compressing the desktop layout into a column
+ * of slivers. Most of the app's styling is inline, so overriding it from a
+ * media query needs !important — that's deliberate here, not sloppiness.
+ *
+ * Breakpoints:
+ *   <1024px  the sidebar becomes an off-canvas drawer ("drawer mode")
+ *   <900px   two-up content grids stack
+ *   <640px   phone spacing, tighter chrome
+ * ========================================================================= */
+
+/* --- Nav drawer ---------------------------------------------------------- */
+
+/* The hamburger only exists in drawer mode. */
+.mobile-nav-btn { display: none; }
+
+.sidebar-scrim { display: none; }
+
+@media (max-width: 1023px) {
+  .mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 34px;
+    height: 34px;
+    padding: 0 7px;
+    margin-left: -6px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-ctl);
+    cursor: pointer;
+  }
+  .mobile-nav-btn span {
+    display: block;
+    height: 1.5px;
+    width: 100%;
+    background: var(--text-secondary);
+    border-radius: 1px;
+  }
+  .mobile-nav-btn:active { background: var(--bg-elevated); }
+
+  /* The rail lifts off the page and slides in from the left. */
+  .app-sidebar {
+    width: 264px !important;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: none;
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-modal);
+  }
+
+  .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(1, 4, 9, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease;
+  }
+  .sidebar-scrim.open { opacity: 1; pointer-events: auto; }
+
+  /* Content reclaims the full width — the drawer overlays, never displaces. */
+  .app-content { margin-left: 0 !important; }
+}
+
+/* --- Content grids ------------------------------------------------------- */
+
+/* Any inline two-up grid opts in with this class and stacks when there isn't
+ * room for two real columns. */
+/* 768px is the last width where a 1.6/1 split still yields two real columns —
+ * below it the narrow side stops holding its content. */
+@media (max-width: 767px) {
+  .stack-md { grid-template-columns: minmax(0, 1fr) !important; }
+}
+@media (max-width: 639px) {
+  .stack-sm { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* --- Page chrome --------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  /* Desktop page gutters are 24px; give phones their pixels back. */
+  .page-pad { padding-left: 14px !important; padding-right: 14px !important; }
+
+  .app-topbar { padding-left: 12px !important; padding-right: 12px !important; }
+
+  /* Fixed-width columns inside otherwise-flexible rows would force the page
+   * wider than the viewport. */
+  .shrink-on-mobile { width: auto !important; min-width: 0 !important; }
+
+  /* Rows of controls that read fine side by side on a laptop but need to wrap
+   * before they start clipping. */
+  .wrap-on-mobile { flex-wrap: wrap !important; }
+}
+
+/* Wide, inherently tabular content scrolls inside its own container rather than
+ * pushing the page sideways. */
+.scroll-x-mobile { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Nothing should ever cause a horizontal page scroll. `clip`, never `hidden` —
+ * `hidden` turns the element into a scroll container and kills every
+ * `position: sticky` descendant (the topbar, cohort subnav, onboarding). */
+html, body { max-width: 100%; overflow-x: clip; }
+
+/* Tap targets: iOS zooms any input whose text is under 16px on focus, which
+ * reads as the page jumping. Hold inputs at 16px on touch-primary devices. */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* --- Messages: two panes on desktop, one at a time on a phone ------------ */
+
+.msg-back { display: none; }
+
+@media (max-width: 767px) {
+  .msg-split > .msg-list {
+    width: 100% !important;
+    border-right: none !important;
+  }
+  /* Reading a thread hides the inbox and vice versa — a 40% inbox next to a
+   * 60% thread is unusable at this width. */
+  .msg-split[data-selected="1"] > .msg-list { display: none !important; }
+  .msg-split[data-selected="0"] > .msg-thread { display: none !important; }
+
+  .msg-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-left: -6px;
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-ctl);
+    cursor: pointer;
+  }
+
+  /* The thread's generous desktop gutters eat a phone's width. */
+  .msg-thread .px-6 { padding-left: 14px !important; padding-right: 14px !important; }
+}
+
+/* --- Settings: sidebar nav becomes a scrolling tab strip ----------------- */
+
+@media (max-width: 767px) {
+  .settings-shell {
+    flex-direction: column !important;
+    gap: 18px !important;
+    padding-top: 24px !important;
+  }
+  .settings-nav {
+    width: 100% !important;
+    position: static !important;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .settings-nav::-webkit-scrollbar { display: none; }
+  .settings-nav button {
+    width: auto !important;
+    white-space: nowrap;
+    margin-bottom: 0 !important;
+    /* Active state still reads from the amber fill + text colour set inline;
+     * the left rule only makes sense in a vertical list. */
+    border-left: none !important;
+  }
+}
+
+/* --- Cohort room --------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  /* The room is the discussion floor. The roster rail costs a quarter of a
+   * phone's width for a list the check-in strip already surfaces. */
+  .cohort-roster { display: none !important; }
+}
+
+/* --- Gutters ------------------------------------------------------------- */
+
+/* Desktop pages are laid out on 24px gutters (Tailwind px-6). That's a tenth of
+ * a phone's width on each side. Scoped to the signed-in shell so onboarding —
+ * which is composed against full-bleed stages — is untouched. */
+@media (max-width: 767px) {
+  .app-content .px-6 { padding-left: 14px !important; padding-right: 14px !important; }
+  .app-content .px-8 { padding-left: 16px !important; padding-right: 16px !important; }
+  .app-content .py-10 { padding-top: 24px !important; padding-bottom: 24px !important; }
+}
+
+/* --- Trial banner -------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  /* Side by side, the status line and the CTA each get half a phone and both
+   * wrap to three ragged lines. Stack them instead. */
+  .trial-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px;
+    padding: 9px 14px !important;
+    position: relative;
+  }
+  .trial-banner-text { line-height: 1.45; padding-right: 22px; }
+  .trial-banner-actions { gap: 0 !important; }
+  /* Dismiss pins to the corner so the CTA sits directly under the message. */
+  .trial-banner-actions button[aria-label="dismiss"] {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+  }
+}
+
+/* --- Vault --------------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  /* The ambient save feed drifts up through the empty state once the panel is
+   * short enough. It's atmosphere — drop it rather than crowd the copy. */
+  .vault-ambient { display: none !important; }
+}
+
+/* --- Settings field rows ------------------------------------------------- */
+
+@media (max-width: 767px) {
+  /* An input beside its action button leaves the button ~90px, which stacks its
+   * label into three lines. Drop the action under the field instead. */
+  .field-row { flex-wrap: wrap; }
+  .field-row > input,
+  .field-row > select { flex: 1 1 100%; }
+  .field-row > button { flex: 0 0 auto; white-space: nowrap; }
+}
+
+/* --- Flex rows that become stacks ---------------------------------------- */
+
+/* The flex counterpart to .stack-md / .stack-sm, for side-by-side sections
+ * built with flex rather than grid. */
+@media (max-width: 767px) {
+  .stack-flex-md {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+@media (max-width: 639px) {
+  .stack-flex-sm {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* --- Pricing page -------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  /* Three price cards need real width to be comparable; below this they stack. */
+  .stack-tiers { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* The feature-comparison table has four fixed columns and can't usefully
+ * collapse, so it scrolls inside its own container instead of widening the
+ * page. Wrapper is added by the pricing page. */
+.comparison-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.comparison-scroll > * { min-width: 520px; }

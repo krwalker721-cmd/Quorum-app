@@ -305,10 +305,10 @@ export default function MessagesClient({
           </button>
         </div>
       )}
-      <div className="flex flex-1 min-h-0">
+      <div className="msg-split flex flex-1 min-h-0" data-selected={selected ? "1" : "0"}>
       {/* LEFT — inbox */}
       <div
-        className="flex flex-col border-r shrink-0"
+        className="msg-list flex flex-col border-r shrink-0"
         style={{
           width: "clamp(230px, 30%, 320px)",
           background: "var(--bg-elevated)",
@@ -387,7 +387,7 @@ export default function MessagesClient({
                 <p className="empty-panel-title">no conversations yet.</p>
                 <p className="empty-panel-sub">search above to find a founder worth talking to.</p>
                 <EmptyStateUpgradeLine>
-                  You have 3 messages on the free tier this month. Upgrade for unlimited.
+                  Messaging is for members. Reactivate to keep your direct lines open.
                 </EmptyStateUpgradeLine>
               </div>
             </div>
@@ -443,7 +443,7 @@ export default function MessagesClient({
       </div>
 
       {/* RIGHT — thread */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="msg-thread flex-1 flex flex-col min-w-0">
         {selected ? (
           <>
             <div
@@ -451,6 +451,14 @@ export default function MessagesClient({
               style={{ borderColor: "var(--border)" }}
             >
               <div className="flex items-center gap-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  className="msg-back font-mono"
+                  aria-label="back to conversations"
+                >
+                  ‹
+                </button>
                 <Avatar
                   name={selected.full_name}
                   stage={selected.stage}

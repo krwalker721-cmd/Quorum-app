@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminRequest } from "@/lib/admin/auth";
-import { applyMilestoneReward, recalculateMonthlyBonus } from "@/lib/referral-helpers";
+import { applyMilestoneReward } from "@/lib/referral-helpers";
 
 // GET — platform-wide referral overview for the admin Referrals section:
 // status counts, top referrers, and recent referral records.
@@ -114,12 +114,6 @@ export async function POST(req: Request) {
   const { user_id, reward_type } = await req.json().catch(() => ({}));
   if (!user_id || typeof user_id !== "string") {
     return NextResponse.json({ error: "missing user_id" }, { status: 400 });
-  }
-
-  // Recalculate the monthly active-referral bonus (DB + Stripe reconciliation).
-  if (reward_type === "monthly_bonus") {
-    await recalculateMonthlyBonus(user_id);
-    return NextResponse.json({ ok: true });
   }
 
   if (!reward_type || !(reward_type in MILESTONE_COUNTS)) {

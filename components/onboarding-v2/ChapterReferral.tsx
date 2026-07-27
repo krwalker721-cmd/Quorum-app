@@ -156,7 +156,7 @@ export function ChapterReferral() {
                 // monthly bonus
               </div>
               <div style={{ fontFamily: SANS, fontSize: 11, color: C.textSecondary }}>
-                1+ active referrals → 50% off every month
+                every founder you bring in → one free month
               </div>
             </div>
           </Beat>

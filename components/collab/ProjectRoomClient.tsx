@@ -218,7 +218,7 @@ export default function ProjectRoomClient({
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ padding: "18px 24px 8px", maxWidth: 1600 }}>
+      <div className="page-pad grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ padding: "18px 24px 8px", maxWidth: 1600 }}>
         <div className="lg:col-span-2 space-y-3">
           {/* Project header tile */}
           <div
@@ -435,7 +435,7 @@ export default function ProjectRoomClient({
           </div>
         </aside>
       </div>
-      <div style={{ padding: "0 24px 8px", maxWidth: 1600 }}>
+      <div className="page-pad" style={{ padding: "0 24px 8px", maxWidth: 1600 }}>
         <TerminalFooter />
       </div>
     </>

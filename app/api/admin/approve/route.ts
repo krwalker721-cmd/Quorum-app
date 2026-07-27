@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Start the user's trial. Referred users (referred_by set at signup) get the
-  // 30-day trial + 48h free-month window; cold signups get 7 days. Best-effort.
+  // Standard trial + 48h free-month window; referred founders get longer. Best-effort.
   const isReferred = !!approved?.referred_by;
   try {
     await initializeUserSubscription(id, isReferred);

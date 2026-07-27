@@ -13,7 +13,8 @@ interface ReferralData {
   link: string | null;
   totalCount: number;
   activeCount: number;
-  monthlyBonus: number;
+  creditMonths: number;
+  creditValue: number;
   referrals: Array<{
     id: string;
     status: string;
@@ -30,20 +31,19 @@ interface ReferralData {
     } | null;
   }>;
   tier: "free" | "member" | "partner";
-  referralCap: number | null;
-  referralCapReached: boolean;
   activeStripeDiscounts?: string[];
-  currentSavings?: number;
 }
 
 // ─── config ──────────────────────────────────────────────────────────────────
 
+// Badges, not discounts. Every referral already pays a month of credit; the
+// ladder is recognition on top of that, not a second payout.
 const MILESTONES = [
-  { count: 1, reward: "1 free month + Connector badge" },
-  { count: 3, reward: "1 free month of Member" },
-  { count: 5, reward: "2 free months of Member" },
-  { count: 10, reward: "3 free months of Member" },
-  { count: 25, reward: "Member free for 1 year" },
+  { count: 1, reward: "Connector badge" },
+  { count: 3, reward: "Connector — confirmed" },
+  { count: 5, reward: "Builder of Rooms badge" },
+  { count: 10, reward: "Builder of Rooms — gold" },
+  { count: 25, reward: "Founding Connector badge" },
 ];
 
 const statusStyles = {
@@ -140,7 +140,7 @@ function SkeletonBlock({ width, height, style }: { width: string | number; heigh
 
 function LoadingState() {
   return (
-    <div style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
+    <div className="page-pad" style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
       <style>{`@keyframes shimmer { 0% { opacity: 0.4 } 50% { opacity: 0.7 } 100% { opacity: 0.4 } }`}</style>
       <SkeletonBlock width={200} height={32} style={{ marginBottom: 24 }} />
       <SkeletonBlock width="100%" height={96} style={{ marginBottom: 24 }} />
@@ -239,7 +239,7 @@ export default function ReferralsDashboard() {
     };
   }, []);
 
-  const linkActive = hasPosted && !(data?.referralCapReached ?? false);
+  const linkActive = hasPosted;
 
   const handleCopy = useCallback(() => {
     if (!data?.link || !linkActive) return;
@@ -251,9 +251,8 @@ export default function ReferralsDashboard() {
   if (loading) return <LoadingState />;
   if (error || !data) return <ErrorState />;
 
-  const { link, totalCount, activeCount, monthlyBonus, referrals, tier, referralCapReached } = data;
+  const { link, totalCount, activeCount, creditMonths, creditValue, referrals, tier } = data;
 
-  const currentSavings = data.currentSavings ?? 0;
   const nextMilestone = MILESTONES.find((m) => m.count > totalCount);
 
   const sortedReferrals = [...referrals].sort((a, b) => {
@@ -264,13 +263,9 @@ export default function ReferralsDashboard() {
 
   const conversionPct = totalCount > 0 ? (activeCount / totalCount) * 100 : 0;
 
-  const bonusTierIndex = activeCount >= 1 ? 0 : -1;
-  const bonusRows = [
-    { label: "1+ active referrals", value: "50% off / month" },
-  ];
 
   return (
-    <div style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
+    <div className="page-pad" style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
       {/* ─── header — compact; the topbar already names the page ────────────── */}
       <div style={{ marginBottom: 18 }}>
         <h1 style={{ fontFamily: SANS, fontSize: 16, fontWeight: 500, color: "#e6edf3", margin: 0, lineHeight: 1.2 }}>
@@ -281,12 +276,12 @@ export default function ReferralsDashboard() {
         </p>
       </div>
 
-      {/* ─── free tier cap notice ───────────────────────────────────────────── */}
+      {/* ─── lapsed notice ──────────────────────────────────────────────────── */}
       {tier === "free" && status !== "trialing" && (
         <div
           style={{
-            background: "rgba(34,197,94,0.06)",
-            border: "1px solid rgba(34,197,94,0.22)",
+            background: "rgba(245,158,11,0.06)",
+            border: "1px solid rgba(245,158,11,0.22)",
             borderRadius: 12,
             padding: "14px 16px",
             marginBottom: 20,
@@ -295,24 +290,22 @@ export default function ReferralsDashboard() {
             justifyContent: "space-between",
             gap: 16,
           }}
+          className="stack-flex-sm"
         >
           <div>
-            <p style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#22c55e", marginBottom: 4, letterSpacing: "0.08em" }}>
-              // free tier
+            <p style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#f8c56a", marginBottom: 4, letterSpacing: "0.08em" }}>
+              // membership lapsed
             </p>
-            <p style={{ fontFamily: SANS, fontSize: 13, color: "#8b949e", marginBottom: 6 }}>
-              You can refer up to 3 founders on the free tier. Upgrade to Member for unlimited referrals.
+            <p style={{ fontFamily: SANS, fontSize: 13, color: "#8b949e", marginBottom: 0 }}>
+              Your referral link is paused while your membership is inactive. Reactivate to keep bringing founders in — and to keep earning free months.
             </p>
-            <p style={{ fontFamily: MONO, fontSize: 10, color: "#22c55e" }}>{totalCount} of 3 referrals used</p>
           </div>
-          {referralCapReached && (
-            <span
-              onClick={() => router.push("/pricing")}
-              style={{ fontFamily: MONO, fontSize: 11, color: "#22c55e", cursor: "pointer", whiteSpace: "nowrap" }}
-            >
-              Upgrade for unlimited →
-            </span>
-          )}
+          <span
+            onClick={() => router.push("/pricing")}
+            style={{ fontFamily: MONO, fontSize: 11, color: "#f8c56a", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            Reactivate →
+          </span>
         </div>
       )}
 
@@ -329,6 +322,7 @@ export default function ReferralsDashboard() {
             justifyContent: "space-between",
             gap: 20,
           }}
+          className="stack-flex-sm"
         >
           <div>
             <div
@@ -347,7 +341,7 @@ export default function ReferralsDashboard() {
               Bring someone who belongs here. Get rewarded when they stay.
             </p>
             <p style={{ fontFamily: MONO, fontSize: 11, color: "#8b949e", marginTop: 10, letterSpacing: "0.04em" }}>
-              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>{monthlyBonus}% off/mo</span>
+              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>{creditMonths} {creditMonths === 1 ? "month" : "months"} earned</span>
             </p>
           </div>
           <button
@@ -370,7 +364,7 @@ export default function ReferralsDashboard() {
               flexShrink: 0,
             }}
           >
-            {referralCapReached ? "link paused" : copied ? "copied ✓" : "copy link →"}
+            {copied ? "copied ✓" : "copy link →"}
           </button>
         </div>
         {!hasPosted && (
@@ -390,7 +384,7 @@ export default function ReferralsDashboard() {
       </div>
 
       {/* ─── two-column layout ──────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+      <div className="stack-flex-md" style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
         {/* LEFT */}
         <div style={{ flex: "1.4", minWidth: 0 }}>
           {/* referral link display */}
@@ -596,52 +590,28 @@ export default function ReferralsDashboard() {
             })}
           </div>
 
-          {/* monthly bonus */}
+          {/* referral credit */}
           <div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 12, padding: 16, marginTop: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.08em" }}>
-                // monthly bonus
-              </span>
-              <span style={{ fontFamily: MONO, fontSize: 9, color: "#484f58" }}>resets {getResetDate()}</span>
-            </div>
+            <span style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.08em" }}>
+              // credit earned
+            </span>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}>
-              <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>{monthlyBonus}%</span>
-              <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>off this month</span>
+              <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>{creditMonths}</span>
+              <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>
+                {creditMonths === 1 ? "free month" : "free months"}
+              </span>
             </div>
-            <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 4 }}>// {activeCount} active referrals</p>
+            <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 4 }}>
+              // ${creditValue} of Member, applied automatically
+            </p>
 
             <div style={{ marginTop: 12, borderTop: "1px solid #21262d", paddingTop: 12 }}>
-              {bonusRows.map((row, i) => {
-                const isActiveTier = i === bonusTierIndex;
-                return (
-                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0" }}>
-                    <span style={{ fontFamily: SANS, fontSize: 12, color: isActiveTier ? "#f59e0b" : "#484f58" }}>{row.label}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 11, color: isActiveTier ? "#f59e0b" : "#484f58" }}>{row.value}</span>
-                  </div>
-                );
-              })}
+              <p style={{ fontFamily: SANS, fontSize: 12, color: "#8b949e", margin: 0, lineHeight: 1.5 }}>
+                Every founder you bring in who sticks around earns you one free
+                month. No cap — fill a cohort and the year is on us.
+              </p>
             </div>
           </div>
-
-          {/* current savings */}
-          {currentSavings > 0 && (
-            <div
-              style={{
-                background: "rgba(34,197,94,0.04)",
-                border: "1px solid rgba(34,197,94,0.15)",
-                borderRadius: 12,
-                padding: "16px 20px",
-                marginTop: 16,
-              }}
-            >
-              <p style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: "#22c55e", marginBottom: 6 }}>
-                // your current savings
-              </p>
-              <p style={{ fontFamily: SANS, fontSize: 16, color: "#22c55e", margin: 0 }}>
-                ${currentSavings.toFixed(2)} off this month
-              </p>
-            </div>
-          )}
         </div>
       </div>
       <TerminalFooter />

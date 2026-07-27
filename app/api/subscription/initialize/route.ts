@@ -3,7 +3,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 // POST — initialize a trialing subscription the first time a user reaches
 // onboarding. Referred users get a 30-day trial (their free month), everyone
-// else gets the standard 7 days. Idempotent: once trial_ends_at is stamped we
+// else gets the standard trial length. Idempotent: once trial_ends_at is stamped we
 // leave the existing subscription untouched.
 //
 // Subscription rows are not user-writable under RLS (only SELECT + service_role

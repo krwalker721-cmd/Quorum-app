@@ -54,6 +54,11 @@ const NAV: NavItem[] = [
 const EXPANDED_W = 240;
 const COLLAPSED_W = 48;
 
+// Below this the rail stops being a rail: it becomes an off-canvas drawer and
+// the content reclaims the full width. Keep in sync with the --bp-rail
+// breakpoint in globals.css.
+const RAIL_MIN_W = 1024;
+
 export default function Sidebar({
   currentUser,
 }: {
@@ -64,26 +69,75 @@ export default function Sidebar({
   const { dots } = useNavDots();
   const { tier } = useTier();
   const [showHomeDot, setShowHomeDot] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsedPref, setCollapsedPref] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Drawer mode (narrow viewports) and whether the drawer is currently open.
+  const [drawer, setDrawer] = useState(false);
+  const [open, setOpen] = useState(false);
 
   // Hydrate collapsed state from localStorage.
   useEffect(() => {
     try {
       const stored = localStorage.getItem(COLLAPSED_KEY);
-      if (stored === "1") setCollapsed(true);
+      if (stored === "1") setCollapsedPref(true);
     } catch {}
     setMounted(true);
   }, []);
 
-  // Sync width into a CSS variable so the main content reflows.
+  // Track drawer mode. Server always renders the desktop rail, so this settles
+  // on mount like the collapsed preference does.
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${RAIL_MIN_W - 1}px)`);
+    const sync = () => {
+      setDrawer(mq.matches);
+      if (!mq.matches) setOpen(false); // never strand the overlay on resize
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  // TopBar's menu button lives in a different subtree, so it talks to the rail
+  // over the window-event bus rather than through a provider.
+  useEffect(() => {
+    const onToggle = () => setOpen((v) => !v);
+    window.addEventListener("quorum:nav-toggle", onToggle);
+    return () => window.removeEventListener("quorum:nav-toggle", onToggle);
+  }, []);
+
+  // A tap that navigates should also dismiss the drawer.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // Escape closes the drawer, and an open drawer locks the page behind it.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  // In drawer mode the rail is always full-width — an icon-only drawer would be
+  // a 48px panel floating over the page, which is nobody's idea of a menu.
+  const collapsed = drawer ? false : collapsedPref;
+
+  // Sync width into a CSS variable so the main content reflows. Drawer mode
+  // overlays instead of displacing, so it contributes no width.
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty(
       "--sidebar-w",
-      `${collapsed ? COLLAPSED_W : EXPANDED_W}px`
+      drawer ? "0px" : `${collapsed ? COLLAPSED_W : EXPANDED_W}px`
     );
-  }, [collapsed]);
+  }, [collapsed, drawer]);
 
   useEffect(() => {
     const refresh = () => setShowHomeDot(computeHomeDot());
@@ -100,7 +154,7 @@ export default function Sidebar({
   }, [pathname]);
 
   function toggle() {
-    setCollapsed((v) => {
+    setCollapsedPref((v) => {
       const next = !v;
       try {
         localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
@@ -112,8 +166,15 @@ export default function Sidebar({
   const width = collapsed ? COLLAPSED_W : EXPANDED_W;
 
   return (
+    <>
+    {/* Scrim — only ever rendered in drawer mode */}
+    <div
+      className={`sidebar-scrim${open ? " open" : ""}`}
+      onClick={() => setOpen(false)}
+      aria-hidden
+    />
     <aside
-      className="flex flex-col fixed left-0 top-0 h-screen"
+      className={`app-sidebar flex flex-col fixed left-0 top-0 h-screen${open ? " open" : ""}`}
       style={{
         width,
         background: "var(--bg-surface)",
@@ -151,15 +212,27 @@ export default function Sidebar({
             quorum
           </span>
         )}
-        <button
-          type="button"
-          onClick={toggle}
-          className="sidebar-toggle"
-          aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
-          title={collapsed ? "expand" : "collapse"}
-        >
-          {mounted && collapsed ? "›" : "‹"}
-        </button>
+        {drawer ? (
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="sidebar-toggle"
+            aria-label="close menu"
+            title="close"
+          >
+            ✕
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={toggle}
+            className="sidebar-toggle"
+            aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
+            title={collapsed ? "expand" : "collapse"}
+          >
+            {mounted && collapsed ? "›" : "‹"}
+          </button>
+        )}
       </div>
 
       {/* Nav */}
@@ -313,5 +386,6 @@ export default function Sidebar({
       </div>
 
     </aside>
+    </>
   );
 }

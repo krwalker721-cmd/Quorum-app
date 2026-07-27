@@ -3,10 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type Lapse =
+  | { state: "ok" }
+  | { state: "grace"; daysLeft: number }
+  | { state: "released" };
+
 interface TrialBannerProps {
   trialEndsAt: string | null;
   tier: "free" | "member" | "partner";
   status: string;
+  lapse?: Lapse;
 }
 
 const DISMISS_KEY = "quorum:trial_banner_dismissed";
@@ -15,6 +21,7 @@ export default function TrialBanner({
   trialEndsAt,
   tier,
   status,
+  lapse = { state: "ok" },
 }: TrialBannerProps) {
   const router = useRouter();
   const [dismissed, setDismissed] = useState(false);
@@ -29,8 +36,40 @@ export default function TrialBanner({
     }
   }, []);
 
-  // Never show for paid tiers or outside an active trial.
+  // Never show for paid tiers.
   if (tier === "member" || tier === "partner") return null;
+
+  // The lapse states outrank the trial countdown: once the trial is over, what
+  // matters is the cohort seat, not the calendar. These are NOT dismissible —
+  // losing your room is not a notice someone should be able to swipe away.
+  if (lapse.state === "grace") {
+    return (
+      <LapseBanner
+        accent="#f59e0b"
+        bg="rgba(245,158,11,0.07)"
+        border="1px solid rgba(245,158,11,0.25)"
+        text={`// your trial has ended — your cohort seat is held for ${lapse.daysLeft} more ${
+          lapse.daysLeft === 1 ? "day" : "days"
+        }`}
+        cta="Keep my seat →"
+        onCta={() => router.push("/pricing")}
+      />
+    );
+  }
+
+  if (lapse.state === "released") {
+    return (
+      <LapseBanner
+        accent="#f85149"
+        bg="rgba(248,81,73,0.07)"
+        border="1px solid rgba(248,81,73,0.25)"
+        text="// your cohort seat was released — reactivate to be placed in a new room"
+        cta="Reactivate →"
+        onCta={() => router.push("/pricing")}
+      />
+    );
+  }
+
   if (status !== "trialing") return null;
   if (!trialEndsAt) return null;
   if (dismissed) return null;
@@ -68,7 +107,7 @@ export default function TrialBanner({
       : "1px solid rgba(34,197,94,0.16)";
   const dayWord = daysLeft === 1 ? "day" : "days";
   const leftText = expired
-    ? "// your trial has ended — you're now on the free tier"
+    ? "// your trial has ended — add a card to keep your cohort seat"
     : ending
       ? `// your trial ends in ${daysLeft} ${dayWord} — add a card to keep full access`
       : `// trial active — full member access for ${daysLeft} more ${dayWord}`;
@@ -76,6 +115,7 @@ export default function TrialBanner({
 
   return (
     <div
+      className="trial-banner"
       style={{
         background: bg,
         borderBottom: border,
@@ -86,6 +126,7 @@ export default function TrialBanner({
       }}
     >
       <span
+        className="trial-banner-text"
         style={{
           fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
           fontSize: 11,
@@ -94,7 +135,7 @@ export default function TrialBanner({
       >
         {leftText}
       </span>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <div className="trial-banner-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <button
           onClick={() => router.push("/pricing")}
           onMouseEnter={() => setCtaHover(true)}
@@ -126,6 +167,66 @@ export default function TrialBanner({
           }}
         >
           ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Non-dismissible banner for the two lapse states. Deliberately has no close
+// button: the trial countdown is information, but losing your cohort seat is a
+// consequence, and it stays on screen until it's resolved.
+function LapseBanner({
+  accent,
+  bg,
+  border,
+  text,
+  cta,
+  onCta,
+}: {
+  accent: string;
+  bg: string;
+  border: string;
+  text: string;
+  cta: string;
+  onCta: () => void;
+}) {
+  return (
+    <div
+      className="trial-banner"
+      style={{
+        background: bg,
+        borderBottom: border,
+        padding: "10px 20px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <span
+        className="trial-banner-text"
+        style={{
+          fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
+          fontSize: 11,
+          color: accent,
+        }}
+      >
+        {text}
+      </span>
+      <div className="trial-banner-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <button
+          onClick={onCta}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
+            fontSize: 11,
+            fontWeight: 600,
+            color: accent,
+          }}
+        >
+          {cta}
         </button>
       </div>
     </div>

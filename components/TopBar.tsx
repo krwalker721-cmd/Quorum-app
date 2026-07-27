@@ -2,6 +2,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NewPostButton from "@/components/NewPostButton";
 import SignOutButton from "@/components/SignOutButton";
 import TopBarTierLink from "@/components/TopBarTierLink";
+import MobileNavButton from "@/components/MobileNavButton";
 
 // One quiet line of context per page so the topbar orients you instead of
 // just naming the route. Falls back to nothing for unmapped pages.
@@ -29,7 +30,7 @@ export default function TopBar({
   const context = PAGE_CONTEXT[title];
   return (
     <div
-      className="flex items-center justify-between px-6 sticky top-0 z-30"
+      className="app-topbar flex items-center justify-between px-6 sticky top-0 z-30"
       style={{
         // Fixed height so full-bleed pages (messages, cohort room) can size
         // themselves against a known chrome height. Keep in sync with
@@ -39,6 +40,8 @@ export default function TopBar({
         borderBottom: "1px solid var(--border-default)",
       }}
     >
+      <div className="flex items-center gap-2 min-w-0">
+      <MobileNavButton />
       <div className="min-w-0">
         {/* Breadcrumb path — terminal-style, quorum is the root */}
         <p
@@ -65,6 +68,7 @@ export default function TopBar({
             </span>
           )}
         </div>
+      </div>
       </div>
       <div className="flex items-center gap-2 shrink-0 pl-4">
         {/* Secondary chrome collapses away first on narrow viewports */}
