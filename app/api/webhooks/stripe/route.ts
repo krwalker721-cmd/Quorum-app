@@ -44,7 +44,7 @@ async function userIdForCustomer(customerId: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
-  const sig = headers().get("stripe-signature");
+  const sig = (await headers()).get("stripe-signature");
 
   if (!sig) {
     return NextResponse.json({ error: "No signature" }, { status: 400 });

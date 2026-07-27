@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // user is taken from the session, never the request body, so a user can't be
 // attributed to someone else.
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

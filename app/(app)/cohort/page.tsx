@@ -9,12 +9,13 @@ import CohortSelectionScreen, {
 
 export const dynamic = "force-dynamic";
 
-export default async function CohortPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
-  const supabase = createClient();
+export default async function CohortPage(
+  props: {
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

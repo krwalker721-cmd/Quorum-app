@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 // username server-side and redirects to /profile/[username] so the sidebar can
 // link here without knowing the slug.
 export default async function MyProfilePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

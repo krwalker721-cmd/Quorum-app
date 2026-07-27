@@ -7,7 +7,7 @@ import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
 // charged. The SetupIntent is created on demand (when the user clicks "claim"),
 // not on page load, to avoid wasting API calls.
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -53,7 +53,7 @@ export async function POST() {
 // card, then creates the Member subscription with a 30-day trial (the referred
 // free month). The trial means $0 for month 1, $12 automatic on day 31.
 export async function PUT(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

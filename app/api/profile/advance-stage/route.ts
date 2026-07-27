@@ -15,7 +15,7 @@ const TRANSITION_COPY: Record<string, string> = {
  * One-directional. Refuses anything else.
  */
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

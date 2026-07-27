@@ -37,7 +37,7 @@ import { MONO } from "./theme";
 
 // Track scroll progress through a specific chapter element. 0 = the element's
 // top hits the viewport top; 1 = the element's bottom hits the viewport bottom.
-export function useChapterScroll(ref: RefObject<HTMLElement>) {
+export function useChapterScroll(ref: RefObject<HTMLElement | null>) {
   return useScroll({ target: ref, offset: ["start start", "end end"] });
 }
 

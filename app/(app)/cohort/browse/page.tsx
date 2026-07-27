@@ -15,7 +15,7 @@ type Cohort = {
 };
 
 export default async function BrowseCohortsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: profile } = await supabase.from("profiles").select("tier").eq("id", user.id).single();

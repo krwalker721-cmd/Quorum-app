@@ -8,7 +8,7 @@ import { checkUsageCap, incrementUsage } from "@/lib/stripe-helpers";
 // below is the authoritative gate (free tier's cap is 0, so free users can
 // browse the board but not post until they upgrade).
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

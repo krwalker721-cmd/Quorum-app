@@ -12,7 +12,7 @@ type Member = {
 };
 
 export default async function HeaderZone({ members }: { members: Member[] }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const tenMinutesAgo = new Date(Date.now() - 10 * 60_000).getTime();
 

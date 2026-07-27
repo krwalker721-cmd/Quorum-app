@@ -6,7 +6,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
  * before, queue the one-time "first honest" notice (shown once on home).
  */
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -4,12 +4,13 @@ import VaultPage from "@/components/vault/VaultPage";
 
 export const dynamic = "force-dynamic";
 
-export default async function Vault({
-  searchParams,
-}: {
-  searchParams: { tab?: string };
-}) {
-  const supabase = createClient();
+export default async function Vault(
+  props: {
+    searchParams: Promise<{ tab?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

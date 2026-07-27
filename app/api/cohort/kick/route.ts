@@ -6,7 +6,7 @@ import { assignUserToCohort } from "@/lib/cohorts";
 // (same logic as signup auto-join). Only the cohort creator (is_creator) may do
 // this, and never themselves. Notifies the removed member.
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

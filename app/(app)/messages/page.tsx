@@ -4,12 +4,13 @@ import MessagesClient from "@/components/messages/MessagesClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function MessagesPage({
-  searchParams,
-}: {
-  searchParams: { to?: string };
-}) {
-  const supabase = createClient();
+export default async function MessagesPage(
+  props: {
+    searchParams: Promise<{ to?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 

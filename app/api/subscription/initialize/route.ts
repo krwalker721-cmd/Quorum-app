@@ -9,7 +9,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 // Subscription rows are not user-writable under RLS (only SELECT + service_role
 // writes), so the upsert and the profile stamp both go through the admin client.
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
