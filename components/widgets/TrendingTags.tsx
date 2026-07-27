@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ROOM_TYPE_COLOR, TAG_COLOR } from "@/lib/stage";
 
 export default async function TrendingTags() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
 
   const { data } = await supabase

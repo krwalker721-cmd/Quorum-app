@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
  * UI can be lenient — we just need any matching row to award the connector.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

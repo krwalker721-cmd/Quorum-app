@@ -30,13 +30,14 @@ function startOfWeek(d: Date) {
   return monday;
 }
 
-export default async function CohortRoomPage({
-  params,
-}: {
-  params: { cohort_id: string };
-}) {
+export default async function CohortRoomPage(
+  props: {
+    params: Promise<{ cohort_id: string }>;
+  }
+) {
+  const params = await props.params;
   const cohortId = params.cohort_id;
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

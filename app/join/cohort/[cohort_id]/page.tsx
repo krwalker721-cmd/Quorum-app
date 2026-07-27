@@ -4,12 +4,13 @@ import LogoMark from "@/components/LogoMark";
 
 export const dynamic = "force-dynamic";
 
-export default async function JoinCohortPage({
-  params,
-}: {
-  params: { cohort_id: string };
-}) {
-  const supabase = createClient();
+export default async function JoinCohortPage(
+  props: {
+    params: Promise<{ cohort_id: string }>;
+  }
+) {
+  const params = await props.params;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

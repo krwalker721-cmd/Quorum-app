@@ -18,7 +18,7 @@ const VALID_FEATURES: UsageFeature[] = [
 // POST — called after an action succeeds to bump the monthly counter. Only free
 // tier usage is tracked; paid tiers are uncapped and skip tracking entirely.
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

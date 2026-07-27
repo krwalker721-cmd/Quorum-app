@@ -3,7 +3,7 @@ import Avatar from "@/components/Avatar";
 import { STAGE_COLOR } from "@/lib/stage";
 
 export default async function MostHelpfulThisWeek() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
 
   // Replies to pulse posts in last 7 days

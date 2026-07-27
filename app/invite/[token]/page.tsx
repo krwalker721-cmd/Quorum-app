@@ -4,8 +4,9 @@ import LogoMark from "@/components/LogoMark";
 
 export const dynamic = "force-dynamic";
 
-export default async function InviteRedeemPage({ params }: { params: { token: string } }) {
-  const supabase = createClient();
+export default async function InviteRedeemPage(props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=/invite/${params.token}`);
 

@@ -5,7 +5,7 @@ import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
 
 // GET — full subscription details for the authenticated user.
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -61,7 +61,7 @@ export async function GET() {
 
 // POST — create a Stripe Customer Portal session for the authenticated user.
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

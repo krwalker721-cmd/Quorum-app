@@ -5,7 +5,7 @@ import { checkUsageCap, incrementUsage } from "@/lib/stripe-helpers";
 // Server-side DM creation. Direct messages count toward the free-tier `messages`
 // cap, enforced here so the API can't be called directly to bypass it.
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

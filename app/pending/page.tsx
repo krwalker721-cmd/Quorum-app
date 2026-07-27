@@ -5,7 +5,7 @@ import SignOutButton from "@/components/SignOutButton";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 
 export default async function PendingPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");

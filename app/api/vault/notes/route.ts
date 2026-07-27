@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { checkUsageCap, incrementUsage } from "@/lib/stripe-helpers";
 
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -39,7 +39,7 @@ export async function POST() {
 }
 
 export async function PATCH(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -66,7 +66,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

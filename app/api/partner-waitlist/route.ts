@@ -3,7 +3,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 // POST — add the authenticated user to the Partner waitlist.
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -20,7 +20,7 @@ export async function POST() {
 
 // DELETE — remove the authenticated user from the Partner waitlist.
 export async function DELETE() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

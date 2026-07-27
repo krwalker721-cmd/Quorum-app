@@ -7,7 +7,7 @@ import { checkUsageCap, incrementUsage } from "@/lib/stripe-helpers";
 // free-tier limits. Cohort posts (cohort_id present) count toward cohort_posts;
 // everything else counts toward pulse_posts.
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

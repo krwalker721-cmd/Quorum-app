@@ -7,7 +7,7 @@ import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
 // The client may pass a priceId, but we default to STRIPE_MEMBER_PRICE_ID so the
 // price never has to be exposed to the browser.
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

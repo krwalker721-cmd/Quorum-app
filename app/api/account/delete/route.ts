@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // that reference it) cleans up the rest. Best-effort: a failure to delete a
 // dependent table must not block removing the auth user.
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

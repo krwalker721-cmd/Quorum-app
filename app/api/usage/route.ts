@@ -32,7 +32,7 @@ const LIMITS: Record<Tier, Record<string, number>> = {
 };
 
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

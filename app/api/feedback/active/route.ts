@@ -4,7 +4,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 // Returns the most recent active feedback question the current user has not yet
 // answered or dismissed, scoped to their audience tier.
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ question: null });
 

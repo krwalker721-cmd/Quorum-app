@@ -5,7 +5,7 @@ import { checkUsageCap, incrementUsage } from "@/lib/stripe-helpers";
 // Server-side reply creation. Replies are stored as posts with a parent_post_id
 // and count toward the free-tier `replies` cap, enforced here as a safety net.
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

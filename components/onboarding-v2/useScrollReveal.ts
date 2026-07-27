@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 // visible — then stops observing so the animation never replays on scroll-up.
 export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
   threshold = 0.2,
-): { ref: RefObject<T>; isVisible: boolean } {
+): { ref: RefObject<T | null>; isVisible: boolean } {
   const ref = useRef<T>(null);
   const [isVisible, setIsVisible] = useState(false);
 

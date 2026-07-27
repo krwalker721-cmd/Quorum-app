@@ -5,14 +5,15 @@ import ProjectRoomClient from "@/components/collab/ProjectRoomClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProjectRoomPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { tab?: string };
-}) {
-  const supabase = createClient();
+export default async function ProjectRoomPage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ tab?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

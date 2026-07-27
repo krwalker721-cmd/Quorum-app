@@ -39,14 +39,15 @@ function formatDate(ts: string) {
   });
 }
 
-export default async function ProfilePage({
-  params,
-  searchParams,
-}: {
-  params: { username: string };
-  searchParams: { tab?: string };
-}) {
-  const supabase = createClient();
+export default async function ProfilePage(
+  props: {
+    params: Promise<{ username: string }>;
+    searchParams: Promise<{ tab?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
@@ -78,7 +79,7 @@ export default async function ProfilePage({
   if (!profile) notFound();
 
   const isOwner = profile.id === user.id;
-  const isAdmin = isAdminUnlocked();
+  const isAdmin = await isAdminUnlocked();
   const canSeeTier = isOwner || isAdmin;
   const tab =
     searchParams.tab === "posts"

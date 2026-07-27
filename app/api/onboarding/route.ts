@@ -8,7 +8,7 @@ import { assignUserToCohort } from "@/lib/cohorts";
 
 // GET — current user's progress, or sensible defaults if no row exists yet.
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -51,7 +51,7 @@ export async function GET() {
 // completed }; only the provided fields are written. Setting completed:true also
 // stamps completed_at.
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

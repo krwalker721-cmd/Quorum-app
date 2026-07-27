@@ -16,7 +16,7 @@ const PAGE = 20;
 const TWO_HOURS = 2 * 60 * 60 * 1000;
 
 export default async function PulsePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 

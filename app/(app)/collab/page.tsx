@@ -6,12 +6,13 @@ import type { PulseEvent } from "@/components/collab/PulseBar";
 
 export const dynamic = "force-dynamic";
 
-export default async function CollabPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string; error?: string };
-}) {
-  const supabase = createClient();
+export default async function CollabPage(
+  props: {
+    searchParams: Promise<{ tab?: string; error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

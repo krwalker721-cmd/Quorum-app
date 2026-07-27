@@ -24,7 +24,7 @@ function calculateCurrentSavings(discountIds: string[]): number {
 // GET — full referral data for the authenticated user. Powers the /referrals
 // dashboard (wired in Session 8).
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
