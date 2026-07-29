@@ -45,7 +45,7 @@ export default function NotesTab({
   initialNotes: NoteRow[];
   initialCollections: NoteCollectionRow[];
 }) {
-  const { paywallState, checkAndGate, closePaywall } = usePaywall();
+  const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
   const [notes, setNotes] = useState<NoteRow[]>(initialNotes);
   const [collections, setCollections] = useState<NoteCollectionRow[]>(initialCollections);
   const [activeId, setActiveId] = useState<string | null>(initialNotes[0]?.id ?? null);
@@ -72,7 +72,13 @@ export default function NotesTab({
     // The POST route enforces the cap and increments usage server-side, so no
     // separate /api/usage/increment call here (it would double-count).
     const res = await fetch("/api/vault/notes", { method: "POST" });
-    if (!res.ok) return;
+    if (!res.ok) {
+      // An entitlement 403 gets the upgrade overlay — otherwise the click to add
+      // a note does nothing at all, with no explanation.
+      const data = await res.json().catch(() => ({}));
+      handleGateResponse("vault_notes", data);
+      return;
+    }
     const { id } = await res.json();
     const fresh: NoteRow = {
       id,
@@ -265,8 +271,6 @@ export default function NotesTab({
           isOpen={paywallState.isOpen}
           onClose={closePaywall}
           feature={paywallState.feature!}
-          currentUsage={paywallState.currentUsage}
-          limit={paywallState.limit}
           hadTrial={paywallState.hadTrial}
         />
       )}

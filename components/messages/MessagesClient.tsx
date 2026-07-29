@@ -43,10 +43,8 @@ export default function MessagesClient({
   initialPartnerId: string | null;
 }) {
   const router = useRouter();
-  const { tier, status } = useTier();
-  const { paywallState, checkAndGate, closePaywall } = usePaywall();
-  // Monthly message usage — drives the 80%+ nudge bar for free-tier users.
-  const [msgUsage, setMsgUsage] = useState<{ current: number; limit: number } | null>(null);
+  const { hasFullAccess, hadTrial, isLoading: tierLoading } = useTier();
+  const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialPartnerId ?? initialConversations[0]?.partner.id ?? null
@@ -64,38 +62,10 @@ export default function MessagesClient({
   const selected =
     conversations.find((c) => c.partner.id === selectedId)?.partner ?? null;
 
-  // Free-tier (non-trial) monthly message usage for the 80%+ nudge bar.
-  const showUsageNudge =
-    tier === "free" &&
-    status !== "trialing" &&
-    msgUsage !== null &&
-    msgUsage.limit > 0 &&
-    msgUsage.current / msgUsage.limit >= 0.8;
-
-  useEffect(() => {
-    if (tier !== "free" || status === "trialing") {
-      setMsgUsage(null);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/usage");
-        const json = await res.json();
-        if (!cancelled) {
-          setMsgUsage({
-            current: json.usage?.messages ?? 0,
-            limit: json.limits?.messages ?? 0,
-          });
-        }
-      } catch {
-        // ignore — bar simply won't render
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [tier, status]);
+  // Whether DMs are closed for this account. Was an "80% of your monthly
+  // messages used" bar, which could never appear: an unentitled account's cap is
+  // 0 and an entitled one is uncapped, so the ratio was never between the two.
+  const showMessagesLocked = !hasFullAccess && !tierLoading;
 
   // Founder search — debounced lookup against profiles
   useEffect(() => {
@@ -245,8 +215,14 @@ export default function MessagesClient({
     });
     setSending(false);
     if (!res.ok) {
+      // Roll the optimistic message back and hand the draft to the founder either
+      // way; an entitlement 403 additionally surfaces the upgrade overlay, which
+      // is the only signal they'd otherwise get for a message that silently
+      // failed to send.
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setDraft(content);
+      const data = await res.json().catch(() => ({}));
+      handleGateResponse("messages", data);
       return;
     }
     // fire-and-forget: maybe award the "connector" to whoever introduced us
@@ -269,7 +245,7 @@ export default function MessagesClient({
 
   return (
     <div className="flex flex-col app-pane">
-      {showUsageNudge && (
+      {showMessagesLocked && (
         <div
           style={{
             background: "rgba(245,158,11,0.04)",
@@ -285,7 +261,9 @@ export default function MessagesClient({
           }}
         >
           <span>
-            // {msgUsage!.current} of {msgUsage!.limit} messages used this month
+            {hadTrial
+              ? "// your trial has ended — upgrade to keep sending messages"
+              : "// direct messages are part of Member"}
           </span>
           <button
             type="button"
@@ -600,8 +578,6 @@ export default function MessagesClient({
           isOpen={paywallState.isOpen}
           onClose={closePaywall}
           feature={paywallState.feature!}
-          currentUsage={paywallState.currentUsage}
-          limit={paywallState.limit}
           hadTrial={paywallState.hadTrial}
         />
       )}

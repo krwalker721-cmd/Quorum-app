@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getUserTier, getCurrentMonth, type Tier } from "@/lib/stripe-helpers";
+import { getCurrentMonth } from "@/lib/stripe-helpers";
+import { resolveEntitlement, type Tier } from "@/lib/entitlements";
 
-// GET — current month usage and the limits for the authenticated user's tier.
-// A limit of -1 means uncapped. `free` is the lapsed state: read-only, so every
-// write limit is 0 (see lib/stripe-helpers.ts).
+// GET — what the authenticated account may do, plus this month's usage counters.
+//
+// `hasFullAccess` is the field callers should gate on. The older shape (tier,
+// status, limits) is still returned for the nudge components that read counters,
+// but deciding access from `tier` alone is what made a trialing account look
+// capped: its tier is "free" because the trial needs no card.
+//
+// A limit of -1 means uncapped. Every write limit for an unentitled account is 0
+// — there is no metered free rung, so "0 of 0 used" is never a useful thing to
+// tell someone. `reason: "upgrade_required"` says what's actually true.
 const LIMITS: Record<Tier, Record<string, number>> = {
   free: {
     cohort_posts: 0,
@@ -32,6 +40,8 @@ const LIMITS: Record<Tier, Record<string, number>> = {
   },
 };
 
+const UNCAPPED = LIMITS.member;
+
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -39,7 +49,10 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const tier = await getUserTier(user.id);
+  // Reconcile before reporting a block: this endpoint is what the client uses to
+  // decide whether to show a paywall, so a stale "free" here is a paying member
+  // being nagged to buy what they already bought.
+  const entitlement = await resolveEntitlement(user.id, { reconcileIfBlocked: true });
   const month = getCurrentMonth();
 
   const { data: usage } = await supabase
@@ -49,23 +62,16 @@ export async function GET() {
     .eq("month", month)
     .maybeSingle();
 
-  // Subscription status + trial info, used to gate caps and tailor the paywall.
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("status, trial_ends_at")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const status = subscription?.status || "trialing";
-  // hadTrial: a trial existed and has already passed.
-  const hadTrial = subscription?.trial_ends_at
-    ? new Date(subscription.trial_ends_at) < new Date()
-    : false;
-
   return NextResponse.json({
-    tier,
-    status,
-    hadTrial,
+    tier: entitlement.tier,
+    status: entitlement.status,
+    hasFullAccess: entitlement.hasFullAccess,
+    accessReason: entitlement.accessReason,
+    isTrialing: entitlement.isTrialing,
+    trialEndsAt: entitlement.trialEndsAt,
+    daysLeftInTrial: entitlement.daysLeftInTrial,
+    hadTrial: entitlement.hadTrial,
+    reason: entitlement.hasFullAccess ? "entitled" : "upgrade_required",
     month,
     usage: {
       cohort_posts: usage?.cohort_posts || 0,
@@ -75,6 +81,7 @@ export async function GET() {
       vault_notes: usage?.vault_notes || 0,
       collab_posts: usage?.collab_posts || 0,
     },
-    limits: LIMITS[tier],
+    // An active trial is uncapped, so it must not report the lapsed limits.
+    limits: entitlement.hasFullAccess ? UNCAPPED : LIMITS[entitlement.tier],
   });
 }

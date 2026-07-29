@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { assignUserToCohort } from "@/lib/cohorts";
 import { enforceLapse, isEligibleForCohortPlacement } from "@/lib/lapse";
+import { resolveEntitlement } from "@/lib/entitlements";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
@@ -62,20 +63,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     console.error("lapse check failed:", e);
   }
 
-  // Subscription status + trial info for the trial banner (best-effort).
-  let subStatus = "trialing";
-  let trialEndsAt: string | null = null;
+  // Entitlement for the trial banner, resolved through lib/entitlements.ts so the
+  // server-rendered shell can't disagree with what TierContext tells the client.
+  // It also self-heals here: a member whose webhook was missed is repaired on
+  // their next page load rather than staying stuck on "free" (throttled, so a
+  // genuinely lapsed account doesn't hit Stripe on every navigation).
+  // Best-effort — a failure here must never keep a member out of the app.
+  let entitlement: Awaited<ReturnType<typeof resolveEntitlement>> | null = null;
   try {
-    const { data: sub } = await supabase
-      .from("subscriptions")
-      .select("status, trial_ends_at")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (sub) {
-      subStatus = sub.status ?? "trialing";
-      trialEndsAt = (sub.trial_ends_at as string | null) ?? null;
-    }
-  } catch {}
+    entitlement = await resolveEntitlement(user.id, { reconcileIfBlocked: true });
+  } catch (e) {
+    console.error("entitlement resolve failed:", e);
+  }
 
   if (profile?.status === "suspended") redirect("/suspended");
   if (WAITLIST_ENABLED && profile?.status !== "approved") redirect("/pending");
@@ -158,9 +157,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             }}
           >
             <TrialBanner
-              trialEndsAt={trialEndsAt}
-              tier={(profile?.tier as "free" | "member" | "partner") ?? "free"}
-              status={subStatus}
+              trialEndsAt={entitlement?.trialEndsAt ?? null}
+              tier={entitlement?.tier ?? (profile?.tier as "free" | "member" | "partner") ?? "free"}
+              status={entitlement?.status ?? "trialing"}
               lapse={lapse}
             />
             {children}

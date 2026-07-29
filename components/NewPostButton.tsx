@@ -25,7 +25,7 @@ export default function NewPostButton({
   currentUserName?: string | null;
 }) {
   const router = useRouter();
-  const { paywallState, checkAndGate, closePaywall } = usePaywall();
+  const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
   const isPulse = defaultPostType === "pulse";
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
@@ -112,6 +112,11 @@ export default function NewPostButton({
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      // An entitlement 403 gets the upgrade overlay, not an inline error.
+      if (handleGateResponse(feature, data)) {
+        setOpen(false);
+        return;
+      }
       setErr((data.error || "failed to create post").toLowerCase());
       return;
     }
@@ -363,8 +368,6 @@ export default function NewPostButton({
           isOpen={paywallState.isOpen}
           onClose={closePaywall}
           feature={paywallState.feature!}
-          currentUsage={paywallState.currentUsage}
-          limit={paywallState.limit}
           hadTrial={paywallState.hadTrial}
         />
       )}

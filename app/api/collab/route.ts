@@ -21,10 +21,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const { allowed, current, limit } = await checkUsageCap(user.id, "collab_posts");
+  const { allowed } = await checkUsageCap(user.id, "collab_posts");
   if (!allowed) {
     return NextResponse.json(
-      { error: "Usage limit reached", code: "CAP_EXCEEDED", feature: "collab_posts", current, limit },
+      {
+        error: "Upgrade your plan to post on the collab board",
+        code: "UPGRADE_REQUIRED",
+        feature: "collab_posts",
+      },
       { status: 403 },
     );
   }

@@ -11,15 +11,13 @@ export async function POST() {
 
   // Server-side cap safety net — the client gates first, but enforce here too so
   // the API can't be called directly to bypass the free-tier vault note limit.
-  const { allowed, current, limit } = await checkUsageCap(user.id, "vault_notes");
+  const { allowed } = await checkUsageCap(user.id, "vault_notes");
   if (!allowed) {
     return NextResponse.json(
       {
-        error: "Usage limit reached",
-        code: "CAP_EXCEEDED",
+        error: "Upgrade your plan to add notes",
+        code: "UPGRADE_REQUIRED",
         feature: "vault_notes",
-        current,
-        limit,
       },
       { status: 403 },
     );

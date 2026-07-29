@@ -9,13 +9,16 @@ import { useTier } from "@/contexts/TierContext";
 // Hidden while collapsed.
 export default function SidebarTierBadge({ collapsed }: { collapsed: boolean }) {
   const router = useRouter();
-  const { tier, status, daysLeftInTrial, isLoading } = useTier();
+  const { tier, isTrialing, hasFullAccess, daysLeftInTrial, isLoading } = useTier();
 
   if (collapsed || isLoading) return null;
 
-  const showTrialCountdown =
-    status === "trialing" && daysLeftInTrial !== null && daysLeftInTrial <= 3;
-  const showUpgradeLink = tier === "free" && status !== "trialing";
+  // A live trial shows as "trial", not "free". It grants everything a Member
+  // gets, so labelling it "free" next to an upgrade prompt was the pill half of
+  // the same bug that blocked trial writes server-side.
+  const pillState = tier === "free" && isTrialing ? "trial" : tier;
+  const showTrialCountdown = isTrialing && daysLeftInTrial !== null && daysLeftInTrial <= 3;
+  const showUpgradeLink = !hasFullAccess;
 
   return (
     <div style={{ borderTop: "1px solid var(--border-default)" }}>
@@ -40,7 +43,7 @@ export default function SidebarTierBadge({ collapsed }: { collapsed: boolean }) 
         >
           plan
         </span>
-        <TierPill tier={tier} />
+        <TierPill tier={pillState} />
       </button>
 
       {showTrialCountdown && (

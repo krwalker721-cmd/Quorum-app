@@ -3,14 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useTier } from "@/contexts/TierContext";
 
-// Subtle "member feature" nudge shown in the vault for free-tier users who are
-// not in an active trial. Hidden for paid users and trial users.
+// Subtle "member feature" nudge shown in the vault to accounts with no live
+// entitlement. Hidden for paid members and for anyone mid-trial.
 export default function VaultUpgradeNudge() {
   const router = useRouter();
-  const { tier, status, isLoading } = useTier();
+  const { hasFullAccess, isLoading } = useTier();
 
   if (isLoading) return null;
-  if (tier !== "free" || status === "trialing") return null;
+  if (hasFullAccess) return null;
 
   return (
     <div

@@ -3,8 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTier } from "@/contexts/TierContext";
-import { createClient } from "@/lib/supabase/client";
 import TerminalFooter from "@/components/ui/TerminalFooter";
+import {
+  REFERRAL_MILESTONES,
+  REFERRAL_LINK_GATES,
+  HOW_REFERRALS_WORK,
+  type ReferralGateKey,
+} from "@/lib/referral-model";
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -32,19 +37,19 @@ interface ReferralData {
   }>;
   tier: "free" | "member" | "partner";
   activeStripeDiscounts?: string[];
+  /** Server's verdict on the link — see isReferralLinkActive(). */
+  linkActive: boolean;
+  /** Which unlock conditions are met — see checkActivityGates(). */
+  gates: Record<ReferralGateKey, boolean> & { allComplete: boolean };
 }
 
 // ─── config ──────────────────────────────────────────────────────────────────
 
 // Badges, not discounts. Every referral already pays a month of credit; the
-// ladder is recognition on top of that, not a second payout.
-const MILESTONES = [
-  { count: 1, reward: "Connector badge" },
-  { count: 3, reward: "Connector — confirmed" },
-  { count: 5, reward: "Builder of Rooms badge" },
-  { count: 10, reward: "Builder of Rooms — gold" },
-  { count: 25, reward: "Founding Connector badge" },
-];
+// ladder is recognition on top of that, not a second payout. Defined in
+// lib/referral-model.ts so the onboarding pitch renders from the same list —
+// the two used to describe different reward schemes.
+const MILESTONES = REFERRAL_MILESTONES;
 
 const statusStyles = {
   active: {
@@ -178,23 +183,20 @@ function ErrorState() {
 
 // ─── how it works ────────────────────────────────────────────────────────────
 
-const HOW_IT_WORKS = [
-  { n: 1, title: "Share your link", sub: "They sign up and join Quorum" },
-  { n: 2, title: "They activate", sub: "They add a card within 48 hours" },
-  { n: 3, title: "You earn", sub: "Rewards unlock as milestones hit" },
-];
+// The real loop, from lib/referral-model.ts. The old version said rewards
+// "unlock as milestones hit", which described the badge ladder as the payout and
+// left out the thing that actually pays: one month of credit per activation.
+const HOW_IT_WORKS = HOW_REFERRALS_WORK.map((step, i) => ({ n: i + 1, ...step }));
 
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function ReferralsDashboard() {
   const router = useRouter();
-  const { status } = useTier();
+  const { hasFullAccess } = useTier();
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Whether the user has made at least one post — the sole gate on the link.
-  const [hasPosted, setHasPosted] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -219,27 +221,11 @@ export default function ReferralsDashboard() {
     };
   }, []);
 
-  // The link activates once the user has posted at least once (cohort or pulse).
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const { count } = await supabase
-        .from("posts")
-        .select("*", { count: "exact", head: true })
-        .eq("author_id", user.id);
-      if (!cancelled) setHasPosted((count || 0) > 0);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const linkActive = hasPosted;
+  // The server decides whether the link is live — isReferralLinkActive() checks
+  // all three activity gates. This component used to run its own single-condition
+  // check ("has posted at least once"), so the dashboard, the onboarding pitch,
+  // and the API each claimed a different unlock rule.
+  const linkActive = !!data?.linkActive;
 
   const handleCopy = useCallback(() => {
     if (!data?.link || !linkActive) return;
@@ -251,7 +237,7 @@ export default function ReferralsDashboard() {
   if (loading) return <LoadingState />;
   if (error || !data) return <ErrorState />;
 
-  const { link, totalCount, activeCount, creditMonths, creditValue, referrals, tier } = data;
+  const { link, totalCount, activeCount, creditMonths, creditValue, referrals, gates } = data;
 
   const nextMilestone = MILESTONES.find((m) => m.count > totalCount);
 
@@ -277,7 +263,9 @@ export default function ReferralsDashboard() {
       </div>
 
       {/* ─── lapsed notice ──────────────────────────────────────────────────── */}
-      {tier === "free" && status !== "trialing" && (
+      {/* Gated on the entitlement bit: a card-free trial reports tier "free" and
+          must not be told its membership has lapsed. */}
+      {!hasFullAccess && (
         <div
           style={{
             background: "rgba(245,158,11,0.06)",
@@ -367,19 +355,74 @@ export default function ReferralsDashboard() {
             {copied ? "copied ✓" : "copy link →"}
           </button>
         </div>
-        {!hasPosted && (
-          <p
+        {/* Which gates are still open, straight from the server's own answer.
+            Replaces a single "make your first post" line that named one of the
+            three conditions and got the unlock rule wrong. */}
+        {!linkActive && (
+          <div
             style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              color: "#484f58",
-              letterSpacing: "0.05em",
-              textAlign: "right",
-              marginTop: 6,
+              background: "#161b22",
+              border: "1px solid #21262d",
+              borderRadius: "0 0 10px 10px",
+              borderTop: "none",
+              padding: "12px 16px",
+              marginTop: -2,
             }}
           >
-            // make your first post to activate
-          </p>
+            <p
+              style={{
+                fontFamily: MONO,
+                fontSize: 9,
+                textTransform: "uppercase",
+                color: "#484f58",
+                letterSpacing: "0.1em",
+                marginBottom: 8,
+              }}
+            >
+              // unlock your link
+            </p>
+            {REFERRAL_LINK_GATES.map((gate) => {
+              const done = !!gates?.[gate.key];
+              return (
+                <div
+                  key={gate.key}
+                  style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "3px 0" }}
+                >
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      color: done ? "#22c55e" : "#484f58",
+                      flexShrink: 0,
+                      width: 12,
+                    }}
+                  >
+                    {done ? "✓" : "○"}
+                  </span>
+                  <span>
+                    <span
+                      style={{
+                        fontFamily: SANS,
+                        fontSize: 12,
+                        color: done ? "#6e7681" : "#e6edf3",
+                        display: "block",
+                        textDecoration: done ? "line-through" : "none",
+                      }}
+                    >
+                      {gate.title}
+                    </span>
+                    {!done && (
+                      <span
+                        style={{ fontFamily: SANS, fontSize: 11, color: "#6e7681", display: "block" }}
+                      >
+                        {gate.sub}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 

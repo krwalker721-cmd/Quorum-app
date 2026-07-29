@@ -18,10 +18,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const { allowed, current, limit } = await checkUsageCap(user.id, "replies");
+  const { allowed } = await checkUsageCap(user.id, "replies");
   if (!allowed) {
     return NextResponse.json(
-      { error: "Usage limit reached", code: "CAP_EXCEEDED", feature: "replies", current, limit },
+      { error: "Upgrade your plan to reply", code: "UPGRADE_REQUIRED", feature: "replies" },
       { status: 403 },
     );
   }

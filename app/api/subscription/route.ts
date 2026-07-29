@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
+import { resolveEntitlement } from "@/lib/entitlements";
 
-// GET — full subscription details for the authenticated user.
+// GET — full subscription details for the authenticated user. This is what
+// TierContext bootstraps from, so it drives every plan pill, upgrade nudge, and
+// paywall in the app: it resolves through lib/entitlements.ts and self-heals
+// against Stripe when the stored state grants nothing. A missed webhook used to
+// leave a paying member looking free here, with the upgrade prompts to match.
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -11,15 +16,11 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const entitlement = await resolveEntitlement(user.id, { reconcileIfBlocked: true });
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("tier, trial_ends_at, partner_waitlist, referred_by")
+    .select("referred_by")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -38,23 +39,31 @@ export async function GET() {
   }
 
   // The referred free-month offer is available only until its expiry passes.
-  const referredFreeMonthExpired = subscription?.referred_free_month_expires_at
-    ? new Date(subscription.referred_free_month_expires_at) < new Date()
+  const referredFreeMonthExpired = entitlement.referredFreeMonthExpiresAt
+    ? new Date(entitlement.referredFreeMonthExpiresAt) < new Date()
     : true;
 
   return NextResponse.json({
-    tier: profile?.tier || "free",
-    status: subscription?.status || "trialing",
-    trial_ends_at: profile?.trial_ends_at || subscription?.trial_ends_at || null,
+    tier: entitlement.tier,
+    status: entitlement.status,
+    trial_ends_at: entitlement.trialEndsAt,
+    // The permission bit. Paid OR mid-trial — clients should gate on this rather
+    // than comparing tier strings.
+    has_full_access: entitlement.hasFullAccess,
+    access_reason: entitlement.accessReason,
+    is_trialing: entitlement.isTrialing,
+    days_left_in_trial: entitlement.daysLeftInTrial,
+    had_trial: entitlement.hadTrial,
+    payment_failing: entitlement.paymentFailing,
     // created_at of the subscription row — powers the "first 24h of trial"
     // welcome card on the home feed.
-    created_at: subscription?.created_at || null,
-    current_period_end: subscription?.current_period_end || null,
-    cancel_at_period_end: subscription?.cancel_at_period_end || false,
-    has_stripe_subscription: !!subscription?.stripe_subscription_id,
+    created_at: entitlement.subscriptionCreatedAt,
+    current_period_end: entitlement.currentPeriodEnd,
+    cancel_at_period_end: entitlement.cancelAtPeriodEnd,
+    has_stripe_subscription: entitlement.hasStripeSubscription,
     referred_free_month_available: !referredFreeMonthExpired,
-    referred_free_month_expires_at: subscription?.referred_free_month_expires_at || null,
-    partner_waitlist: profile?.partner_waitlist || false,
+    referred_free_month_expires_at: entitlement.referredFreeMonthExpiresAt,
+    partner_waitlist: entitlement.partnerWaitlist,
     referrer_name: referrerName,
   });
 }

@@ -7,7 +7,7 @@ import { useTier } from "@/contexts/TierContext";
 // home page and shows a self-dismissing success banner. Uses window.location so
 // it needs no Suspense boundary.
 export default function UpgradeToast() {
-  const { refresh } = useTier();
+  const { reconcile } = useTier();
   const [message, setMessage] = useState<string | null>(null);
   // Secondary line connecting the upgrade moment to the referral flow — shown a
   // couple seconds after a successful upgrade.
@@ -30,11 +30,13 @@ export default function UpgradeToast() {
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Tier just changed — refresh the shared context so pills and nudges across
-    // the app update immediately without a page reload, then surface a referral
-    // nudge a couple seconds later.
+    // Tier just changed — but Stripe's redirect regularly beats its own webhook,
+    // so a plain refresh here would re-read the pre-purchase state and leave the
+    // member looking free (and being nagged to buy what they just bought).
+    // reconcile() pulls live state from Stripe first, then refreshes, so pills and
+    // nudges across the app are correct without a page reload.
     if (upgraded || params.get("trial") === "activated") {
-      refresh();
+      void reconcile();
       timers.push(
         setTimeout(
           () =>
@@ -63,7 +65,7 @@ export default function UpgradeToast() {
       }, upgraded ? 8000 : 5000),
     );
     return () => timers.forEach(clearTimeout);
-  }, [refresh]);
+  }, [reconcile]);
 
   if (!message) return null;
 

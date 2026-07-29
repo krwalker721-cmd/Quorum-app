@@ -113,19 +113,18 @@ export default function CollabBoardClient({
   errorBanner?: string | null;
 }) {
   const router = useRouter();
-  const { paywallState, checkAndGate, closePaywall } = usePaywall();
-  // Whether collab creation is locked for this user (free tier, no active trial).
-  // Drives the read-only indicators and info bar; the actual block runs through
-  // checkAndGate so it stays authoritative.
+  const { paywallState, checkAndGate, openPaywall, closePaywall } = usePaywall();
+  // Whether collab creation is locked for this user. Drives the read-only
+  // indicators and info bar; the actual block runs through checkAndGate so it
+  // stays authoritative. Reads the entitlement bit rather than comparing tier
+  // strings — a card-free trial reports tier "free" and must not read as locked.
   const [collabLocked, setCollabLocked] = useState(false);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/usage")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled) {
-          setCollabLocked(d.tier === "free" && d.status !== "trialing");
-        }
+        if (!cancelled && d) setCollabLocked(!d.hasFullAccess);
       })
       .catch(() => {});
     return () => {
@@ -303,6 +302,10 @@ export default function CollabBoardClient({
             // Usage is incremented server-side by /api/collab.
             router.refresh();
           }}
+          onUpgradeRequired={() => {
+            setNewOpen(false);
+            openPaywall("collab_posts");
+          }}
         />
       )}
       {respondFor && (
@@ -355,8 +358,6 @@ export default function CollabBoardClient({
           isOpen={paywallState.isOpen}
           onClose={closePaywall}
           feature={paywallState.feature!}
-          currentUsage={paywallState.currentUsage}
-          limit={paywallState.limit}
           hadTrial={paywallState.hadTrial}
         />
       )}

@@ -20,6 +20,13 @@ type Sub = {
   tier: "free" | "member" | "partner";
   status: string;
   trial_ends_at: string | null;
+  // Resolved server-side by lib/entitlements.ts. `tier` is "free" during a
+  // card-free trial, so these are what tell the page where the founder actually
+  // stands.
+  is_trialing: boolean;
+  had_trial: boolean;
+  days_left_in_trial: number | null;
+  has_full_access: boolean;
   has_stripe_subscription: boolean;
   referred_free_month_available: boolean;
   referred_free_month_expires_at: string | null;
@@ -196,7 +203,10 @@ const MEMBER_FEATURES: Feat[] = [
   { name: "Unlimited vault notes", desc: "Full rich editor, unlimited storage" },
   { name: "Full collab board", desc: "Post projects, needs, and find hires" },
   { name: "Unlimited referrals", desc: "Invite as many founders as you want" },
-  { name: `${TRIAL_DAYS.standard} day free trial`, desc: "Full access, no card required to start" },
+  {
+    name: `${TRIAL_DAYS.standard} day trial`,
+    desc: "Granted the moment you join — no card required",
+  },
 ];
 const PARTNER_FEATURES: Feat[] = [
   { name: "Everything in Member", desc: "Full Member access included" },
@@ -360,6 +370,17 @@ function PricingBody() {
   const referred = !!sub?.referred_free_month_available;
   const countdown = useCountdown(sub?.referred_free_month_expires_at ?? null);
 
+  // The trial is granted at onboarding, without a card (see
+  // /api/subscription/initialize) — so by the time a signed-in founder reaches
+  // this page it is already running, or already over. Nothing here can start one,
+  // which is why the CTA no longer offers to.
+  const trialing = !!sub?.is_trialing;
+  const daysLeft = sub?.days_left_in_trial ?? null;
+  const hadTrial = !!sub?.had_trial;
+  // Signed out (or the fetch failed): this is a cold visitor being pitched, and
+  // for them the trial genuinely is something signing up starts.
+  const coldVisitor = sub === null;
+
   async function startCheckout(plan: "member" | "member_annual" | "founding" = "member") {
     setLoadingCheckout(true);
     try {
@@ -401,13 +422,48 @@ function PricingBody() {
     }
   }
 
-  // Member CTA depends on tier + referral state.
-  const memberCta = useMemo(() => {
+  // Member CTA depends on where the founder actually stands. "Start free trial"
+  // used to be the fallback for every signed-in state, which made no sense to
+  // anyone already mid-trial (or already lapsed out of one) — the button offered
+  // to start something they couldn't start twice.
+  const memberCta = useMemo<{
+    label: string;
+    disabled: boolean;
+    action?: "checkout" | "claim" | "portal";
+    /** Optional line under the button explaining the state. */
+    sub?: string;
+  }>(() => {
     if (tier === "member") return { label: "Current plan", disabled: true };
-    if (tier === "partner") return { label: "Downgrade to Member →", disabled: false, action: "portal" as const };
-    if (referred) return { label: "Claim my free month →", disabled: false, action: "claim" as const };
-    return { label: "Start free trial →", disabled: false, action: "checkout" as const };
-  }, [tier, referred]);
+    if (tier === "partner") {
+      return { label: "Downgrade to Member →", disabled: false, action: "portal" as const };
+    }
+    if (referred) {
+      return { label: "Claim my free month →", disabled: false, action: "claim" as const };
+    }
+    if (coldVisitor) {
+      return { label: "Join Quorum →", disabled: false, action: "checkout" as const };
+    }
+    if (trialing) {
+      return {
+        label: "Become a Member →",
+        disabled: false,
+        action: "checkout" as const,
+        sub:
+          daysLeft !== null
+            ? `// your trial is running — ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left, nothing is charged until it ends`
+            : "// your trial is running — nothing is charged until it ends",
+      };
+    }
+    if (hadTrial) {
+      return {
+        label: "Upgrade to Member →",
+        disabled: false,
+        action: "checkout" as const,
+        sub: "// your trial has ended — pick this up where you left off",
+      };
+    }
+    return { label: "Upgrade to Member →", disabled: false, action: "checkout" as const };
+  }, [tier, referred, coldVisitor, trialing, daysLeft, hadTrial]);
 
   return (
     <div
@@ -458,7 +514,9 @@ function PricingBody() {
           className="font-sans"
           style={{ fontSize: 16, color: "var(--text-secondary)", textAlign: "center", marginBottom: 60 }}
         >
-          {TRIAL_DAYS.standard} days free. Then a room worth paying for.
+          {trialing && daysLeft !== null
+            ? `Your trial is running — ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left. Then a room worth paying for.`
+            : `${TRIAL_DAYS.standard} days free. Then a room worth paying for.`}
         </p>
 
         {/* What is Quorum */}
@@ -627,6 +685,20 @@ function PricingBody() {
             >
               {loadingCheckout ? "Loading..." : memberCta.label}
             </button>
+            {memberCta.sub && (
+              <p
+                className="font-mono"
+                style={{
+                  fontSize: 10,
+                  color: "var(--text-disabled)",
+                  marginTop: 8,
+                  textAlign: "center",
+                  lineHeight: 1.5,
+                }}
+              >
+                {memberCta.sub}
+              </p>
+            )}
           </div>
 
           {/* ── Partner (coming soon) ── */}
@@ -711,13 +783,17 @@ function PricingBody() {
           <CardForm onActivated={() => router.push("/home?trial=activated")} />
         )}
 
-        {/* Canceled state */}
+        {/* Returned from an abandoned checkout. Only claim the trial is still
+            running when it actually is — this line used to reassure a lapsed
+            founder about a trial that had already ended. */}
         {canceled && (
           <p
             className="font-mono"
             style={{ fontSize: 11, color: "var(--text-disabled)", textAlign: "center", marginTop: 32 }}
           >
-            No worries — your free trial is still active.
+            {trialing
+              ? "No worries — your trial is still running."
+              : "No charge made — upgrade whenever you're ready."}
           </p>
         )}
 

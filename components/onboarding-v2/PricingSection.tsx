@@ -61,7 +61,7 @@ const MEMBER_FEATURES = [
   "Unlimited vault notes",
   "Full collab board access",
   "Unlimited referrals",
-  `${TRIAL_DAYS.standard} day free trial`,
+  `${TRIAL_DAYS.standard} day trial, no card required`,
 ];
 const PARTNER_FEATURES = [
   "Everything in Member",
@@ -445,7 +445,8 @@ function PricingBody({ onComplete }: { onComplete: (redirectTo: string) => void 
         <span style={{ fontFamily: MONO, fontSize: 9, color: C.textDisabled, letterSpacing: "0.08em" }}>
           // you&rsquo;re on
         </span>
-        <TierPill tier={sub?.tier ?? "free"} />
+        {/* A live trial reads as "trial", not "free" — it has full access. */}
+        <TierPill tier={trialActive && !isPaid ? "trial" : sub?.tier ?? "free"} />
       </div>
 
       {/* Tier cards */}

@@ -29,7 +29,7 @@ export default function RoomPostModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const { paywallState, checkAndGate, closePaywall } = usePaywall();
+  const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
   const [type, setType] = useState<RoomType>("update");
   const [content, setContent] = useState(initialContent);
   const [anon, setAnon] = useState(false);
@@ -59,6 +59,8 @@ export default function RoomPostModal({
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      // An entitlement 403 gets the upgrade overlay, not an inline error.
+      if (handleGateResponse("cohort_posts", data)) return;
       setErr((data.error || "failed to post").toLowerCase());
       return;
     }
@@ -190,8 +192,6 @@ export default function RoomPostModal({
           isOpen={paywallState.isOpen}
           onClose={closePaywall}
           feature={paywallState.feature!}
-          currentUsage={paywallState.currentUsage}
-          limit={paywallState.limit}
           hadTrial={paywallState.hadTrial}
         />
       )}

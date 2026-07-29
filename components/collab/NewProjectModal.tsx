@@ -12,6 +12,7 @@ export default function NewProjectModal({
   initialTitle = "",
   onClose,
   onCreated,
+  onUpgradeRequired,
 }: {
   userId: string;
   postType: "project" | "need";
@@ -19,6 +20,9 @@ export default function NewProjectModal({
   initialTitle?: string;
   onClose: () => void;
   onCreated: () => void;
+  // Called when the server rejects the create for lack of a plan, so the board
+  // can raise the upgrade overlay instead of this modal showing an error.
+  onUpgradeRequired?: () => void;
 }) {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState("");
@@ -48,6 +52,10 @@ export default function NewProjectModal({
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      if (data.code === "UPGRADE_REQUIRED" && onUpgradeRequired) {
+        onUpgradeRequired();
+        return;
+      }
       setErr((data.error || "failed to create").toLowerCase());
       return;
     }

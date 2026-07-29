@@ -1,14 +1,25 @@
 export type Tier = "free" | "member" | "partner";
 
+// What the pill can display. "trial" is not a tier — a card-free trial stores
+// tier "free" — but showing "free" to someone with a live trial and full access
+// is a lie the sidebar used to tell, so the pill can render that state directly.
+type PillState = Tier | "trial";
+
 // Filled pill per the payments design spec. Free and member pull from theme
 // tokens so the high-contrast theme remaps them; partner uses its purple accent
 // (no token exists for it yet).
-const TIER_STYLES: Record<Tier, { background: string; color: string; border: string; label: string }> = {
+const TIER_STYLES: Record<PillState, { background: string; color: string; border: string; label: string }> = {
   free: {
     background: "var(--bg-overlay)",
     color: "var(--text-secondary)",
     border: "1px solid var(--border-muted)",
     label: "free",
+  },
+  trial: {
+    background: "rgba(34,197,94,0.10)",
+    color: "#22c55e",
+    border: "1px solid rgba(34,197,94,0.28)",
+    label: "trial",
   },
   member: {
     background: "var(--accent-bg)",
@@ -25,7 +36,7 @@ const TIER_STYLES: Record<Tier, { background: string; color: string; border: str
 };
 
 export default function TierPill({ tier }: { tier: string | null | undefined }) {
-  const t = (tier ?? "free") as Tier;
+  const t = (tier ?? "free") as PillState;
   const style = TIER_STYLES[t] ?? TIER_STYLES.free;
   return (
     <span

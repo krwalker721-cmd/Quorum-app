@@ -22,10 +22,13 @@ export async function POST(req: NextRequest) {
 
   const feature = cohort_id ? "cohort_posts" : "pulse_posts";
 
-  const { allowed, current, limit } = await checkUsageCap(user.id, feature);
+  // Denied means "no live trial, nothing paid" — there is no metered free rung to
+  // exhaust, so the response says upgrade rather than inventing a usage limit.
+  // The client turns this code into the upgrade overlay.
+  const { allowed } = await checkUsageCap(user.id, feature);
   if (!allowed) {
     return NextResponse.json(
-      { error: "Usage limit reached", code: "CAP_EXCEEDED", feature, current, limit },
+      { error: "Upgrade your plan to post", code: "UPGRADE_REQUIRED", feature },
       { status: 403 },
     );
   }

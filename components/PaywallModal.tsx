@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PRICING } from "@/lib/pricing";
+import { PRICING, FOUNDING_SEATS } from "@/lib/pricing";
 
 export type PaywallFeature =
   | "cohort_posts"
@@ -16,107 +16,93 @@ interface PaywallModalProps {
   isOpen: boolean;
   onClose: () => void;
   feature: PaywallFeature;
-  currentUsage?: number;
-  limit?: number;
   hadTrial?: boolean;
 }
 
-// Per-feature copy. Heading shows on the modal, list is what Member unlocks.
-const FEATURE_COPY: Record<
-  PaywallFeature,
-  { heading: string; unlocks: string[] }
-> = {
-  cohort_posts: {
-    heading: "You've used your cohort posts for this month.",
-    unlocks: [
-      "Unlimited cohort posts",
-      "Post decisions, wins, blockers",
-      "Get real answers from your cohort",
-    ],
-  },
-  pulse_posts: {
-    heading: "You've used your pulse posts for this month.",
-    unlocks: [
-      "Unlimited pulse posts",
-      "Share with the whole network",
-      "Build your reputation",
-    ],
-  },
-  replies: {
-    heading: "You've used your replies for this month.",
-    unlocks: [
-      "Unlimited replies",
-      "Engage with every post",
-      "Build real relationships",
-    ],
-  },
-  messages: {
-    heading: "You've used your messages for this month.",
-    unlocks: [
-      "Unlimited messages",
-      "DM any founder directly",
-      "No monthly limits",
-    ],
-  },
-  vault_notes: {
-    heading: "You've reached your vault note limit.",
-    unlocks: [
-      "Unlimited vault notes",
-      "Full Tiptap rich editor",
-      "Organize everything",
-    ],
-  },
-  collab_posts: {
-    heading: "Collab board access is for Members only.",
-    unlocks: [
-      "Full collab board access",
-      "Post projects and needs",
-      "Find co-builders and hires",
-    ],
-  },
+// What the blocked action was, in one line. Deliberately not framed as a usage
+// limit: unentitled accounts have a cap of zero on every write, so "you've used
+// your posts for this month" described a meter that doesn't exist. The honest
+// version is that this needs a plan.
+const FEATURE_LINE: Record<PaywallFeature, string> = {
+  cohort_posts: "Posting to your cohort is part of Member.",
+  pulse_posts: "Posting to the pulse feed is part of Member.",
+  replies: "Replying is part of Member.",
+  messages: "Direct messages are part of Member.",
+  vault_notes: "Vault notes are part of Member.",
+  collab_posts: "Posting on the collab board is part of Member.",
 };
 
+const INCLUDED = [
+  "Your cohort of 12 — post, reply, and show up weekly",
+  "Unlimited pulse posts, replies, and DMs",
+  "Full collab board and vault",
+  "Unlimited referrals — each one earns a free month",
+];
+
+type Plan = "member" | "member_annual" | "founding";
+
+/**
+ * The upgrade decision, rendered over whatever the founder was doing.
+ *
+ * Previously this navigated to /pricing, which cost them their draft and their
+ * place. Checkout starts from here instead, so the only thing that leaves the
+ * page is the trip to Stripe.
+ */
 export default function PaywallModal({
   isOpen,
   onClose,
   feature,
-  currentUsage,
-  limit,
   hadTrial,
 }: PaywallModalProps) {
   const router = useRouter();
-  const [closeHover, setCloseHover] = useState(false);
-  const [billingHover, setBillingHover] = useState(false);
-  const [dismissHover, setDismissHover] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Escape closes, matching every other modal in the app.
+  useEffect(() => {
+    if (!isOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  const copy = FEATURE_COPY[feature];
-  const isCollab = feature === "collab_posts";
-
-  function goToPricing() {
-    router.push("/pricing");
-    onClose();
-  }
-
-  async function manageBilling() {
+  async function startCheckout(plan: Plan) {
+    setLoadingPlan(plan);
+    setError(null);
     try {
-      const res = await fetch("/api/subscription", { method: "POST" });
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
       const data = await res.json();
-      if (data?.url) window.open(data.url, "_blank");
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error("Billing portal failed:", err);
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setError(data?.error || "Could not start checkout. Please try again.");
+    } catch {
+      setError("Could not start checkout. Please try again.");
     }
+    setLoadingPlan(null);
   }
+
+  const busy = loadingPlan !== null;
 
   return (
     <div
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Upgrade your plan"
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.7)",
+        background: "rgba(0,0,0,0.72)",
         backdropFilter: "blur(4px)",
         WebkitBackdropFilter: "blur(4px)",
         zIndex: 1000,
@@ -124,18 +110,20 @@ export default function PaywallModal({
         alignItems: "center",
         justifyContent: "center",
         padding: 20,
+        overflowY: "auto",
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#161b22",
-          border: "1px solid #21262d",
-          borderRadius: 4,
-          padding: 32,
-          maxWidth: 440,
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border-default)",
+          borderRadius: 12,
+          padding: 28,
+          maxWidth: 560,
           width: "100%",
           position: "relative",
+          margin: "auto",
         }}
       >
         {/* Top accent bar */}
@@ -146,24 +134,22 @@ export default function PaywallModal({
             left: 0,
             right: 0,
             height: 3,
-            background: "#f59e0b",
-            borderRadius: "4px 4px 0 0",
+            background: "var(--accent)",
+            borderRadius: "12px 12px 0 0",
           }}
         />
 
-        {/* Close button */}
         <button
           onClick={onClose}
-          onMouseEnter={() => setCloseHover(true)}
-          onMouseLeave={() => setCloseHover(false)}
           aria-label="close"
+          className="font-mono"
           style={{
             position: "absolute",
-            top: 16,
+            top: 14,
             right: 16,
             background: "transparent",
             border: "none",
-            color: closeHover ? "#8b949e" : "#484f58",
+            color: "var(--text-disabled)",
             cursor: "pointer",
             fontSize: 18,
             lineHeight: 1,
@@ -172,134 +158,85 @@ export default function PaywallModal({
           ×
         </button>
 
-        {/* Lock icon */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: 20,
-          }}
-        >
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#f59e0b"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <rect x="4" y="11" width="16" height="10" rx="2" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-        </div>
-
-        {/* Eyebrow */}
         <p
+          className="font-mono uppercase"
           style={{
-            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
             fontSize: 10,
-            color: "#f59e0b",
-            textTransform: "uppercase",
+            color: "var(--accent)",
             letterSpacing: "0.12em",
-            textAlign: "center",
-            marginBottom: 8,
+            marginBottom: 10,
           }}
         >
-          // membership required
+          // upgrade your plan
         </p>
 
-        {/* Heading */}
         <h2
+          className="font-sans"
           style={{
-            fontFamily: "var(--font-space-grotesk, ui-sans-serif, system-ui)",
-            fontSize: 20,
-            color: "#e6edf3",
-            textAlign: "center",
-            marginBottom: 8,
+            fontSize: 22,
+            color: "var(--text-primary)",
+            marginBottom: 6,
             lineHeight: 1.25,
           }}
         >
-          {copy.heading}
+          Upgrade your plan to keep going
         </h2>
 
-        {/* Usage line */}
-        {!isCollab && (
+        <p
+          className="font-sans"
+          style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 4 }}
+        >
+          {FEATURE_LINE[feature]}
+        </p>
+
+        {hadTrial && (
           <p
-            style={{
-              fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-              fontSize: 11,
-              color: "#484f58",
-              textAlign: "center",
-              marginBottom: 20,
-            }}
+            className="font-mono"
+            style={{ fontSize: 10, color: "var(--text-disabled)", marginBottom: 4 }}
           >
-            {currentUsage ?? 0} / {limit ?? 0} used this month
-          </p>
-        )}
-        {isCollab && (
-          <p
-            style={{
-              fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-              fontSize: 11,
-              color: "#484f58",
-              textAlign: "center",
-              marginBottom: 20,
-            }}
-          >
-            member feature — upgrade to access
+            // your trial has ended — pick a plan to pick up where you left off
           </p>
         )}
 
-        {/* What you're missing card */}
+        {/* What Member is */}
         <div
           style={{
-            background: "#0d1117",
-            border: "1px solid #21262d",
-            borderRadius: 4,
+            background: "var(--bg-base)",
+            border: "1px solid var(--border-default)",
+            borderRadius: 10,
             padding: 16,
-            marginBottom: 24,
+            margin: "18px 0",
           }}
         >
           <p
+            className="font-mono uppercase"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
               fontSize: 9,
-              color: "#f59e0b",
-              textTransform: "uppercase",
+              color: "var(--accent)",
               letterSpacing: "0.1em",
               marginBottom: 10,
             }}
           >
-            unlock with member
+            what you get
           </p>
-          {copy.unlocks.map((item) => (
+          {INCLUDED.map((item) => (
             <div
               key={item}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 6,
-              }}
+              style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 7 }}
             >
               <span
                 style={{
-                  width: 6,
-                  height: 6,
+                  width: 5,
+                  height: 5,
                   borderRadius: "50%",
                   background: "#22c55e",
                   flexShrink: 0,
+                  marginTop: 6,
                 }}
               />
               <span
-                style={{
-                  fontFamily: "var(--font-space-grotesk, ui-sans-serif, system-ui)",
-                  fontSize: 13,
-                  color: "#8b949e",
-                }}
+                className="font-sans"
+                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}
               >
                 {item}
               </span>
@@ -307,79 +244,124 @@ export default function PaywallModal({
           ))}
         </div>
 
-        {/* Trial awareness */}
-        {hadTrial && (
-          <p
+        {/* Plan choice — same keys the pricing page uses, resolved to a price
+            server-side by lib/plans.ts. */}
+        <div className="paywall-plans" style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={() => startCheckout("member")}
+            disabled={busy}
+            className="font-mono"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-              fontSize: 10,
-              color: "#484f58",
-              textAlign: "center",
-              marginBottom: 16,
+              flex: 2,
+              padding: "14px 16px",
+              borderRadius: 10,
+              border: "none",
+              background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
+              color: "#1a1204",
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: "0.04em",
+              cursor: busy ? "default" : "pointer",
+              opacity: busy ? 0.7 : 1,
             }}
           >
-            // your trial has ended — upgrade to keep the momentum going
+            {loadingPlan === "member"
+              ? "Loading..."
+              : `Become a Member — $${PRICING.member.monthly}/mo →`}
+          </button>
+          <button
+            onClick={() => startCheckout("founding")}
+            disabled={busy}
+            className="font-mono"
+            style={{
+              flex: 1,
+              padding: "14px 16px",
+              borderRadius: 10,
+              background: "transparent",
+              color: "var(--text-primary)",
+              border: "1px solid var(--border-default)",
+              fontSize: 12,
+              cursor: busy ? "default" : "pointer",
+              opacity: busy ? 0.7 : 1,
+            }}
+            title={`Founding rate — first ${FOUNDING_SEATS} members, locked for life`}
+          >
+            {loadingPlan === "founding"
+              ? "Loading..."
+              : `Founding — $${PRICING.founding.monthly}/mo`}
+          </button>
+        </div>
+
+        <button
+          onClick={() => startCheckout("member_annual")}
+          disabled={busy}
+          className="font-mono"
+          style={{
+            display: "block",
+            width: "100%",
+            marginTop: 10,
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            fontSize: 11,
+            color: "var(--accent)",
+            cursor: busy ? "default" : "pointer",
+            textAlign: "center",
+          }}
+        >
+          {loadingPlan === "member_annual"
+            ? "Loading..."
+            : `or $${PRICING.member.annual}/year — 2 months free →`}
+        </button>
+
+        {error && (
+          <p
+            className="font-mono"
+            style={{ fontSize: 11, color: "#f85149", marginTop: 12, textAlign: "center" }}
+          >
+            {error}
           </p>
         )}
 
-        {/* Primary CTA */}
-        <button
-          onClick={goToPricing}
+        <div
           style={{
-            background: "#f59e0b",
-            color: "#0d1117",
-            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 12,
-            fontWeight: 500,
-            letterSpacing: "0.06em",
-            padding: 14,
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer",
-            width: "100%",
-            marginBottom: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 18,
+            marginTop: 18,
           }}
         >
-          Become a Member — ${PRICING.member.monthly}/month →
-        </button>
-
-        {/* Manage billing */}
-        <button
-          onClick={manageBilling}
-          onMouseEnter={() => setBillingHover(true)}
-          onMouseLeave={() => setBillingHover(false)}
-          style={{
-            display: "block",
-            margin: "0 auto 4px",
-            background: "transparent",
-            border: "none",
-            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 11,
-            color: billingHover ? "#8b949e" : "#484f58",
-            cursor: "pointer",
-          }}
-        >
-          Manage billing →
-        </button>
-
-        {/* Dismiss */}
-        <button
-          onClick={onClose}
-          onMouseEnter={() => setDismissHover(true)}
-          onMouseLeave={() => setDismissHover(false)}
-          style={{
-            display: "block",
-            margin: "0 auto",
-            background: "transparent",
-            border: "none",
-            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 11,
-            color: dismissHover ? "#8b949e" : "#484f58",
-            cursor: "pointer",
-          }}
-        >
-          stay on free →
-        </button>
+          <button
+            onClick={() => {
+              router.push("/pricing");
+              onClose();
+            }}
+            className="font-mono"
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: 11,
+              color: "var(--text-disabled)",
+              cursor: "pointer",
+            }}
+          >
+            Compare plans →
+          </button>
+          <button
+            onClick={onClose}
+            className="font-mono"
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: 11,
+              color: "var(--text-disabled)",
+              cursor: "pointer",
+            }}
+          >
+            Not now
+          </button>
+        </div>
       </div>
     </div>
   );

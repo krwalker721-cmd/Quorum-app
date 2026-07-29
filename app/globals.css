@@ -2092,3 +2092,9 @@ html, body { max-width: 100%; overflow-x: clip; }
  * page. Wrapper is added by the pricing page. */
 .comparison-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .comparison-scroll > * { min-width: 520px; }
+
+/* Side-by-side plan buttons in the upgrade overlay (components/PaywallModal).
+ * Two price CTAs on one row get unreadably narrow on a phone. */
+@media (max-width: 519px) {
+  .paywall-plans { flex-direction: column !important; }
+}

@@ -3,11 +3,11 @@
 import { useTier } from "@/contexts/TierContext";
 
 // A single tier-aware line appended to key empty states. Only renders for
-// free-tier users who are not in an active trial — paid and trial users see
-// the plain empty state.
+// accounts with no live entitlement — paid and trialing founders see the plain
+// empty state.
 export default function EmptyStateUpgradeLine({ children }: { children: React.ReactNode }) {
-  const { tier, status, isLoading } = useTier();
-  if (isLoading || tier !== "free" || status === "trialing") return null;
+  const { hasFullAccess, isLoading } = useTier();
+  if (isLoading || hasFullAccess) return null;
   return (
     <p
       className="font-sans"

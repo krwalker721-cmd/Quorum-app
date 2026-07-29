@@ -42,7 +42,7 @@ export default function ReplyThread({
   variant?: "attached" | "inline";
 }) {
   const supabase = useMemo(() => createClient(), []);
-  const { paywallState, checkAndGate, closePaywall } = usePaywall();
+  const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -135,6 +135,9 @@ export default function ReplyThread({
     setBusy(false);
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
+      // An entitlement 403 is a plan decision, not an error — show the upgrade
+      // overlay over the thread instead of a red line under the composer.
+      if (handleGateResponse("replies", d)) return;
       setErr((d.error || "failed to reply").toLowerCase());
       return;
     }
@@ -253,8 +256,6 @@ export default function ReplyThread({
           isOpen={paywallState.isOpen}
           onClose={closePaywall}
           feature={paywallState.feature!}
-          currentUsage={paywallState.currentUsage}
-          limit={paywallState.limit}
           hadTrial={paywallState.hadTrial}
         />
       )}

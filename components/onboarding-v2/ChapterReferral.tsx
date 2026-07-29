@@ -4,19 +4,19 @@ import { useRef, type ReactNode } from "react";
 import { motion, useTransform, type MotionValue } from "framer-motion";
 import { Chapter, StickyStage, useChapterScroll } from "./sticky";
 import { C, MONO, SANS, hexToRgba } from "./theme";
+import {
+  REFERRAL_CREDIT,
+  REFERRAL_MILESTONES,
+  REFERRAL_LINK_GATES,
+} from "@/lib/referral-model";
 
-const MILESTONES = [
-  { count: "1 →", reward: "1 free month" },
-  { count: "3 →", reward: "1 free month" },
-  { count: "5 →", reward: "2 free months" },
-  { count: "10 →", reward: "3 free months" },
-  { count: "25 →", reward: "free for a year" },
-];
-
-function RewardLadder({ lit }: { lit: boolean }) {
+// The badge ladder. Recognition only — the money is one month per activation,
+// which beat 1 covers. This used to promise a second, larger pile of free months
+// at each rung, which the app never paid.
+function BadgeLadder({ lit }: { lit: boolean }) {
   return (
-    <div style={{ width: 240, margin: "24px auto 0" }}>
-      {MILESTONES.map((m) => (
+    <div style={{ width: 260, margin: "22px auto 0" }}>
+      {REFERRAL_MILESTONES.map((m) => (
         <div
           key={m.count}
           style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0" }}
@@ -28,6 +28,8 @@ function RewardLadder({ lit }: { lit: boolean }) {
               padding: "3px 8px",
               borderRadius: 3,
               flexShrink: 0,
+              minWidth: 34,
+              textAlign: "center",
               background: lit ? hexToRgba(C.amber, 0.1) : C.surface,
               border: `1px solid ${lit ? hexToRgba(C.amber, 0.25) : C.border}`,
               color: lit ? C.amber : C.textDisabled,
@@ -82,9 +84,14 @@ function Beat({
   );
 }
 
-// Chapter 14 — the referral sell, three cinematic beats. Beat 1 introduces the
-// ladder (unlit); beat 2 lights it up with the monthly bonus; beat 3 teases the
-// gated referral link.
+// The referral chapter, three cinematic beats — and the same three facts the
+// /referrals dashboard shows once they're inside:
+//
+//   1. one month of Member per founder who activates, uncapped   (the money)
+//   2. the milestone ladder is badges                            (the status)
+//   3. the link unlocks on the real activity gates               (the catch)
+//
+// Kept in step with the app by reading lib/referral-model.ts.
 export function ChapterReferral() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useChapterScroll(ref);
@@ -100,6 +107,7 @@ export function ChapterReferral() {
     <Chapter ref={ref} id="chapter-14" label="grow it" heightVh={400}>
       <StickyStage>
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          {/* Beat 1 — the actual economics. */}
           <Beat opacity={b1Opacity} y={b1Y}>
             <div
               style={{
@@ -118,16 +126,40 @@ export function ChapterReferral() {
                 fontFamily: SANS,
                 fontSize: "clamp(20px, 3.5vw, 24px)",
                 color: C.textPrimary,
-                maxWidth: 480,
+                maxWidth: 500,
                 margin: 0,
                 lineHeight: 1.5,
               }}
             >
-              Refer a founder. Get rewarded. Make Quorum more accessible.
+              Every founder you bring in who stays earns you{" "}
+              <span style={{ color: C.amber }}>one free month</span> of Member.
             </p>
-            <RewardLadder lit={false} />
+            <div
+              style={{
+                background: C.surface,
+                border: `1px solid ${hexToRgba(C.amber, 0.25)}`,
+                borderRadius: 4,
+                padding: "14px 20px",
+                margin: "24px auto 0",
+                maxWidth: 320,
+              }}
+            >
+              <div
+                style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled, marginBottom: 6 }}
+              >
+                // how the credit works
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: 13, color: C.textSecondary }}>
+                ${REFERRAL_CREDIT.dollarsPerActivation} of credit per activation,
+                applied automatically
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: C.amber, marginTop: 8 }}>
+                no cap — fill a cohort and the year is on us
+              </div>
+            </div>
           </Beat>
 
+          {/* Beat 2 — the ladder, correctly labelled as recognition. */}
           <Beat opacity={b2Opacity} y={b2Y}>
             <p
               style={{
@@ -139,28 +171,22 @@ export function ChapterReferral() {
                 lineHeight: 1.5,
               }}
             >
-              The more founders you bring, the less you pay.
+              Bring enough of them and the room starts to know it.
             </p>
-            <RewardLadder lit />
-            <div
+            <p
               style={{
-                background: C.surface,
-                border: `1px solid ${C.border}`,
-                borderRadius: 4,
-                padding: "10px 14px",
-                maxWidth: 260,
-                margin: "16px auto 0",
+                fontFamily: MONO,
+                fontSize: 10,
+                color: C.textDisabled,
+                marginTop: 10,
               }}
             >
-              <div style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled, marginBottom: 4 }}>
-                // monthly bonus
-              </div>
-              <div style={{ fontFamily: SANS, fontSize: 11, color: C.textSecondary }}>
-                every founder you bring in → one free month
-              </div>
-            </div>
+              // badges, on top of the credit — not instead of it
+            </p>
+            <BadgeLadder lit />
           </Beat>
 
+          {/* Beat 3 — the gates, named exactly as the dashboard names them. */}
           <Beat opacity={b3Opacity} y={b3Y}>
             <p
               style={{
@@ -172,8 +198,58 @@ export function ChapterReferral() {
                 lineHeight: 1.5,
               }}
             >
-              Your referral link unlocks once you&rsquo;ve settled in.
+              Your referral link unlocks once you&rsquo;ve earned it.
             </p>
+            <div style={{ width: 300, margin: "20px auto 0", textAlign: "left" }}>
+              {REFERRAL_LINK_GATES.map((gate, i) => (
+                <div
+                  key={gate.key}
+                  style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "6px 0" }}
+                >
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      color: C.textDisabled,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: "50%",
+                      width: 18,
+                      height: 18,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      marginTop: 1,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span>
+                    <span
+                      style={{
+                        fontFamily: SANS,
+                        fontSize: 13,
+                        color: C.textPrimary,
+                        display: "block",
+                      }}
+                    >
+                      {gate.title}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: SANS,
+                        fontSize: 11,
+                        color: C.textMuted,
+                        display: "block",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {gate.sub}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
             <div
               style={{
                 background: C.bg,
@@ -184,13 +260,10 @@ export function ChapterReferral() {
                 fontSize: 12,
                 color: C.textDisabled,
                 maxWidth: 300,
-                margin: "20px auto 12px",
+                margin: "20px auto 0",
               }}
             >
               quorum.app/signup?ref=••••••
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: C.textDisabled }}>
-              // complete your profile to activate
             </div>
           </Beat>
         </div>

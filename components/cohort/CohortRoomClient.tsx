@@ -24,16 +24,6 @@ import {
   type MemberRoomStats,
 } from "@/lib/recognition";
 
-// Cohort-post usage counter color ramps with how close the user is to the cap.
-function usageColor(used: number, limit: number): string {
-  if (limit <= 0) return "#f85149";
-  const pct = (used / limit) * 100;
-  if (pct >= 100) return "#f85149";
-  if (pct >= 81) return "#f59e0b";
-  if (pct >= 51) return "#8b949e";
-  return "#484f58";
-}
-
 type Member = {
   id: string;
   full_name: string | null;
@@ -136,10 +126,8 @@ export default function CohortRoomClient({
 }) {
   const router = useRouter();
   const online = usePresence();
-  const { tier, status } = useTier();
-  const { paywallState, checkAndGate, closePaywall } = usePaywall();
-  // Free-tier (non-trial) cohort-post usage for the counter above the composer.
-  const [cohortUsage, setCohortUsage] = useState<{ current: number; limit: number } | null>(null);
+  const { hasFullAccess, hadTrial, isLoading: tierLoading } = useTier();
+  const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [postOpen, setPostOpen] = useState(false);
@@ -159,33 +147,11 @@ export default function CohortRoomClient({
     [members]
   );
 
-  const showUsageCounter = tier === "free" && status !== "trialing";
-
-  // Pull cohort-post usage for free-tier (non-trial) users only.
-  useEffect(() => {
-    if (!showUsageCounter) {
-      setCohortUsage(null);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/usage");
-        const json = await res.json();
-        if (!cancelled) {
-          setCohortUsage({
-            current: json.usage?.cohort_posts ?? 0,
-            limit: json.limits?.cohort_posts ?? 0,
-          });
-        }
-      } catch {
-        // ignore — counter simply won't render
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [showUsageCounter]);
+  // Whether to warn that posting to the room is closed. There is no metered free
+  // rung — an unentitled account's cap is 0 and an entitled one is uncapped — so
+  // this is a lock notice, not the "x / y posts this month" counter it used to
+  // fetch (which could never render: it required a limit above zero).
+  const showPostingLocked = !hasFullAccess && !tierLoading;
 
   // Hydrate the status-board collapse state from localStorage (default open).
   useEffect(() => {
@@ -397,9 +363,11 @@ export default function CohortRoomClient({
       // Let a waiting tour step know the post actually landed.
       reportPosted("cohort-post");
       setMessageText("");
-      setCohortUsage((u) => (u ? { ...u, current: u.current + 1 } : u));
     } else {
       const data = await res.json().catch(() => ({}));
+      // An entitlement 403 gets the upgrade overlay. It also keeps the draft in
+      // the composer, which an alert() and a discarded post did not.
+      if (handleGateResponse("cohort_posts", data)) return;
       window.alert((data.error || "failed to post").toLowerCase());
     }
   }
@@ -796,21 +764,22 @@ export default function CohortRoomClient({
               <div ref={bottomRef} />
             </div>
 
-            {/* Free-tier usage counter — sits just above the composer. Shows
-                once they've made at least one cohort post this month. */}
-            {showUsageCounter && cohortUsage && cohortUsage.limit > 0 && cohortUsage.current >= 1 && (
+            {/* Sits just above the composer when posting to the room is closed. */}
+            {showPostingLocked && (
               <div
                 className="max-w-3xl xl:max-w-none"
                 style={{
                   fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
                   fontSize: 9,
-                  color: usageColor(cohortUsage.current, cohortUsage.limit),
+                  color: "#f59e0b",
                   letterSpacing: "0.05em",
                   padding: "4px 0",
                   textAlign: "right",
                 }}
               >
-                {cohortUsage.current} / {cohortUsage.limit} cohort posts this month
+                {hadTrial
+                  ? "// your trial has ended — upgrade to post to your room"
+                  : "// posting to your room is part of Member"}
               </div>
             )}
 
@@ -1020,8 +989,6 @@ export default function CohortRoomClient({
           isOpen={paywallState.isOpen}
           onClose={closePaywall}
           feature={paywallState.feature!}
-          currentUsage={paywallState.currentUsage}
-          limit={paywallState.limit}
           hadTrial={paywallState.hadTrial}
         />
       )}

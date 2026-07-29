@@ -2,6 +2,11 @@ import Stripe from "stripe";
 import { stripe } from "./stripe";
 import { createAdminClient } from "@/lib/supabase/server";
 import { TRIAL_DAYS } from "@/lib/pricing";
+import {
+  resolveEntitlement,
+  tierForSubscription,
+  type Tier,
+} from "@/lib/entitlements";
 
 // Tier model: free / member / partner.
 //
@@ -11,7 +16,11 @@ import { TRIAL_DAYS } from "@/lib/pricing";
 // from. A cohort seat is scarce and rivalrous — a non-paying member occupying
 // one of twelve chairs degrades the room for the eleven who are paying, which
 // is why there's no metered free rung. See lib/pricing.ts.
-export type Tier = "free" | "member" | "partner";
+//
+// A card-free TRIAL is not this state. It stores tier="free" (there's no paid
+// tier to stamp) with status="trialing", and it grants everything. Never decide
+// access from a tier string alone — ask lib/entitlements.ts.
+export type { Tier };
 
 // Lapsed accounts can read, and write nothing. Kept as a map (rather than a
 // blanket deny) so the usage plumbing, paywall copy, and admin tooling all keep
@@ -87,35 +96,42 @@ export function getCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-// Check whether a user has hit a usage cap for a feature. Paid tiers are uncapped.
+/**
+ * Authoritative write gate, enforced by every write route.
+ *
+ * This used to read `profiles.tier` and nothing else, which meant a trialing
+ * account (tier "free", status "trialing") was blocked from every write while
+ * being told its trial was active. It now asks lib/entitlements.ts, which knows
+ * that a live trial and a paid subscription both grant everything — and which
+ * double-checks Stripe before blocking, so a paying member is never turned away
+ * on the strength of stale local state.
+ *
+ * `reason` distinguishes the two ways to be denied, so callers can say "upgrade
+ * your plan" rather than inventing a usage limit that doesn't exist.
+ */
 export async function checkUsageCap(
   userId: string,
   feature: UsageFeature,
-): Promise<{ allowed: boolean; current: number; limit: number }> {
-  const supabase = createAdminClient();
-  const tier = await getUserTier(userId);
+): Promise<{
+  allowed: boolean;
+  current: number;
+  limit: number;
+  reason: "entitled" | "upgrade_required";
+}> {
+  // deepSearch: a denied write is exactly the moment worth spending a Stripe
+  // round trip on, and it runs on an action rather than on every page render.
+  const entitlement = await resolveEntitlement(userId, {
+    reconcileIfBlocked: true,
+    deepSearch: true,
+  });
 
-  if (tier === "member" || tier === "partner") {
-    return { allowed: true, current: 0, limit: -1 };
+  if (entitlement.hasFullAccess) {
+    return { allowed: true, current: 0, limit: -1, reason: "entitled" };
   }
 
-  const limit = LAPSED_LIMITS[feature];
-
-  // Every write is blocked once lapsed — there is no metered free rung.
-  if (limit === 0) {
-    return { allowed: false, current: 0, limit: 0 };
-  }
-
-  const month = getCurrentMonth();
-  const { data } = await supabase
-    .from("usage_tracking")
-    .select(feature)
-    .eq("user_id", userId)
-    .eq("month", month)
-    .maybeSingle();
-
-  const current = ((data as Record<string, number> | null)?.[feature] as number) || 0;
-  return { allowed: current < limit, current, limit };
+  // No live trial and nothing paid: every write is closed. There is no metered
+  // free rung to be partway through, so there is no usage to report.
+  return { allowed: false, current: 0, limit: LAPSED_LIMITS[feature], reason: "upgrade_required" };
 }
 
 // Increment a usage counter for the current month (upsert).
@@ -163,20 +179,31 @@ export async function syncSubscriptionToSupabase(
   }
   if (!resolvedUserId) return;
 
-  const priceId = stripeSubscription.items?.data?.[0]?.price?.id;
-  let tier: Tier = "free";
-  if (priceId && priceId === process.env.STRIPE_MEMBER_PRICE_ID) tier = "member";
-  if (priceId && priceId === process.env.STRIPE_PARTNER_PRICE_ID) tier = "partner";
-
+  // Tier resolution lives in lib/entitlements.ts, which maps every paid price
+  // (member, member_annual, founding, partner) and falls back to Member for an
+  // unrecognized price on a live subscription. The old two-entry map here left
+  // anyone on the founding or annual rate stranded on "free" while Stripe
+  // charged them.
+  const effectiveTier: Tier = tierForSubscription(stripeSubscription);
   const status = stripeSubscription.status;
-  // Only an active/trialing subscription grants paid access.
-  const effectiveTier: Tier =
-    status === "active" || status === "trialing" ? tier : "free";
 
   const sub = stripeSubscription as unknown as {
     current_period_start?: number;
     current_period_end?: number;
   };
+
+  const stripeTrialEnd = stripeSubscription.trial_end
+    ? new Date(stripeSubscription.trial_end * 1000).toISOString()
+    : null;
+
+  // Preserve a trial date Stripe doesn't know about. Upgrading mid-trial creates
+  // a subscription with no Stripe trial, and blanking the date here would erase
+  // the record that this account ever trialed — which `hadTrial` copy depends on.
+  const { data: existing } = await supabase
+    .from("subscriptions")
+    .select("trial_ends_at")
+    .eq("user_id", resolvedUserId)
+    .maybeSingle();
 
   await supabase.from("subscriptions").upsert(
     {
@@ -185,9 +212,7 @@ export async function syncSubscriptionToSupabase(
       stripe_subscription_id: stripeSubscription.id,
       tier: effectiveTier,
       status,
-      trial_ends_at: stripeSubscription.trial_end
-        ? new Date(stripeSubscription.trial_end * 1000).toISOString()
-        : null,
+      trial_ends_at: stripeTrialEnd ?? existing?.trial_ends_at ?? null,
       current_period_start: sub.current_period_start
         ? new Date(sub.current_period_start * 1000).toISOString()
         : null,
