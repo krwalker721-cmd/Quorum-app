@@ -204,11 +204,17 @@ export default async function HomePage() {
   }
 
   // Recent pulse posts (top-level), 2 for the preview.
+  //
+  // post_type must be filtered: without it this pulled the newest top-level post
+  // of ANY kind, so cohort-room posts surfaced in a tile titled "recent in pulse"
+  // that links to /pulse. Matches the filter /pulse itself uses, so the preview
+  // and its destination can't disagree.
   let recentPosts: any[] = [];
   try {
     const { data } = await supabase
       .from("posts")
       .select("id, content, tag, post_type, reply_count, created_at, author_id")
+      .eq("post_type", "pulse")
       .is("parent_post_id", null)
       .order("created_at", { ascending: false })
       .limit(2);
