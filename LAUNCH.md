@@ -6,6 +6,34 @@
 
 ---
 
+## 0. Start here (context for a fresh session)
+
+If you are picking this up cold, this is the state of the world:
+
+- **What Quorum is:** a private, invite-gated community for founders. Twelve-seat
+  cohorts, a weekly check-in rhythm, a pulse feed, a collab board, a vault, DMs,
+  and referrals. Next.js 16 / React 19, Supabase (auth + Postgres + RLS +
+  realtime), Stripe billing, deployed on Vercel.
+- **Pricing:** $39/mo Member, $390/yr, $19/mo founding rate for the first 100
+  seats, $99/mo Partner (not shipped). 30-day card-free trial, 45 if referred.
+  There is no free tier — an unentitled account has a write limit of 0.
+- **Where it runs today:** `https://quorum-app-kappa.vercel.app`. A custom domain
+  is Phase 0 and had not been bought as of writing.
+- **Repo:** `main` is the deploy branch; Vercel auto-deploys from it via the
+  GitHub integration (`krwalker721-cmd/Quorum-app`). No Vercel CLI or token is
+  configured locally.
+- **Status:** the six launch blockers in §5 are fixed, deployed, and verified in
+  production. Migration 014 is applied. Nothing in this document is done yet.
+- **Read §7 before touching the database or deploying** — the migration and
+  deploy workflow here has a specific ordering requirement that will break signup
+  if ignored.
+- **Design language**, if any UI work comes up: dark, boxed tiles, amber as the
+  single accent, green for live/positive only, mono micro-labels as seasoning.
+  `design/REDESIGN-BUILD-GUIDE.md` is the authority; don't reintroduce a rainbow
+  of accent colors.
+
+---
+
 ## 1. How to read this
 
 The flat checklist at the end is the complete inventory. The phases are the
