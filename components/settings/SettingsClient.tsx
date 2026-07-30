@@ -665,9 +665,17 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
     if (res.ok) {
       router.push("/login");
       router.refresh();
-    } else {
-      setMsg("could not delete account — contact support");
+      return;
     }
+    // Surface the route's own message. It distinguishes the case that actually
+    // matters — billing couldn't be canceled, so the account was deliberately
+    // left intact — from a generic failure. Telling someone "contact support"
+    // when their card is still on file is the wrong thing to say.
+    const detail = await res
+      .json()
+      .then((j) => (typeof j?.error === "string" ? j.error.toLowerCase() : null))
+      .catch(() => null);
+    setMsg(detail ?? "could not delete account — contact support");
   }
 
   const dangerBtn: React.CSSProperties = {

@@ -81,11 +81,25 @@ export async function hasDepthRing(
   return true;
 }
 
-/** Handshake count — total handshakes the user has been part of. */
+/**
+ * Handshake count — total handshakes the user has been part of.
+ *
+ * Goes through the handshake_count() RPC rather than counting rows directly.
+ * Since migration 014 the handshakes table is readable only by the two parties
+ * to each handshake (the `agreement` text is private), so a direct count run by
+ * a visitor would return only the handshakes they personally share with the
+ * profile owner — turning a public trust signal into "how many we two have".
+ * The RPC is SECURITY DEFINER and returns the integer without exposing rows.
+ */
 export async function getHandshakeCount(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<number> {
+  const { data, error } = await supabase.rpc("handshake_count", { target: userId });
+  if (!error && typeof data === "number") return data;
+
+  // Pre-014 fallback. Undercounts for a visitor, which is the old behaviour —
+  // better than rendering nothing while the migration is still pending.
   const { count } = await supabase
     .from("handshakes")
     .select("id", { count: "exact", head: true })
