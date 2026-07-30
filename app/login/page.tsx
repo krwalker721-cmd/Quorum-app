@@ -15,7 +15,9 @@ function LoginForm() {
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // Seeded from ?error= so a dead auth link (expired reset, spent confirmation)
+  // explains itself here instead of dumping the user on a blank login form.
+  const [error, setError] = useState<string | null>(searchParams.get("error"));
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -60,7 +62,15 @@ function LoginForm() {
         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div>
-        <label>password</label>
+        <div className="flex items-baseline justify-between">
+          <label>password</label>
+          <Link
+            href="/forgot-password"
+            className="font-mono text-[0.65rem] text-text-faint lowercase hover:text-amber"
+          >
+            forgot?
+          </Link>
+        </div>
         <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
 

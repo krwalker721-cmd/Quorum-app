@@ -26,6 +26,9 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [refCode, setRefCode] = useState<string | null>(null);
   const [referrerName, setReferrerName] = useState<string | null>(null);
+  // Set when Supabase has "confirm email" enabled: signUp() returns a user but
+  // no session, and nothing more can happen until they click the link.
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
   // Capture ?ref=CODE from the URL (read from window to avoid needing a Suspense
   // boundary for useSearchParams). Persist it in a cookie as a fallback for any
@@ -49,11 +52,22 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
 
+    // Every profile field rides along as user metadata. The handle_new_user()
+    // trigger (migration 014) reads it and creates the profiles row inside the
+    // same transaction as the auth user — which is what makes this work with
+    // email confirmation ON. The old client-side insert could not: with
+    // confirmation on there is no session here, so the insert failed RLS and
+    // left an auth user with no profile, permanently stuck.
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: {
+          full_name: fullName,
+          what_they_are_building: building,
+          stage,
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
@@ -63,37 +77,17 @@ export default function SignupPage() {
       return;
     }
 
-    const userId = data.user?.id;
-    if (!userId) {
-      setError("signup pending email confirmation. check your inbox.");
+    // No session means confirmation is required. The profile already exists, and
+    // /auth/callback claims the referral cookie once they confirm.
+    if (!data.session) {
+      setAwaitingConfirmation(true);
       setLoading(false);
       return;
     }
 
-    const username =
-      fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") +
-      "-" +
-      userId.slice(0, 4);
-
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: userId,
-      full_name: fullName,
-      email,
-      what_they_are_building: building,
-      stage,
-      status: WAITLIST_ENABLED ? "pending" : "approved",
-      username,
-    });
-
-    if (profileError) {
-      setError(profileError.message.toLowerCase());
-      setLoading(false);
-      return;
-    }
-
-    // Record the referral if this signup came through a referral link. The user
-    // is authenticated at this point; the claim route reads them from the session
-    // and creates the referral as 'pending'. Best-effort — never block signup.
+    // Confirmation is off, so we're signed in already. Record the referral if
+    // this signup came through a referral link — the claim route reads the user
+    // from the session. Best-effort; never block signup.
     if (refCode) {
       try {
         await fetch("/api/referrals/claim", {
@@ -117,7 +111,22 @@ export default function SignupPage() {
           <p className="font-mono lowercase text-text-faint text-xs mt-1">request access</p>
         </div>
 
-        {referrerName && (
+        {awaitingConfirmation && (
+          <div className="bg-card border border-border p-6 space-y-3">
+            <p className="font-mono text-xs text-text-primary lowercase">confirm your email</p>
+            <p className="font-mono text-xs text-text-faint lowercase leading-relaxed">
+              we sent a link to {email.trim().toLowerCase()}. click it and you&apos;re in the
+              queue — nothing else to do here.
+            </p>
+            <p className="font-mono text-xs text-text-faint lowercase leading-relaxed">
+              no email after a few minutes? check spam, or{" "}
+              <Link href="/login" className="text-amber hover:underline">log in</Link> to
+              resend.
+            </p>
+          </div>
+        )}
+
+        {!awaitingConfirmation && referrerName && (
           <div
             style={{
               background: "rgba(34,197,94,0.06)",
@@ -141,7 +150,11 @@ export default function SignupPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-card border border-border p-6 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-card border border-border p-6 space-y-4"
+          hidden={awaitingConfirmation}
+        >
           <div>
             <label>full name</label>
             <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -178,10 +191,12 @@ export default function SignupPage() {
           </button>
         </form>
 
-        <p className="font-mono text-xs text-text-faint lowercase text-center mt-6">
-          already have an account?{" "}
-          <Link href="/login" className="text-amber hover:underline">log in</Link>
-        </p>
+        {!awaitingConfirmation && (
+          <p className="font-mono text-xs text-text-faint lowercase text-center mt-6">
+            already have an account?{" "}
+            <Link href="/login" className="text-amber hover:underline">log in</Link>
+          </p>
+        )}
       </div>
     </main>
   );

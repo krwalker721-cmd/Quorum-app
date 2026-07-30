@@ -5,10 +5,10 @@ import { validateReferralCode, createReferral } from "@/lib/referral-helpers";
 export const dynamic = "force-dynamic";
 
 // POST { code } — claim a referral code for the newly-signed-up (authenticated)
-// user. This project has no auth-callback route; the signup page creates the
-// profile inline and then calls this with the captured ?ref= code. The referred
-// user is taken from the session, never the request body, so a user can't be
-// attributed to someone else.
+// user. Called by the signup page when email confirmation is disabled and a
+// session exists immediately; when confirmation is on, /auth/callback claims the
+// same cookie server-side instead. The referred user is taken from the session,
+// never the request body, so a user can't be attributed to someone else.
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 

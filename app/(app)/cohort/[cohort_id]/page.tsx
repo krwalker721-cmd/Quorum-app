@@ -99,11 +99,19 @@ export default async function CohortRoomPage(
   const members = [me, ...others].filter(Boolean) as Member[];
 
   // Check-ins this week — for THIS cohort's members only.
+  //
+  // Anonymous check-ins are excluded explicitly. The roster below keys check-ins
+  // by user_id and renders them against the member, so including an anonymous
+  // one would attribute it to its author by name — the exact disclosure the
+  // anonymous option promises to prevent. Migration 014 also withholds these
+  // rows at the RLS level; this filter is the second lock, and keeps the
+  // behaviour correct for the viewer's own anonymous check-ins, which they are
+  // still allowed to read.
   const weekStart = startOfWeek(new Date()).toISOString();
   const { data: checkins } = memberIds.length
     ? await supabase
         .from("check_ins")
-        .select("user_id, weekly_win, decision, blocker, created_at")
+        .select("user_id, weekly_win, decision, blocker, created_at, is_anonymous")
         .in("user_id", memberIds)
         .gte("created_at", weekStart)
         .order("created_at", { ascending: false })
@@ -111,6 +119,7 @@ export default async function CohortRoomPage(
 
   const checkinByUser = new Map<string, any>();
   for (const c of checkins ?? []) {
+    if (c.is_anonymous) continue;
     if (!checkinByUser.has(c.user_id)) checkinByUser.set(c.user_id, c);
   }
 
