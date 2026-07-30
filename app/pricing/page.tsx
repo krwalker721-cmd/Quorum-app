@@ -273,7 +273,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do referrals work?",
-    a: "Share your invite link. Every founder who joins and sticks around earns you one free month of Member — automatically credited, with no cap. Bring twelve and the year is on us.",
+    a: "Share your invite link. Every founder who joins and stays active brings your own price down — $10 off a month at one, $30 at five, free at eight. It tracks who is still active, so it rewards people you actually keep in the room. Fill a cohort of twelve and Quorum is free.",
   },
   {
     q: "Is the founding rate really locked?",

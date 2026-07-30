@@ -19,54 +19,47 @@ interface CouponDef {
 }
 
 const coupons: CouponDef[] = [
-  // ── Milestone rewards (one-time) ──────────────────────────────────────────
-  // Milestones 1/3/5/10 are applied as one-off customer balance credits, not
-  // these coupons, but we still create them so the catalog is complete and
-  // auditable. Rewards are denominated in free months of Member ($12/mo). Stripe
-  // caps coupon `name` at 40 chars, so these are kept short; the coupon id
-  // encodes the exact milestone.
+  // NOTE: the QUORUM_MILESTONE_* coupons are gone. Milestones are badges now
+  // (see applyMilestoneReward in lib/referral-helpers.ts) and never touch
+  // Stripe — paying free months there on top of the standing bonus would credit
+  // the same referral twice.
+
+  // ── Standing referral bonus (repeating; swapped as the active count moves) ──
+  // Sized against the $39 Member price. See lib/referral-bonus.ts for the
+  // ladder — these ids must stay in sync with BONUS_TIERS.
   {
-    id: "QUORUM_MILESTONE_1",
-    amount_off: 1200, // cents — 1 free month
+    id: "QUORUM_MONTHLY_10",
+    amount_off: 1000,
     currency: "usd",
-    duration: "once",
-    name: "Quorum Referral - 1 Free Month",
+    duration: "repeating",
+    duration_in_months: 120, // effectively permanent; removed when unearned
+    name: "Quorum Referral Bonus - $10 Off",
   },
   {
-    id: "QUORUM_MILESTONE_3",
-    amount_off: 1200, // 1 free month
+    id: "QUORUM_MONTHLY_20",
+    amount_off: 2000,
     currency: "usd",
-    duration: "once",
-    name: "Quorum Referral - 1 Free Month",
+    duration: "repeating",
+    duration_in_months: 120,
+    name: "Quorum Referral Bonus - $20 Off",
   },
   {
-    id: "QUORUM_MILESTONE_5",
-    amount_off: 2400, // 2 free months
+    id: "QUORUM_MONTHLY_30",
+    amount_off: 3000,
     currency: "usd",
-    duration: "once",
-    name: "Quorum Referral - 2 Free Months",
+    duration: "repeating",
+    duration_in_months: 120,
+    name: "Quorum Referral Bonus - $30 Off",
   },
   {
-    id: "QUORUM_MILESTONE_10",
-    amount_off: 3600, // 3 free months
-    currency: "usd",
-    duration: "once",
-    name: "Quorum Referral - 3 Free Months",
-  },
-  // ── Milestone rewards (recurring) ─────────────────────────────────────────
-  {
-    id: "QUORUM_MILESTONE_25",
+    // 8+ active referrals. Percent rather than a fixed amount so it stays
+    // correct if the Member price ever moves.
+    id: "QUORUM_MONTHLY_FREE",
     percent_off: 100,
     duration: "repeating",
-    duration_in_months: 12,
-    name: "Quorum Referral - Free Year",
+    duration_in_months: 120,
+    name: "Quorum Referral Bonus - Free",
   },
-  // NOTE: QUORUM_MONTHLY_50 (the old standing "50% off forever off one
-  // referral" bonus) is intentionally gone. Referral rewards are now customer
-  // balance credit — one month of Member per activated referral — granted in
-  // lib/referral-credit.ts, which needs no coupons at all. Any coupon still
-  // attached to a live subscription is detached by
-  // scripts/retire-monthly-bonus.ts.
 ];
 
 async function createCoupons(): Promise<void> {

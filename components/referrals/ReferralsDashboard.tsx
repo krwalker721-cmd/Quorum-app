@@ -18,8 +18,11 @@ interface ReferralData {
   link: string | null;
   totalCount: number;
   activeCount: number;
-  creditMonths: number;
-  creditValue: number;
+  monthlyBonus: number;
+  bonusIsFree: boolean;
+  bonusLabel: string | null;
+  bonusLadder: Array<{ min: number; amountOff: number | null; label: string }>;
+  memberPrice: number;
   referrals: Array<{
     id: string;
     status: string;
@@ -185,7 +188,7 @@ function ErrorState() {
 
 // The real loop, from lib/referral-model.ts. The old version said rewards
 // "unlock as milestones hit", which described the badge ladder as the payout and
-// left out the thing that actually pays: one month of credit per activation.
+// left out the thing that actually pays: the standing monthly bonus.
 const HOW_IT_WORKS = HOW_REFERRALS_WORK.map((step, i) => ({ n: i + 1, ...step }));
 
 // ─── component ───────────────────────────────────────────────────────────────
@@ -237,7 +240,7 @@ export default function ReferralsDashboard() {
   if (loading) return <LoadingState />;
   if (error || !data) return <ErrorState />;
 
-  const { link, totalCount, activeCount, creditMonths, creditValue, referrals, gates } = data;
+  const { link, totalCount, activeCount, monthlyBonus, bonusIsFree, bonusLadder, memberPrice, referrals, gates } = data;
 
   const nextMilestone = MILESTONES.find((m) => m.count > totalCount);
 
@@ -285,7 +288,7 @@ export default function ReferralsDashboard() {
               // membership lapsed
             </p>
             <p style={{ fontFamily: SANS, fontSize: 13, color: "#8b949e", marginBottom: 0 }}>
-              Your referral link is paused while your membership is inactive. Reactivate to keep bringing founders in — and to keep earning free months.
+              Your referral link is paused while your membership is inactive. Reactivate to keep bringing founders in — and to keep earning your monthly bonus.
             </p>
           </div>
           <span
@@ -329,7 +332,7 @@ export default function ReferralsDashboard() {
               Bring someone who belongs here. Get rewarded when they stay.
             </p>
             <p style={{ fontFamily: MONO, fontSize: 11, color: "#8b949e", marginTop: 10, letterSpacing: "0.04em" }}>
-              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>{creditMonths} {creditMonths === 1 ? "month" : "months"} earned</span>
+              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>{bonusIsFree ? "free every month" : monthlyBonus > 0 ? `$${monthlyBonus} off/mo` : "no bonus yet"}</span>
             </p>
           </div>
           <button
@@ -633,27 +636,48 @@ export default function ReferralsDashboard() {
             })}
           </div>
 
-          {/* referral credit */}
+          {/* standing bonus + the ladder */}
           <div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 12, padding: 16, marginTop: 16 }}>
             <span style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.08em" }}>
-              // credit earned
+              // your monthly bonus
             </span>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}>
-              <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>{creditMonths}</span>
-              <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>
-                {creditMonths === 1 ? "free month" : "free months"}
-              </span>
+              {bonusIsFree ? (
+                <span style={{ fontFamily: SANS, fontSize: 28, color: "#22c55e" }}>free</span>
+              ) : (
+                <>
+                  <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>${monthlyBonus}</span>
+                  <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>off every month</span>
+                </>
+              )}
             </div>
             <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 4 }}>
-              // ${creditValue} of Member, applied automatically
+              // {activeCount} active {activeCount === 1 ? "referral" : "referrals"}
+              {!bonusIsFree && monthlyBonus > 0 ? ` · you pay $${memberPrice - monthlyBonus}` : ""}
             </p>
 
             <div style={{ marginTop: 12, borderTop: "1px solid #21262d", paddingTop: 12 }}>
-              <p style={{ fontFamily: SANS, fontSize: 12, color: "#8b949e", margin: 0, lineHeight: 1.5 }}>
-                Every founder you bring in who sticks around earns you one free
-                month. No cap — fill a cohort and the year is on us.
-              </p>
+              {[...bonusLadder].reverse().map((t) => {
+                const held = activeCount >= t.min;
+                const next = !held && activeCount < t.min;
+                const c = held ? "#f59e0b" : next ? "#8b949e" : "#484f58";
+                return (
+                  <div key={t.min} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0" }}>
+                    <span style={{ fontFamily: SANS, fontSize: 12, color: c }}>
+                      {t.min}+ active
+                    </span>
+                    <span style={{ fontFamily: MONO, fontSize: 11, color: c }}>
+                      {t.amountOff === null ? "free" : `$${t.amountOff} off / mo`}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
+
+            <p style={{ fontFamily: SANS, fontSize: 12, color: "#8b949e", marginTop: 12, lineHeight: 1.5 }}>
+              Your bonus tracks how many of your referrals are <strong style={{ color: "#e6edf3" }}>still active</strong> —
+              it recalculates as people come and go. Fill a room of 12 and Quorum is free.
+            </p>
           </div>
         </div>
       </div>

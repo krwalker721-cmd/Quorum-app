@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import {
+  createReferralCode,
   checkActivityGates,
   isReferralLinkActive,
   getTotalReferralCount,
   getActiveReferralCount,
 } from "@/lib/referral-helpers";
-import { getEarnedCreditMonths } from "@/lib/referral-credit";
+import { recalculateBonus } from "@/lib/referral-helpers";
+import { tierFor, BONUS_TIERS } from "@/lib/referral-model";
 import { PRICING } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
@@ -22,11 +24,25 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: codeData } = await supabase
+  let { data: codeData } = await supabase
     .from("referral_codes")
     .select("code, active")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  // Mint the code on demand if it's missing. It used to be created only by the
+  // admin approve route, so anyone approved another way — seeded directly,
+  // approved before that route existed, or with the waitlist off — ended up
+  // with no code at all and therefore no referral link. createReferralCode is
+  // idempotent, so this is safe to run on every request.
+  if (!codeData?.code) {
+    try {
+      const code = await createReferralCode(user.id);
+      codeData = { code, active: true };
+    } catch (e) {
+      console.error("referral code creation failed:", e);
+    }
+  }
 
   const gates = await checkActivityGates(user.id);
   const linkStatus = await isReferralLinkActive(user.id);
@@ -67,9 +83,17 @@ export async function GET() {
     .eq("id", user.id)
     .single();
 
-  // Months of Member earned as credit — one per referral who activated. This
-  // replaced the old standing 50%-off-forever bonus.
-  const creditMonths = await getEarnedCreditMonths(user.id);
+  // Self-heal the standing bonus on dashboard load, so a missed webhook shows
+  // up as the right tier rather than silently stale. Best-effort.
+  try {
+    await recalculateBonus(user.id);
+  } catch (e) {
+    console.error("bonus recalculation failed:", e);
+  }
+
+  const tier_ = tierFor(activeCount);
+  const monthlyBonus = tier_?.amountOff ?? (tier_ ? PRICING.member.monthly : 0);
+  const bonusIsFree = tier_ != null && tier_.amountOff === null;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
   const referralLink = codeData?.code
@@ -114,8 +138,15 @@ export async function GET() {
     gates,
     totalCount,
     activeCount,
-    creditMonths,
-    creditValue: creditMonths * PRICING.member.monthly,
+    monthlyBonus,
+    bonusIsFree,
+    bonusLabel: tier_?.label ?? null,
+    bonusLadder: BONUS_TIERS.map((t) => ({
+      min: t.min,
+      amountOff: t.amountOff,
+      label: t.label,
+    })),
+    memberPrice: PRICING.member.monthly,
     referrals: referrals ?? [],
     rewards: rewards ?? [],
     tier,

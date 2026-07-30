@@ -5,14 +5,14 @@ import { motion, useTransform, type MotionValue } from "framer-motion";
 import { Chapter, StickyStage, useChapterScroll } from "./sticky";
 import { C, MONO, SANS, hexToRgba } from "./theme";
 import {
-  REFERRAL_CREDIT,
+  BONUS_LADDER_ASC,
   REFERRAL_MILESTONES,
   REFERRAL_LINK_GATES,
 } from "@/lib/referral-model";
 
-// The badge ladder. Recognition only — the money is one month per activation,
-// which beat 1 covers. This used to promise a second, larger pile of free months
-// at each rung, which the app never paid.
+// The badge ladder. Recognition only — the money is the standing monthly bonus,
+// which beat 1 covers. This used to promise a second pile of free months at each
+// rung, which the app never paid.
 function BadgeLadder({ lit }: { lit: boolean }) {
   return (
     <div style={{ width: 260, margin: "22px auto 0" }}>
@@ -131,8 +131,8 @@ export function ChapterReferral() {
                 lineHeight: 1.5,
               }}
             >
-              Every founder you bring in who stays earns you{" "}
-              <span style={{ color: C.amber }}>one free month</span> of Member.
+              Every founder you bring in who <span style={{ color: C.amber }}>stays active</span>{" "}
+              brings your own price down — and keeps it down.
             </p>
             <div
               style={{
@@ -145,16 +145,31 @@ export function ChapterReferral() {
               }}
             >
               <div
-                style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled, marginBottom: 6 }}
+                style={{ fontFamily: MONO, fontSize: 8, color: C.textDisabled, marginBottom: 8 }}
               >
-                // how the credit works
+                // your monthly bonus
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 13, color: C.textSecondary }}>
-                ${REFERRAL_CREDIT.dollarsPerActivation} of credit per activation,
-                applied automatically
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: C.amber, marginTop: 8 }}>
-                no cap — fill a cohort and the year is on us
+              {BONUS_LADDER_ASC.map((t) => (
+                <div
+                  key={t.min}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "3px 0",
+                    fontFamily: SANS,
+                    fontSize: 12,
+                    color: C.textSecondary,
+                  }}
+                >
+                  <span>{t.min}+ active</span>
+                  <span style={{ fontFamily: MONO, fontSize: 11, color: C.amber }}>
+                    {t.amountOff === null ? "free" : `$${t.amountOff} off / mo`}
+                  </span>
+                </div>
+              ))}
+              <div style={{ fontFamily: MONO, fontSize: 10, color: C.amber, marginTop: 10 }}>
+                fill a room of 12 and quorum is free
               </div>
             </div>
           </Beat>

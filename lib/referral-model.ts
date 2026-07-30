@@ -1,30 +1,65 @@
-import { PRICING, REFERRAL_CREDIT_MONTHS_PER_ACTIVATION } from "@/lib/pricing";
+import { PRICING } from "@/lib/pricing";
 
 // What referrals actually are, in one place.
 //
 // This file exists because the onboarding pitch and the /referrals dashboard
-// were describing two different products. Onboarding promised a ladder of free
-// months (1 → 1 month, 5 → 2 months, 25 → free for a year); the app pays one
-// month per activated referral with no cap and treats the ladder as badges. A
-// founder was being sold a scheme that didn't exist, then shown the real one.
+// were describing two different products — a founder was sold one scheme and
+// then shown another. Both surfaces render from the constants below.
 //
-// Both surfaces now render from these constants. The reward mechanics themselves
-// live in lib/referral-credit.ts (the money) and lib/referral-helpers.ts (the
-// badges and the unlock gates) — the values below describe that behaviour and
-// must not drift from it.
+// It is deliberately CLIENT-SAFE: no Stripe, no Supabase, no server imports.
+// lib/referral-bonus.ts imports the ladder FROM here to do the Stripe work, so
+// the numbers a founder is promised and the numbers we actually bill cannot
+// drift apart.
 
-/** The economics: one month of Member per referral who activates, uncapped. */
-export const REFERRAL_CREDIT = {
-  monthsPerActivation: REFERRAL_CREDIT_MONTHS_PER_ACTIVATION,
-  dollarsPerActivation: PRICING.member.monthly * REFERRAL_CREDIT_MONTHS_PER_ACTIVATION,
-  /** Kept honest with lib/referral-credit.ts, which never caps a grant. */
-  uncapped: true,
-} as const;
+/**
+ * The standing referral bonus: a recurring discount sized by how many of your
+ * referrals are CURRENTLY active, recalculated whenever that count moves.
+ *
+ * The "currently active" part is the whole point. A one-off bounty pays for a
+ * signup; this pays for people who stay, so a referrer has a reason to care
+ * whether the room they filled is still alive. Let your referrals go quiet and
+ * the bonus shrinks with them.
+ *
+ * The ladder runs to 12 — a full cohort — rather than stopping at 5 like the
+ * original version, because when a room is twelve seats, five is the wrong
+ * place to stop paying.
+ *
+ * Ordered high → low; the first tier a count satisfies is the one it holds.
+ */
+export const BONUS_TIERS: {
+  /** Minimum currently-active referrals to hold this tier. */
+  min: number;
+  /** Stripe coupon id. Must exist — see scripts/create-stripe-coupons.ts. */
+  coupon: string;
+  /** Dollars off the monthly price. null = 100% off. */
+  amountOff: number | null;
+  label: string;
+}[] = [
+  { min: 12, coupon: "QUORUM_MONTHLY_FREE", amountOff: null, label: "free — you filled a room" },
+  { min: 8, coupon: "QUORUM_MONTHLY_FREE", amountOff: null, label: "free every month" },
+  { min: 5, coupon: "QUORUM_MONTHLY_30", amountOff: 30, label: "$30 off every month" },
+  { min: 3, coupon: "QUORUM_MONTHLY_20", amountOff: 20, label: "$20 off every month" },
+  { min: 1, coupon: "QUORUM_MONTHLY_10", amountOff: 10, label: "$10 off every month" },
+];
+
+/** The tier a given active-referral count earns (null = no bonus). */
+export function tierFor(activeCount: number) {
+  return BONUS_TIERS.find((t) => activeCount >= t.min) ?? null;
+}
+
+/** What you'd pay at a given tier, for copy that quotes a number. */
+export function pricePaidAt(amountOff: number | null): number {
+  return amountOff === null ? 0 : Math.max(0, PRICING.member.monthly - amountOff);
+}
+
+/** Low → high, for rendering the ladder as a progression. */
+export const BONUS_LADDER_ASC = [...BONUS_TIERS].reverse();
 
 /**
  * The milestone ladder — recognition, not money. Every referral is already paid
- * for in credit; paying free months here as well would credit the same referral
- * twice. Mirrors MILESTONE_BADGE / REWARD_MESSAGES in lib/referral-helpers.ts.
+ * for by the standing bonus; paying free months here as well would credit the
+ * same referral twice, which is what an earlier version of this did. Mirrors
+ * MILESTONE_BADGE / REWARD_MESSAGES in lib/referral-helpers.ts.
  */
 export const REFERRAL_MILESTONES: { count: number; reward: string }[] = [
   { count: 1, reward: "Connector badge" },
@@ -39,8 +74,8 @@ export const REFERRAL_MILESTONES: { count: number; reward: string }[] = [
  * returned by checkActivityGates() in lib/referral-helpers.ts, which is the
  * server's answer — these are labels for it, not a second implementation.
  *
- * The gates are what stop a drive-by account from farming credit, which is why
- * the link is earned rather than handed out at signup.
+ * The gates are what stop a drive-by account from farming the bonus, which is
+ * why the link is earned rather than handed out at signup.
  */
 export type ReferralGateKey =
   | "profileComplete"
@@ -88,7 +123,7 @@ export const HOW_REFERRALS_WORK: { title: string; sub: string }[] = [
     sub: "That's what activates the referral — not the signup",
   },
   {
-    title: "You earn a free month",
-    sub: `$${REFERRAL_CREDIT.dollarsPerActivation} of Member credit, applied automatically. No cap.`,
+    title: "Your price drops, and stays down",
+    sub: `$10 off at one active referral, $30 at five, free at eight — for as long as they stay.`,
   },
 ];

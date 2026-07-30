@@ -3,9 +3,8 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { syncSubscriptionToSupabase } from "@/lib/stripe-helpers";
-import { activateReferral, churnReferral } from "@/lib/referral-helpers";
+import { activateReferral, recalculateBonus, churnReferral } from "@/lib/referral-helpers";
 import { createAdminClient } from "@/lib/supabase/server";
-import { reconcilePendingCredit } from "@/lib/referral-credit";
 import { claimFoundingSeat } from "@/lib/plans";
 
 // Stripe signature verification needs the raw request body, so this handler must
@@ -94,11 +93,11 @@ export async function POST(req: NextRequest) {
                 console.error("claimFoundingSeat failed:", e);
               }
             }
-            // Apply any credit earned before they had a subscription.
+            // Attach whatever standing bonus their active-referral count earns.
             try {
-              await reconcilePendingCredit(userId);
+              await recalculateBonus(userId);
             } catch (e) {
-              console.error("reconcilePendingCredit failed:", e);
+              console.error("recalculateBonus failed:", e);
             }
           }
         }
@@ -151,10 +150,10 @@ export async function POST(req: NextRequest) {
         const userId = await userIdForCustomer(invoice.customer as string);
         if (!userId) break;
 
-        // Apply any referral credit earned before the member had a Stripe
-        // customer, or whose grant previously failed. Milestones no longer touch
-        // Stripe at all — they're badges now.
-        await reconcilePendingCredit(userId);
+        // Reconcile the standing referral bonus on every paid invoice — this
+        // is what self-heals a subscription whose coupon update previously
+        // failed. Milestones don't touch Stripe at all; they're badges.
+        await recalculateBonus(userId);
 
         await notify(supabase, userId, "payment_succeeded");
         break;

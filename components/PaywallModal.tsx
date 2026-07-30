@@ -36,7 +36,7 @@ const INCLUDED = [
   "Your cohort of 12 — post, reply, and show up weekly",
   "Unlimited pulse posts, replies, and DMs",
   "Full collab board and vault",
-  "Unlimited referrals — each one earns a free month",
+  "Unlimited referrals — each active one cuts your price",
 ];
 
 type Plan = "member" | "member_annual" | "founding";

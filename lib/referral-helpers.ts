@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
-import { grantReferralCredit } from "@/lib/referral-credit";
+import { applyBonusToStripe } from "@/lib/referral-bonus";
+import { tierFor } from "@/lib/referral-model";
 
 // Referral data layer (Session 7). These helpers run server-side from the
 // webhook, the signup claim route, the API routes, and scheduled jobs — often
@@ -22,12 +23,12 @@ const REFERRAL_NOTICE_COPY: Record<string, string> = {
   referral_pending: "someone just joined using your link",
   referral_activated:
     "a referral activated their account — your milestone progress updated",
-  referral_inactive: "a referral is no longer active",
+  referral_inactive: "a referral went inactive — your monthly bonus was recalculated",
   referral_nudge:
     "a referral hasn't activated yet — they have 24 hours to claim their first month",
   referral_churned: "a referral cancelled their account",
   referral_reward: "you earned a referral reward!",
-  referral_credit: "you earned a free month — thanks for bringing someone in.",
+  monthly_bonus_updated: "your monthly referral bonus changed",
 };
 
 async function notify(
@@ -193,9 +194,7 @@ export async function activateReferral(referredId: string): Promise<void> {
   });
 
   await checkAndApplyMilestoneReward(referral.referrer_id);
-  // One month of Member credit for the founder they brought in. Idempotent per
-  // referral, so a replayed activation can't pay out twice.
-  await grantReferralCredit(referral.referrer_id, referredId);
+  await recalculateBonus(referral.referrer_id);
 }
 
 // Mark a referral inactive (no login in 30 days).
@@ -218,6 +217,8 @@ export async function deactivateReferral(referredId: string): Promise<void> {
   await notify(supabase, referral.referrer_id, "referral_inactive", {
     sourceId: referredId,
   });
+
+  await recalculateBonus(referral.referrer_id);
 }
 
 // Mark a referral churned (subscription cancelled).
@@ -240,6 +241,8 @@ export async function churnReferral(referredId: string): Promise<void> {
   await notify(supabase, referral.referrer_id, "referral_churned", {
     sourceId: referredId,
   });
+
+  await recalculateBonus(referral.referrer_id);
 }
 
 // ---------------------------------------------------------------------------
@@ -378,10 +381,10 @@ export async function checkAndApplyMilestoneReward(userId: string): Promise<void
   }
 }
 
-// Milestones are STATUS, not money. Referral economics live entirely in
-// lib/referral-credit.ts (one month of Member per activated referral) — paying
-// free months here on top of that would be crediting the same referral twice.
-// Badges cost nothing and matter disproportionately in a community, so the
+// Milestones are STATUS, not money. Referral economics live entirely in the
+// standing bonus (lib/referral-bonus.ts) — paying free months here on top of
+// that would be crediting the same referral twice, which is what the old model
+// did. Badges cost nothing and matter disproportionately in a community, so the
 // ladder survives as recognition.
 const MILESTONE_BADGE: Record<MilestoneType, string> = {
   milestone_1: "connector",
@@ -455,4 +458,63 @@ export async function trackLoginEvent(userId: string): Promise<void> {
     .update({ last_seen_at: new Date().toISOString() })
     .eq("referred_id", userId)
     .neq("status", "churned");
+}
+
+// ---------------------------------------------------------------------------
+// Standing bonus
+// ---------------------------------------------------------------------------
+
+// Recalculate the standing referral bonus from the CURRENT active count and
+// reconcile it to Stripe. Called whenever a referral activates, goes inactive,
+// or churns — and lazily on dashboard load, so a missed webhook self-heals
+// rather than silently leaving someone on the wrong tier.
+export async function recalculateBonus(userId: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const activeCount = await getActiveReferralCount(userId);
+  const tier = tierFor(activeCount);
+
+  const { data: prev } = await supabase
+    .from("referral_rewards")
+    .select("id, milestone_count")
+    .eq("user_id", userId)
+    .eq("reward_type", "monthly_bonus")
+    .eq("active", true)
+    .maybeSingle();
+
+  const changed = (prev?.milestone_count ?? 0) !== activeCount;
+
+  if (changed) {
+    await supabase
+      .from("referral_rewards")
+      .update({ active: false })
+      .eq("user_id", userId)
+      .eq("reward_type", "monthly_bonus");
+
+    if (tier) {
+      await supabase.from("referral_rewards").insert({
+        user_id: userId,
+        reward_type: "monthly_bonus",
+        milestone_count: activeCount,
+        amount_cents: tier.amountOff === null ? null : tier.amountOff * 100,
+        applied: true,
+        active: true,
+      });
+    }
+  }
+
+  // Always reconcile Stripe, even when the count is unchanged — this is what
+  // self-heals a subscription whose last update failed. Never let a Stripe
+  // error break the DB record or fail the calling webhook.
+  try {
+    await applyBonusToStripe(userId, activeCount);
+  } catch (err) {
+    console.error("[Referral Bonus] Stripe reconciliation failed:", err);
+  }
+
+  if (changed) {
+    await notify(supabase, userId, "monthly_bonus_updated", {
+      payload: { active_count: activeCount, amount_off: tier?.amountOff ?? null },
+    });
+  }
 }
