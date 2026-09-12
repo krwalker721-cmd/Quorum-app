@@ -157,8 +157,10 @@ without you.
       on the live site, and `/` currently redirects straight to `/login`. That
       makes the legal pages *and* a minimal landing page more urgent than their
       phase numbers imply — a "need more information" response restarts the wait.
-- [ ] **[me → you]** **Terms of Service, Privacy Policy, refund/cancellation
-      policy.** Claude can draft all three to a solid first-pass standard, and
+- [x] **[me → you]** **Terms of Service, Privacy Policy, refund/cancellation
+      policy.** ✅ **Done 2026-09-12** — live on `quorumhq.co`, reviewed against
+      current law (§8), with consent captured at signup, on the referral card
+      form, and in Stripe Checkout. Claude can draft all three to a solid first-pass standard, and
       wire them into the footer, pricing page, and signup. **But treat the draft
       as a draft.** These are legally binding documents describing how you handle
       other people's data, and Claude is not a lawyer. Read them, and get a
@@ -217,7 +219,10 @@ without you.
         `/terms`. **Done once deployed and the owner has clicked "Join" once and
         seen the checkbox** — that click is the only way to prove the Terms URL
         is on file in the mode production uses (still test keys), because
-        session creation fails outright if it isn't
+        session creation fails outright if it isn't.
+        ✅ **Verified 2026-09-12:** deployed as `6557c62`; the owner clicked
+        "Join" on production and saw the checkbox on Stripe's page. That also
+        confirms the Terms URL is on file in test mode, not only live
 - [ ] **[you]** **File a Massachusetts business certificate ("DBA") for
       "Quorum".** Massachusetts requires anyone doing business under a name other
       than their own legal name to file a business certificate with the clerk of
@@ -236,8 +241,18 @@ without you.
       emails section → the option to email customers before a free trial ends.
       One toggle. (The card-free standard trial never auto-charges, so it isn't
       affected — that gap is §4a, a conversion problem rather than a legal one.)
-- [ ] **[me]** **Fix the PKCE cross-device error message** (see §5) — small, and
+- [x] **[me]** **Fix the PKCE cross-device error message** (see §5) — small, and
       it's a real support ticket on launch week.
+      ✅ *2026-09-12, branch `fix/pkce-cross-device`:* `/auth/callback` now maps
+      Supabase's error **codes** to plain messages instead of passing raw text
+      to the login page — cross-device (`pkce_code_verifier_not_found`,
+      `bad_code_verifier`, `flow_state_not_found`), expired (`otp_expired`,
+      `flow_state_expired`), and a generic fallback — each worded for resets
+      (`type=recovery`) or signups; the raw error is still logged server-side.
+      Verified locally with four fake links: the server log shows the real
+      `AuthPKCECodeVerifierMissingError` being caught, and the login page shows
+      the reset message cleanly. **Not deployed yet.** Phase 6's
+      different-device reset test is the real-world confirmation.
 - [ ] **[you]** Decide §4a (trial notification) and §4b (admission cadence).
       Both change what gets built in later phases.
 
@@ -585,7 +600,7 @@ Shipped in `main` @ `2605f8b`; schema in `supabase/migrations/014_launch_privacy
   through. Correct for most failures, bad for the common case of requesting a
   reset on desktop and clicking the link on mobile, which produces a developer-
   facing wall of text. Should say "open this link on the device you requested it
-  from." **[me]**
+  from." **[me]** ✅ Fixed 2026-09-12 — see the Phase 0 item.
 - **Collab activity ticker degraded.** It listed recent handshakes across the
   community; now that handshake rows are private it only shows your own. If the
   ambient signal is wanted back, it needs the same `SECURITY DEFINER` treatment
