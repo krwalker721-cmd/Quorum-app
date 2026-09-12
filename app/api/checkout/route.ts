@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
 import { isPlanKey, resolvePlanPrice, type PlanKey } from "@/lib/plans";
 import { PRICING } from "@/lib/pricing";
+import { LEGAL } from "@/lib/legal";
 
 // Automatic-renewal terms shown directly above Stripe Checkout's Subscribe
 // button — the point of consent, which is where auto-renewal laws want them.
@@ -76,7 +77,20 @@ export async function POST(req: NextRequest) {
       metadata: { supabase_user_id: user.id, plan },
       subscription_data: { metadata: { supabase_user_id: user.id, plan } },
       allow_promotion_codes: true,
-      custom_text: { submit: { message: renewalNotice(plan) } },
+      // An explicit "I agree" checkbox. Stripe records it on the session as
+      // consent.terms_of_service = "accepted", which is the proof of consent
+      // California's automatic-renewal law requires (Cal. Bus. & Prof. Code
+      // § 17602). Session creation errors unless a Terms of Service URL is set in
+      // Stripe's public business details — added 2026-09-12.
+      consent_collection: { terms_of_service: "required" },
+      custom_text: {
+        submit: { message: renewalNotice(plan) },
+        terms_of_service_acceptance: {
+          message:
+            `I agree to the [Terms of Service](${LEGAL.site}/terms), including that my ` +
+            "membership renews automatically until I cancel.",
+        },
+      },
     });
 
     return NextResponse.json({ url: session.url });
