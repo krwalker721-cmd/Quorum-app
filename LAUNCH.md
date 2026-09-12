@@ -17,8 +17,12 @@ If you are picking this up cold, this is the state of the world:
 - **Pricing:** $39/mo Member, $390/yr, $19/mo founding rate for the first 100
   seats, $99/mo Partner (not shipped). 30-day card-free trial, 45 if referred.
   There is no free tier — an unentitled account has a write limit of 0.
-- **Where it runs today:** `https://quorum-app-kappa.vercel.app`. A custom domain
-  is Phase 0 and had not been bought as of writing.
+- **Where it runs today:** `https://quorum-app-kappa.vercel.app`. The launch
+  domain **`quorumhq.co`** was bought 2026-07-31 through Vercel (Vercel is
+  registrar, DNS, and host) and already serves HTTPS on the apex — but it is not
+  yet the canonical URL. `NEXT_PUBLIC_APP_URL`, Supabase's Site URL, and the
+  Stripe webhook endpoint all still point at the `.vercel.app` host until the
+  Phase 1 atomic cutover.
 - **Repo:** `main` is the deploy branch; Vercel auto-deploys from it via the
   GitHub integration (`krwalker721-cmd/Quorum-app`). No Vercel CLI or token is
   configured locally.
@@ -112,9 +116,46 @@ These aren't preferences, so don't plan around them changing:
 Nothing here depends on anything else, and three of them start clocks that run
 without you.
 
-- [ ] **[you]** **Buy the domain.** Everything downstream needs it.
-- [ ] **[you]** **Begin Stripe live activation** — business details, bank
-      account, identity verification. Can sit in review while you do the rest.
+- [x] **[you]** **Buy the domain.** Everything downstream needs it.
+      ✅ `quorumhq.co`, bought 2026-07-31 through Vercel. Apex is bound and
+      serving HTTPS. **Open sub-item:** `www.quorumhq.co` was not added to the
+      project and has no certificate — add it as a redirect in Phase 1.
+- [x] **[you]** **Begin Stripe live activation** — business details, bank
+      account, identity verification.
+      ✅ **Already active as of 2026-07-31.** Account status reads *active*; live
+      keys are issued. Denyse Walker's identity verification was completed
+      previously on this account. **Phase 2 is therefore not gated** — it can be
+      done whenever, and two of its items should fold into the Phase 1 cutover
+      (see the note at the top of Phase 2). Business website still to be set to
+      `https://quorumhq.co`.
+
+      **Which Stripe account (decided 2026-07-31):** Quorum uses the *existing*
+      account `acct_1T75lURPXtW7MxMw`, originally created for a freelance
+      business. Two things about it that will look wrong later without this note:
+
+      - **The verified legal entity is Denyse Walker** — the owner's mother and
+        business partner in Quorum. She is therefore the merchant of record: the
+        1099-K, the payout bank account, chargeback liability, and Stripe's terms
+        all attach to her, and *she* must be the one to complete any identity or
+        verification step. Her identity verification is already done, which is
+        the reason this account was kept. Account name, statement descriptor, and
+        branding are display fields and are set to **Quorum**.
+      - **The account is configured as a Connect *platform***, left over from the
+        freelance setup. This is dormant and harmless with zero connected
+        accounts — it does not affect subscriptions, checkout, the portal,
+        webhooks, or payouts. If the setup guide demands a business model, choose
+        **Platform**. Quorum needs no Connect functionality: referral rewards are
+        Stripe *coupons*, not payouts, so no funds ever move to a third party.
+
+      **Open:** confirm whether an accountant should weigh in on the partnership
+      structure (sole prop under her SSN vs. a shared entity/EIN) before revenue
+      starts. Cheap now, expensive to unwind after money moves.
+
+      **Expect a snag:**
+      reviewers look for pricing, Terms, Privacy, refund policy, and contact info
+      on the live site, and `/` currently redirects straight to `/login`. That
+      makes the legal pages *and* a minimal landing page more urgent than their
+      phase numbers imply — a "need more information" response restarts the wait.
 - [ ] **[me → you]** **Terms of Service, Privacy Policy, refund/cancellation
       policy.** Claude can draft all three to a solid first-pass standard, and
       wire them into the footer, pricing page, and signup. **But treat the draft
@@ -133,6 +174,15 @@ without you.
       the sending domain (SPF/DKIM DNS records), and put the credentials into
       Supabase. Without this, the password reset flow that is *already deployed*
       silently delivers nothing.
+- [ ] **[you]** **Inbound email on the domain — `support@quorumhq.co`.** Separate
+      problem from the SMTP item above: that one is *sending*, this one is
+      *receiving*. Vercel is registrar and DNS but does not host mailboxes, so
+      right now there is no address at `quorumhq.co` that can receive anything.
+      Stripe puts the support address on receipts and in the billing portal, and
+      it is also what a locked-out member will write to. A personal Gmail works
+      as a stopgap and is changeable any time; before launch, either add a
+      forwarding service (MX records into Vercel DNS) or Google Workspace at
+      ~$6/mo. Decide which; neither is launch-blocking on its own.
 - [ ] **[me → you]** Supabase auth email templates — they say "Supabase" by
       default, not Quorum. Claude can write the HTML for confirmation, recovery,
       and magic-link; you paste them into the dashboard.
@@ -146,27 +196,109 @@ without you.
 - [ ] **[you]** Confirm every env var exists in Vercel production, not only
       locally. **[me]** can produce the definitive list to check against.
 
-### Phase 2 — Stripe live mode (once activated)
+### Phase 2 — Stripe live mode (~~once activated~~ — activation is done)
+
+**Resequencing note, 2026-07-31.** Live activation turned out to be already
+complete, so this phase is no longer blocked. But it splits in two:
+
+- **Domain-independent — do any time, now if convenient:** the four live prices,
+  the coupons script, business info, statement descriptor, branding, Customer
+  Portal config, and the Stripe Tax decision. None of these care what the app's
+  URL is.
+- **Domain-coupled — must wait and land *inside* the Phase 1 atomic cutover:**
+  swapping Vercel to live keys, and creating the webhook endpoint + secret. The
+  endpoint has to point at `https://quorumhq.co/api/webhooks/stripe`, so creating
+  it now against the `.vercel.app` host just means doing it twice.
+
+Nothing is paying yet and the waitlist gates signup, so leaving production on
+test keys until the cutover costs nothing.
 
 - [ ] **[you]** Swap to `sk_live_` / `pk_live_` in Vercel env vars
-- [ ] **[me → you]** Recreate all four prices in live mode — test-mode IDs do not
+      — **do this during the Phase 1 cutover, not before**
+- [x] **[me → you]** Recreate all four prices in live mode — test-mode IDs do not
       carry over: `MEMBER`, `MEMBER_ANNUAL`, `FOUNDING`, `PARTNER`. Claude can
       write a script that creates all four from `lib/pricing.ts` so the numbers
       can't drift from the app; you run it with your live key.
+      **Script: `scripts/create-stripe-prices.mjs`** — dry run by default, which
+      also prints the account's public profile and branding so the dashboard
+      items above get verified in the same pass; `--apply` creates. Idempotent
+      (fixed product ids, price lookup keys). Run instructions are in its header.
+      ✅ **Created in live mode 2026-09-12** on `acct_1T75lURPXtW7MxMw`, under
+      products `quorum_member`, `quorum_founding`, `quorum_partner`. Price IDs
+      are not secret; these go into Vercel during the Phase 1 cutover:
+
+      ```
+      STRIPE_MEMBER_PRICE_ID=price_1UEsuVRPXtW7MxMwEVtvBzSw          # $39/mo
+      STRIPE_MEMBER_ANNUAL_PRICE_ID=price_1UEsuVRPXtW7MxMwAmVNiILO   # $390/yr
+      STRIPE_FOUNDING_PRICE_ID=price_1UEsuVRPXtW7MxMwg3Jjgzyv        # $19/mo
+      STRIPE_PARTNER_PRICE_ID=price_1UEsuWRPXtW7MxMw2ZlV7moC         # $99/mo
+      ```
+
+      **Scope them to Vercel's *Production* environment only.** Preview and
+      Development should keep the test keys and test price IDs — otherwise any
+      checkout tried on a preview deploy charges a real card. Leave
+      `STRIPE_PARTNER_PRICE_ID` unset in Production unless Partner ships; that
+      is what keeps its checkout path closed.
 - [ ] **[you]** New webhook signing secret (`STRIPE_WEBHOOK_SECRET`) — the test
-      secret will not validate live events
-- [ ] **[me → you]** **Run `scripts/create-stripe-coupons.ts` against live.**
-      Script already exists; you run it. Four coupons (`QUORUM_MONTHLY_FREE`,
-      `_30`, `_20`, `_10`). `lib/referral-bonus.ts` attaches them by hard-coded
-      ID — without them every referral bonus fails silently and the referrer just
-      keeps paying full price.
-- [ ] **[you]** Public business information: name, logo, support email — this is
+      secret will not validate live events — **during the Phase 1 cutover**
+- [x] **[me → you]** **Run `scripts/create-stripe-coupons.mjs` against live.**
+      ✅ **All four created in live mode 2026-09-12** on `acct_1T75lURPXtW7MxMw`:
+      `QUORUM_MONTHLY_FREE` (100%), `_30`, `_20`, `_10`.
+      Four coupons (`QUORUM_MONTHLY_FREE`, `_30`, `_20`, `_10`).
+      `lib/referral-bonus.ts` attaches them by hard-coded ID — without them every
+      referral bonus fails silently and the referrer just keeps paying full price.
+      *2026-09-12:* the original `create-stripe-coupons.ts` could not run — its
+      `npx ts-node` command fails on Node 26 with `Cannot find module
+      '…/lib/stripe'`, because Node's native TypeScript handling rejects
+      extensionless imports. Replaced by `create-stripe-coupons.mjs`: dry run by
+      default, `--apply` to create, and it reads the coupon ids and amounts from
+      `BONUS_TIERS` in `lib/referral-model.ts` rather than keeping a copy, so the
+      coupons can't drift from what founders are promised. Key handling for both
+      Stripe scripts is shared in `scripts/stripe-key.mjs`.
+- [x] **[you]** Public business information: name, logo, support email — this is
       what makes the billing page and receipts say Quorum instead of your
       personal name
-- [ ] **[you]** Statement descriptor — what appears on the cardholder's statement
-- [ ] **[you]** Configure the **Customer Portal in live mode**.
+      ✅ *2026-09-12:* website `https://quorumhq.co` and logo verified by the price
+      script; support email set afterwards (a personal Gmail as a stopgap — swap
+      to `support@quorumhq.co` once the Phase 1 inbound-email item lands).
+      **Follow-up:** the public name reads lowercase `quorum` and prints on
+      receipts — confirm that's intended, or capitalise it.
+- [x] **[you]** **Stripe → Settings → Branding**: logo, amber accent, background.
+      Hosted Checkout *and* the Customer Portal both inherit it, so this is the
+      cheap 90% of making billing feel like Quorum. See §4c.
+      ✅ *2026-09-12:* accent `#f59e0b` and logo verified; icon set afterwards.
+      Brand color is `#0d1117` (dark) rather than amber — it mirrors the app's own
+      dark-background-plus-amber pairing and was kept deliberately.
+- [x] **[you]** Statement descriptor — what appears on the cardholder's statement
+      ✅ `QUORUM`, verified 2026-09-12.
+- [x] **[you]** Configure the **Customer Portal in live mode**.
+      ✅ **Saved in live mode 2026-09-12** with the settings below. Stripe's opt-in
+      "next generation portal experience" was deliberately **left off**: it was
+      undocumented in Stripe's portal docs and changelog as of that date, and
+      swapping the billing surface right before launch is risk with no payoff.
+      Revisit after launch, in a sandbox first.
       `/api/subscription` calls `billingPortal.sessions.create`, which 400s if the
       portal was only ever configured in test.
+      **Settings (decided 2026-09-12)** — Settings → Billing → Customer portal:
+      - Update payment methods **on**; invoice history **on**
+      - Customer info: billing address **on**, email **off** (the Quorum login is
+        the identity; keep one email on file), tax ID **off** until the Stripe
+        Tax decision
+      - Cancel subscriptions **on**, **at end of billing period** — the billing
+        cards already render "Cancels <date>" from `cancel_at_period_end`;
+        collect a cancellation reason; no retention offer
+      - Switch plans **on**, products: **Quorum Member only** (the $39/mo and
+        $390/yr prices). **Never add Quorum Founding or Quorum Partner.**
+        `tierForSubscription` (`lib/entitlements.ts`) checks
+        `metadata.plan` first and falls back to the price, and subscriptions
+        made by the referral `CardForm` carry no `plan` — so for those members
+        the price alone decides the tier. Offering Partner would let them
+        self-upgrade to an unshipped tier; offering Founding would hand out
+        the $19 rate without `claimFoundingSeat` ever running.
+      - Quantities **off**; promotion codes **off**
+      - Privacy and Terms links: **blank until the Phase 0 legal pages exist**,
+        then fill in. Default redirect link blank — the app sets `return_url`
+        per session. Skip the no-code login link.
 - [ ] **[you]** Decide on Stripe Tax if you'll take EU/UK customers
 
 ### Phase 3 — operational safety net
@@ -216,6 +348,16 @@ activation and DNS.
       `STRIPE_FOUNDING_PRICE_ID`, both required by `lib/plans.ts`
 - [ ] **[me]** Next 16 deprecated the `middleware` convention in favor of `proxy`
 - [ ] **[me]** Dead code: `isAdminUnlocked()` on the profile page (see §5)
+- [ ] **[me]** **Favicon is the wrong amber.** `app/icon.svg` draws the logo mark
+      in `#e8702a`, but the design token and `components/LogoMark.tsx` both use
+      `#f59e0b`. Same mark, two different oranges depending on whether you're
+      looking at the browser tab or the page.
+- [ ] **[me]** **Billing cards still describe a free tier.**
+      `components/ProfileBilling.tsx` (lines 42, 49) and
+      `components/SettingsBilling.tsx` (lines 63, 71) show "Free tier" and "Free
+      plan — read everything, post within limits", but there is no free tier — an
+      unentitled account's write limit is 0. A lapsed member is told they're on a
+      plan that doesn't exist, which undercuts the reason to resubscribe.
 
 ### Phase 6 — production test pass (the gate)
 
@@ -226,7 +368,9 @@ yours, because most of them need a real inbox or a real card.
 - [ ] **[you]** Password reset end to end — including clicking the link on a
       *different device* than the one that requested it
 - [ ] **[you]** A real checkout with a live card; confirm the webhook fires and
-      the tier updates
+      the tier updates. **Test both payment paths** — the hosted Checkout
+      redirect *and* the inline `CardForm` on `/pricing`. They are separate code
+      paths that write subscription state differently. See §4c.
 - [ ] **[you]** Founding-seat claim stamps `is_founding_member` and decrements
       the pool
 - [ ] **[you]** A referral: signup through a link, add a card, confirm the
@@ -244,7 +388,7 @@ yours, because most of them need a real inbox or a real card.
 
 ---
 
-## 4. Two things that need a decision, not a checkbox
+## 4. Three things that need a decision, not a checkbox
 
 ### 4a. The trial-expiry gap
 
@@ -285,6 +429,57 @@ lets you hold people until there's a room worth joining.
 
 **[you]** decides the cadence. **[me]** can build tooling for it — batch-approve
 in the admin panel, or a "hold until N approved" flow — if you want it.
+
+### 4c. The billing surface — two payment paths already exist
+
+Raised 2026-07-31: should members pay and manage billing *inside* Quorum rather
+than being handed to Stripe? Partly already true, and that's the problem.
+
+**There are two divergent payment paths in the codebase today:**
+
+| Path | Where | Used by |
+|---|---|---|
+| **Inline Elements** — card entered inside Quorum | `CardForm` in `app/pricing/page.tsx`; `POST`+`PUT /api/setup-intent` | The referred free-month claim, only |
+| **Hosted Stripe Checkout** — redirect to `checkout.stripe.com` | `app/api/checkout/route.ts` | `PaywallModal`, `SettingsBilling`, onboarding pricing |
+
+The inline path creates a SetupIntent, confirms the card with
+`stripe.confirmCardSetup`, then creates the subscription with a `trial_end`. The
+card never leaves the domain. So the "own the checkout" work is ~80% built — it
+is just scoped to one flow.
+
+**The read:**
+
+- **On checkout, the "looks more legit" argument is weak.** For an unknown brand
+  charging $39/mo, Stripe's presence *reassures*. The real argument for going
+  inline is continuity — no domain seam mid-flow — which is worth something for a
+  product whose pitch is a curated room, but it is not a launch blocker.
+- **On billing management, the argument is strong.** The Customer Portal is
+  visibly Stripe's and generic. This is the piece worth owning.
+
+**Recommended sequencing:**
+
+1. **Before launch — do nothing in code.** Set logo, amber accent, and background
+   in **Stripe → Settings → Branding**. Hosted Checkout *and* the Customer Portal
+   both inherit it. Ten minutes, folded into the Phase 2 branding item.
+2. **After launch — own the reads, delegate the writes.** Build a billing summary
+   inside Quorum (plan, price, renewal date, trial countdown, referral coupon
+   status, invoices) and keep mutations — change card, cancel, switch plan — going
+   to the portal. Stripe handles proration, dunning, and failed-payment recovery
+   correctly; that logic is where self-built billing quietly breaks.
+
+**Hard line:** never put raw card `<input>` fields on a Quorum form. Card entry
+stays inside Stripe's iframe (Elements, as today). That is what keeps this in PCI
+**SAQ-A** instead of **SAQ-D**, which is a serious compliance burden.
+
+**Two defects found while assessing this:**
+
+- **`/api/setup-intent` (PUT) hardcodes `STRIPE_MEMBER_PRICE_ID`** — it always
+  creates a Member *monthly* subscription regardless of the plan chosen. Harmless
+  for the referral flow it was written for; a real bug the moment anything else
+  routes through it. **[me]**
+- **`CardElement` is Stripe's legacy API.** `PaymentElement` is current and adds
+  Apple Pay, Google Pay, and Link — wallets lift conversion. Migrate when the
+  billing page gets built, not before. **[me]**
 
 ---
 
@@ -327,6 +522,8 @@ All **[you]**:
   `plan: "partner"` and the price ID is configured. Ship it or close the path.
 - **Waitlist cadence** — see §4b.
 - **Trial notification** — see §4a.
+- **Billing surface** — see §4c. Whether to converge on an in-app billing page or
+  keep delegating to Stripe's hosted Checkout and Customer Portal.
 - **Landing page positioning** — Claude can build the page; the pitch is yours.
 
 ---
