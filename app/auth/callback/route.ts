@@ -41,6 +41,41 @@ function safeNext(raw: string | null): string | null {
   return raw;
 }
 
+// Supabase's messages for a failed link are written for developers — the PKCE
+// one reads "PKCE code verifier not found in storage" — and they used to be
+// passed straight to the login page. These are the failures real people hit,
+// in words they can act on. Matched on error codes, as Supabase recommends, not
+// on message text; the raw error is still logged server-side.
+//
+// The common case: a reset (or signup) requested on a laptop and opened on a
+// phone. PKCE only lets the browser that started the flow finish it, because
+// the code verifier lives in that browser's cookies.
+const CROSS_DEVICE_CODES = new Set([
+  "pkce_code_verifier_not_found", // this browser never started the flow
+  "bad_code_verifier",
+  "flow_state_not_found",
+]);
+const EXPIRED_CODES = new Set(["otp_expired", "flow_state_expired"]);
+
+/** `type` is "recovery" for reset links (set by /forgot-password); signup and
+ *  magic links carry no type. */
+function linkErrorMessage(code: string | undefined, type: string | null): string {
+  const reset = type === "recovery";
+  if (code && CROSS_DEVICE_CODES.has(code)) {
+    return reset
+      ? "reset links only work in the browser you requested them from. tap “forgot?” to send a new one, then open the email on this device."
+      : "this link only works in the browser you signed up in. open it there, or try logging in here.";
+  }
+  if (code && EXPIRED_CODES.has(code)) {
+    return reset
+      ? "that reset link has expired or was already used. tap “forgot?” to send a new one."
+      : "that link has expired or was already used. try logging in here.";
+  }
+  return reset
+    ? "we couldn’t open that reset link. tap “forgot?” to send a new one."
+    : "we couldn’t sign you in with that link. try logging in here.";
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const origin = publicOrigin(request);
@@ -50,25 +85,49 @@ export async function GET(request: NextRequest) {
 
   // Supabase reports link failures (expired, already used) as query params
   // rather than a non-2xx, so check them before trying to spend the code.
-  const errorCode = searchParams.get("error") || searchParams.get("error_code");
-  if (errorCode) {
-    const description =
-      searchParams.get("error_description") || "that link is no longer valid";
+  if (searchParams.get("error") || searchParams.get("error_code")) {
+    const linkCode = searchParams.get("error_code") ?? undefined;
+    console.error(
+      "[auth/callback] link error:",
+      searchParams.get("error"),
+      linkCode,
+      searchParams.get("error_description"),
+    );
     return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(description)}`,
+      `${origin}/login?error=${encodeURIComponent(linkErrorMessage(linkCode, type))}`,
     );
   }
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=missing+code`);
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(linkErrorMessage(undefined, type))}`,
+    );
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  let exchangeError: { name?: string; code?: string; message: string } | null = null;
+  try {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    exchangeError = error;
+  } catch (e) {
+    // A missing code verifier can surface as a thrown error rather than a
+    // returned one; handle both the same way.
+    exchangeError = e as { name?: string; code?: string; message: string };
+  }
 
-  if (error) {
+  if (exchangeError) {
+    console.error(
+      "[auth/callback] code exchange failed:",
+      exchangeError.name,
+      exchangeError.code,
+      exchangeError.message,
+    );
+    const failure =
+      exchangeError.name === "AuthPKCECodeVerifierMissingError"
+        ? "pkce_code_verifier_not_found"
+        : exchangeError.code;
     return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error.message.toLowerCase())}`,
+      `${origin}/login?error=${encodeURIComponent(linkErrorMessage(failure, type))}`,
     );
   }
 
