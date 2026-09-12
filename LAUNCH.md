@@ -256,12 +256,13 @@ without you.
       and expired-link requests to `quorumhq.co/auth/callback` all return the
       new messages. Phase 6's different-device reset test (needs Phase 1 SMTP)
       is the real-world confirmation.
-- [ ] **[you]** Decide §4a (trial notification) and §4b (admission cadence).
+- [x] **[you]** Decide §4a (trial notification) and §4b (admission cadence).
       Both change what gets built in later phases.
       ✅ §4a decided 2026-09-12: **option 1**, Quorum-sent reminder emails.
       ✅ §4b decided 2026-09-12: **approve in groups of 12**, keeping a manual
-      way to approve anyone; approved members must be told. Open: release a
-      group by hand, or semi-automatically (see §4b).
+      way to approve anyone; approved members must be told. Mechanism: **by
+      hand** — select about 12, bulk approve. Semi-automatic release is
+      deferred (see §4b).
 
 ### Phase 1 — infrastructure cutover (once DNS resolves)
 
@@ -584,10 +585,12 @@ in the admin panel, or a "hold until N approved" flow — if you want it.
 **Decision (2026-09-12): approve in groups of 12**, each group filling one
 cohort, while keeping a manual way to approve anyone. Weekly batches were
 rejected: they'd back up as volume grows. Approved members must be told.
-**Open:** is a group released by hand (select ~12, bulk approve), or
-semi-automatically (accept applicants one by one; the 12th acceptance releases
-the whole group, with a "release now" override)? The second needs a small
-schema change. Status of the three fixes above:
+**Mechanism, decided 2026-09-12: by hand.** When about 12 good applicants are
+waiting, select them in the admin panel and bulk approve; approve anyone
+individually at any time. **Deferred:** semi-automatic release (accept
+applicants one by one; the 12th acceptance releases the whole group, with a
+"release now" override). Build it when volume makes the manual step tedious;
+it needs a small schema change. Status of the three fixes above:
 
 - **Bulk approve** — fixed on `fix/bulk-approve-referred`. Both approve paths
   now call `approveUser()` in `lib/admin/approve.ts`. It also skips members who
