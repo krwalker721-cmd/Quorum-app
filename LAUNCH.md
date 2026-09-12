@@ -118,8 +118,9 @@ without you.
 
 - [x] **[you]** **Buy the domain.** Everything downstream needs it.
       ✅ `quorumhq.co`, bought 2026-07-31 through Vercel. Apex is bound and
-      serving HTTPS. **Open sub-item:** `www.quorumhq.co` was not added to the
-      project and has no certificate — add it as a redirect in Phase 1.
+      serving HTTPS. ~~`www.quorumhq.co` was not added and had no certificate.~~
+      ✅ Resolved by 2026-09-12: `www` now 307-redirects to the apex with a valid
+      certificate.
 - [x] **[you]** **Begin Stripe live activation** — business details, bank
       account, identity verification.
       ✅ **Already active as of 2026-07-31.** Account status reads *active*; live
@@ -202,12 +203,21 @@ without you.
       - ✅ **[you]** Stripe email settings from §8 turned on (2026-09-12,
         confirmed by the owner in the dashboard — those toggles aren't exposed
         through Stripe's API, so they couldn't be probed)
-      - **[me]** deploy (merge + push) once approved
-      - **[you]** after deploy: add the Terms and Privacy URLs to the Customer
-        Portal settings and to Stripe's public business details
+      - ✅ **[me]** deployed — merged to `main` as `651f6c8` on 2026-09-12. All
+        six pages return 200 logged-out on `quorumhq.co` with the new content;
+        the pricing notice and legal links verified in a real browser
+      - ✅ **[you]** Terms and Privacy URLs added to Stripe's public business
+        details and the Customer Portal (per owner, 2026-09-12)
       - **[me]** then require Terms acceptance inside Checkout
         (`consent_collection.terms_of_service`) — it errors unless Stripe has a
-        Terms URL on file, so it can only follow the step above
+        Terms URL on file, so it can only follow the step above.
+        *Written 2026-09-12 on branch `launch/checkout-consent`:* a required
+        checkbox reading "I agree to the Terms of Service, including that my
+        membership renews automatically until I cancel", with a Markdown link to
+        `/terms`. **Done once deployed and the owner has clicked "Join" once and
+        seen the checkbox** — that click is the only way to prove the Terms URL
+        is on file in the mode production uses (still test keys), because
+        session creation fails outright if it isn't
 - [ ] **[you]** **File a Massachusetts business certificate ("DBA") for
       "Quorum".** Massachusetts requires anyone doing business under a name other
       than their own legal name to file a business certificate with the clerk of
@@ -402,6 +412,15 @@ activation and DNS.
 - [ ] **[me]** `public/` directory: `robots.txt`, OG image
 - [ ] **[me]** `metadataBase` + `openGraph` in the root layout — links shared to
       Twitter, LinkedIn, or Slack currently render as a bare URL
+- [ ] **[me]** **`/pricing` renders nothing without JavaScript in production.**
+      Found 2026-09-12. `PricingBody` calls `useSearchParams()` under a
+      page-wide `Suspense`, so the production build bails out of pre-rendering
+      the whole page (the HTML carries Next's `BAILOUT_TO_CLIENT_SIDE_RENDERING`
+      marker). The served HTML is an 8 KB shell with no heading, prices, or
+      renewal notice. Browsers are fine (verified), but link previews, search
+      engines, and any non-JS reviewer see an empty page. Fix: read the search
+      param in a small child component inside its own `Suspense`, so the rest
+      of the page prerenders.
 - [ ] **[me → you]** Analytics — Claude wires it, you create the account
 
 ### Phase 5 — docs drift (anytime, low risk)
@@ -651,7 +670,7 @@ the Terms promise something that doesn't happen.
 ### After deploy
 
 - **[you]** Put the `/terms` URL in Stripe's public business details, and the Terms and Privacy URLs in the Customer Portal settings.
-- **[me]** Then turn on `consent_collection.terms_of_service = "required"` in `/api/checkout`, with `custom_text.terms_of_service_acceptance` naming the renewal terms. Stripe then records `consent.terms_of_service = accepted` on every Checkout session — California's proof-of-consent requirement, stored by Stripe. It **errors unless Stripe has a Terms URL**, which is why it can't come first.
+- **[me]** Then turn on `consent_collection.terms_of_service = "required"` in `/api/checkout`, with `custom_text.terms_of_service_acceptance` naming the renewal terms — *written 2026-09-12, see the Phase 0 legal item for its status.* Stripe then records `consent.terms_of_service = accepted` on every Checkout session — California's proof-of-consent requirement, stored by Stripe. It **errors unless Stripe has a Terms URL**, which is why it can't come first.
 
 ### Sources
 
