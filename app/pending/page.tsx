@@ -33,7 +33,8 @@ export default async function PendingPage() {
             you&apos;re on the list.
           </p>
           <p className="text-text-muted text-sm mt-3">
-            we&apos;ll be in touch within 48 hours.
+            quorum admits founders in groups of twelve, so every cohort starts
+            full. we&apos;ll email you when your group opens.
           </p>
         </div>
 
