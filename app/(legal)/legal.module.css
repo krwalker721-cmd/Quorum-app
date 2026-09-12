@@ -1,0 +1,84 @@
+/* Long-form reading styles for the legal pages. The app's design language is
+   built for dense tiles; a policy has to be read end to end, so this trades the
+   mono micro-type for comfortable sans body text at a readable measure, and
+   keeps the mono only as seasoning (kicker, date). */
+
+.prose {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.prose h1 {
+  color: var(--text-primary);
+  font-size: 30px;
+  line-height: 1.25;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.prose h2 {
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 500;
+  margin: 40px 0 12px;
+}
+
+.prose p {
+  margin: 0 0 14px;
+}
+
+.prose ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.prose li {
+  margin: 0 0 6px;
+}
+
+.prose li::marker {
+  color: var(--text-muted);
+}
+
+.prose strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose .kicker {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+
+.prose .meta {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0 0 32px;
+}
+
+/* The plain-English summary at the top of each page: one boxed tile. */
+.prose .summary {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-default);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.prose .summary > :last-child {
+  margin-bottom: 0;
+}

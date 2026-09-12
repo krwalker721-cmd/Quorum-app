@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import LogoMark from "@/components/LogoMark";
 import { WAITLIST_ENABLED } from "@/lib/flags";
+import { LEGAL } from "@/lib/legal";
 
 const STAGES = [
   { value: "idea", label: "idea" },
@@ -20,6 +21,9 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // Explicit "I agree" — Massachusetts's SJC (Kauders v. Uber, 2021) strongly
+  // prefers a checkbox or button over a passive "by signing up you agree" line.
+  const [agreed, setAgreed] = useState(false);
   const [building, setBuilding] = useState("");
   const [stage, setStage] = useState("idea");
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +70,10 @@ export default function SignupPage() {
           full_name: fullName,
           what_they_are_building: building,
           stage,
+          // Proof of assent: which Terms were accepted, and when. Lives in
+          // auth.users.raw_user_meta_data; handle_new_user() ignores these keys.
+          terms_version: LEGAL.effectiveDate,
+          terms_accepted_at: new Date().toISOString(),
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -182,9 +190,25 @@ export default function SignupPage() {
 
           {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}
 
+          <label className="flex items-start gap-2 cursor-pointer" style={{ lineHeight: 1.6 }}>
+            <input
+              type="checkbox"
+              required
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              style={{ marginTop: 3, accentColor: "var(--accent)" }}
+            />
+            <span className="font-mono text-[0.65rem] text-text-faint lowercase">
+              i agree to the{" "}
+              <Link href="/terms" target="_blank" className="text-amber hover:underline">terms</Link>
+              {" "}and{" "}
+              <Link href="/privacy" target="_blank" className="text-amber hover:underline">privacy policy</Link>
+            </span>
+          </label>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !agreed}
             className="btn-primary w-full"
           >
             {loading ? "..." : "request access"}

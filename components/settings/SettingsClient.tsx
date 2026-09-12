@@ -704,7 +704,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
 
       <div>
         <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", marginBottom: 10 }}>
-          Permanently delete your account and all your data. This cannot be undone.
+          Permanently delete your account and all your data. Any subscription ends immediately, without a refund for the rest of the period. This cannot be undone.
         </p>
         <button onClick={() => setModal("delete")} style={dangerBtn}>
           Delete account
@@ -725,7 +725,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
       {modal === "delete" && (
         <ConfirmModal
           heading="Are you sure?"
-          description="This permanently deletes your account and all of your data. This cannot be undone."
+          description="This permanently deletes your account and all of your data. Any subscription is cancelled immediately, and the rest of your paid period isn't refunded — to keep access until it ends, cancel your membership first and delete afterwards. This cannot be undone."
           confirmLabel="Delete account"
           requireText="DELETE"
           onConfirm={deleteAccount}

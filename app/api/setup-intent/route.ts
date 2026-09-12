@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
+import { PRICING } from "@/lib/pricing";
+import { LEGAL } from "@/lib/legal";
 
 // POST — create a SetupIntent so a referred user can save a card without being
 // charged. The SetupIntent is created on demand (when the user clicks "claim"),
@@ -63,14 +65,27 @@ export async function PUT(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { paymentMethodId, customerId } = (await req.json()) as {
+  const { paymentMethodId, customerId, renewalConsent } = (await req.json()) as {
     paymentMethodId?: string;
     customerId?: string;
+    renewalConsent?: boolean;
   };
 
   if (!paymentMethodId || !customerId) {
     return NextResponse.json(
       { error: "Missing payment method or customer" },
+      { status: 400 },
+    );
+  }
+
+  // Automatic-renewal laws (Cal. Bus. & Prof. Code § 17602; 940 CMR 38.05) need
+  // the member's affirmative consent to the renewal terms before a trial can turn
+  // into a charge, and California requires keeping proof of it. The CardForm
+  // checkbox is that consent; it's stamped onto the Stripe subscription below,
+  // where the record outlives anything that happens to our own database.
+  if (renewalConsent !== true) {
+    return NextResponse.json(
+      { error: "Please agree to the renewal terms to continue." },
       { status: 400 },
     );
   }
@@ -111,7 +126,13 @@ export async function PUT(req: NextRequest) {
       items: [{ price: priceId }],
       trial_end: trialEnd,
       default_payment_method: paymentMethodId,
-      metadata: { supabase_user_id: user.id },
+      metadata: {
+        supabase_user_id: user.id,
+        renewal_consent_at: new Date().toISOString(),
+        renewal_consent_terms:
+          `Free until trial end, then $${PRICING.member.monthly}/month, renewing until ` +
+          `cancelled. Terms of Service effective ${LEGAL.effectiveDate}.`,
+      },
     });
 
     await admin

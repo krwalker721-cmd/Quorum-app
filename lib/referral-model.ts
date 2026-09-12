@@ -29,7 +29,7 @@ import { PRICING } from "@/lib/pricing";
 export const BONUS_TIERS: {
   /** Minimum currently-active referrals to hold this tier. */
   min: number;
-  /** Stripe coupon id. Must exist — see scripts/create-stripe-coupons.ts. */
+  /** Stripe coupon id. Must exist — see scripts/create-stripe-coupons.mjs. */
   coupon: string;
   /** Dollars off the monthly price. null = 100% off. */
   amountOff: number | null;
