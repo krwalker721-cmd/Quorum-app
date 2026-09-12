@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminRequest } from "@/lib/admin/auth";
-import { assignUserToCohort } from "@/lib/cohorts";
-import { initializeUserSubscription } from "@/lib/stripe-helpers";
-import { createReferralCode, trackLoginEvent } from "@/lib/referral-helpers";
+import { approveUser } from "@/lib/admin/approve";
 
+// Approve one member. The steps — trial, referral code, cohort — live in
+// lib/admin/approve.ts, shared with bulk approve.
 export async function POST(req: Request) {
   if (!(await verifyAdminRequest(req))) {
     return NextResponse.json({ error: "admin locked" }, { status: 403 });
@@ -15,42 +15,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "missing id" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-  const { data: approved, error } = await admin
-    .from("profiles")
-    .update({ status: "approved" })
-    .eq("id", id)
-    .select("referred_by")
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Start the user's trial. Referred users (referred_by set at signup) get the
-  // Standard trial + 48h free-month window; referred founders get longer. Best-effort.
-  const isReferred = !!approved?.referred_by;
-  try {
-    await initializeUserSubscription(id, isReferred);
-  } catch (e) {
-    console.error("initializeUserSubscription failed on approve:", e);
+  const outcome = await approveUser(createAdminClient(), id);
+  if (outcome.result === "failed") {
+    return NextResponse.json({ error: outcome.reason ?? "approval failed" }, { status: 500 });
   }
 
-  // Generate the user's referral code and seed their first login event (day 1
-  // toward the 3-day activity gate). Best-effort — never block approval.
-  try {
-    await createReferralCode(id);
-    await trackLoginEvent(id);
-  } catch (e) {
-    console.error("referral code / login event setup failed on approve:", e);
-  }
-
-  // Auto-assign to a cohort on approval. Don't fail the whole approval if cohort
-  // assignment hits a transient error — surface a warning in the response.
-  let cohortId: string | null = null;
-  let cohortWarn: string | null = null;
-  try {
-    cohortId = await assignUserToCohort(admin, id);
-  } catch (e: any) {
-    cohortWarn = e?.message ?? "cohort assignment failed";
-  }
-
-  return NextResponse.json({ ok: true, cohort_id: cohortId, cohort_warning: cohortWarn });
+  return NextResponse.json({
+    ok: true,
+    skipped: outcome.result === "skipped" ? outcome.reason : undefined,
+    cohort_id: outcome.cohortId ?? null,
+    cohort_warning: outcome.cohortWarning ?? null,
+  });
 }

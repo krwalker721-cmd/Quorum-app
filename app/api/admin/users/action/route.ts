@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdminRequest } from "@/lib/admin/auth";
-import { initializeUserSubscription } from "@/lib/stripe-helpers";
+import { approveUser, type ApproveOutcome } from "@/lib/admin/approve";
 
 const TIERS = new Set(["free", "member", "partner"]);
 
@@ -19,21 +19,26 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
 
   if (action === "approve") {
-    const { error } = await admin
-      .from("profiles")
-      .update({ status: "approved" })
-      .in("id", ids);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // The same steps as approving one person (lib/admin/approve.ts): referred
+    // trials, referral code, cohort. One at a time, in the order given, so a
+    // group of twelve fills a cohort predictably.
+    const outcomes: ApproveOutcome[] = [];
+    for (const id of ids) outcomes.push(await approveUser(admin, id));
 
-    // Start each approved user's trial (standard trial; no referral source yet).
-    for (const id of ids) {
-      try {
-        await initializeUserSubscription(id, false);
-      } catch (e) {
-        console.error("initializeUserSubscription failed on approve:", e);
-      }
+    const approved = outcomes.filter((o) => o.result === "approved").length;
+    const skipped = outcomes.filter((o) => o.result === "skipped").length;
+    const failed = outcomes.filter((o) => o.result === "failed");
+    if (failed.length > 0) {
+      // Surface partial failures — the panel alerts on a non-2xx.
+      return NextResponse.json(
+        {
+          error: `approved ${approved}, skipped ${skipped}, failed ${failed.length}: ${failed[0].reason}`,
+          failed: failed.map((o) => ({ id: o.id, reason: o.reason })),
+        },
+        { status: 500 },
+      );
     }
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, approved, skipped });
   }
 
   if (action === "suspend") {
