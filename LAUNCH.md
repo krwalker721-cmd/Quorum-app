@@ -162,6 +162,70 @@ without you.
       as a draft.** These are legally binding documents describing how you handle
       other people's data, and Claude is not a lawyer. Read them, and get a
       professional review if you're taking EU users or expect to raise.
+      **Decisions (2026-09-12):**
+      - Legal party: **Denyse Walker, doing business as Quorum**
+      - Governing law: **Massachusetts**
+      - Refunds: **none** — cancel anytime, access runs to the end of the paid
+        period (matches the Customer Portal's cancel-at-period-end setting)
+      - **US-only at launch.** Enforced by the waitlist: approve US founders
+        only for now. The privacy policy follows GDPR-compatible practice
+        (access and deletion honoured for everyone) so adding EU/UK later is a
+        new section, not a rewrite — but that section, plus Stripe Tax, must
+        land *before* the first EU/UK approval.
+      - Legal/privacy contact: the owner's personal Gmail as a stopgap, held in
+        one constant so `support@quorumhq.co` is a one-line swap
+
+      **Drafted 2026-09-12 (not yet deployed):** `/terms`, `/privacy`, and
+      `/refunds` under `app/(legal)/`, all public — verified logged-out (HTTP
+      200, content present, no console or server errors). Identity and contact
+      live in `lib/legal.ts`; trial lengths, grace days, and founding seats are
+      read from `lib/pricing.ts`, so the copy can't drift from the app. Wired in:
+      an agreement line under the signup button, a links row on login and
+      pricing, an auto-renewal notice on pricing, and — via `custom_text` in
+      `/api/checkout` — the same notice directly above Stripe Checkout's
+      Subscribe button. Also fixed along the way: the referral `CardForm` said
+      "charged on day 31", which was wrong for 45-day trials, and now names the
+      real date and price; the delete-account warning now says deletion cancels
+      at once with no refund.
+      **Reviewed against current law 2026-09-12 — see §8.** The review added a
+      required signup checkbox (with the accepted Terms version and time saved),
+      renewal consent on the referral card form (stamped onto the Stripe
+      subscription), a Do Not Track paragraph, and a copyright-complaints
+      section, and it fixed the price-change notice window to 7–30 days.
+      **Still open before this item is done:**
+      - ✅ **[you]** public contact address (`krwalker721@gmail.com`) and the
+        choices baked into the Terms — founding rate only while continuously
+        active, refunds if we terminate without cause or shut down, 7–30 day
+        price notice, 14 days for material Terms changes, admins can see
+        anonymous check-in authors — confirmed by the owner 2026-09-12. The
+        pages weren't reviewed line by line by the owner.
+      - ✅ **[you]** Stripe email settings from §8 turned on (2026-09-12,
+        confirmed by the owner in the dashboard — those toggles aren't exposed
+        through Stripe's API, so they couldn't be probed)
+      - **[me]** deploy (merge + push) once approved
+      - **[you]** after deploy: add the Terms and Privacy URLs to the Customer
+        Portal settings and to Stripe's public business details
+      - **[me]** then require Terms acceptance inside Checkout
+        (`consent_collection.terms_of_service`) — it errors unless Stripe has a
+        Terms URL on file, so it can only follow the step above
+- [ ] **[you]** **File a Massachusetts business certificate ("DBA") for
+      "Quorum".** Massachusetts requires anyone doing business under a name other
+      than their own legal name to file a business certificate with the clerk of
+      the city or town where the business is based (M.G.L. c. 110, § 5). The
+      Terms will name "Denyse Walker, doing business as Quorum", so the filing
+      should exist to back that up. It's done in Denyse's name, at her town
+      clerk's office; fees are small and set by the town. Some banks also want
+      it to accept payments made out to the business name.
+- [ ] **[you]** **Turn on Stripe's trial-ending reminder email.** Referred
+      members add a card and get a 45-day trial that converts to paid on its
+      own, but the only warning today is an in-app notification from the
+      `customer.subscription.trial_will_end` webhook. California's automatic
+      renewal law requires notice before a free trial longer than 31 days
+      converts, and a member who never opens the app gets none. Stripe can send
+      the reminder itself: Settings → Billing → the subscription/customer
+      emails section → the option to email customers before a free trial ends.
+      One toggle. (The card-free standard trial never auto-charges, so it isn't
+      affected — that gap is §4a, a conversion problem rather than a legal one.)
 - [ ] **[me]** **Fix the PKCE cross-device error message** (see §5) — small, and
       it's a real support ticket on launch week.
 - [ ] **[you]** Decide §4a (trial notification) and §4b (admission cadence).
@@ -539,3 +603,71 @@ All **[you]**:
   on `handle_new_user()` — deploying that code first breaks every new account.
 - **Deploys** are triggered by pushing `main`; Vercel picks it up via the GitHub
   integration. There's no Vercel CLI or token configured locally.
+
+---
+
+## 8. Legal and compliance review (2026-09-12)
+
+Claude checked the legal drafts against current law on 2026-09-12, from primary
+sources where it could reach them. **This is research, not legal advice** — re-check
+anything load-bearing before relying on it.
+
+### What applies, and what it requires
+
+| Law | What it requires of Quorum | Status |
+|---|---|---|
+| **940 CMR 38.05** (Massachusetts, recurring charges & trials) | Clear written disclosure *before* acceptance of the charge, the cancel deadline, and the date charges begin; notice **5–30 days** before a trial converts; for billing periods ≤31 days, a notice with **every charge** (amount + how to cancel); for longer terms, notice **5–30 days** before renewal; cancellation as easy as signup, same medium | Disclosures ✅ (CardForm, Checkout, pricing). Notices need the **Stripe settings below** |
+| **Cal. Bus. & Prof. Code § 17602** (California ARL, amended by AB 2863, eff. 2025-07-01) | Terms in visual proximity to consent; **affirmative consent**, with proof kept **3 years** (or 1 year after termination); post-purchase acknowledgment with renewal terms + how to cancel; trial >31 days: notice **3–21 days** before it ends; **annual reminder**; price-change notice **7–30 days** ahead; online cancellation | Consent ✅ (checkboxes; referral consent stamped on the Stripe subscription). Checkout consent record — **after deploy**, below. Price-change wording fixed to 7–30 days |
+| **New York** (amended, eff. 2025-11-05) | Trial >31 days: notice 3–21 days before paid period | Covered by Stripe's 7-day trial reminder |
+| **Maryland** (eff. 2026-06-01) | Trial >14 days: notice 3–21 days before; terms ≥1 year: 15–45 days before renewal | Covered by the 7-day trial reminder and a **30-day** renewal reminder |
+| **Utah** | Trial: ≥3 days' notice; terms >45 days: **30–60 days** before renewal | 30-day renewal reminder is the one value that satisfies MA (5–30), MD (15–45), and UT (30–60) at once |
+| **Minnesota** | Annual notice of terms and how to cancel | Monthly receipts with a manage/cancel link *probably* cover this — lawyer question |
+| **ROSCA** (federal) — the FTC's click-to-cancel rule was vacated by the 8th Circuit in July 2025, but ROSCA still applies | Clear disclosure, express informed consent, simple cancellation | ✅ |
+| **Kauders v. Uber**, 486 Mass. 557 (2021) | Online terms bind only with reasonable notice *and* a reasonable manifestation of assent; the SJC strongly prefers a checkbox/"I agree" | Signup now requires a checkbox; the Terms version and time accepted are saved in `auth.users.raw_user_meta_data` |
+| **CalOPPA** (Cal. Bus. & Prof. Code § 22575) | Privacy policy must say how the site responds to **Do Not Track** and whether third parties track across sites | Added to the Privacy Policy |
+| **M.G.L. c. 110, § 5** | Business certificate ("DBA") for trading under a name other than your own; fines up to **$300 per month** of non-compliance; valid 4 years | **[you]** — Phase 0 item |
+| **Massachusetts sales tax** (830 CMR 64H.1.3) | Prewritten software accessed remotely (SaaS) is taxable at 6.25%. DOR applies an "object of the transaction" test; Quorum is software members use themselves — `lib/pricing.ts` itself calls it "software with no facilitation" — so it **likely is taxable**. An in-state seller has no threshold: collect from the first Massachusetts sale | **[you]** — accountant; register on MassTaxConnect; ties into the Stripe Tax decision |
+| **DMCA § 512(c)** | Safe harbor for members' uploads needs a designated agent registered with the Copyright Office ($6, renew every 3 years) and a takedown process | Takedown section added to the Terms; **[you]** agent registration optional |
+| **201 CMR 17.00 / M.G.L. c. 93H** | Security program and breach notices for "personal information" = name + SSN, driver's licence, or financial account/card number | Probably doesn't apply — Quorum stores none of those (Stripe holds cards). Breach-notice language kept |
+| **Massachusetts comprehensive privacy bill** | Not in effect; House and Senate versions in conference committee as of mid-2026 | Watch it; revisit the Privacy Policy if it passes |
+
+### Required Stripe settings — a pre-deploy gate ✅ done 2026-09-12
+
+*Confirmed by the owner in the dashboard. These toggles aren't visible through
+Stripe's API, so unlike the prices and branding they weren't verified by a probe.
+Phase 6 should confirm them for real: a test trial should produce the 7-day
+reminder, and a test charge a receipt with the manage-subscription link.*
+
+The Terms now promise a trial reminder, a receipt with every charge, and renewal
+reminders on annual plans. **Don't deploy the legal pages until these are on**, or
+the Terms promise something that doesn't happen.
+
+- **Settings → Billing → Subscriptions and emails → Email notifications and customer management**
+  - **Send a reminder email 7 days before a free trial ends** — on
+  - **Send emails about upcoming renewals** — on; set **Prevent failed payments → Upcoming renewal events** to **30 days**
+  - Link destination for these emails → the **Stripe-hosted customer portal**; also set the **Manage subscription link** → customer portal
+- **Settings → Emails → Successful payments** (customer receipts) — on. Stripe adds trial information and the cancellation link to receipts automatically
+
+### After deploy
+
+- **[you]** Put the `/terms` URL in Stripe's public business details, and the Terms and Privacy URLs in the Customer Portal settings.
+- **[me]** Then turn on `consent_collection.terms_of_service = "required"` in `/api/checkout`, with `custom_text.terms_of_service_acceptance` naming the renewal terms. Stripe then records `consent.terms_of_service = accepted` on every Checkout session — California's proof-of-consent requirement, stored by Stripe. It **errors unless Stripe has a Terms URL**, which is why it can't come first.
+
+### Sources
+
+[940 CMR 38.05](https://www.law.cornell.edu/regulations/massachusetts/940-CMR-38-05) ·
+[Cal. BPC § 17602](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=17602) ·
+[Kelley Drye 2025 auto-renewal round-up](https://www.kelleydrye.com/viewpoints/blogs/ad-law-access/auto-renewal-laws-2025-round-up) ·
+[Maryland ARL](https://www.subscriptioninsider.com/blog/maryland-automatic-renewal-law-raises-compliance-stakes-for-consumer-subscription-businesses-news) ·
+[ROSCA after the vacatur](https://www.gibsondunn.com/ftc-restarts-negative-option-rulemaking-after-eighth-circuit-vacatur-enforcement-under-rosca-continues/) ·
+[Kauders v. Uber](https://law.justia.com/cases/massachusetts/supreme-court/volumes/486/486mass557.html) ·
+[CalOPPA DNT](https://iapp.org/news/a/what-do-the-new-disclosure-requirements-under-caloppa-mean-for-your-busines) ·
+[M.G.L. c. 110 § 5](https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXV/Chapter110/Section5) ·
+[MA SaaS tax](https://www.numeral.com/blog/saas-sales-tax-massachusetts) ·
+[MA LR 16-1 (object of the transaction)](https://mass.gov/letter-ruling/letter-ruling-16-1-application-of-the-massachusetts-sales-tax-to-sales-associated) ·
+[DMCA agent directory](https://www.copyright.gov/dmca-directory/) ·
+[201 CMR 17.00](https://www.mass.gov/regulations/201-CMR-1700-standards-for-the-protection-of-personal-information-of-residents-of-the-commonwealth) ·
+[MA privacy bill status](https://foleyhoag.com/news-and-insights/blogs/state-ag-insights/2026/june/one-step-closer-to-a-massachusetts-data-privacy-law-comparing-the-current-house-and-senate-bills/) ·
+[Stripe trial compliance](https://docs.stripe.com/billing/subscriptions/trials/manage-trial-compliance) ·
+[Stripe customer emails](https://docs.stripe.com/billing/revenue-recovery/customer-emails) ·
+[Stripe Checkout policies](https://docs.stripe.com/payments/checkout/customization/policies)
