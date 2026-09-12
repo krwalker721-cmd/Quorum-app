@@ -2,7 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
-import { isPlanKey, resolvePlanPrice } from "@/lib/plans";
+import { isPlanKey, resolvePlanPrice, type PlanKey } from "@/lib/plans";
+import { PRICING } from "@/lib/pricing";
+
+// Automatic-renewal terms shown directly above Stripe Checkout's Subscribe
+// button — the point of consent, which is where auto-renewal laws want them.
+// Read from lib/pricing.ts so the stated price can't drift from the charged one.
+function renewalNotice(plan: PlanKey): string {
+  const price: Record<PlanKey, string> = {
+    member: `$${PRICING.member.monthly}/month`,
+    member_annual: `$${PRICING.member.annual}/year`,
+    founding: `$${PRICING.founding.monthly}/month`,
+    partner: `$${PRICING.partner.monthly}/month`,
+  };
+  return (
+    `Renews automatically at ${price[plan]} until you cancel. Cancel anytime in ` +
+    "Settings; access continues to the end of the paid period. Payments are non-refundable."
+  );
+}
 
 // POST — create a Stripe Checkout session for the standard (cold signup) flow.
 // The client passes a plan KEY (member / member_annual / founding / partner);
@@ -59,6 +76,7 @@ export async function POST(req: NextRequest) {
       metadata: { supabase_user_id: user.id, plan },
       subscription_data: { metadata: { supabase_user_id: user.id, plan } },
       allow_promotion_codes: true,
+      custom_text: { submit: { message: renewalNotice(plan) } },
     });
 
     return NextResponse.json({ url: session.url });

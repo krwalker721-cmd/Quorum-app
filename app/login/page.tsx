@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import LogoMark from "@/components/LogoMark";
+import LegalLinks from "@/components/LegalLinks";
 import { WAITLIST_ENABLED } from "@/lib/flags";
 
 function LoginForm() {
@@ -105,6 +106,8 @@ export default function LoginPage() {
           no account?{" "}
           <Link href="/signup" className="text-amber hover:underline">request access</Link>
         </p>
+
+        <LegalLinks className="mt-8" />
       </div>
     </main>
   );

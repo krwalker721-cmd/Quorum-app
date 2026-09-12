@@ -10,6 +10,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { PRICING, FOUNDING_SEATS, TRIAL_DAYS, LAPSE_GRACE_DAYS } from "@/lib/pricing";
+import LegalLinks from "@/components/LegalLinks";
 
 // Publishable key is safe to expose. If it's missing the card form simply won't
 // mount — the cold-signup checkout flow still works without it.
@@ -47,12 +48,32 @@ const cardElementOptions = {
 };
 
 // ─── Embedded card form (referred free-month claim) ──────────────────────────
-function CardForm({ onActivated }: { onActivated: () => void }) {
+function CardForm({
+  onActivated,
+  trialEndsAt,
+}: {
+  onActivated: () => void;
+  /** When the trial this card claims ends — which is when the first charge lands. */
+  trialEndsAt: string | null;
+}) {
+  // This line is the only automatic-renewal notice on this path (it never passes
+  // through Stripe Checkout), so it names the real date and price. It used to say
+  // "day 31", which was wrong for the 45-day referred trial this form claims.
+  const chargeDate = trialEndsAt
+    ? new Date(trialEndsAt).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // Affirmative consent to the renewal terms — required by the automatic-renewal
+  // laws before a trial may convert, and enforced again server-side.
+  const [agreed, setAgreed] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,7 +103,11 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
       const subRes = await fetch("/api/setup-intent", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentMethodId, customerId: setup.customerId }),
+        body: JSON.stringify({
+          paymentMethodId,
+          customerId: setup.customerId,
+          renewalConsent: agreed,
+        }),
       });
       const subJson = await subRes.json();
       if (!subRes.ok) throw new Error(subJson.error || "Could not activate your free month.");
@@ -117,7 +142,7 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
         className="font-mono"
         style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 20 }}
       >
-        You won&apos;t be charged until day 31. Cancel anytime before then.
+        {`You won’t be charged until ${chargeDate ?? "your trial ends"}. Then your membership renews automatically at $${PRICING.member.monthly}/month until you cancel — cancel before ${chargeDate ?? "then"} to pay nothing.`}
       </p>
 
       <div
@@ -132,6 +157,23 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
         <CardElement options={cardElementOptions} />
       </div>
 
+      <label
+        style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 16, cursor: "pointer", lineHeight: 1.6 }}
+      >
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          style={{ marginTop: 3, accentColor: "var(--accent)" }}
+        />
+        <span>
+          {`I agree that my membership starts automatically on ${chargeDate ?? "the day my trial ends"} and renews at $${PRICING.member.monthly}/month until I cancel. Cancelling before then costs nothing.`}{" "}
+          <a href="/terms" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>
+            Terms
+          </a>
+        </span>
+      </label>
+
       {error && (
         <p className="font-mono" style={{ fontSize: 11, color: "#f85149", marginBottom: 12 }}>
           {error}
@@ -140,7 +182,7 @@ function CardForm({ onActivated }: { onActivated: () => void }) {
 
       <button
         type="submit"
-        disabled={loading || done || !stripe}
+        disabled={loading || done || !stripe || !agreed}
         className="font-mono"
         style={{
           width: "100%",
@@ -261,11 +303,11 @@ const COMPARISON_ROWS: { feature: string; free: string; member: string; partner:
 const FAQ_ITEMS = [
   {
     q: "Can I cancel anytime?",
-    a: "Yes — cancel from your settings page at any time. You keep access until the end of your billing period.",
+    a: "Yes — cancel from your settings page at any time. Memberships renew automatically until you do; once you cancel, you keep access until the end of the period you've paid for. Payments aren't refunded, including partial periods.",
   },
   {
     q: "What happens when my trial ends?",
-    a: `No surprise charges — we never charge a card you didn't add. Your cohort seat is held for ${LAPSE_GRACE_DAYS} days, and you keep read access to everything you were part of. After that the seat returns to the pool so the room stays full of people who show up.`,
+    a: `No surprise charges — we never charge a card you didn't add. (If you added a card to claim a referral trial, your membership starts on the trial's end date unless you cancel first.) Your cohort seat is held for ${LAPSE_GRACE_DAYS} days, and you keep read access to everything you were part of. After that the seat returns to the pool so the room stays full of people who show up.`,
   },
   {
     q: "Why isn't there a free plan?",
@@ -780,7 +822,10 @@ function PricingBody() {
 
         {/* Embedded card form for referred claim */}
         {showCardForm && referred && (
-          <CardForm onActivated={() => router.push("/home?trial=activated")} />
+          <CardForm
+            onActivated={() => router.push("/home?trial=activated")}
+            trialEndsAt={sub?.trial_ends_at ?? null}
+          />
         )}
 
         {/* Returned from an abandoned checkout. Only claim the trial is still
@@ -863,6 +908,17 @@ function PricingBody() {
         {FAQ_ITEMS.map((item) => (
           <FaqItem key={item.q} q={item.q} a={item.a} />
         ))}
+
+        {/* Automatic-renewal terms, stated plainly on the page that sells the plan. */}
+        <p
+          className="font-mono"
+          style={{ fontSize: 11, color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.7, marginTop: 40 }}
+        >
+          Memberships renew automatically — ${PRICING.member.monthly}/month, or ${PRICING.member.annual}/year —
+          until you cancel. Cancel anytime from settings; access runs to the end of the period
+          you&apos;ve paid for, and payments aren&apos;t refunded.
+        </p>
+        <LegalLinks className="mt-6" />
       </div>
 
       {/* Downgrade confirmation modal */}
