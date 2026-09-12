@@ -251,10 +251,17 @@ without you.
       (`type=recovery`) or signups; the raw error is still logged server-side.
       Verified locally with four fake links: the server log shows the real
       `AuthPKCECodeVerifierMissingError` being caught, and the login page shows
-      the reset message cleanly. **Not deployed yet.** Phase 6's
-      different-device reset test is the real-world confirmation.
+      the reset message cleanly. ✅ **Deployed 2026-09-12 as `065b61b`** and
+      verified on production: fake cross-device reset, cross-device signup,
+      and expired-link requests to `quorumhq.co/auth/callback` all return the
+      new messages. Phase 6's different-device reset test (needs Phase 1 SMTP)
+      is the real-world confirmation.
 - [ ] **[you]** Decide §4a (trial notification) and §4b (admission cadence).
       Both change what gets built in later phases.
+      ✅ §4a decided 2026-09-12: **option 1**, Quorum-sent reminder emails.
+      ✅ §4b decided 2026-09-12: **approve in groups of 12**, keeping a manual
+      way to approve anyone; approved members must be told. Open: release a
+      group by hand, or semi-automatically (see §4b).
 
 ### Phase 1 — infrastructure cutover (once DNS resolves)
 
@@ -272,6 +279,25 @@ without you.
       as a stopgap and is changeable any time; before launch, either add a
       forwarding service (MX records into Vercel DNS) or Google Workspace at
       ~$6/mo. Decide which; neither is launch-blocking on its own.
+- [ ] **[me]** **Trial-ending reminder emails** (the §4a decision). At 7, 3,
+      and 1 days before `subscriptions.trial_ends_at`, email card-free
+      trialers what ends, when, what it costs to continue, and a link to
+      subscribe. Build notes:
+      - **Blocked on the SMTP item above** — nothing can be sent until it lands
+      - **Skip members whose trial is a Stripe trial** (a
+        `stripe_subscription_id` is set, i.e. the referral card path). Stripe
+        already sends them its 7-day reminder; a second email would confuse
+      - **Honour the existing `email_trial_ending` preference** in Settings. The
+        card-free trial never auto-charges, so no auto-renewal law requires this
+        email, and an opt-out is fine
+      - Record each send, so a retried job can't email the same person twice
+      - Scheduled alongside the Phase 3 edge functions and `pg_cron` jobs
+      - **Deadline:** live before the first cohort's T-7 mark (§4a)
+- [ ] **[me]** **"You're in" approval email** (the §4b decision). Sent from
+      `approveUser()` in `lib/admin/approve.ts`, so every approval path sends
+      it: single, bulk, or a released group. Say that their group has opened,
+      and link straight to `quorumhq.co/login`. **Blocked on the SMTP item
+      above**; until it lands, email each approved group by hand.
 - [ ] **[me → you]** Supabase auth email templates — they say "Supabase" by
       default, not Quorum. Claude can write the HTML for confirmation, recovery,
       and magic-link; you paste them into the dashboard.
@@ -511,6 +537,13 @@ Options, roughly in order of effort:
 3. **Accept it for the first cohort** and watch what happens, given the numbers
    are small enough to handle by hand. **[you]**.
 
+**Decision (2026-09-12): option 1** — Quorum emails the trial warning itself,
+keeping the card-free trial that the pricing page and Terms promise. It's built
+in Phase 1, once SMTP works (see the item there). **Hard timing constraint:** it
+must be live before the first cohort's T-7 mark, about 23 days after the first
+approvals, or that cohort falls into exactly the gap this decision closes. Until
+it ships, trials ending in the first cohort need a personal note by hand.
+
 ### 4b. Cold start and the shape of admission
 
 `WAITLIST_ENABLED = true`, so every signup waits for manual approval. Worth
@@ -527,6 +560,43 @@ lets you hold people until there's a room worth joining.
 
 **[you]** decides the cadence. **[me]** can build tooling for it — batch-approve
 in the admin panel, or a "hold until N approved" flow — if you want it.
+
+**Found 2026-09-12 while scoping this — three things any cadence has to fix:**
+
+- **Bulk approve shortchanges referred founders.** The admin panel's "bulk
+  approve" (`/api/admin/users/action`) calls `initializeUserSubscription(id,
+  false)` for everyone, so a referred founder gets the 30-day trial instead of
+  the 45 days the Terms and signup page promise, and no referral free-month
+  window (the card form never appears for them). The single "approve" route
+  (`/api/admin/approve`) reads `referred_by` and gets it right; it also creates
+  the referral code and assigns the cohort at approval, which bulk approve
+  leaves to the member's first visit. **[me]** fix: bulk approve should run the
+  same steps as single approve.
+- **Nobody is told they've been approved.** There's no approval email (no SMTP
+  yet), so an approved batch only finds out if they happen to log in again —
+  and a batch that doesn't come back is still an empty room. **[me]** approval
+  email once Phase 1 SMTP lands; until then, email each approved batch by hand.
+- **The waitlist page promises "we'll be in touch within 48 hours"**
+  (`app/pending/page.tsx`). Nothing actually gets in touch, and a weekly batch
+  would break that timing anyway. The copy has to match the chosen cadence.
+  **[me]**
+
+**Decision (2026-09-12): approve in groups of 12**, each group filling one
+cohort, while keeping a manual way to approve anyone. Weekly batches were
+rejected: they'd back up as volume grows. Approved members must be told.
+**Open:** is a group released by hand (select ~12, bulk approve), or
+semi-automatically (accept applicants one by one; the 12th acceptance releases
+the whole group, with a "release now" override)? The second needs a small
+schema change. Status of the three fixes above:
+
+- **Bulk approve** — fixed on `fix/bulk-approve-referred`. Both approve paths
+  now call `approveUser()` in `lib/admin/approve.ts`. It also skips members who
+  are already approved or suspended, because re-running approval restarts the
+  trial clock.
+- **Waiting-page copy** — now says founders are admitted in groups of twelve
+  and that we'll email them when their group opens. No time promise.
+- **Approval email** — a Phase 1 item, after SMTP. Until then, email each
+  approved group by hand.
 
 ### 4c. The billing surface — two payment paths already exist
 
