@@ -326,7 +326,7 @@ without you.
       it: single, bulk, or a released group. Say that their group has opened,
       and link straight to `quorumhq.co/login`. **Blocked on the SMTP item
       above**; until it lands, email each approved group by hand.
-- [ ] **[me → you]** Supabase auth email templates
+- [x] **[me → you]** Supabase auth email templates
       *Research 2026-09-13 — the plan changed.* Don't just rebrand the
       defaults. Switch the links from `{{ .ConfirmationURL }}` (a
       `*.supabase.co` URL that completes via the PKCE `code` exchange) to
@@ -365,19 +365,82 @@ without you.
       saves it in user metadata, and the claim falls back to it. Verified
       locally: fake reset and signup tokens, a missing token, and an unknown
       type all land on login with plain messages (Supabase reports a bad token
-      as `otp_expired`), and `/auth/callback` output is unchanged. **Next:**
-      deploy, confirm `/auth/confirm` is live, then paste the three templates. — they say "Supabase" by
+      as `otp_expired`), and `/auth/callback` output is unchanged.
+      ✅ **Deployed 2026-09-13 as `39568e3`.** The gate passed: fake tokens to
+      `/auth/confirm` on production return a 307 to login with the right
+      message, not a 404, and `/auth/callback` is unchanged. **Next [you]:**
+      paste the templates, Reset Password first; test it by requesting on one
+      device and opening on another; then the other two.
+      ✅ **Reset Password pasted and verified 2026-09-13:** requested on a
+      computer, opened on a phone, and the button reached the set-password
+      page on the phone. It rendered as designed and landed in **Primary**,
+      not spam, so the own-domain link fixed the spam placement.
+      ✅ **All three pasted 2026-09-13.** Confirm signup gets tested when
+      "Confirm email" is turned on (below). Change Email Address is untested,
+      since a live test would change the owner's real account email. — they say "Supabase" by
       default, not Quorum. Claude can write the HTML for confirmation, recovery,
       and magic-link; you paste them into the dashboard.
 - [ ] **[you]** **The atomic cutover** — all three in one sitting:
   - [ ] `NEXT_PUBLIC_APP_URL` in **Vercel's** env vars (not just `.env.local`)
   - [ ] Supabase → Auth → URL Configuration → Site URL + redirect allow-list
   - [ ] Stripe webhook endpoint → `https://<domain>/api/webhooks/stripe`
+  - [ ] *(folded in from Phase 2)* live Stripe keys, live webhook secret, and
+        live price IDs in Vercel **Production only**; remove
+        `STRIPE_PARTNER_PRICE_ID` from Production (see the env-var table below)
+  - [ ] **Redeploy** after the env-var edits — `NEXT_PUBLIC_*` values are
+        baked into the build, so nothing changes until a new deploy is live
+  - [ ] **Clear the test-mode Stripe IDs** with
+        `supabase/cutover/stripe-test-to-live-1-check.sql` (read-only) and
+        `…-2-cleanup.sql`, the cleanup pasted right after the
+        live-key deploy is confirmed (not before, or a checkout in the gap
+        writes fresh test IDs). Found 2026-09-13: production has only ever used
+        test keys, so every stored `stripe_customer_id` and
+        `stripe_subscription_id` is a test-mode ID that live Stripe rejects.
+        `getOrCreateStripeCustomer` returns a stored ID unchecked, so checkout,
+        the billing portal, and the referral card form would fail for any
+        test-era account, including the owner's; and account deletion, which
+        aborts on any Stripe error by design, couldn't delete one at all. With
+        the IDs cleared, checkout creates a fresh live customer and deletion
+        searches live Stripe, finds nothing, and proceeds. The reconcile path
+        and the referrals page already catch the error and log it. Run the
+        read-only `-1-check` file first (safe any time), to see what will
+        change.
+        **Also reset the founding stamps.** `claimFoundingSeat` stamps
+        `is_founding_member` only when a founding subscription is created, and
+        every subscription so far was test-mode, so every existing stamp came
+        from a test checkout. Each one counts against the 100 founding seats
+        (`foundingSeatsRemaining` counts the stamps), so leaving them in place
+        would launch with fewer than 100 seats and no visible reason. The
+        lapse columns from migration 013 (`lapsed_at`, `seat_released_at`) are
+        deliberately left alone.
 - [ ] **[you]** **Turn on "Confirm email"** in Supabase Auth. Safe now that
       migration 014's `handle_new_user()` trigger creates the profile without
       needing a session.
 - [ ] **[you]** Confirm every env var exists in Vercel production, not only
       locally. **[me]** can produce the definitive list to check against.
+      *The definitive list (2026-09-13, from every `process.env` read in
+      `app/`, `lib/`, `components/`, and `middleware.ts`):*
+
+      | Var | Kind | Production at cutover | Preview / Development |
+      |---|---|---|---|
+      | `NEXT_PUBLIC_APP_URL` | public, **baked at build** | `https://quorumhq.co` | leave as is |
+      | `NEXT_PUBLIC_SUPABASE_URL` | public | unchanged | unchanged |
+      | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | public | unchanged | unchanged |
+      | `SUPABASE_SERVICE_ROLE_KEY` | secret | unchanged | unchanged |
+      | `ADMIN_CODE` | secret | unchanged | unchanged |
+      | `STRIPE_SECRET_KEY` | secret | `sk_live_…` | keep `sk_test_…` |
+      | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | public, **baked at build** | `pk_live_…` | keep `pk_test_…` |
+      | `STRIPE_WEBHOOK_SECRET` | secret | the **live** endpoint's `whsec_…` | keep test |
+      | `STRIPE_MEMBER_PRICE_ID` | config | `price_1UEsuVRPXtW7MxMwEVtvBzSw` | keep test |
+      | `STRIPE_MEMBER_ANNUAL_PRICE_ID` | config | `price_1UEsuVRPXtW7MxMwAmVNiILO` | keep test |
+      | `STRIPE_FOUNDING_PRICE_ID` | config | `price_1UEsuVRPXtW7MxMwg3Jjgzyv` | keep test |
+      | `STRIPE_PARTNER_PRICE_ID` | config | **remove** — unset closes Partner checkout; a leftover test ID would 500 under a live key | keep test |
+
+      `NODE_ENV` is set by Vercel. The edge functions' `SUPABASE_URL` and
+      `SUPABASE_SERVICE_ROLE_KEY` are injected by Supabase. **`NEXT_PUBLIC_*`
+      values are compiled into the build, so editing them in Vercel does
+      nothing until a redeploy.** `.env.local.example` still lacks the annual
+      and founding price IDs (Phase 5).
 
 ### Phase 2 — Stripe live mode (~~once activated~~ — activation is done)
 
@@ -559,6 +622,9 @@ yours, because most of them need a real inbox or a real card.
 - [ ] **[you]** Full signup, with email confirmation on, from a clean browser
 - [ ] **[you]** Password reset end to end — including clicking the link on a
       *different device* than the one that requested it
+      *Passed 2026-09-13 on the `vercel.app` host* (computer → phone, via the
+      new `/auth/confirm` link). Repeat once on `quorumhq.co` after the
+      Phase 1 cutover, since that's where `{{ .SiteURL }}` will point.
 - [ ] **[you]** A real checkout with a live card; confirm the webhook fires and
       the tier updates. **Test both payment paths** — the hosted Checkout
       redirect *and* the inline `CardForm` on `/pricing`. They are separate code
