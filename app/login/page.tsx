@@ -6,7 +6,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import LogoMark from "@/components/LogoMark";
 import LegalLinks from "@/components/LegalLinks";
-import { WAITLIST_ENABLED } from "@/lib/flags";
 
 function LoginForm() {
   const router = useRouter();
@@ -26,33 +25,17 @@ function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
       setError(signInError.message.toLowerCase());
       setLoading(false);
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("status")
-      .eq("id", data.user!.id)
-      .single();
-
-    if (profile?.status === "suspended") {
-      router.push("/suspended");
-      router.refresh();
-      return;
-    }
-
-    if (!WAITLIST_ENABLED) {
-      router.push(safeNext ?? "/home");
-      router.refresh();
-      return;
-    }
-
-    const approved = profile?.status === "approved";
-    router.push(approved ? (safeNext ?? "/home") : "/pending");
+    // Where a member belongs (pending, suspended, or in) is decided on the
+    // server: "/" and the app layout both route on it, and they know whether the
+    // waitlist is on. Deciding here as well would be a second copy of that rule.
+    router.push(safeNext ?? "/");
     router.refresh();
   }
 

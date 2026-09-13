@@ -23,10 +23,11 @@ import { onPosted, type TourTarget } from "@/lib/tour-bus";
  *   tour_step       last completed tour step (0 = not started). Resumes here.
  *   tour_completed  walkthrough finished; the overlay never shows again.
  *
- * The tour runs when `!tour_completed` AND either the handoff param `?tour=1`
- * is present (fresh from onboarding) or `tour_step > 0` (resuming). A user who
- * finished onboarding before this feature shipped (tour_step 0, no param) is
- * never retro-triggered.
+ * The tour runs when `!tour_completed` AND one of: `tour_step > 0` (resuming),
+ * `startFresh` (a member who never finished the old onboarding, which is every
+ * new member now that onboarding is retired), or the old handoff param
+ * `?tour=1`. A member who finished onboarding before the tour shipped
+ * (completed, tour_step 0) is never retro-triggered.
  */
 
 export interface TourStep {
@@ -291,11 +292,15 @@ function persist(body: Record<string, unknown>) {
 export function TourProvider({
   tourStep = 0,
   tourCompleted = false,
+  startFresh = false,
   demo = false,
   children,
 }: {
   tourStep?: number;
   tourCompleted?: boolean;
+  // A brand-new member: never finished the retired onboarding flow. Starts the
+  // tour at step 1 without needing onboarding's ?tour=1 handoff.
+  startFresh?: boolean;
   // Demo mode (unused in the shipping flow, kept as a seam for a future preview
   // harness): forces the tour active from step 1, never navigates between
   // routes, never writes to the DB, and loops at the end.
@@ -329,13 +334,13 @@ export function TourProvider({
       const resume = Math.min(tourStep + 1, TOUR_STEPS.length);
       setStepIndex(resume);
       setActive(true);
-    } else if (hasParam) {
-      // Fresh handoff from onboarding — begin at step 1.
+    } else if (startFresh || hasParam) {
+      // A new member's first visit — begin at step 1.
       setStepIndex(1);
       setActive(true);
       persist({ tour_step: 1 });
     }
-  }, [tourStep, tourCompleted, demo]);
+  }, [tourStep, tourCompleted, startFresh, demo]);
 
   const step = active ? TOUR_STEPS[stepIndex - 1] ?? null : null;
   const isLast = stepIndex >= TOUR_STEPS.length;

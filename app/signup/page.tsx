@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import LogoMark from "@/components/LogoMark";
-import { WAITLIST_ENABLED } from "@/lib/flags";
 import { LEGAL } from "@/lib/legal";
 
 const STAGES = [
@@ -26,6 +25,7 @@ export default function SignupPage() {
   const [agreed, setAgreed] = useState(false);
   const [building, setBuilding] = useState("");
   const [stage, setStage] = useState("idea");
+  const [bio, setBio] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [refCode, setRefCode] = useState<string | null>(null);
@@ -70,6 +70,8 @@ export default function SignupPage() {
           full_name: fullName,
           what_they_are_building: building,
           stage,
+          // Optional; handle_new_user() copies it to the profile (migration 017).
+          bio: bio.trim() || undefined,
           // Proof of assent: which Terms were accepted, and when. Lives in
           // auth.users.raw_user_meta_data; handle_new_user() ignores these keys.
           terms_version: LEGAL.effectiveDate,
@@ -111,7 +113,9 @@ export default function SignupPage() {
       } catch {}
     }
 
-    router.push(WAITLIST_ENABLED ? "/pending" : "/home");
+    // "/" sends them to the waiting room or straight in, per the admin's
+    // platform_status setting.
+    router.push("/");
     router.refresh();
   }
 
@@ -191,6 +195,16 @@ export default function SignupPage() {
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>
+          </div>
+          <div>
+            <label>a line about you <span className="text-text-faint">(optional)</span></label>
+            <textarea
+              rows={2}
+              maxLength={280}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="e.g. second-time founder, ex-product at a fintech"
+            />
           </div>
 
           {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}

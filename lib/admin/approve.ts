@@ -23,7 +23,13 @@ export type ApproveOutcome = {
   cohortWarning?: string | null;
 };
 
-export async function approveUser(admin: SupabaseClient, id: string): Promise<ApproveOutcome> {
+export async function approveUser(
+  admin: SupabaseClient,
+  id: string,
+  // notify: false approves silently. Open signup uses it: someone who was let
+  // straight in doesn't need an email announcing it.
+  opts: { notify?: boolean } = {},
+): Promise<ApproveOutcome> {
   const { data: current, error: readErr } = await admin
     .from("profiles")
     .select("status, referred_by, email, full_name")
@@ -72,7 +78,7 @@ export async function approveUser(admin: SupabaseClient, id: string): Promise<Ap
   // Tell them they're in. Every approval path runs through here, so single,
   // bulk, and a released group all send it. Best-effort: a failed email never
   // undoes an approval. The idempotency key absorbs a double-click.
-  if (current.email) {
+  if (opts.notify !== false && current.email) {
     const sent = await sendEmail({
       to: current.email,
       ...approvedEmail({

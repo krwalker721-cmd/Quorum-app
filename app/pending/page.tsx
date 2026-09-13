@@ -2,14 +2,15 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LogoMark from "@/components/LogoMark";
 import SignOutButton from "@/components/SignOutButton";
-import { WAITLIST_ENABLED } from "@/lib/flags";
+import { isWaitlistOn } from "@/lib/platform";
 
 export default async function PendingPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
-  if (!WAITLIST_ENABLED) redirect("/home");
+  // With open signup there's no waiting room; the app layout approves them.
+  if (!(await isWaitlistOn())) redirect("/home");
 
   const { data: profile } = await supabase
     .from("profiles")

@@ -700,7 +700,33 @@ activation and DNS.
       `components/landing/Landing.tsx` at `/`; signed-in routing is
       unchanged. Server-rendered with native `<details>` for the FAQ, so it
       reads without JavaScript. Product and FAQ copy moved to
-      `lib/marketing-copy.ts`, shared with /pricing.* `/` currently redirects straight to
+      `lib/marketing-copy.ts`, shared with /pricing.*
+      *Same branch, the owner's flow change:* **onboarding is retired.** New
+      members go signup → confirm → pending → approved → straight into the app,
+      where the guided tour starts on its own (`startFresh` in
+      `TourContext`, for anyone who never finished the old onboarding;
+      members who finished it aren't re-toured). `/onboarding` redirects to
+      home. Its pitch (the opening line, the question, the manifesto and
+      three-part promise) is now the landing page's "why quorum" section, and
+      the referral FAQ answer was added. **Not carried over: the "founder
+      names" chapter** — eight invented members with invented results and
+      quotes, which on a public page would be fake testimonials (FTC 16 CFR
+      Part 465); they also stop being shown to members. **The growth stat:**
+      onboarding's "founders with strong peer networks grow 2-3x faster
+      (Enterprise Nation)" has no study behind it — the cited page doesn't
+      contain it. The landing page instead attributes Vistage's own claim
+      ("member companies grow 2.2x faster than non-members") with a link.
+      **Bio** moved to an optional signup field (280 chars), copied to the
+      profile by `handle_new_user()` — **migration `017_signup_bio.sql`**.
+      **The admin's waitlist/open switch now actually works:** it had only
+      ever been saved, while every gate read a hard-coded `WAITLIST_ENABLED`
+      (deleted). `lib/platform.ts` reads `platform_status` (failing toward the
+      waitlist); in open mode a pending member is approved silently on arrival
+      (trial + cohort, no "you're in" email). Login and signup now route
+      through `/`, so the rule lives in one place. Dead code left for Phase 5:
+      the unused onboarding chapters in `components/onboarding-v2/` (the tour
+      still imports its `PricingSection`) and `components/onboarding-archived/`.
+      `/` currently redirects straight to
       `/login`, so the new domain shows a bare login box with no explanation of
       what Quorum is or why it costs $39/mo. For a product whose pitch *is* the
       filter, this is the highest-leverage item in this phase. Claude builds it;

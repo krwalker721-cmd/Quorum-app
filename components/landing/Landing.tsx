@@ -4,7 +4,6 @@ import LegalLinks from "@/components/LegalLinks";
 import { FAQ_ITEMS, PRODUCT_BLOCKS } from "@/lib/marketing-copy";
 import { FOUNDING_SEATS, PRICING, TRIAL_DAYS } from "@/lib/pricing";
 import { foundingSeatsRemaining } from "@/lib/plans";
-import { WAITLIST_ENABLED } from "@/lib/flags";
 
 // The public front door: what signed-out visitors see at "/". Signed-in
 // members never see it; app/page.tsx routes them on as before.
@@ -15,7 +14,8 @@ import { WAITLIST_ENABLED } from "@/lib/flags";
 const HERO_BG = "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)";
 const SOLID_BUTTON = "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))";
 
-const CTA_LABEL = WAITLIST_ENABLED ? "Request an invite" : "Start your free trial";
+// The three-part promise from the retired onboarding's manifesto chapter.
+const PROMISE = ["Find your people", "Get real advice", "Build together"];
 
 const STEPS = [
   {
@@ -35,6 +35,7 @@ const STEPS = [
 const LANDING_FAQ = new Set([
   "Why isn't there a free plan?",
   "What happens when my trial ends?",
+  "How do referrals work?",
   "Can I cancel anytime?",
 ]);
 
@@ -44,14 +45,14 @@ function Kicker({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PrimaryCta() {
+function PrimaryCta({ label }: { label: string }) {
   return (
     <Link
       href="/signup"
       className="inline-block rounded-lg px-5 py-3 text-sm font-medium transition-opacity hover:opacity-90"
       style={{ background: SOLID_BUTTON, color: "#1a1204" }}
     >
-      {CTA_LABEL} →
+      {label} →
     </Link>
   );
 }
@@ -73,8 +74,9 @@ function SeatLine({ remaining }: { remaining: number }) {
   );
 }
 
-export default async function Landing() {
+export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
   const remaining = await foundingSeatsRemaining();
+  const ctaLabel = waitlistOn ? "Request an invite" : "Start your free trial";
   const faq = FAQ_ITEMS.filter((f) => LANDING_FAQ.has(f.q));
 
   return (
@@ -113,7 +115,7 @@ export default async function Landing() {
             matters most.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <PrimaryCta />
+            <PrimaryCta label={ctaLabel} />
             <Link
               href="/pricing"
               className="inline-block rounded-lg px-5 py-3 text-sm border border-border-muted text-text-primary hover:border-amber/50"
@@ -122,6 +124,56 @@ export default async function Landing() {
             </Link>
           </div>
           <SeatLine remaining={remaining} />
+        </section>
+
+        {/* Why Quorum: the case that used to open onboarding. */}
+        <section className="rounded-xl bg-card border border-border p-8 sm:p-12">
+          <Kicker>{"// why quorum"}</Kicker>
+          <p className="font-sans text-2xl sm:text-3xl font-medium leading-snug text-text-primary max-w-3xl">
+            Have you ever wanted a room full of founders who have the same mindset as you — and
+            have already solved the problems you&rsquo;re about to face?
+          </p>
+          <div className="mt-10 border-t border-border pt-10">
+            <h2 className="font-sans text-xl sm:text-2xl font-semibold text-text-primary max-w-2xl">
+              This is what happens when founders stop figuring it out alone.
+            </h2>
+            <ul className="mt-6 flex flex-wrap gap-3">
+              {PROMISE.map((p) => (
+                <li
+                  key={p}
+                  className="rounded-full border border-border-muted px-4 py-1.5 text-sm text-text-primary"
+                >
+                  {p}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-text-secondary">
+              You&rsquo;ll get there faster — with the right people around you.
+            </p>
+          </div>
+          {/* Attributed to Vistage because it's their claim, about their CEO
+              peer groups: no independent study behind a founder-wide number was
+              found (LAUNCH.md, Phase 4). */}
+          <div
+            className="mt-10 rounded-lg p-5"
+            style={{ background: "rgba(245,158,11,.06)", border: "1px solid rgba(245,158,11,.2)" }}
+          >
+            <p className="font-sans text-3xl font-semibold" style={{ color: "#f8c56a" }}>
+              2.2×
+            </p>
+            <p className="mt-2 text-sm text-text-secondary leading-relaxed max-w-2xl">
+              Vistage, a CEO peer-advisory network, reports that its members&rsquo; companies grow
+              2.2× faster than non-members.
+            </p>
+            <a
+              href="https://vistage.com/membership/our-approach/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block font-mono text-[0.65rem] text-text-muted hover:text-amber"
+            >
+              source: vistage.com
+            </a>
+          </div>
         </section>
 
         {/* How it works */}
@@ -215,8 +267,11 @@ export default async function Landing() {
           <h2 className="font-sans text-2xl sm:text-3xl font-semibold text-text-primary">
             Every cohort is twelve seats. Take one.
           </h2>
+          <p className="mt-3 text-text-secondary">
+            A room of founders who&rsquo;ve already been where you&rsquo;re going.
+          </p>
           <div className="mt-8">
-            <PrimaryCta />
+            <PrimaryCta label={ctaLabel} />
           </div>
           <p className="mt-5 font-mono lowercase text-xs text-text-muted">
             already a member?{" "}
