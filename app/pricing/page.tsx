@@ -454,6 +454,19 @@ function PricingBody() {
     }
   }
 
+  // Not a bare router.back(): Stripe returns an abandoned checkout here through
+  // cancel_url as a fresh history entry, so the entry behind this page is
+  // Checkout itself, and "back" would reopen it. Go to "/" in that case, and
+  // when there's no history to go back through at all — it already routes each
+  // visitor to the right place (login, pending, or home).
+  function goBack() {
+    if (canceled || window.history.length <= 1) {
+      router.push("/");
+    } else {
+      router.back();
+    }
+  }
+
   async function joinWaitlist() {
     setWaitlistLoading(true);
     try {
@@ -521,7 +534,7 @@ function PricingBody() {
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
         {/* Back button */}
         <button
-          onClick={() => router.back()}
+          onClick={goBack}
           style={{
             background: "transparent",
             border: "none",

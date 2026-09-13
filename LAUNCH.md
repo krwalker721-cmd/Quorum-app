@@ -380,10 +380,21 @@ without you.
       since a live test would change the owner's real account email. — they say "Supabase" by
       default, not Quorum. Claude can write the HTML for confirmation, recovery,
       and magic-link; you paste them into the dashboard.
-- [ ] **[you]** **The atomic cutover** — all three in one sitting:
-  - [ ] `NEXT_PUBLIC_APP_URL` in **Vercel's** env vars (not just `.env.local`)
-  - [ ] Supabase → Auth → URL Configuration → Site URL + redirect allow-list
-  - [ ] Stripe webhook endpoint → `https://<domain>/api/webhooks/stripe`
+- [x] **[you]** **The atomic cutover** — all three in one sitting. *Done
+      2026-09-13, deployed as `bc29864`.* Smoke test: `/login` 200, the
+      webhook refuses an unsigned POST (`No signature`), `/pricing` ships
+      `pk_live_…`, and a Member checkout opened live Stripe Checkout at $39
+      (live secret key + price IDs proven; abandoned, nothing charged). **Still
+      unproven: the live webhook signing secret.** First time a real member
+      adds a card, check Stripe → Webhooks → Quorum production → Event
+      deliveries shows 200s. Stripe retries failures for 3 days, so a bad
+      secret is fixable without losing the payment.
+  - [x] `NEXT_PUBLIC_APP_URL` in **Vercel's** env vars (not just `.env.local`).
+        Vercel refuses a `NEXT_PUBLIC_*` var marked Sensitive, and a Sensitive
+        var can't be switched back: remove and re-add it as a plain (Config)
+        var. Same for the publishable key, which is public by design.
+  - [x] Supabase → Auth → URL Configuration → Site URL + redirect allow-list
+  - [x] Stripe webhook endpoint → `https://quorumhq.co/api/webhooks/stripe`
         *API-version trap, found 2026-09-13.* Webhook payloads arrive in the
         **endpoint's** API version, not the client's pinned `2024-06-20`, and
         the dashboard only offers the account default or the latest version
@@ -400,12 +411,13 @@ without you.
         dashboard offers is fine. Events to send: `customer.subscription.created`,
         `.updated`, `.deleted`, `.trial_will_end`, `invoice.payment_succeeded`,
         `invoice.payment_failed`.
-  - [ ] *(folded in from Phase 2)* live Stripe keys, live webhook secret, and
+  - [x] *(folded in from Phase 2)* live Stripe keys, live webhook secret, and
         live price IDs in Vercel **Production only**; remove
         `STRIPE_PARTNER_PRICE_ID` from Production (see the env-var table below)
-  - [ ] **Redeploy** after the env-var edits — `NEXT_PUBLIC_*` values are
+  - [x] **Redeploy** after the env-var edits — `NEXT_PUBLIC_*` values are
         baked into the build, so nothing changes until a new deploy is live
-  - [ ] **Clear the test-mode Stripe IDs** with
+  - [x] **Clear the test-mode Stripe IDs** *(run 2026-09-13; verify row
+        `0,0,0,0`)* with
         `supabase/cutover/stripe-test-to-live-1-check.sql` (read-only) and
         `…-2-cleanup.sql`, the cleanup pasted right after the
         live-key deploy is confirmed (not before, or a checkout in the gap
