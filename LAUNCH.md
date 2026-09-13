@@ -448,7 +448,8 @@ without you.
         would launch with fewer than 100 seats and no visible reason. The
         lapse columns from migration 013 (`lapsed_at`, `seat_released_at`) are
         deliberately left alone.
-- [ ] **[you]** **Turn on "Confirm email"** in Supabase Auth. Safe now that
+- [x] **[you]** **Turn on "Confirm email"** in Supabase Auth. *On 2026-09-13;
+      passed the Phase 6 signup test below.* Safe now that
       migration 014's `handle_new_user()` trigger creates the profile without
       needing a session.
 - [ ] **[you]** Confirm every env var exists in Vercel production, not only
@@ -654,12 +655,17 @@ activation and DNS.
 Do not announce until every one of these passes **on the real domain**. Mostly
 yours, because most of them need a real inbox or a real card.
 
-- [ ] **[you]** Full signup, with email confirmation on, from a clean browser
-- [ ] **[you]** Password reset end to end — including clicking the link on a
+- [x] **[you]** Full signup, with email confirmation on, from a clean browser
+      *Passed 2026-09-13 on `quorumhq.co`:* signed up in a private window,
+      got the "confirm your email" screen and the branded email, opened the
+      link on a phone (a different device) and landed signed in on /pending.
+- [x] **[you]** Password reset end to end — including clicking the link on a
       *different device* than the one that requested it
       *Passed 2026-09-13 on the `vercel.app` host* (computer → phone, via the
       new `/auth/confirm` link). Repeat once on `quorumhq.co` after the
       Phase 1 cutover, since that's where `{{ .SiteURL }}` will point.
+      *Passed again 2026-09-13 on `quorumhq.co`* (computer → phone, on a
+      throwaway `+confirmtest` account).
 - [ ] **[you]** A real checkout with a live card; confirm the webhook fires and
       the tier updates. **Test both payment paths** — the hosted Checkout
       redirect *and* the inline `CardForm` on `/pricing`. They are separate code
