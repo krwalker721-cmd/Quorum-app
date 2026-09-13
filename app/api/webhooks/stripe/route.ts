@@ -137,14 +137,24 @@ export async function POST(req: NextRequest) {
       }
 
       case "invoice.payment_succeeded": {
-        const invoice = event.data.object as Stripe.Invoice & {
-          subscription?: string | null;
+        // Where an invoice names its subscription depends on the webhook
+        // endpoint's API version: a top-level `subscription` before 2025-03-31
+        // (basil), `parent.subscription_details.subscription` from basil on.
+        // Read both — otherwise a payment on a newer endpoint syncs nothing,
+        // silently, and the member never gets the access they paid for.
+        const invoice = event.data.object as Stripe.Invoice;
+        const shape = invoice as unknown as {
+          subscription?: string | { id: string } | null;
+          parent?: {
+            subscription_details?: { subscription?: string | { id: string } | null } | null;
+          } | null;
         };
-        if (!invoice.subscription) break;
+        const subRef =
+          shape.subscription ?? shape.parent?.subscription_details?.subscription ?? null;
+        const subscriptionId = typeof subRef === "string" ? subRef : subRef?.id;
+        if (!subscriptionId) break;
 
-        const subscription = await stripe.subscriptions.retrieve(
-          invoice.subscription as string,
-        );
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         await syncSubscriptionToSupabase(subscription);
 
         const userId = await userIdForCustomer(invoice.customer as string);
