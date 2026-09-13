@@ -16,5 +16,5 @@ export const LEGAL = {
   contactEmail: "krwalker721@gmail.com",
   site: "https://quorumhq.co",
   /** Bump whenever the substance of any legal page changes. */
-  effectiveDate: "September 12, 2026",
+  effectiveDate: "September 13, 2026",
 } as const;

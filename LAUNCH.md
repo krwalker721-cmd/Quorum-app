@@ -647,7 +647,16 @@ once something has already gone wrong.
       until there's a real member; **upgrade to Pro (daily backups, 7 days)
       before approving the first group**, since approval creates the first
       data worth keeping. PITR isn't needed at this size.
-- [ ] **[me → you]** Error monitoring. Claude installs and wires the Sentry SDK;
+- [ ] **[me → you]** Error monitoring. *Built 2026-09-13, branch `feat/sentry`:*
+      `@sentry/nextjs` 10.74 via `instrumentation.ts` (server + edge),
+      `instrumentation-client.ts` (browser), and `app/global-error.tsx`.
+      Server `console.error` calls are forwarded too
+      (`captureConsoleIntegration`), since most failures here are caught and
+      logged, not thrown. DSN in `NEXT_PUBLIC_SENTRY_DSN`, Production only.
+      No `withSentryConfig` wrapper yet: browser stack traces stay minified
+      until source maps are uploaded with a `SENTRY_AUTH_TOKEN`. The Privacy
+      Policy now names Sentry and Resend (effective date → September 13).
+      Claude installs and wires the Sentry SDK;
       **[you]** create the account and supply the DSN as a Vercel env var.
       Webhook and entitlement failures currently `console.error` into Vercel logs
       and nowhere else — you will not know a webhook is failing.
@@ -688,6 +697,7 @@ activation and DNS.
       filter, this is the highest-leverage item in this phase. Claude builds it;
       **[you]** own the positioning and copy decisions.
 - [ ] **[me]** `error.tsx`, `not-found.tsx`, `global-error.tsx`
+      *(`global-error.tsx` added with Sentry, 2026-09-13; the other two remain)*
 - [ ] **[me]** `public/` directory: `robots.txt`, OG image
 - [ ] **[me]** `metadataBase` + `openGraph` in the root layout — links shared to
       Twitter, LinkedIn, or Slack currently render as a bare URL
