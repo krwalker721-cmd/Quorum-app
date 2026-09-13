@@ -35,25 +35,34 @@ const TIER_STYLES: Record<PillState, { background: string; color: string; border
   },
 };
 
-export default function TierPill({ tier }: { tier: string | null | undefined }) {
+export default function TierPill({
+  tier,
+  sleek = false,
+}: {
+  tier: string | null | undefined;
+  /** The landing page's finish: rounded, sentence case, readable size. Opt-in
+   *  while it rolls out (the sidebar first); other uses keep the mono pill. */
+  sleek?: boolean;
+}) {
   const t = (tier ?? "free") as PillState;
   const style = TIER_STYLES[t] ?? TIER_STYLES.free;
   return (
     <span
-      className="font-mono uppercase"
+      className={sleek ? "" : "font-mono uppercase"}
       style={{
         background: style.background,
         color: style.color,
         border: style.border,
-        fontSize: 9,
-        letterSpacing: "0.1em",
-        padding: "4px 10px",
-        borderRadius: 3,
+        fontSize: sleek ? 11 : 9,
+        fontWeight: sleek ? 500 : undefined,
+        letterSpacing: sleek ? 0 : "0.1em",
+        padding: sleek ? "3px 9px" : "4px 10px",
+        borderRadius: sleek ? 9999 : 3,
         display: "inline-block",
-        lineHeight: 1,
+        lineHeight: sleek ? 1.3 : 1,
       }}
     >
-      {style.label}
+      {sleek ? style.label.charAt(0).toUpperCase() + style.label.slice(1) : style.label}
     </span>
   );
 }

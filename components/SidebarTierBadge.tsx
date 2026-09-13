@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import TierPill from "@/components/TierPill";
 import { useTier } from "@/contexts/TierContext";
+import ui from "@/components/ui/sleek.module.css";
 
 // Subtle tier pill near the bottom of the sidebar. Reads tier/trial state from
 // the shared TierContext (no own fetch) and routes to /settings when clicked.
@@ -37,26 +38,13 @@ export default function SidebarTierBadge({ collapsed }: { collapsed: boolean }) 
           width: "100%",
         }}
       >
-        <span
-          className="font-mono lowercase"
-          style={{ fontSize: 10, color: "var(--text-muted)" }}
-        >
-          plan
-        </span>
-        <TierPill tier={pillState} />
+        <span className={ui.sideMeta}>Plan</span>
+        <TierPill sleek tier={pillState} />
       </button>
 
       {showTrialCountdown && (
-        <p
-          style={{
-            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 9,
-            color: "#f59e0b",
-            letterSpacing: "0.05em",
-            margin: "0 0 8px 14px",
-          }}
-        >
-          trial ends in {daysLeftInTrial}d
+        <p className={ui.sideMeta} style={{ color: "#f59e0b", margin: "0 0 8px 14px" }}>
+          Trial ends in {daysLeftInTrial} {daysLeftInTrial === 1 ? "day" : "days"}
         </p>
       )}
 
@@ -72,14 +60,12 @@ export default function SidebarTierBadge({ collapsed }: { collapsed: boolean }) 
             textAlign: "left",
             padding: 0,
             margin: "0 0 8px 14px",
-            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 9,
+            fontSize: 12,
             color: "#f59e0b",
-            letterSpacing: "0.05em",
             textDecoration: "none",
           }}
         >
-          upgrade →
+          Upgrade →
         </button>
       )}
     </div>
