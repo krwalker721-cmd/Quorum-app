@@ -155,18 +155,18 @@ export default function AdminApp() {
 function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<null | "wrong" | "locked">(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setError(false);
-    const ok = await verifyCode(code);
-    if (ok) {
+    setError(null);
+    const result = await verifyCode(code);
+    if (result === "ok") {
       saveSession(code);
       onSuccess();
     } else {
-      setError(true);
+      setError(result);
     }
     setBusy(false);
   }
@@ -193,7 +193,7 @@ function CodeEntry({ onSuccess }: { onSuccess: () => void }) {
         />
         {error && (
           <p className="font-mono lowercase text-xs text-red-400/80 mt-3 text-center">
-            incorrect code
+            {error === "locked" ? "too many attempts — try again in 15 minutes" : "incorrect code"}
           </p>
         )}
         <button

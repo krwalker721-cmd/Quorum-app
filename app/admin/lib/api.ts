@@ -43,11 +43,12 @@ export async function adminFetch(path: string, init: RequestInit = {}): Promise<
   return fetch(path, { ...init, headers });
 }
 
-export async function verifyCode(code: string): Promise<boolean> {
+export async function verifyCode(code: string): Promise<"ok" | "wrong" | "locked"> {
   const res = await fetch("/api/admin/verify", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ code }),
   });
-  return res.ok;
+  if (res.ok) return "ok";
+  return res.status === 429 ? "locked" : "wrong";
 }

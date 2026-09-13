@@ -613,7 +613,9 @@ test keys until the cutover costs nothing.
 Do this before announcing. These are the things whose absence you only notice
 once something has already gone wrong.
 
-- [ ] **[me → you]** ~~Deploy the 3 edge functions and schedule them.~~
+- [x] **[me → you]** ~~Deploy the 3 edge functions and schedule them.~~
+      *Live 2026-09-13 (`fc0f6e8`); a manual Run logged
+      `[cron] release-seats {"checked":0,…}` with a 200.*
       **Replaced 2026-09-13: the functions were stale, and are deleted from the
       repo** (branch `feat/release-seats-cron`). Do not deploy them from git
       history.
@@ -648,6 +650,15 @@ once something has already gone wrong.
 - [ ] **[me]** Rate limiting. Nothing has any. Highest priority:
       `/api/admin/verify`, which accepts unlimited guesses against a single
       static passphrase.
+      *Built 2026-09-13, branch `feat/admin-rate-limit`.* The surface was wider
+      than `/verify`: all 18 `/api/admin/*` routes accept the code, so the
+      limit sits in their shared `verifyAdminRequest()`. 5 distinct wrong codes
+      per address per 15 minutes, 50 site-wide; a repeated stale code counts
+      once; wrong codes are stored only as keyed hashes (migration
+      `016_admin_auth_failures.sql`). Fails closed if the log is unreadable,
+      so 016 must be applied before the deploy. Also deleted the unused
+      env-only `unlockAdmin` server action, a second code check the limit
+      wouldn't have covered. Auth emails are already rate-limited by Supabase.
 - [ ] **[me → you]** Verify migrations 001–014 are all applied to production.
       Claude can write probe queries for each; 014 is already confirmed, the rest
       are assumed and there's no `config.toml` to check against.
