@@ -74,6 +74,10 @@ export default function SignupPage() {
           // auth.users.raw_user_meta_data; handle_new_user() ignores these keys.
           terms_version: LEGAL.effectiveDate,
           terms_accepted_at: new Date().toISOString(),
+          // The referral travels with the account as well as in the cookie, so
+          // a confirmation link opened on another device (no cookie there) can
+          // still credit the referrer. See claimSignupReferral.
+          referral_code: refCode ?? undefined,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -86,7 +90,8 @@ export default function SignupPage() {
     }
 
     // No session means confirmation is required. The profile already exists, and
-    // /auth/callback claims the referral cookie once they confirm.
+    // /auth/confirm (or /auth/callback, for old links) claims the referral once
+    // they confirm — from the cookie, or from their metadata on another device.
     if (!data.session) {
       setAwaitingConfirmation(true);
       setLoading(false);
