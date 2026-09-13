@@ -231,7 +231,8 @@ without you.
       should exist to back that up. It's done in Denyse's name, at her town
       clerk's office; fees are small and set by the town. Some banks also want
       it to accept payments made out to the business name.
-- [ ] **[you]** **Turn on Stripe's trial-ending reminder email.** Referred
+- [x] **[you]** **Turn on Stripe's trial-ending reminder email.** *On
+      2026-09-13, in live mode.* Referred
       members add a card and get a 45-day trial that converts to paid on its
       own, but the only warning today is an in-app notification from the
       `customer.subscription.trial_will_end` webhook. California's automatic
@@ -321,11 +322,22 @@ without you.
       - Record each send, so a retried job can't email the same person twice
       - Scheduled alongside the Phase 3 edge functions and `pg_cron` jobs
       - **Deadline:** live before the first cohort's T-7 mark (§4a)
+      - *Built 2026-09-13, branch `feat/trial-and-approval-emails`:* migration
+        `015_trial_reminder_sends.sql` (the send log), `lib/email/`, and
+        `/api/cron/trial-reminders`, run daily at 14:00 UTC by Vercel Cron
+        (`vercel.json`). Each mark owns a one-day window around it, so a daily
+        run always catches it; a missed run sends late with the true time
+        left. Checked against 2,000 simulated trials. Goes live once 015 is
+        pasted (before the deploy), `RESEND_API_KEY` and `CRON_SECRET` are in
+        Production, and it's pushed.
 - [ ] **[me]** **"You're in" approval email** (the §4b decision). Sent from
       `approveUser()` in `lib/admin/approve.ts`, so every approval path sends
       it: single, bulk, or a released group. Say that their group has opened,
       and link straight to `quorumhq.co/login`. **Blocked on the SMTP item
       above**; until it lands, email each approved group by hand.
+      *Built 2026-09-13 on the same branch:* `approveUser()` sends it after
+      the approval, best-effort (a failed email never undoes an approval), with
+      the member's real trial length (30, or 45 if referred).
 - [x] **[me → you]** Supabase auth email templates
       *Research 2026-09-13 — the plan changed.* Don't just rebrand the
       defaults. Switch the links from `{{ .ConfirmationURL }}` (a
@@ -448,7 +460,8 @@ without you.
         would launch with fewer than 100 seats and no visible reason. The
         lapse columns from migration 013 (`lapsed_at`, `seat_released_at`) are
         deliberately left alone.
-- [ ] **[you]** **Turn on "Confirm email"** in Supabase Auth. Safe now that
+- [x] **[you]** **Turn on "Confirm email"** in Supabase Auth. *On 2026-09-13;
+      passed the Phase 6 signup test below.* Safe now that
       migration 014's `handle_new_user()` trigger creates the profile without
       needing a session.
 - [ ] **[you]** Confirm every env var exists in Vercel production, not only
@@ -470,6 +483,12 @@ without you.
       | `STRIPE_MEMBER_ANNUAL_PRICE_ID` | config | `price_1UEsuVRPXtW7MxMwAmVNiILO` | keep test |
       | `STRIPE_FOUNDING_PRICE_ID` | config | `price_1UEsuVRPXtW7MxMwg3Jjgzyv` | keep test |
       | `STRIPE_PARTNER_PRICE_ID` | config | **remove** — unset closes Partner checkout; a leftover test ID would 500 under a live key | keep test |
+      | `RESEND_API_KEY` | secret | a Resend key with **sending access**, separate from the one Supabase SMTP uses | unset: app emails are skipped and logged |
+      | `CRON_SECRET` | secret | a long random string. Vercel Cron sends it to `/api/cron/trial-reminders`; without it the route refuses every call | unset |
+
+      `ADMIN_CODE` is only a fallback: the admin panel checks
+      `platform_settings.admin_code` first. The code was reset there by SQL on
+      2026-09-13 after the old one was lost.
 
       `NODE_ENV` is set by Vercel. The edge functions' `SUPABASE_URL` and
       `SUPABASE_SERVICE_ROLE_KEY` are injected by Supabase. **`NEXT_PUBLIC_*`
@@ -654,12 +673,17 @@ activation and DNS.
 Do not announce until every one of these passes **on the real domain**. Mostly
 yours, because most of them need a real inbox or a real card.
 
-- [ ] **[you]** Full signup, with email confirmation on, from a clean browser
-- [ ] **[you]** Password reset end to end — including clicking the link on a
+- [x] **[you]** Full signup, with email confirmation on, from a clean browser
+      *Passed 2026-09-13 on `quorumhq.co`:* signed up in a private window,
+      got the "confirm your email" screen and the branded email, opened the
+      link on a phone (a different device) and landed signed in on /pending.
+- [x] **[you]** Password reset end to end — including clicking the link on a
       *different device* than the one that requested it
       *Passed 2026-09-13 on the `vercel.app` host* (computer → phone, via the
       new `/auth/confirm` link). Repeat once on `quorumhq.co` after the
       Phase 1 cutover, since that's where `{{ .SiteURL }}` will point.
+      *Passed again 2026-09-13 on `quorumhq.co`* (computer → phone, on a
+      throwaway `+confirmtest` account).
 - [ ] **[you]** A real checkout with a live card; confirm the webhook fires and
       the tier updates. **Test both payment paths** — the hosted Checkout
       redirect *and* the inline `CardForm` on `/pricing`. They are separate code

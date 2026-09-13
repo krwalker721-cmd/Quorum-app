@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { assignUserToCohort } from "@/lib/cohorts";
 import { initializeUserSubscription } from "@/lib/stripe-helpers";
 import { createReferralCode, trackLoginEvent } from "@/lib/referral-helpers";
+import { TRIAL_DAYS } from "@/lib/pricing";
+import { sendEmail } from "@/lib/email/send";
+import { approvedEmail } from "@/lib/email/templates";
 
 // Everything "approve" means, in one place.
 //
@@ -23,7 +26,7 @@ export type ApproveOutcome = {
 export async function approveUser(admin: SupabaseClient, id: string): Promise<ApproveOutcome> {
   const { data: current, error: readErr } = await admin
     .from("profiles")
-    .select("status, referred_by")
+    .select("status, referred_by, email, full_name")
     .eq("id", id)
     .maybeSingle();
   if (readErr) return { id, result: "failed", reason: readErr.message };
@@ -64,6 +67,21 @@ export async function approveUser(admin: SupabaseClient, id: string): Promise<Ap
     cohortId = await assignUserToCohort(admin, id);
   } catch (e) {
     cohortWarning = e instanceof Error ? e.message : "cohort assignment failed";
+  }
+
+  // Tell them they're in. Every approval path runs through here, so single,
+  // bulk, and a released group all send it. Best-effort: a failed email never
+  // undoes an approval. The idempotency key absorbs a double-click.
+  if (current.email) {
+    const sent = await sendEmail({
+      to: current.email,
+      ...approvedEmail({
+        fullName: current.full_name,
+        trialDays: current.referred_by ? TRIAL_DAYS.referred : TRIAL_DAYS.standard,
+      }),
+      idempotencyKey: `approved/${id}`,
+    });
+    if (!sent.ok) console.error("[approve] welcome email failed:", id, sent.error);
   }
 
   return { id, result: "approved", cohortId, cohortWarning };
