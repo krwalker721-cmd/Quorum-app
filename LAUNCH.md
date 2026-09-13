@@ -384,6 +384,22 @@ without you.
   - [ ] `NEXT_PUBLIC_APP_URL` in **Vercel's** env vars (not just `.env.local`)
   - [ ] Supabase → Auth → URL Configuration → Site URL + redirect allow-list
   - [ ] Stripe webhook endpoint → `https://<domain>/api/webhooks/stripe`
+        *API-version trap, found 2026-09-13.* Webhook payloads arrive in the
+        **endpoint's** API version, not the client's pinned `2024-06-20`, and
+        the dashboard only offers the account default or the latest version
+        for a new endpoint (the installed SDK is `2026-05-27.dahlia`). Stripe
+        `2025-03-31` (basil) moved an invoice's subscription to
+        `parent.subscription_details.subscription` and moved
+        `current_period_start`/`_end` onto subscription items. The old
+        handler read only the old fields: `invoice.payment_succeeded` would hit
+        `if (!invoice.subscription) break;` and record **no payment, with no
+        error**, and the billing cards would lose their next-billing date.
+        **Fixed on `cutover/quorumhq-live`** — the webhook and
+        `syncSubscriptionToSupabase` read both shapes — so it deploys with the
+        live keys, before any live payment can arrive. Either version the
+        dashboard offers is fine. Events to send: `customer.subscription.created`,
+        `.updated`, `.deleted`, `.trial_will_end`, `invoice.payment_succeeded`,
+        `invoice.payment_failed`.
   - [ ] *(folded in from Phase 2)* live Stripe keys, live webhook secret, and
         live price IDs in Vercel **Production only**; remove
         `STRIPE_PARTNER_PRICE_ID` from Production (see the env-var table below)
@@ -405,6 +421,13 @@ without you.
         and the referrals page already catch the error and log it. Run the
         read-only `-1-check` file first (safe any time), to see what will
         change.
+        *Check run 2026-09-13:* two rows, both the owner's accounts
+        (`krwalker721@gmail.com` and a school test address). Neither has a
+        test subscription and there are no founding stamps, so the cleanup
+        only clears two test customer IDs. Side note: the owner's main account
+        is `trialing` with a null `trial_ends_at` — a billing row created by
+        `getOrCreateStripeCustomer` before any trial was initialized. It
+        doesn't affect members, since approval always sets a trial date.
         **Also reset the founding stamps.** `claimFoundingSeat` stamps
         `is_founding_member` only when a founding subscription is created, and
         every subscription so far was test-mode, so every existing stamp came
