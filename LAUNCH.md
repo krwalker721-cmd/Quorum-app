@@ -308,7 +308,10 @@ without you.
       as a stopgap and is changeable any time; before launch, either add a
       forwarding service (MX records into Vercel DNS) or Google Workspace at
       ~$6/mo. Decide which; neither is launch-blocking on its own.
-- [ ] **[me]** **Trial-ending reminder emails** (the §4a decision). At 7, 3,
+- [x] **[me]** **Trial-ending reminder emails** (the §4a decision). *Live
+      2026-09-13 (`141eb62`); a manual Run from Vercel → Cron Jobs logged a
+      clean `[cron] trial-reminders` summary, and unauthenticated calls get
+      401.* At 7, 3,
       and 1 days before `subscriptions.trial_ends_at`, email card-free
       trialers what ends, when, what it costs to continue, and a link to
       subscribe. Build notes:
@@ -330,7 +333,9 @@ without you.
         left. Checked against 2,000 simulated trials. Goes live once 015 is
         pasted (before the deploy), `RESEND_API_KEY` and `CRON_SECRET` are in
         Production, and it's pushed.
-- [ ] **[me]** **"You're in" approval email** (the §4b decision). Sent from
+- [x] **[me]** **"You're in" approval email** (the §4b decision). *Live
+      2026-09-13; approving a `+approvaltest` signup delivered it with the
+      right trial length.* Sent from
       `approveUser()` in `lib/admin/approve.ts`, so every approval path sends
       it: single, bulk, or a released group. Say that their group has opened,
       and link straight to `quorumhq.co/login`. **Blocked on the SMTP item
@@ -464,7 +469,8 @@ without you.
       passed the Phase 6 signup test below.* Safe now that
       migration 014's `handle_new_user()` trigger creates the profile without
       needing a session.
-- [ ] **[you]** Confirm every env var exists in Vercel production, not only
+- [x] **[you]** *(set during the Phase 1 cutover and the email build,
+      2026-09-13)* Confirm every env var exists in Vercel production, not only
       locally. **[me]** can produce the definitive list to check against.
       *The definitive list (2026-09-13, from every `process.env` read in
       `app/`, `lib/`, `components/`, and `middleware.ts`):*
@@ -513,7 +519,8 @@ complete, so this phase is no longer blocked. But it splits in two:
 Nothing is paying yet and the waitlist gates signup, so leaving production on
 test keys until the cutover costs nothing.
 
-- [ ] **[you]** Swap to `sk_live_` / `pk_live_` in Vercel env vars
+- [x] **[you]** Swap to `sk_live_` / `pk_live_` in Vercel env vars *(done in
+      the Phase 1 cutover, 2026-09-13)*
       — **do this during the Phase 1 cutover, not before**
 - [x] **[me → you]** Recreate all four prices in live mode — test-mode IDs do not
       carry over: `MEMBER`, `MEMBER_ANNUAL`, `FOUNDING`, `PARTNER`. Claude can
@@ -539,7 +546,7 @@ test keys until the cutover costs nothing.
       checkout tried on a preview deploy charges a real card. Leave
       `STRIPE_PARTNER_PRICE_ID` unset in Production unless Partner ships; that
       is what keeps its checkout path closed.
-- [ ] **[you]** New webhook signing secret (`STRIPE_WEBHOOK_SECRET`) — the test
+- [x] **[you]** *(done in the Phase 1 cutover, 2026-09-13)* New webhook signing secret (`STRIPE_WEBHOOK_SECRET`) — the test
       secret will not validate live events — **during the Phase 1 cutover**
 - [x] **[me → you]** **Run `scripts/create-stripe-coupons.mjs` against live.**
       ✅ **All four created in live mode 2026-09-12** on `acct_1T75lURPXtW7MxMw`:
