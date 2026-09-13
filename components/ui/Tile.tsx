@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
-import MonoKicker from "./MonoKicker";
 import ui from "./sleek.module.css";
 
 /**
@@ -9,9 +8,8 @@ import ui from "./sleek.module.css";
  *
  * Finish carried over from the landing page (sleek.module.css): a hairline
  * border, a faintly top-lit surface, and an amber edge on hover. The gradient
- * variant is the one amber hero tile per page, with a soft glow.
- *
- * Optional MonoKicker header with an optional right-aligned link (`all →`).
+ * variant is the one amber hero tile per page, with a soft glow. The header is
+ * a plain sentence-case label with an optional quiet link on the right.
  */
 export default function Tile({
   kicker,
@@ -22,7 +20,7 @@ export default function Tile({
   className = "",
   style,
   gradient = false,
-  padding = "14px 16px",
+  padding = "20px 22px",
 }: {
   kicker?: ReactNode;
   kickerColor?: string;
@@ -44,25 +42,21 @@ export default function Tile({
       className={`${gradient ? ui.tileHero : ui.tile} ${className}`}
     >
       {hasHeader && (
-        <div className="flex items-baseline justify-between" style={{ marginBottom: 11 }}>
+        <div className="flex items-baseline justify-between" style={{ marginBottom: 14 }}>
           {kicker != null ? (
-            <MonoKicker color={kickerColor}>{kicker}</MonoKicker>
+            <span className={ui.label} style={kickerColor ? { color: kickerColor } : undefined}>
+              {kicker}
+            </span>
           ) : (
             <span />
           )}
           {right != null &&
             (rightHref ? (
-              <Link
-                href={rightHref}
-                className="font-mono"
-                style={{ fontSize: 10, color: "var(--blue)", textDecoration: "none" }}
-              >
+              <Link href={rightHref} className={ui.tileLink}>
                 {right}
               </Link>
             ) : (
-              <span className="font-mono" style={{ fontSize: 10, color: "var(--blue)" }}>
-                {right}
-              </span>
+              <span className={ui.tileLink}>{right}</span>
             ))}
         </div>
       )}

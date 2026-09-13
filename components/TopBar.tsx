@@ -49,19 +49,22 @@ export default function TopBar({
       <div className="flex items-center gap-2 min-w-0">
       <MobileNavButton />
       <div className="min-w-0">
-        {/* Breadcrumb path — terminal-style, quorum is the root */}
-        <p
-          className="font-mono uppercase truncate"
-          style={{ fontSize: 9, lineHeight: 1.3, letterSpacing: "0.06em", color: "var(--text-muted)" }}
-        >
-          <span style={{ color: "var(--text-disabled)" }}>quorum</span>
-          <span style={{ color: "var(--text-disabled)", margin: "0 4px" }}>/</span>
-          <span style={{ color: "var(--text-secondary)" }}>{title.replace(/_/g, " ")}</span>
-        </p>
-        <div className="flex items-baseline gap-3 mt-0.5 min-w-0">
+        {/* Breadcrumb path — terminal-style, quorum is the root. Dropped in the
+            sleek finish, where one clean title is enough. */}
+        {!sleek && (
+          <p
+            className="font-mono uppercase truncate"
+            style={{ fontSize: 9, lineHeight: 1.3, letterSpacing: "0.06em", color: "var(--text-muted)" }}
+          >
+            <span style={{ color: "var(--text-disabled)" }}>quorum</span>
+            <span style={{ color: "var(--text-disabled)", margin: "0 4px" }}>/</span>
+            <span style={{ color: "var(--text-secondary)" }}>{title.replace(/_/g, " ")}</span>
+          </p>
+        )}
+        <div className={`flex items-baseline gap-3 min-w-0 ${sleek ? "" : "mt-0.5"}`}>
           <h1
-            className="font-sans lowercase shrink-0"
-            style={{ fontSize: 16, lineHeight: 1.3, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.2px" }}
+            className={`font-sans shrink-0 ${sleek ? "capitalize" : "lowercase"}`}
+            style={{ fontSize: sleek ? 15 : 16, lineHeight: 1.3, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.2px" }}
           >
             {title.replace(/_/g, " ")}
           </h1>

@@ -117,6 +117,29 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* ── Labels and links inside tiles: sentence case, readable size, quiet colour
+   (replacing 9px uppercase mono kickers). */
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--text-secondary);
+}
+.tileLink {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.tileLink:hover {
+  color: var(--text-primary);
+}
+
+/* ── Opt-in: no background grid on this page (set by <NoGrid />). */
+:global(body.no-grid) {
+  background-image: none !important;
+}
+
 /* ── A faint, static amber glow at the top of a page */
 .pageGlow {
   background: radial-gradient(ellipse 55% 320px at 18% 0%, rgba(245, 158, 11, 0.07), transparent 70%);
