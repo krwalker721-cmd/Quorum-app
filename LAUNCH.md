@@ -308,7 +308,10 @@ without you.
       as a stopgap and is changeable any time; before launch, either add a
       forwarding service (MX records into Vercel DNS) or Google Workspace at
       ~$6/mo. Decide which; neither is launch-blocking on its own.
-- [ ] **[me]** **Trial-ending reminder emails** (the §4a decision). At 7, 3,
+- [x] **[me]** **Trial-ending reminder emails** (the §4a decision). *Live
+      2026-09-13 (`141eb62`); a manual Run from Vercel → Cron Jobs logged a
+      clean `[cron] trial-reminders` summary, and unauthenticated calls get
+      401.* At 7, 3,
       and 1 days before `subscriptions.trial_ends_at`, email card-free
       trialers what ends, when, what it costs to continue, and a link to
       subscribe. Build notes:
@@ -330,7 +333,9 @@ without you.
         left. Checked against 2,000 simulated trials. Goes live once 015 is
         pasted (before the deploy), `RESEND_API_KEY` and `CRON_SECRET` are in
         Production, and it's pushed.
-- [ ] **[me]** **"You're in" approval email** (the §4b decision). Sent from
+- [x] **[me]** **"You're in" approval email** (the §4b decision). *Live
+      2026-09-13; approving a `+approvaltest` signup delivered it with the
+      right trial length.* Sent from
       `approveUser()` in `lib/admin/approve.ts`, so every approval path sends
       it: single, bulk, or a released group. Say that their group has opened,
       and link straight to `quorumhq.co/login`. **Blocked on the SMTP item
@@ -464,7 +469,8 @@ without you.
       passed the Phase 6 signup test below.* Safe now that
       migration 014's `handle_new_user()` trigger creates the profile without
       needing a session.
-- [ ] **[you]** Confirm every env var exists in Vercel production, not only
+- [x] **[you]** *(set during the Phase 1 cutover and the email build,
+      2026-09-13)* Confirm every env var exists in Vercel production, not only
       locally. **[me]** can produce the definitive list to check against.
       *The definitive list (2026-09-13, from every `process.env` read in
       `app/`, `lib/`, `components/`, and `middleware.ts`):*
@@ -513,7 +519,8 @@ complete, so this phase is no longer blocked. But it splits in two:
 Nothing is paying yet and the waitlist gates signup, so leaving production on
 test keys until the cutover costs nothing.
 
-- [ ] **[you]** Swap to `sk_live_` / `pk_live_` in Vercel env vars
+- [x] **[you]** Swap to `sk_live_` / `pk_live_` in Vercel env vars *(done in
+      the Phase 1 cutover, 2026-09-13)*
       — **do this during the Phase 1 cutover, not before**
 - [x] **[me → you]** Recreate all four prices in live mode — test-mode IDs do not
       carry over: `MEMBER`, `MEMBER_ANNUAL`, `FOUNDING`, `PARTNER`. Claude can
@@ -539,7 +546,7 @@ test keys until the cutover costs nothing.
       checkout tried on a preview deploy charges a real card. Leave
       `STRIPE_PARTNER_PRICE_ID` unset in Production unless Partner ships; that
       is what keeps its checkout path closed.
-- [ ] **[you]** New webhook signing secret (`STRIPE_WEBHOOK_SECRET`) — the test
+- [x] **[you]** *(done in the Phase 1 cutover, 2026-09-13)* New webhook signing secret (`STRIPE_WEBHOOK_SECRET`) — the test
       secret will not validate live events — **during the Phase 1 cutover**
 - [x] **[me → you]** **Run `scripts/create-stripe-coupons.mjs` against live.**
       ✅ **All four created in live mode 2026-09-12** on `acct_1T75lURPXtW7MxMw`:
@@ -606,12 +613,33 @@ test keys until the cutover costs nothing.
 Do this before announcing. These are the things whose absence you only notice
 once something has already gone wrong.
 
-- [ ] **[me → you]** **Deploy the 3 edge functions and schedule them.** The cron
-      expressions exist only as comments in the source. Claude can write the
-      `pg_cron` SQL; you paste and run it, and deploy the functions.
-  - `expire-trials` — hourly (`0 * * * *`)
-  - `check-referral-activity` — daily 2am UTC (`0 2 * * *`)
-  - `nudge-pending-referrals` — daily 10am UTC (`0 10 * * *`)
+- [ ] **[me → you]** ~~Deploy the 3 edge functions and schedule them.~~
+      **Replaced 2026-09-13: the functions were stale, and are deleted from the
+      repo** (branch `feat/release-seats-cron`). Do not deploy them from git
+      history.
+  - `expire-trials` — **harmful as written.** It set ended trials to
+    `status: "active", tier: "free"` and told the member "you're now on the
+    free plan", a tier that stopped existing in migration 013. And it isn't
+    needed: access is derived from `trial_ends_at` on every read
+    (`lib/entitlements.ts`), so an ended trial locks itself.
+  - **The real gap was one nobody scheduled.** `enforceLapse()` (return a
+    lapsed member's seat after the 7-day grace) ran only when that member
+    opened the app, so a member who never came back held a seat forever.
+    Now `/api/cron/release-seats` runs it daily for every seated member
+    (Vercel Cron, 15:00 UTC), reusing `enforceLapse` unchanged.
+  - `check-referral-activity` wrote `monthly_bonus` rows from the pre-013
+    referral model. The app's own `deactivateReferral()` is current, but
+    nothing reactivates a referral when the member returns, so scheduling
+    it is a product decision. **Decided 2026-09-13: left off for launch.**
+    Bonuses still drop on churn (the `customer.subscription.deleted`
+    webhook). If inactivity is ever switched on, make a returning member
+    reactivate the referral first, or a long break costs the referrer for
+    good.
+  - `nudge-pending-referrals` promised a 24-hour window (the code gives
+    48) and counted from signup rather than approval. Dropped.
+  - ✅ **[you]** Checked 2026-09-13 that they were never deployed: Supabase →
+    Edge Functions lists none of the three, and nothing is scheduled in
+    `cron.job`.
 - [ ] **[you]** Enable database backups / PITR
 - [ ] **[me → you]** Error monitoring. Claude installs and wires the Sentry SDK;
       **[you]** create the account and supply the DSN as a Vercel env var.

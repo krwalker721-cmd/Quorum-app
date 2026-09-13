@@ -96,6 +96,46 @@ export async function releaseCohortSeat(userId: string): Promise<void> {
 }
 
 /**
+ * Run enforceLapse for every member who holds a cohort seat.
+ *
+ * The lazy check above runs only when a member opens the app, so someone whose
+ * trial ended and who never came back would keep their seat for good, and a
+ * cohort of twelve would slowly fill with people who left. The daily cron
+ * (/api/cron/release-seats) closes that gap. It reuses enforceLapse unchanged,
+ * so a member is treated the same whether the cron or their own visit gets
+ * there first, and paying or trialing members are left alone.
+ */
+export async function releaseLapsedSeats(): Promise<{
+  checked: number;
+  /** Tallies of the state each seated member resolved to on this run. */
+  ok: number;
+  grace: number;
+  released: number;
+  errors: string[];
+}> {
+  const supabase = createAdminClient();
+  const run = { checked: 0, ok: 0, grace: 0, released: 0, errors: [] as string[] };
+
+  const { data, error } = await supabase.from("cohort_members").select("user_id");
+  if (error) {
+    run.errors.push(`query: ${error.message}`);
+    return run;
+  }
+
+  const userIds = [...new Set((data ?? []).map((r) => r.user_id as string | null).filter(Boolean))];
+  for (const userId of userIds as string[]) {
+    run.checked++;
+    try {
+      const { state } = await enforceLapse(userId);
+      run[state]++;
+    } catch (e) {
+      run.errors.push(`${userId}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  return run;
+}
+
+/**
  * Whether this user should be auto-placed into a cohort when they have no
  * membership row. Guards the layout's auto-assign safety net: without this, a
  * seat released for non-payment would be handed straight back on next load.
