@@ -187,10 +187,18 @@ export async function syncSubscriptionToSupabase(
   const effectiveTier: Tier = tierForSubscription(stripeSubscription);
   const status = stripeSubscription.status;
 
+  // Billing-period dates moved from the subscription to its items in Stripe API
+  // 2025-03-31 (basil). Webhook payloads arrive in the webhook endpoint's API
+  // version, not this client's pinned 2024-06-20, and a new endpoint can only
+  // be created on the account's default or the latest version. So read the
+  // top-level field when it's there and fall back to the first item.
   const sub = stripeSubscription as unknown as {
     current_period_start?: number;
     current_period_end?: number;
+    items?: { data?: { current_period_start?: number; current_period_end?: number }[] };
   };
+  const periodStart = sub.current_period_start ?? sub.items?.data?.[0]?.current_period_start;
+  const periodEnd = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end;
 
   const stripeTrialEnd = stripeSubscription.trial_end
     ? new Date(stripeSubscription.trial_end * 1000).toISOString()
@@ -213,12 +221,8 @@ export async function syncSubscriptionToSupabase(
       tier: effectiveTier,
       status,
       trial_ends_at: stripeTrialEnd ?? existing?.trial_ends_at ?? null,
-      current_period_start: sub.current_period_start
-        ? new Date(sub.current_period_start * 1000).toISOString()
-        : null,
-      current_period_end: sub.current_period_end
-        ? new Date(sub.current_period_end * 1000).toISOString()
-        : null,
+      current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
+      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
       cancel_at_period_end: stripeSubscription.cancel_at_period_end,
     },
     { onConflict: "user_id" },
