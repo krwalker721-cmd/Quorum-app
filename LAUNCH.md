@@ -647,7 +647,9 @@ once something has already gone wrong.
       until there's a real member; **upgrade to Pro (daily backups, 7 days)
       before approving the first group**, since approval creates the first
       data worth keeping. PITR isn't needed at this size.
-- [ ] **[me → you]** Error monitoring. *Built 2026-09-13, branch `feat/sentry`:*
+- [x] **[me → you]** Error monitoring. *Live 2026-09-13 (`bb96e0b`): a
+      fake-signature webhook call showed up in Sentry → Issues and sent the
+      new-issue alert email.* *Built on branch `feat/sentry`:*
       `@sentry/nextjs` 10.74 via `instrumentation.ts` (server + edge),
       `instrumentation-client.ts` (browser), and `app/global-error.tsx`.
       Server `console.error` calls are forwarded too
