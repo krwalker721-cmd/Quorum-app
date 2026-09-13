@@ -643,11 +643,26 @@ once something has already gone wrong.
     Edge Functions lists none of the three, and nothing is scheduled in
     `cron.job`.
 - [ ] **[you]** Enable database backups / PITR
-- [ ] **[me → you]** Error monitoring. Claude installs and wires the Sentry SDK;
+      *Decided 2026-09-13:* stay on Supabase **Free** (no restorable backups)
+      until there's a real member; **upgrade to Pro (daily backups, 7 days)
+      before approving the first group**, since approval creates the first
+      data worth keeping. PITR isn't needed at this size.
+- [ ] **[me → you]** Error monitoring. *Built 2026-09-13, branch `feat/sentry`:*
+      `@sentry/nextjs` 10.74 via `instrumentation.ts` (server + edge),
+      `instrumentation-client.ts` (browser), and `app/global-error.tsx`.
+      Server `console.error` calls are forwarded too
+      (`captureConsoleIntegration`), since most failures here are caught and
+      logged, not thrown. DSN in `NEXT_PUBLIC_SENTRY_DSN`, Production only.
+      No `withSentryConfig` wrapper yet: browser stack traces stay minified
+      until source maps are uploaded with a `SENTRY_AUTH_TOKEN`. The Privacy
+      Policy now names Sentry and Resend (effective date → September 13).
+      Claude installs and wires the Sentry SDK;
       **[you]** create the account and supply the DSN as a Vercel env var.
       Webhook and entitlement failures currently `console.error` into Vercel logs
       and nowhere else — you will not know a webhook is failing.
-- [ ] **[me]** Rate limiting. Nothing has any. Highest priority:
+- [x] **[me]** Rate limiting. *Live 2026-09-13 (`da77270`): a wrong code on
+      production gets 401 (so the attempt log is readable) and the real code
+      still opens the panel.* Nothing had any. Highest priority:
       `/api/admin/verify`, which accepts unlimited guesses against a single
       static passphrase.
       *Built 2026-09-13, branch `feat/admin-rate-limit`.* The surface was wider
@@ -659,7 +674,15 @@ once something has already gone wrong.
       so 016 must be applied before the deploy. Also deleted the unused
       env-only `unlockAdmin` server action, a second code check the limit
       wouldn't have covered. Auth emails are already rate-limited by Supabase.
-- [ ] **[me → you]** Verify migrations 001–014 are all applied to production.
+- [x] **[me → you]** Verify migrations 001–014 are all applied to production.
+      *Done 2026-09-13: the `pg_policies` query returned all 8 policies.*
+      *Probed 2026-09-13 with the public key (read-only, `limit=0`):* a
+      table or column from every migration that adds one is present in
+      production (002, 004–013, plus 015 and 016); 014 was confirmed earlier.
+      A made-up column correctly came back missing. 001 and 003 only change
+      access policies, which the public key can't see; they, plus the policy
+      parts of 002 and 006, need one `pg_policies` query in the SQL editor
+      (8 expected rows; no later migration drops any of them).
       Claude can write probe queries for each; 014 is already confirmed, the rest
       are assumed and there's no `config.toml` to check against.
 
@@ -674,6 +697,7 @@ activation and DNS.
       filter, this is the highest-leverage item in this phase. Claude builds it;
       **[you]** own the positioning and copy decisions.
 - [ ] **[me]** `error.tsx`, `not-found.tsx`, `global-error.tsx`
+      *(`global-error.tsx` added with Sentry, 2026-09-13; the other two remain)*
 - [ ] **[me]** `public/` directory: `robots.txt`, OG image
 - [ ] **[me]** `metadataBase` + `openGraph` in the root layout — links shared to
       Twitter, LinkedIn, or Slack currently render as a bare URL

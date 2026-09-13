@@ -145,10 +145,17 @@ export default function PrivacyPage() {
         and only as needed to provide their service to us:
       </p>
       <ul>
-        <li><strong>Supabase</strong> — database, authentication, and account emails;</li>
+        <li><strong>Supabase</strong> — database and authentication;</li>
         <li><strong>Stripe</strong> — payments and billing;</li>
-        <li><strong>Vercel</strong> — hosting; and</li>
-        <li>an email delivery provider, for account emails, once one is connected.</li>
+        <li><strong>Vercel</strong> — hosting;</li>
+        <li>
+          <strong>Resend</strong> — email delivery: account emails, trial reminders, and
+          approval notices; and
+        </li>
+        <li>
+          <strong>Sentry</strong> — error monitoring: technical details when something breaks,
+          such as the page or request involved and your browser type.
+        </li>
       </ul>
       <p>
         We may also disclose information if the law requires it, to protect the safety or
