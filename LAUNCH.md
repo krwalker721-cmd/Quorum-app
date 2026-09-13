@@ -643,6 +643,10 @@ once something has already gone wrong.
     Edge Functions lists none of the three, and nothing is scheduled in
     `cron.job`.
 - [ ] **[you]** Enable database backups / PITR
+      *Decided 2026-09-13:* stay on Supabase **Free** (no restorable backups)
+      until there's a real member; **upgrade to Pro (daily backups, 7 days)
+      before approving the first group**, since approval creates the first
+      data worth keeping. PITR isn't needed at this size.
 - [ ] **[me → you]** Error monitoring. Claude installs and wires the Sentry SDK;
       **[you]** create the account and supply the DSN as a Vercel env var.
       Webhook and entitlement failures currently `console.error` into Vercel logs
@@ -661,7 +665,15 @@ once something has already gone wrong.
       so 016 must be applied before the deploy. Also deleted the unused
       env-only `unlockAdmin` server action, a second code check the limit
       wouldn't have covered. Auth emails are already rate-limited by Supabase.
-- [ ] **[me → you]** Verify migrations 001–014 are all applied to production.
+- [x] **[me → you]** Verify migrations 001–014 are all applied to production.
+      *Done 2026-09-13: the `pg_policies` query returned all 8 policies.*
+      *Probed 2026-09-13 with the public key (read-only, `limit=0`):* a
+      table or column from every migration that adds one is present in
+      production (002, 004–013, plus 015 and 016); 014 was confirmed earlier.
+      A made-up column correctly came back missing. 001 and 003 only change
+      access policies, which the public key can't see; they, plus the policy
+      parts of 002 and 006, need one `pg_policies` query in the SQL editor
+      (8 expected rows; no later migration drops any of them).
       Claude can write probe queries for each; 014 is already confirmed, the rest
       are assumed and there's no `config.toml` to check against.
 
