@@ -74,7 +74,7 @@ function SectionHeading({ kicker, title }: { kicker: string; title: string }) {
     <div className="text-center">
       <Kicker>{kicker}</Kicker>
       <h2
-        className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] max-w-3xl mx-auto ${s.gradientText}`}
+        className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] max-w-3xl mx-auto ${s.gradientText} ${s.balance}`}
       >
         {title}
       </h2>
@@ -201,7 +201,7 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
           <section className="text-center max-w-4xl mx-auto">
             <Kicker>{"// why quorum"}</Kicker>
             <p
-              className={`font-sans text-3xl sm:text-5xl font-semibold leading-[1.15] tracking-[-0.025em] ${s.gradientText}`}
+              className={`font-sans text-3xl sm:text-5xl font-semibold leading-[1.15] tracking-[-0.025em] ${s.gradientText} ${s.balance}`}
             >
               Have you ever wanted a room full of founders who have the same mindset as you — and
               have already solved the problems you&rsquo;re about to face?
@@ -220,7 +220,7 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
           <section className="text-center">
             <Kicker>{"// the difference"}</Kicker>
             <h2
-              className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] max-w-3xl mx-auto ${s.gradientText}`}
+              className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] max-w-3xl mx-auto ${s.gradientText} ${s.balance}`}
             >
               This is what happens when founders stop figuring it out alone.
             </h2>
@@ -354,7 +354,7 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
             <div className="relative">
               <Kicker>{"// the next cohort"}</Kicker>
               <h2
-                className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] ${s.gradientText}`}
+                className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] ${s.gradientText} ${s.balance}`}
               >
                 Every cohort is twelve seats. Take one.
               </h2>

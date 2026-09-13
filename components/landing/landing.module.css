@@ -78,6 +78,12 @@
   to { background-position: -150% 0; }
 }
 
+/* ── Even out the lines of big headings, so no word is left alone on the last
+   line ("Every / week."). Ignored where unsupported, which just wraps as before. */
+.balance {
+  text-wrap: balance;
+}
+
 /* ── The live dot in the seat badge. */
 .pulseDot::after {
   content: "";
