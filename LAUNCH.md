@@ -715,7 +715,11 @@ activation and DNS.
       onboarding's "founders with strong peer networks grow 2-3x faster
       (Enterprise Nation)" has no study behind it — the cited page doesn't
       contain it. The landing page instead attributes Vistage's own claim
-      ("member companies grow 2.2x faster than non-members") with a link.
+      ("member companies grow 2.2x faster than non-members") with a link,
+      as its own section (`components/landing/GrowthStat.tsx`) using
+      onboarding's bar graph, animated on scroll. Drawn to scale (2.2 : 1);
+      onboarding's version drew 3 : 1 and counted to 3.0×. Renders finished
+      without JavaScript and under reduced motion.
       **Bio** moved to an optional signup field (280 chars), copied to the
       profile by `handle_new_user()` — **migration `017_signup_bio.sql`**.
       **The admin's waitlist/open switch now actually works:** it had only

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LogoMark from "@/components/LogoMark";
 import LegalLinks from "@/components/LegalLinks";
+import GrowthStat from "@/components/landing/GrowthStat";
 import { FAQ_ITEMS, PRODUCT_BLOCKS } from "@/lib/marketing-copy";
 import { FOUNDING_SEATS, PRICING, TRIAL_DAYS } from "@/lib/pricing";
 import { foundingSeatsRemaining } from "@/lib/plans";
@@ -126,54 +127,39 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
           <SeatLine remaining={remaining} />
         </section>
 
-        {/* Why Quorum: the case that used to open onboarding. */}
+        {/* Why Quorum: the case that used to open onboarding, in its order:
+            the question, the proof, then the difference. */}
         <section className="rounded-xl bg-card border border-border p-8 sm:p-12">
           <Kicker>{"// why quorum"}</Kicker>
           <p className="font-sans text-2xl sm:text-3xl font-medium leading-snug text-text-primary max-w-3xl">
             Have you ever wanted a room full of founders who have the same mindset as you — and
             have already solved the problems you&rsquo;re about to face?
           </p>
-          <div className="mt-10 border-t border-border pt-10">
-            <h2 className="font-sans text-xl sm:text-2xl font-semibold text-text-primary max-w-2xl">
-              This is what happens when founders stop figuring it out alone.
-            </h2>
-            <ul className="mt-6 flex flex-wrap gap-3">
-              {PROMISE.map((p) => (
-                <li
-                  key={p}
-                  className="rounded-full border border-border-muted px-4 py-1.5 text-sm text-text-primary"
-                >
-                  {p}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-6 text-text-secondary">
-              You&rsquo;ll get there faster — with the right people around you.
-            </p>
-          </div>
-          {/* Attributed to Vistage because it's their claim, about their CEO
-              peer groups: no independent study behind a founder-wide number was
-              found (LAUNCH.md, Phase 4). */}
-          <div
-            className="mt-10 rounded-lg p-5"
-            style={{ background: "rgba(245,158,11,.06)", border: "1px solid rgba(245,158,11,.2)" }}
-          >
-            <p className="font-sans text-3xl font-semibold" style={{ color: "#f8c56a" }}>
-              2.2×
-            </p>
-            <p className="mt-2 text-sm text-text-secondary leading-relaxed max-w-2xl">
-              Vistage, a CEO peer-advisory network, reports that its members&rsquo; companies grow
-              2.2× faster than non-members.
-            </p>
-            <a
-              href="https://vistage.com/membership/our-approach/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-block font-mono text-[0.65rem] text-text-muted hover:text-amber"
-            >
-              source: vistage.com
-            </a>
-          </div>
+        </section>
+
+        {/* Attributed to Vistage because it's their claim, about their CEO peer
+            groups: no independent study behind a founder-wide number was found
+            (LAUNCH.md, Phase 4). */}
+        <GrowthStat />
+
+        <section className="rounded-xl bg-card border border-border p-8 sm:p-12">
+          <Kicker>{"// the difference"}</Kicker>
+          <h2 className="font-sans text-xl sm:text-2xl font-semibold text-text-primary max-w-2xl">
+            This is what happens when founders stop figuring it out alone.
+          </h2>
+          <ul className="mt-6 flex flex-wrap gap-3">
+            {PROMISE.map((p) => (
+              <li
+                key={p}
+                className="rounded-full border border-border-muted px-4 py-1.5 text-sm text-text-primary"
+              >
+                {p}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 text-text-secondary">
+            You&rsquo;ll get there faster — with the right people around you.
+          </p>
         </section>
 
         {/* How it works */}
