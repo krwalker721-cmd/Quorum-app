@@ -693,7 +693,14 @@ once something has already gone wrong.
 Almost entirely Claude's, and it's what to build *while waiting* on Stripe
 activation and DNS.
 
-- [ ] **[me]** **Public landing page.** `/` currently redirects straight to
+- [ ] **[me]** **Public landing page.** *Built 2026-09-13, branch
+      `feat/landing-page`, on the owner's choices: lead with "The honest
+      version of LinkedIn", any stage (early-leaning), full pricing shown, a
+      live founding-seat counter as the only proof. Signed-out visitors get
+      `components/landing/Landing.tsx` at `/`; signed-in routing is
+      unchanged. Server-rendered with native `<details>` for the FAQ, so it
+      reads without JavaScript. Product and FAQ copy moved to
+      `lib/marketing-copy.ts`, shared with /pricing.* `/` currently redirects straight to
       `/login`, so the new domain shows a bare login box with no explanation of
       what Quorum is or why it costs $39/mo. For a product whose pitch *is* the
       filter, this is the highest-leverage item in this phase. Claude builds it;
