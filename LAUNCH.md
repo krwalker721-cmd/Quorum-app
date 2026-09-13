@@ -266,11 +266,38 @@ without you.
 
 ### Phase 1 — infrastructure cutover (once DNS resolves)
 
-- [ ] **[you]** Add the domain to Vercel; confirm HTTPS.
-- [ ] **[you]** **Custom SMTP** — create the Resend or Postmark account, verify
+- [x] **[you]** Add the domain to Vercel; confirm HTTPS. ✅ Done at purchase —
+      bought through Vercel, so it was bound automatically. The apex serves
+      HTTPS and `www` 307-redirects to it; verified 2026-09-12.
+- [x] **[you]** **Custom SMTP** — create the Resend or Postmark account, verify
       the sending domain (SPF/DKIM DNS records), and put the credentials into
       Supabase. Without this, the password reset flow that is *already deployed*
       silently delivers nothing.
+      *Progress 2026-09-13:* provider is **Resend** (free tier: 3,000/month,
+      **100/day**; Pro $20/month removes the daily cap). Account created and
+      `quorumhq.co` added in region US East; Resend's Vercel integration
+      auto-published the DNS records, verified with `dig` via Vercel's
+      nameserver, 8.8.8.8, and 1.1.1.1: DKIM `resend._domainkey`, SPF TXT
+      and MX on `send.quorumhq.co` (→ `feedback-smtp.us-east-1.amazonses.com`).
+      DMARC `v=DMARC1; p=none;` at `_dmarc` added by hand in Vercel (monitor
+      only — it blocks nothing), confirmed live on all three resolvers.
+      **Domain verified in Resend 2026-09-13** (DKIM + SPF). Resend's "Enable
+      Receiving" turned **off**: sending doesn't need it, it delivers to code
+      rather than a readable inbox, and it would claim the apex MX that a real
+      `support@` inbox will need.
+      ✅ **Working 2026-09-13.** Supabase SMTP saved with sender `Quorum
+      <no-reply@quorumhq.co>`. The first test failed with `535 invalid
+      username`: Chrome had autofilled the owner's email into the Username
+      field, which must be exactly `resend`. **If SMTP ever breaks, check
+      that field first.** After the fix, a password reset from the `vercel.app`
+      host was delivered — **to spam**. Gmail's "Show original" shows **SPF,
+      DKIM, and DMARC all PASS**, so the configuration is right. The spam
+      placement is reputation and content: a days-old domain with no sending
+      history, sending Supabase's default template with a link to
+      `*.supabase.co`. See the email-templates item below.
+      Apex A records untouched; no apex MX (no inbox yet — separate item).
+      Supabase SMTP values: host `smtp.resend.com`, port `465`, username
+      `resend`, password = the Resend API key (never committed or pasted).
 - [ ] **[you]** **Inbound email on the domain — `support@quorumhq.co`.** Separate
       problem from the SMTP item above: that one is *sending*, this one is
       *receiving*. Vercel is registrar and DNS but does not host mailboxes, so
@@ -299,7 +326,47 @@ without you.
       it: single, bulk, or a released group. Say that their group has opened,
       and link straight to `quorumhq.co/login`. **Blocked on the SMTP item
       above**; until it lands, email each approved group by hand.
-- [ ] **[me → you]** Supabase auth email templates — they say "Supabase" by
+- [ ] **[me → you]** Supabase auth email templates
+      *Research 2026-09-13 — the plan changed.* Don't just rebrand the
+      defaults. Switch the links from `{{ .ConfirmationURL }}` (a
+      `*.supabase.co` URL that completes via the PKCE `code` exchange) to
+      Supabase's recommended server-side format,
+      `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=<type>`,
+      handled by a new `/auth/confirm` route that calls
+      `supabase.auth.verifyOtp({ token_hash, type })`. That fixes three
+      problems at once:
+      - **Spam:** the link stays on our own domain instead of `supabase.co`,
+        which no longer mismatches the `quorumhq.co` sender
+      - **Cross-device:** `verifyOtp` in the installed `@supabase/auth-js`
+        2.105.3 never reads a PKCE code verifier (checked in its source), so a
+        reset requested on a laptop works when opened on a phone
+      - **Branding:** the emails say Quorum, not Supabase
+      Types: signup `email`, `recovery`, `magiclink`, `invite`, plus email
+      change. **Ordering, as in §7: deploy `/auth/confirm` *before* pasting
+      the new templates**, or every email sent in between links to a 404.
+      `/auth/callback` stays for links already in flight. Until the Phase 1
+      cutover, `{{ .SiteURL }}` is still the `vercel.app` host; it becomes
+      `quorumhq.co` automatically when the Site URL moves. Known limit: some
+      corporate email scanners prefetch links, which can spend a one-time
+      token before the person clicks; a click-to-confirm page fixes that if it
+      ever shows up. Sources: Supabase docs "Email Templates" and "Password-based
+      Auth"; `node_modules/@supabase/auth-js/dist/main/GoTrueClient.js`
+      `verifyOtp()`.
+      *Built 2026-09-13 on `feat/auth-confirm-templates` (not yet deployed):*
+      `app/auth/confirm/route.ts` calls `verifyOtp` and routes recovery →
+      `/reset-password`, email change → `/settings`, and signup → referral
+      claim, then `/`. The shared helpers moved to `lib/auth/email-links.ts`,
+      and `/auth/callback` was rewritten onto them with unchanged behaviour.
+      Templates for Confirm signup, Reset Password, and Change Email Address
+      are in `supabase/templates/`, with a README of subjects and where to
+      paste each; the app sends no magic links or invites. **Also fixed:** a
+      confirmation opened on another device would have dropped the signup's
+      referral, because the code lived only in a cookie. `/signup` now also
+      saves it in user metadata, and the claim falls back to it. Verified
+      locally: fake reset and signup tokens, a missing token, and an unknown
+      type all land on login with plain messages (Supabase reports a bad token
+      as `otp_expired`), and `/auth/callback` output is unchanged. **Next:**
+      deploy, confirm `/auth/confirm` is live, then paste the three templates. — they say "Supabase" by
       default, not Quorum. Claude can write the HTML for confirmation, recovery,
       and magic-link; you paste them into the dashboard.
 - [ ] **[you]** **The atomic cutover** — all three in one sitting:
@@ -592,7 +659,8 @@ applicants one by one; the 12th acceptance releases the whole group, with a
 "release now" override). Build it when volume makes the manual step tedious;
 it needs a small schema change. Status of the three fixes above:
 
-- **Bulk approve** — fixed on `fix/bulk-approve-referred`. Both approve paths
+- **Bulk approve** — ✅ fixed and deployed (`a1ee5a3`, 2026-09-12; both admin
+  routes verified still locked on production). Both approve paths
   now call `approveUser()` in `lib/admin/approve.ts`. It also skips members who
   are already approved or suspended, because re-running approval restarts the
   trial clock.
