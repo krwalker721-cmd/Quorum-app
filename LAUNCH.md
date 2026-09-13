@@ -630,12 +630,16 @@ once something has already gone wrong.
   - `check-referral-activity` wrote `monthly_bonus` rows from the pre-013
     referral model. The app's own `deactivateReferral()` is current, but
     nothing reactivates a referral when the member returns, so scheduling
-    it is a product decision (see below).
+    it is a product decision. **Decided 2026-09-13: left off for launch.**
+    Bonuses still drop on churn (the `customer.subscription.deleted`
+    webhook). If inactivity is ever switched on, make a returning member
+    reactivate the referral first, or a long break costs the referrer for
+    good.
   - `nudge-pending-referrals` promised a 24-hour window (the code gives
     48) and counted from signup rather than approval. Dropped.
-  - **[you]** Check they were never deployed: Supabase → Edge Functions
-    should list none of the three, and `cron.job` should have no rows for
-    them.
+  - ✅ **[you]** Checked 2026-09-13 that they were never deployed: Supabase →
+    Edge Functions lists none of the three, and nothing is scheduled in
+    `cron.job`.
 - [ ] **[you]** Enable database backups / PITR
 - [ ] **[me → you]** Error monitoring. Claude installs and wires the Sentry SDK;
       **[you]** create the account and supply the DSN as a Vercel env var.
