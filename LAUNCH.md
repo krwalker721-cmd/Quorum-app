@@ -647,7 +647,9 @@ once something has already gone wrong.
       **[you]** create the account and supply the DSN as a Vercel env var.
       Webhook and entitlement failures currently `console.error` into Vercel logs
       and nowhere else — you will not know a webhook is failing.
-- [ ] **[me]** Rate limiting. Nothing has any. Highest priority:
+- [x] **[me]** Rate limiting. *Live 2026-09-13 (`da77270`): a wrong code on
+      production gets 401 (so the attempt log is readable) and the real code
+      still opens the panel.* Nothing had any. Highest priority:
       `/api/admin/verify`, which accepts unlimited guesses against a single
       static passphrase.
       *Built 2026-09-13, branch `feat/admin-rate-limit`.* The surface was wider
