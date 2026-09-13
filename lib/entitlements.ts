@@ -169,7 +169,8 @@ export function computeEntitlement(
 
   // A trial only grants access while its status says trialing AND the window is
   // open. This is what makes an expired trial lapse the moment it expires,
-  // without waiting on the expire-trials cron to flip the status.
+  // with no job needed to flip the status. (The old expire-trials edge function
+  // did flip it, to a "free plan" that no longer exists; it's been deleted.)
   const isTrialing = status === "trialing" && trialOpen;
   const hadTrial = !!trialEndsAt && !trialOpen;
 

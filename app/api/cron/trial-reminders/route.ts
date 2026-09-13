@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isCronRequest } from "@/lib/cron";
 import { sendTrialReminders } from "@/lib/email/trial-reminders";
 
-// Run once a day by Vercel Cron (vercel.json). Vercel sends
-// `Authorization: Bearer $CRON_SECRET` when that env var is set; anything
-// without it is turned away, so nobody else can trigger a batch of emails.
+// Run once a day by Vercel Cron (vercel.json). Anything without the cron
+// secret is turned away, so nobody else can trigger a batch of emails.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!isCronRequest(req)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

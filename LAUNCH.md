@@ -613,12 +613,29 @@ test keys until the cutover costs nothing.
 Do this before announcing. These are the things whose absence you only notice
 once something has already gone wrong.
 
-- [ ] **[me → you]** **Deploy the 3 edge functions and schedule them.** The cron
-      expressions exist only as comments in the source. Claude can write the
-      `pg_cron` SQL; you paste and run it, and deploy the functions.
-  - `expire-trials` — hourly (`0 * * * *`)
-  - `check-referral-activity` — daily 2am UTC (`0 2 * * *`)
-  - `nudge-pending-referrals` — daily 10am UTC (`0 10 * * *`)
+- [ ] **[me → you]** ~~Deploy the 3 edge functions and schedule them.~~
+      **Replaced 2026-09-13: the functions were stale, and are deleted from the
+      repo** (branch `feat/release-seats-cron`). Do not deploy them from git
+      history.
+  - `expire-trials` — **harmful as written.** It set ended trials to
+    `status: "active", tier: "free"` and told the member "you're now on the
+    free plan", a tier that stopped existing in migration 013. And it isn't
+    needed: access is derived from `trial_ends_at` on every read
+    (`lib/entitlements.ts`), so an ended trial locks itself.
+  - **The real gap was one nobody scheduled.** `enforceLapse()` (return a
+    lapsed member's seat after the 7-day grace) ran only when that member
+    opened the app, so a member who never came back held a seat forever.
+    Now `/api/cron/release-seats` runs it daily for every seated member
+    (Vercel Cron, 15:00 UTC), reusing `enforceLapse` unchanged.
+  - `check-referral-activity` wrote `monthly_bonus` rows from the pre-013
+    referral model. The app's own `deactivateReferral()` is current, but
+    nothing reactivates a referral when the member returns, so scheduling
+    it is a product decision (see below).
+  - `nudge-pending-referrals` promised a 24-hour window (the code gives
+    48) and counted from signup rather than approval. Dropped.
+  - **[you]** Check they were never deployed: Supabase → Edge Functions
+    should list none of the three, and `cron.job` should have no rows for
+    them.
 - [ ] **[you]** Enable database backups / PITR
 - [ ] **[me → you]** Error monitoring. Claude installs and wires the Sentry SDK;
       **[you]** create the account and supply the DSN as a Vercel env var.
