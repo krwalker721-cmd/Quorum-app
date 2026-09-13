@@ -72,6 +72,13 @@ export async function POST(req: Request) {
     }
     const { error } = await admin.from("profiles").update({ tier }).in("id", ids);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // The billing row carries the tier too, and the lapse check (lib/lapse.ts)
+    // reads only that row. Updating the profile alone left a comped member
+    // looking lapsed, so the daily seat-release job could still take their
+    // seat. A member with no billing row yet (never approved) has nothing to
+    // update, which is fine.
+    const { error: subError } = await admin.from("subscriptions").update({ tier }).in("user_id", ids);
+    if (subError) return NextResponse.json({ error: subError.message }, { status: 500 });
     return NextResponse.json({ ok: true });
   }
 

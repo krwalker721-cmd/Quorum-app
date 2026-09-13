@@ -8,6 +8,7 @@ import Avatar from "@/components/Avatar";
 import SidebarTierBadge from "@/components/SidebarTierBadge";
 import { useNavDots, type NavKey } from "@/components/NotificationsProvider";
 import { useTier } from "@/contexts/TierContext";
+import ui from "@/components/ui/sleek.module.css";
 
 const VIEWED_KEY = "last_summary_viewed_week";
 const DISMISS_KEY_PREFIX = "dismissed_weekly_summary:";
@@ -42,13 +43,13 @@ type NavItem = { href: string; label: string; glyph: string; dotKey?: NavKey };
 // Strict nav order. Profile and settings are intentionally absent — profile is
 // reached via the avatar block at the bottom, settings from the profile page.
 const NAV: NavItem[] = [
-  { href: "/home", label: "home", glyph: "⌂" },
-  { href: "/cohort", label: "cohort", glyph: "⬡", dotKey: "cohort" },
-  { href: "/pulse", label: "pulse", glyph: "∿", dotKey: "pulse" },
-  { href: "/collab", label: "collab_board", glyph: "⊞", dotKey: "collab" },
-  { href: "/vault", label: "vault", glyph: "◫", dotKey: "vault" },
-  { href: "/messages", label: "messages", glyph: "✉", dotKey: "messages" },
-  { href: "/referrals", label: "referrals", glyph: "⇄", dotKey: "referrals" },
+  { href: "/home", label: "Home", glyph: "⌂" },
+  { href: "/cohort", label: "Cohort", glyph: "⬡", dotKey: "cohort" },
+  { href: "/pulse", label: "Pulse", glyph: "∿", dotKey: "pulse" },
+  { href: "/collab", label: "Collab board", glyph: "⊞", dotKey: "collab" },
+  { href: "/vault", label: "Vault", glyph: "◫", dotKey: "vault" },
+  { href: "/messages", label: "Messages", glyph: "✉", dotKey: "messages" },
+  { href: "/referrals", label: "Referrals", glyph: "⇄", dotKey: "referrals" },
 ];
 
 const EXPANDED_W = 240;
@@ -251,9 +252,9 @@ export default function Sidebar({
               <Link
                 href={item.href}
                 title={collapsed ? item.label : undefined}
-                className={`nav-item font-mono lowercase${active ? " active" : ""}`}
+                className={`${ui.navItem}${active ? ` ${ui.navItemActive}` : ""}`}
                 style={{
-                  fontSize: collapsed ? 14 : 12,
+                  fontSize: 14,
                   justifyContent: collapsed ? "center" : "flex-start",
                   padding: collapsed ? "8px 0" : undefined,
                   margin: collapsed ? "0 6px 3px" : undefined,
@@ -276,7 +277,6 @@ export default function Sidebar({
                   </span>
                 ) : (
                   <>
-                    <span className="nav-dot" />
                     <span>{item.label}</span>
                     {hasUnseen && (
                       <span className="nav-unseen-dot" aria-label={`new in ${item.label}`} />
@@ -314,27 +314,14 @@ export default function Sidebar({
           />
         </Link>
       ) : (
-        <Link
-          href="/pricing#partner"
-          style={{
-            display: "block",
-            margin: "8px 12px",
-            padding: "8px 12px",
-            background: "rgba(167,139,250,0.04)",
-            borderRadius: 4,
-            border: "1px solid rgba(167,139,250,0.1)",
-            textDecoration: "none",
-          }}
-        >
-          <p
-            className="font-mono"
-            style={{ fontSize: 8, color: "#a78bfa", marginBottom: 2, letterSpacing: "0.05em" }}
-          >
-            // partner
-          </p>
-          <p className="font-mono" style={{ fontSize: 8, color: "#484f58" }}>
-            coming soon
-          </p>
+        <Link href="/pricing#partner" className={ui.partnerLine}>
+          <span
+            aria-hidden
+            style={{ width: 6, height: 6, borderRadius: "50%", background: "#a78bfa", flexShrink: 0 }}
+          />
+          <span>
+            <span style={{ color: "var(--text-secondary)" }}>Partner</span> · coming soon
+          </span>
         </Link>
       )}
 
@@ -370,17 +357,12 @@ export default function Sidebar({
         {!collapsed && (
           <div style={{ minWidth: 0 }}>
             <p
-              className="font-mono lowercase truncate"
-              style={{ fontSize: 12, color: "var(--text-primary)", lineHeight: 1.2 }}
+              className="truncate"
+              style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.25 }}
             >
-              {currentUser?.full_name?.toLowerCase() ?? "your profile"}
+              {currentUser?.full_name ?? "Your profile"}
             </p>
-            <p
-              className="font-mono lowercase"
-              style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.04em" }}
-            >
-              view profile →
-            </p>
+            <p className={ui.sideMeta}>View profile</p>
           </div>
         )}
       </div>

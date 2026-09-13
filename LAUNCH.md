@@ -693,7 +693,14 @@ once something has already gone wrong.
 Almost entirely Claude's, and it's what to build *while waiting* on Stripe
 activation and DNS.
 
-- [ ] **[me]** **Public landing page.** *Built 2026-09-13, branch
+- [x] **[me]** **Public landing page.** *Live 2026-09-13 (`21d6dfe`), with the
+      redesign (drifting glow, cohort ring, topic strip, scroll reveals).
+      Both flows tested on production with throwaway accounts: waitlist on
+      (signup with bio → pending → approved → straight into the app, tour
+      running, bio on the profile) and the admin switch set to open (signup →
+      straight in, no approval), then set back to waitlist (confirmed from the
+      live page's button, "Request an invite"). Test accounts deleted.*
+      *Built on branch
       `feat/landing-page`, on the owner's choices: lead with "The honest
       version of LinkedIn", any stage (early-leaning), full pricing shown, a
       live founding-seat counter as the only proof. Signed-out visitors get

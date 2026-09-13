@@ -1,0 +1,256 @@
+/* The landing page's finish, carried into the app: hairline borders, top-lit
+   surfaces with an amber edge on hover, a glass topbar, glowing primary
+   buttons, and gradient titles. Static only. The app is used every day, so the
+   landing page's constant motion (drifting glow, scrolling strips, reveals)
+   stays out.
+
+   Themes: "normal" (dark) and "high-contrast". There is no light theme;
+   ThemeProvider migrates old "light"/"dark" preferences to "normal". High
+   contrast gets brighter borders and a more solid topbar below. */
+
+/* ── Tiles */
+.tile {
+  --tile-border: rgba(255, 255, 255, 0.07);
+  --tile-lift: rgba(255, 255, 255, 0.03);
+  position: relative;
+  border: 1px solid var(--tile-border);
+  border-radius: var(--radius-card, 12px);
+  background:
+    linear-gradient(180deg, var(--tile-lift), rgba(255, 255, 255, 0) 45%),
+    var(--bg-surface);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.tile::before,
+.tileHero::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 16%;
+  right: 16%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.55), transparent);
+  pointer-events: none;
+}
+.tile::before {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.tile:hover {
+  border-color: rgba(245, 158, 11, 0.24);
+  box-shadow: 0 14px 40px -26px rgba(245, 158, 11, 0.4);
+}
+.tile:hover::before {
+  opacity: 1;
+}
+:global([data-theme="high-contrast"]) .tile {
+  --tile-border: rgba(255, 255, 255, 0.18);
+  --tile-lift: rgba(255, 255, 255, 0.05);
+}
+
+/* The one amber hero tile per page (the weekly check-in on home). */
+.tileHero {
+  position: relative;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-card, 12px);
+  background:
+    linear-gradient(150deg, rgba(245, 158, 11, 0.16), rgba(245, 158, 11, 0.03) 60%),
+    var(--bg-surface);
+  box-shadow: 0 18px 50px -30px rgba(245, 158, 11, 0.5);
+}
+
+/* ── Glass topbar (opt-in per page via <TopBar sleek />) */
+.glass {
+  background: rgba(13, 17, 23, 0.72);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+:global([data-theme="high-contrast"]) .glass {
+  background: rgba(26, 33, 43, 0.94);
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+
+/* ── Buttons (opt-in via <GradientButton glow />) */
+.glow {
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.45),
+    0 8px 24px -10px rgba(245, 158, 11, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+.glow:hover {
+  filter: brightness(1.08);
+}
+.glow:active {
+  transform: translateY(1px);
+}
+.glowGhost {
+  box-shadow: 0 8px 24px -14px rgba(245, 158, 11, 0.45);
+  transition: filter 0.15s ease;
+}
+.glowGhost:hover {
+  filter: brightness(1.12);
+}
+
+/* ── Titles */
+.titleGradient {
+  background: linear-gradient(180deg, #ffffff 0%, #aeb6c1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+:global([data-theme="high-contrast"]) .titleGradient {
+  background: linear-gradient(180deg, #ffffff 0%, #d7dde5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.balance {
+  text-wrap: balance;
+}
+
+/* ── List rows inside tiles */
+.row {
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+.row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ── Labels and links inside tiles: sentence case, readable size, quiet colour
+   (replacing 9px uppercase mono kickers). */
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--text-secondary);
+}
+.tileLink {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.tileLink:hover {
+  color: var(--text-primary);
+}
+
+/* ── Opt-in: no background grid on this page (set by <NoGrid />). The grid is
+   painted twice, on <body> and on the app layout's .root-layout wrapper, so
+   both are cleared. */
+:global(body.no-grid),
+:global(body.no-grid .root-layout) {
+  background-image: none !important;
+}
+
+/* ── The topbar's shared buttons, restyled only inside a glass (sleek) topbar,
+   so every other page keeps the global .btn-primary / .btn-ghost look. */
+.glass :global(.btn-primary) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  color: #1a1204;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(245, 158, 11, 0.75));
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.45),
+    0 8px 24px -10px rgba(245, 158, 11, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.glass :global(.btn-primary):hover {
+  filter: brightness(1.08);
+}
+.glass :global(.btn-ghost) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+}
+.glass :global(.btn-ghost):hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-primary);
+}
+
+/* ── A faint, static amber glow at the top of a page */
+.pageGlow {
+  background: radial-gradient(ellipse 55% 320px at 18% 0%, rgba(245, 158, 11, 0.07), transparent 70%);
+}
+
+/* ── Sidebar (every page). Plain sentence-case labels at a readable size, a
+   soft hover, and a thin glowing amber bar for the current page. */
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.navItem:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+.navItemActive {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+.navItemActive::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+:global([data-theme="high-contrast"]) .navItemActive {
+  background: rgba(255, 255, 255, 0.1);
+}
+.partnerLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.partnerLine:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+}
+.sideMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile::before,
+  .glow,
+  .glowGhost,
+  .row,
+  .navItem,
+  .partnerLine {
+    transition: none;
+  }
+  .glow:active {
+    transform: none;
+  }
+}

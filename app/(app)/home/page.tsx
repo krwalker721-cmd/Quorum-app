@@ -3,17 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import UpgradeToast from "@/components/UpgradeToast";
 import Tile from "@/components/ui/Tile";
-import MonoKicker from "@/components/ui/MonoKicker";
-import TerminalFooter from "@/components/ui/TerminalFooter";
 import PersonAvatar from "@/components/ui/PersonAvatar";
 import NetworkGraph from "@/components/ui/NetworkGraph";
+import NoGrid from "@/components/ui/NoGrid";
 import HomeCheckinHero from "@/components/home/HomeCheckinHero";
-import { STAGE_COLOR, initials, timeAgo } from "@/lib/stage";
+import ui from "@/components/ui/sleek.module.css";
+import { STAGE_COLOR, timeAgo } from "@/lib/stage";
 
 export const dynamic = "force-dynamic";
 
 const COHORT_MAX = 12;
-const DAY = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const DAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // Loose skill overlap — tokenizes free-text `looking_for` and array `skills`
 // into a comparable lowercase set.
@@ -162,7 +162,6 @@ export default async function HomePage() {
         applicantsByProject.set((r as any).need_id, (applicantsByProject.get((r as any).need_id) ?? 0) + 1);
     }
   } catch {}
-  const totalApplicants = [...applicantsByProject.values()].reduce((a, b) => a + b, 0);
   // Name the project with the most applicants for the NEEDS YOU row.
   let topApplicantProject: { id: string; title: string; count: number } | null = null;
   for (const p of [...myProjects, ...myNeeds]) {
@@ -223,7 +222,9 @@ export default async function HomePage() {
   } catch {}
 
   const dayName = DAY[new Date().getDay()];
-  const contextLine = `${dayName} · ${members.length} member${members.length === 1 ? "" : "s"} · 1 active now · trust ${profile?.trust_score ?? 0}`;
+  // No "active now" count here: there's no presence data behind one yet, and a
+  // fixed number would be a made-up stat.
+  const contextLine = `${dayName} · ${members.length} member${members.length === 1 ? "" : "s"} · trust score ${profile?.trust_score ?? 0}`;
 
   // NEEDS YOU rows — only surface what actually needs the user.
   const needsRows: {
@@ -249,7 +250,7 @@ export default async function HomePage() {
       icon: "＋",
       label: (
         <>
-          {topApplicantProject.count} applied to “{topApplicantProject.title.toLowerCase()}”
+          {topApplicantProject.count} applied to “{topApplicantProject.title}”
         </>
       ),
     });
@@ -262,42 +263,47 @@ export default async function HomePage() {
       label: `${matchingNeed.author} posted a need you can help with`,
     });
 
+  const divider = "1px solid var(--border-default)";
+
   return (
     <>
-      <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <NoGrid />
+      <TopBar sleek title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <UpgradeToast />
 
-      <div className="page-pad" style={{ padding: "14px 24px 8px", maxWidth: 1600 }} data-tour-id="home-tiles">
+      <div
+        className={`page-pad ${ui.pageGlow}`}
+        style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+        data-tour-id="home-tiles"
+      >
         {/* Header */}
-        <div className="mb-3">
-          <h1 style={{ fontSize: 17, fontWeight: 500, color: "var(--text-primary)" }}>
+        <div style={{ marginBottom: 24 }}>
+          <h1
+            className={`${ui.titleGradient} ${ui.balance}`}
+            style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+          >
             Good to see you, {firstName}
           </h1>
-          <p
-            className="font-mono"
-            style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 4, letterSpacing: "0.03em" }}
-          >
-            {contextLine}
-          </p>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>{contextLine}</p>
         </div>
 
         {/* Row 1 — NEEDS YOU (wide) + check-in / cohort rail */}
         <div
-          className="grid gap-3 mb-3 stack-md"
+          className="grid gap-4 mb-4 stack-md"
           style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}
         >
-          <Tile kicker="needs you" padding="4px 16px" className="flex flex-col">
+          <Tile kicker="Needs you" padding="20px 22px 10px" className="flex flex-col">
             {needsRows.length === 0 ? (
               <div
                 className="flex-1 flex flex-col items-center justify-center text-center"
-                style={{ minHeight: 96, gap: 8, padding: "16px 0" }}
+                style={{ minHeight: 120, gap: 10, padding: "20px 0" }}
               >
                 <span
                   aria-hidden
                   className="flex items-center justify-center"
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: 44,
+                    height: 44,
                     borderRadius: "50%",
                     fontSize: 20,
                     color: "var(--green)",
@@ -306,32 +312,29 @@ export default async function HomePage() {
                 >
                   ✓
                 </span>
-                <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  You&apos;re all caught up.
-                </p>
-                <p className="font-mono" style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.03em" }}>
-                  nothing needs you right now
-                </p>
+                <p style={{ fontSize: 15, color: "var(--text-primary)" }}>You&apos;re all caught up.</p>
+                <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Nothing needs you right now.</p>
               </div>
             ) : (
               needsRows.map((r, i) => (
                 <Link
                   key={r.key}
                   href={r.href}
-                  className="flex items-center gap-2.5"
+                  className={`flex items-center gap-3 ${ui.row}`}
                   style={{
-                    padding: "10px 0",
-                    borderBottom: i < needsRows.length - 1 ? "0.5px solid var(--border-default)" : "none",
+                    padding: "12px 12px",
+                    margin: "0 -12px",
+                    borderBottom: i < needsRows.length - 1 ? divider : "none",
                     textDecoration: "none",
                   }}
                 >
                   <span
                     className="flex items-center justify-center shrink-0"
                     style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 7,
-                      fontSize: 13,
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9,
+                      fontSize: 14,
                       background: `linear-gradient(135deg, rgba(${r.tint},.28), rgba(${r.tint},.06))`,
                       color: `rgb(${r.tint})`,
                     }}
@@ -339,22 +342,22 @@ export default async function HomePage() {
                   >
                     {r.icon}
                   </span>
-                  <span style={{ flex: 1, fontSize: 12, color: "var(--text-primary)" }}>{r.label}</span>
-                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>→</span>
+                  <span style={{ flex: 1, fontSize: 14, color: "var(--text-primary)" }}>{r.label}</span>
+                  <span style={{ fontSize: 14, color: "var(--text-muted)" }}>→</span>
                 </Link>
               ))
             )}
           </Tile>
 
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-4">
             <HomeCheckinHero userId={user.id} />
             <Tile
-              kicker={`your cohort · ${cohortFill}/${COHORT_MAX}`}
-              padding="10px 13px"
+              kicker={`Your cohort · ${cohortFill}/${COHORT_MAX}`}
+              padding="20px 22px"
               style={{ flex: 1 }}
               className="flex flex-col justify-center"
             >
-              <div style={{ maxWidth: 280, width: "100%", margin: "0 auto" }}>
+              <div style={{ maxWidth: 300, width: "100%", margin: "0 auto" }}>
                 <NetworkGraph
                   you={{ full_name: profile?.full_name ?? null }}
                   members={otherMembers.slice(0, 5)}
@@ -365,29 +368,27 @@ export default async function HomePage() {
         </div>
 
         {/* Row 2 — MATCHES YOUR NEEDS strip */}
-        <Tile padding="9px 14px" className="mb-3">
-          <div className="flex items-center gap-3.5">
-            <MonoKicker style={{ whiteSpace: "nowrap", letterSpacing: "0.1em" }}>
-              <span style={{ color: "var(--teal)" }}>✦</span> matches your needs
-            </MonoKicker>
-            <div className="flex gap-4 flex-1 min-w-0 overflow-hidden scroll-x-mobile">
+        <Tile padding="16px 22px" className="mb-4">
+          <div className="flex items-center gap-5">
+            <span className={ui.label} style={{ whiteSpace: "nowrap" }}>
+              <span style={{ color: "var(--teal)", marginRight: 6 }}>✦</span>
+              Matches your needs
+            </span>
+            <div className="flex gap-5 flex-1 min-w-0 overflow-hidden scroll-x-mobile">
               {matchPeople.map((m) => {
                 const c = (m.stage && STAGE_COLOR[m.stage]) || "var(--text-muted)";
                 return (
                   <Link
                     key={m.id}
                     href={m.username ? `/profile/${m.username}` : "/collab?tab=skills"}
-                    className="flex items-center gap-2 shrink-0"
+                    className="flex items-center gap-2.5 shrink-0"
                     style={{ textDecoration: "none" }}
                   >
-                    <PersonAvatar name={m.full_name} stage={m.stage} size={24} color={c} />
-                    <span style={{ fontSize: 11, color: "var(--text-primary)" }}>
+                    <PersonAvatar name={m.full_name} stage={m.stage} size={30} color={c} />
+                    <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
                       {(m.full_name ?? "founder").split(/\s+/)[0]}
                       {m.stage && (
-                        <span
-                          className="font-mono"
-                          style={{ color: "var(--text-muted)", fontSize: 9, marginLeft: 5 }}
-                        >
+                        <span style={{ color: "var(--text-muted)", fontSize: 12, marginLeft: 6 }}>
                           {m.stage}
                         </span>
                       )}
@@ -396,58 +397,56 @@ export default async function HomePage() {
                 );
               })}
             </div>
-            <Link
-              href="/collab?tab=skills"
-              style={{ fontSize: 10, color: "var(--blue)", whiteSpace: "nowrap", textDecoration: "none" }}
-            >
-              browse →
+            <Link href="/collab?tab=skills" className={ui.tileLink} style={{ whiteSpace: "nowrap" }}>
+              Browse →
             </Link>
           </div>
         </Tile>
 
         {/* Row 3 — RECENT IN PULSE + YOUR WORK */}
-        <div className="grid gap-3 stack-md" style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}>
-          <Tile kicker="recent in pulse" right="all →" rightHref="/pulse" padding="13px 15px">
+        <div className="grid gap-4 stack-md" style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}>
+          <Tile kicker="Recent in pulse" right="All posts →" rightHref="/pulse">
             {recentPosts.length === 0 ? (
-              <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>No posts yet.</p>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>No posts yet.</p>
             ) : (
-              recentPosts.map((p, i) => (
-                <Link
-                  key={p.id}
-                  href="/pulse"
-                  className="flex gap-2.5"
-                  style={{
-                    paddingBottom: i < recentPosts.length - 1 ? 11 : 0,
-                    borderBottom: i < recentPosts.length - 1 ? "0.5px solid var(--border-default)" : "none",
-                    marginBottom: i < recentPosts.length - 1 ? 11 : 0,
-                    textDecoration: "none",
-                  }}
-                >
-                  <PersonAvatar name={p.author?.full_name} stage={p.author?.stage} size={26} />
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: 12, lineHeight: 1.4, color: "var(--text-primary)" }}>
-                      {(p.content ?? "").slice(0, 90)}
-                      {(p.content ?? "").length > 90 ? "…" : ""}
-                    </p>
-                    <p
-                      className="font-mono uppercase"
-                      style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 4, letterSpacing: "0.04em" }}
-                    >
-                      {p.tag === "decision" && <span style={{ color: "var(--accent)" }}>decision · </span>}
-                      {initials(p.author?.full_name)} · {timeAgo(p.created_at)} · {p.reply_count ?? 0}
-                    </p>
-                  </div>
-                </Link>
-              ))
+              recentPosts.map((p, i) => {
+                const replies = p.reply_count ?? 0;
+                return (
+                  <Link
+                    key={p.id}
+                    href="/pulse"
+                    className="flex gap-3"
+                    style={{
+                      paddingBottom: i < recentPosts.length - 1 ? 14 : 0,
+                      borderBottom: i < recentPosts.length - 1 ? divider : "none",
+                      marginBottom: i < recentPosts.length - 1 ? 14 : 0,
+                      textDecoration: "none",
+                    }}
+                  >
+                    <PersonAvatar name={p.author?.full_name} stage={p.author?.stage} size={32} />
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--text-primary)" }}>
+                        {(p.content ?? "").slice(0, 120)}
+                        {(p.content ?? "").length > 120 ? "…" : ""}
+                      </p>
+                      <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 5 }}>
+                        {p.tag === "decision" && <span style={{ color: "var(--accent)" }}>Decision · </span>}
+                        {(p.author?.full_name ?? "A founder").split(/\s+/)[0]} · {timeAgo(p.created_at)} ·{" "}
+                        {replies} {replies === 1 ? "reply" : "replies"}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })
             )}
           </Tile>
 
-          <Tile kicker="your work" right="board →" rightHref="/collab" padding="13px 15px">
+          <Tile kicker="Your work" right="Board →" rightHref="/collab">
             {myProjects.length === 0 && myNeeds.length === 0 ? (
-              <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
                 No projects yet.{" "}
-                <Link href="/collab" style={{ color: "var(--blue)" }}>
-                  start one →
+                <Link href="/collab" className={ui.tileLink} style={{ color: "var(--text-primary)" }}>
+                  Start one →
                 </Link>
               </p>
             ) : (
@@ -459,19 +458,16 @@ export default async function HomePage() {
                     href={`/collab/${p.id}`}
                     className="block"
                     style={{
-                      paddingBottom: i < arr.length - 1 ? 10 : 0,
-                      borderBottom: i < arr.length - 1 ? "0.5px solid var(--border-default)" : "none",
-                      marginBottom: i < arr.length - 1 ? 10 : 0,
+                      paddingBottom: i < arr.length - 1 ? 12 : 0,
+                      borderBottom: i < arr.length - 1 ? divider : "none",
+                      marginBottom: i < arr.length - 1 ? 12 : 0,
                       textDecoration: "none",
                     }}
                   >
-                    <p style={{ fontSize: 12, color: "var(--text-primary)" }}>
-                      {(p.title ?? p.name ?? "untitled").toLowerCase()}
+                    <p style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                      {p.title ?? p.name ?? "Untitled"}
                     </p>
-                    <p
-                      className="font-mono uppercase"
-                      style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 3, letterSpacing: "0.04em" }}
-                    >
+                    <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                       {applicants > 0 ? (
                         <span style={{ color: "var(--green)" }}>
                           {applicants} new applicant{applicants === 1 ? "" : "s"} ·{" "}
@@ -487,8 +483,6 @@ export default async function HomePage() {
             )}
           </Tile>
         </div>
-
-        <TerminalFooter />
       </div>
     </>
   );
