@@ -135,9 +135,45 @@
   color: var(--text-primary);
 }
 
-/* ── Opt-in: no background grid on this page (set by <NoGrid />). */
-:global(body.no-grid) {
+/* ── Opt-in: no background grid on this page (set by <NoGrid />). The grid is
+   painted twice, on <body> and on the app layout's .root-layout wrapper, so
+   both are cleared. */
+:global(body.no-grid),
+:global(body.no-grid .root-layout) {
   background-image: none !important;
+}
+
+/* ── The topbar's shared buttons, restyled only inside a glass (sleek) topbar,
+   so every other page keeps the global .btn-primary / .btn-ghost look. */
+.glass :global(.btn-primary) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  color: #1a1204;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(245, 158, 11, 0.75));
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.45),
+    0 8px 24px -10px rgba(245, 158, 11, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.glass :global(.btn-primary):hover {
+  filter: brightness(1.08);
+}
+.glass :global(.btn-ghost) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+}
+.glass :global(.btn-ghost):hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-primary);
 }
 
 /* ── A faint, static amber glow at the top of a page */
