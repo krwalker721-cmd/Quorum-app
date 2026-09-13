@@ -1,0 +1,205 @@
+/* Landing page motion and finish. Scoped to the landing page; the in-app
+   design guide (design/REDESIGN-BUILD-GUIDE.md) covers the app, and the landing
+   page was left undesigned there. Every animation stops under
+   prefers-reduced-motion (bottom of file). */
+
+/* ── The drifting amber glow behind the hero and the closing call to action. */
+.aurora {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -220px;
+  height: 820px;
+  pointer-events: none;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  border-radius: 50%;
+  will-change: transform;
+}
+.aurora::before {
+  width: 720px;
+  height: 720px;
+  top: 0;
+  margin-left: -520px;
+  background: radial-gradient(closest-side, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0) 72%);
+  animation: drift-a 18s ease-in-out infinite alternate;
+}
+.aurora::after {
+  width: 560px;
+  height: 560px;
+  top: 120px;
+  margin-left: -40px;
+  background: radial-gradient(closest-side, rgba(248, 197, 106, 0.13), rgba(248, 197, 106, 0) 72%);
+  animation: drift-b 22s ease-in-out infinite alternate;
+}
+@keyframes drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(140px, 50px, 0) scale(1.15); }
+}
+@keyframes drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to { transform: translate3d(-160px, 70px, 0) scale(0.92); }
+}
+
+/* ── A grid that fades out from the middle of the hero. */
+.gridFade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 35%, #000 15%, transparent 75%);
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 35%, #000 15%, transparent 75%);
+}
+
+/* ── Headline type: white fading to grey, and an amber shimmer for emphasis. */
+.gradientText {
+  background: linear-gradient(180deg, #ffffff 0%, #aeb6c1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.amberText {
+  background: linear-gradient(90deg, #f8c56a, #f59e0b 45%, #fde4b0 55%, #f8c56a);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 7s linear infinite;
+}
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -150% 0; }
+}
+
+/* ── The live dot in the seat badge. */
+.pulseDot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: #22c55e;
+  animation: ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ping {
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* ── The topic strip. Items carry their own right margin (not a flex gap) so
+   the doubled list is exactly two equal halves and the loop has no jump. */
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  animation: marquee 48s linear infinite;
+}
+.marquee:hover .marqueeTrack {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ── Cards: hairline border, faint top-lit surface, amber edge on hover. */
+.card {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.55), transparent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.card:hover {
+  border-color: rgba(245, 158, 11, 0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px -24px rgba(245, 158, 11, 0.45);
+}
+.card:hover::before {
+  opacity: 1;
+}
+.cardFeatured {
+  border-color: rgba(245, 158, 11, 0.32);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.08), 0 20px 60px -30px rgba(245, 158, 11, 0.5);
+}
+.cardFeatured::before {
+  opacity: 1;
+}
+
+/* ── The cohort ring. */
+.ringSpin {
+  transform-origin: 200px 200px;
+  animation: spin 80s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.node {
+  animation: node-pulse 3.6s ease-in-out infinite;
+}
+@keyframes node-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+.link {
+  stroke-dasharray: 3 7;
+  animation: dash 9s linear infinite;
+}
+@keyframes dash {
+  to { stroke-dashoffset: -100; }
+}
+
+/* ── Scroll reveal (see Reveal.tsx: only armed below the fold, with JS). */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.revealIn {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after,
+  .amberText,
+  .pulseDot::after,
+  .marqueeTrack,
+  .ringSpin,
+  .node,
+  .link {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .card {
+    transition: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+}

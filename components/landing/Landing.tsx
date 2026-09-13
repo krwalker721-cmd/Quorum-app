@@ -2,21 +2,44 @@ import Link from "next/link";
 import LogoMark from "@/components/LogoMark";
 import LegalLinks from "@/components/LegalLinks";
 import GrowthStat from "@/components/landing/GrowthStat";
+import CohortRing from "@/components/landing/CohortRing";
+import Reveal from "@/components/landing/Reveal";
 import { FAQ_ITEMS, PRODUCT_BLOCKS } from "@/lib/marketing-copy";
 import { FOUNDING_SEATS, PRICING, TRIAL_DAYS } from "@/lib/pricing";
 import { foundingSeatsRemaining } from "@/lib/plans";
+import s from "./landing.module.css";
 
 // The public front door: what signed-out visitors see at "/". Signed-in
 // members never see it; app/page.tsx routes them on as before.
 //
-// Server-rendered with no client JavaScript of its own (the FAQ uses native
-// <details>), so the whole page reads even before, or without, hydration.
+// Server-rendered. The only client pieces are the scroll reveals and the
+// growth-stat animation, both of which render finished without JavaScript;
+// the FAQ uses native <details>. Motion lives in landing.module.css and stops
+// under prefers-reduced-motion.
 
-const HERO_BG = "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)";
-const SOLID_BUTTON = "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))";
+const PAGE_BG = "#0b0e13";
+const SOLID_BUTTON = "linear-gradient(135deg, rgba(245,158,11,.95), rgba(245,158,11,.75))";
+const BUTTON_GLOW =
+  "0 0 0 1px rgba(245,158,11,.45), 0 10px 30px -10px rgba(245,158,11,.6), inset 0 1px 0 rgba(255,255,255,.25)";
 
 // The three-part promise from the retired onboarding's manifesto chapter.
 const PROMISE = ["Find your people", "Get real advice", "Build together"];
+
+// What founders bring to a cohort. Topics only: no invented people or results.
+const TOPICS = [
+  "pricing",
+  "your first hire",
+  "fundraising",
+  "churn",
+  "co-founder conflict",
+  "go-to-market",
+  "burnout",
+  "your first ten customers",
+  "raise or bootstrap",
+  "product-market fit",
+  "runway",
+  "saying no",
+];
 
 const STEPS = [
   {
@@ -42,36 +65,45 @@ const LANDING_FAQ = new Set([
 
 function Kicker({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-mono uppercase text-[0.65rem] tracking-[0.14em] text-amber mb-4">{children}</p>
+    <p className="font-mono uppercase text-[0.65rem] tracking-[0.16em] text-amber mb-5">{children}</p>
   );
 }
 
-function PrimaryCta({ label }: { label: string }) {
+function SectionHeading({ kicker, title }: { kicker: string; title: string }) {
+  return (
+    <div className="text-center">
+      <Kicker>{kicker}</Kicker>
+      <h2
+        className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] max-w-3xl mx-auto ${s.gradientText}`}
+      >
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function PrimaryCta({ label, small = false }: { label: string; small?: boolean }) {
   return (
     <Link
       href="/signup"
-      className="inline-block rounded-lg px-5 py-3 text-sm font-medium transition-opacity hover:opacity-90"
-      style={{ background: SOLID_BUTTON, color: "#1a1204" }}
+      className={`inline-block rounded-lg font-medium transition-[filter,transform] hover:brightness-110 active:translate-y-px ${
+        small ? "px-3.5 py-1.5 text-xs" : "px-5 py-3 text-sm"
+      }`}
+      style={{ background: SOLID_BUTTON, color: "#1a1204", boxShadow: BUTTON_GLOW }}
     >
       {label} →
     </Link>
   );
 }
 
-function SeatLine({ remaining }: { remaining: number }) {
-  if (remaining <= 0) {
-    return (
-      <p className="mt-6 font-mono text-xs text-text-secondary">
-        founding seats are gone. membership is ${PRICING.member.monthly}/month.
-      </p>
-    );
-  }
+function SeatBadge({ remaining }: { remaining: number }) {
   return (
-    <p className="mt-6 font-mono text-xs text-text-secondary flex items-center gap-2">
-      <span className="inline-block h-1.5 w-1.5 rounded-full bg-green" aria-hidden />
-      {remaining} of {FOUNDING_SEATS} founding seats left at ${PRICING.founding.monthly}/month, locked
-      for life
-    </p>
+    <div className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 font-mono text-[0.7rem] text-text-secondary backdrop-blur">
+      <span className={`relative inline-block h-1.5 w-1.5 rounded-full bg-green ${s.pulseDot}`} aria-hidden />
+      {remaining > 0
+        ? `${remaining} of ${FOUNDING_SEATS} founding seats left · $${PRICING.founding.monthly}/mo for life`
+        : `founding seats are gone · membership is $${PRICING.member.monthly}/mo`}
+    </div>
   );
 }
 
@@ -81,146 +113,203 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
   const faq = FAQ_ITEMS.filter((f) => LANDING_FAQ.has(f.q));
 
   return (
-    <div className="min-h-screen">
-      <header className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
-          <LogoMark size={26} />
-          <span className="font-mono lowercase text-text-primary text-sm tracking-wide">quorum</span>
-        </Link>
-        <nav className="flex items-center gap-5">
-          <Link href="/pricing" className="font-mono lowercase text-xs text-text-secondary hover:text-amber">
-            pricing
+    <div className="min-h-screen" style={{ background: PAGE_BG }}>
+      {/* Pinned, see-through header. */}
+      <header
+        className="sticky top-0 z-40 border-b border-white/[0.06] backdrop-blur-md"
+        style={{ background: "rgba(11,14,19,.72)" }}
+      >
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <LogoMark size={24} />
+            <span className="font-mono lowercase text-text-primary text-sm tracking-wide">quorum</span>
           </Link>
-          <Link href="/login" className="font-mono lowercase text-xs text-text-secondary hover:text-amber">
-            log in
-          </Link>
-        </nav>
+          <nav className="flex items-center gap-5">
+            <Link href="/pricing" className="font-mono lowercase text-xs text-text-secondary hover:text-text-primary transition-colors">
+              pricing
+            </Link>
+            <Link href="/login" className="font-mono lowercase text-xs text-text-secondary hover:text-text-primary transition-colors">
+              log in
+            </Link>
+            <span className="hidden sm:inline-block">
+              <PrimaryCta label={ctaLabel} small />
+            </span>
+          </nav>
+        </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 pb-16 space-y-20">
-        {/* Hero */}
-        <section
-          className="rounded-xl p-8 sm:p-12 mt-4"
-          style={{ background: HERO_BG, border: "0.5px solid rgba(245,158,11,.3)" }}
-        >
-          <Kicker>{"// a private network for founders"}</Kicker>
-          <h1 className="font-sans text-4xl sm:text-6xl font-semibold leading-[1.05] tracking-tight text-text-primary max-w-3xl">
-            The <span style={{ color: "#f8c56a" }}>honest</span> version of LinkedIn.
-          </h1>
-          <p className="mt-6 text-lg text-text-secondary max-w-2xl leading-relaxed">
-            A private network of founders sharing real decisions, wins, and blockers, anchored by a
-            cohort of twelve you meet every week.
-          </p>
-          <p className="mt-3 text-sm text-text-muted max-w-2xl leading-relaxed">
-            For founders at any stage, built especially for the early years, when the right room
-            matters most.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <PrimaryCta label={ctaLabel} />
-            <Link
-              href="/pricing"
-              className="inline-block rounded-lg px-5 py-3 text-sm border border-border-muted text-text-primary hover:border-amber/50"
-            >
-              See pricing
-            </Link>
+      {/* Hero: full-width, glow and fading grid behind it. */}
+      <section className="relative overflow-hidden">
+        <div aria-hidden className={s.aurora} />
+        <div aria-hidden className={s.gridFade} />
+        <div className="relative max-w-6xl mx-auto px-6 pt-16 pb-20 sm:pt-24 sm:pb-28 grid gap-14 lg:grid-cols-[1.3fr_1fr] lg:items-center">
+          <div>
+            <SeatBadge remaining={remaining} />
+            <h1 className="mt-7 font-sans text-5xl sm:text-7xl font-semibold leading-[1.02] tracking-[-0.035em]">
+              <span className={s.gradientText}>The </span>
+              <span className={s.amberText}>honest</span>
+              <span className={s.gradientText}> version of LinkedIn.</span>
+            </h1>
+            <p className="mt-7 text-lg sm:text-xl text-text-secondary max-w-xl leading-relaxed">
+              A private network of founders sharing real decisions, wins, and blockers, anchored by a
+              cohort of twelve you meet every week.
+            </p>
+            <p className="mt-3 text-sm text-text-muted max-w-xl leading-relaxed">
+              For founders at any stage, built especially for the early years, when the right room
+              matters most.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <PrimaryCta label={ctaLabel} />
+              <Link
+                href="/pricing"
+                className="inline-block rounded-lg px-5 py-3 text-sm text-text-primary border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] transition-colors"
+              >
+                See pricing
+              </Link>
+            </div>
           </div>
-          <SeatLine remaining={remaining} />
-        </section>
+          <div className="flex justify-center lg:justify-end">
+            <CohortRing />
+          </div>
+        </div>
+      </section>
 
+      {/* The topic strip. */}
+      <section aria-label="Topics founders bring to a cohort" className="border-y border-white/[0.06] py-7">
+        <p className="text-center font-mono uppercase text-[0.65rem] tracking-[0.16em] text-text-muted mb-5">
+          {"// bring the hard questions"}
+        </p>
+        <div className={s.marquee}>
+          <div className={s.marqueeTrack}>
+            {[...TOPICS, ...TOPICS].map((t, i) => (
+              <span
+                key={i}
+                aria-hidden={i >= TOPICS.length || undefined}
+                className="mr-3 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 font-mono text-xs text-text-secondary whitespace-nowrap"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <main className="max-w-6xl mx-auto px-6 py-24 sm:py-32 space-y-28 sm:space-y-36">
         {/* Why Quorum: the case that used to open onboarding, in its order:
             the question, the proof, then the difference. */}
-        <section className="rounded-xl bg-card border border-border p-8 sm:p-12">
-          <Kicker>{"// why quorum"}</Kicker>
-          <p className="font-sans text-2xl sm:text-3xl font-medium leading-snug text-text-primary max-w-3xl">
-            Have you ever wanted a room full of founders who have the same mindset as you — and
-            have already solved the problems you&rsquo;re about to face?
-          </p>
-        </section>
+        <Reveal>
+          <section className="text-center max-w-4xl mx-auto">
+            <Kicker>{"// why quorum"}</Kicker>
+            <p
+              className={`font-sans text-3xl sm:text-5xl font-semibold leading-[1.15] tracking-[-0.025em] ${s.gradientText}`}
+            >
+              Have you ever wanted a room full of founders who have the same mindset as you — and
+              have already solved the problems you&rsquo;re about to face?
+            </p>
+          </section>
+        </Reveal>
 
         {/* Attributed to Vistage because it's their claim, about their CEO peer
             groups: no independent study behind a founder-wide number was found
             (LAUNCH.md, Phase 4). */}
-        <GrowthStat />
+        <Reveal>
+          <GrowthStat />
+        </Reveal>
 
-        <section className="rounded-xl bg-card border border-border p-8 sm:p-12">
-          <Kicker>{"// the difference"}</Kicker>
-          <h2 className="font-sans text-xl sm:text-2xl font-semibold text-text-primary max-w-2xl">
-            This is what happens when founders stop figuring it out alone.
-          </h2>
-          <ul className="mt-6 flex flex-wrap gap-3">
-            {PROMISE.map((p) => (
-              <li
-                key={p}
-                className="rounded-full border border-border-muted px-4 py-1.5 text-sm text-text-primary"
-              >
-                {p}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-6 text-text-secondary">
-            You&rsquo;ll get there faster — with the right people around you.
-          </p>
-        </section>
+        <Reveal>
+          <section className="text-center">
+            <Kicker>{"// the difference"}</Kicker>
+            <h2
+              className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] max-w-3xl mx-auto ${s.gradientText}`}
+            >
+              This is what happens when founders stop figuring it out alone.
+            </h2>
+            <ul className="mt-9 flex flex-wrap justify-center gap-3">
+              {PROMISE.map((p) => (
+                <li
+                  key={p}
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-2 text-sm text-text-primary"
+                >
+                  {p}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-8 text-text-secondary">
+              You&rsquo;ll get there faster — with the right people around you.
+            </p>
+          </section>
+        </Reveal>
 
         {/* How it works */}
         <section>
-          <Kicker>{"// how it works"}</Kicker>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {STEPS.map((s, i) => (
-              <div key={s.title} className="rounded-xl bg-card border border-border p-6">
-                <p className="font-mono text-xs text-amber mb-3">{String(i + 1).padStart(2, "0")}</p>
-                <h2 className="text-text-primary font-medium mb-2">{s.title}</h2>
-                <p className="text-sm text-text-secondary leading-relaxed">{s.desc}</p>
-              </div>
+          <Reveal>
+            <SectionHeading kicker="// how it works" title="Twelve founders. One room. Every week." />
+          </Reveal>
+          <div className="mt-14 grid gap-4 sm:grid-cols-3">
+            {STEPS.map((st, i) => (
+              <Reveal key={st.title} delay={i * 120} className="h-full">
+                <div className={`${s.card} p-7 h-full`}>
+                  <p className="font-mono text-xs text-amber mb-5">{String(i + 1).padStart(2, "0")}</p>
+                  <h3 className="text-text-primary font-medium text-lg mb-2">{st.title}</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">{st.desc}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </section>
 
         {/* Inside Quorum */}
         <section>
-          <Kicker>{"// inside quorum"}</Kicker>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {PRODUCT_BLOCKS.map((b) => (
-              <div key={b.title} className="rounded-xl bg-card border border-border p-6">
-                <h2 className="text-text-primary font-medium mb-2">{b.title}</h2>
-                <p className="text-sm text-text-secondary leading-relaxed">{b.desc}</p>
-              </div>
+          <Reveal>
+            <SectionHeading kicker="// inside quorum" title="Everything happens in one place." />
+          </Reveal>
+          <div className="mt-14 grid gap-4 sm:grid-cols-2">
+            {PRODUCT_BLOCKS.map((b, i) => (
+              <Reveal key={b.title} delay={(i % 2) * 120} className="h-full">
+                <div className={`${s.card} p-7 h-full`}>
+                  <h3 className="text-text-primary font-medium text-lg mb-2">{b.title}</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">{b.desc}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </section>
 
         {/* Pricing */}
         <section>
-          <Kicker>{"// pricing"}</Kicker>
-          <div className={`grid gap-4 ${remaining > 0 ? "sm:grid-cols-2" : ""}`}>
+          <Reveal>
+            <SectionHeading kicker="// pricing" title="Simple, honest pricing." />
+          </Reveal>
+          <div className={`mt-14 grid gap-4 max-w-4xl mx-auto ${remaining > 0 ? "sm:grid-cols-2" : ""}`}>
             {remaining > 0 && (
-              <div
-                className="rounded-xl bg-card p-6"
-                style={{ border: "1px solid rgba(245,158,11,.32)" }}
-              >
-                <p className="font-mono lowercase text-xs text-amber mb-3">founding rate</p>
+              <Reveal className="h-full">
+                <div className={`${s.card} ${s.cardFeatured} p-8 h-full`}>
+                  <p className="font-mono lowercase text-xs text-amber mb-4">founding rate</p>
+                  <p className="text-text-primary">
+                    <span className="text-5xl font-semibold tracking-tight">${PRICING.founding.monthly}</span>
+                    <span className="text-text-secondary">/month</span>
+                  </p>
+                  <p className="mt-4 text-sm text-text-secondary leading-relaxed">
+                    Locked for life for the first {FOUNDING_SEATS} members.{" "}
+                    <span className="text-text-primary">{remaining} left.</span>
+                  </p>
+                </div>
+              </Reveal>
+            )}
+            <Reveal delay={120} className="h-full">
+              <div className={`${s.card} p-8 h-full`}>
+                <p className="font-mono lowercase text-xs text-text-secondary mb-4">membership</p>
                 <p className="text-text-primary">
-                  <span className="text-4xl font-semibold">${PRICING.founding.monthly}</span>
+                  <span className="text-5xl font-semibold tracking-tight">${PRICING.member.monthly}</span>
                   <span className="text-text-secondary">/month</span>
                 </p>
-                <p className="mt-3 text-sm text-text-secondary leading-relaxed">
-                  Locked for life for the first {FOUNDING_SEATS} members.{" "}
-                  <span className="text-text-primary">{remaining} left.</span>
+                <p className="mt-4 text-sm text-text-secondary leading-relaxed">
+                  Or ${PRICING.member.annual}/year, two months free.
                 </p>
               </div>
-            )}
-            <div className="rounded-xl bg-card border border-border p-6">
-              <p className="font-mono lowercase text-xs text-text-secondary mb-3">membership</p>
-              <p className="text-text-primary">
-                <span className="text-4xl font-semibold">${PRICING.member.monthly}</span>
-                <span className="text-text-secondary">/month</span>
-              </p>
-              <p className="mt-3 text-sm text-text-secondary leading-relaxed">
-                Or ${PRICING.member.annual}/year, two months free.
-              </p>
-            </div>
+            </Reveal>
           </div>
-          <p className="mt-5 text-sm text-text-secondary leading-relaxed">
+          <p className="mt-7 text-center text-sm text-text-secondary leading-relaxed">
             Every membership starts with a {TRIAL_DAYS.standard}-day free trial ({TRIAL_DAYS.referred}{" "}
             days if a member refers you). No card needed to start.{" "}
             <Link href="/pricing" className="text-amber hover:underline">
@@ -231,13 +320,21 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
 
         {/* FAQ */}
         <section>
-          <Kicker>{"// questions"}</Kicker>
-          <div className="space-y-3">
+          <Reveal>
+            <SectionHeading kicker="// questions" title="Questions, answered." />
+          </Reveal>
+          <div className="mt-14 space-y-3 max-w-3xl mx-auto">
             {faq.map((f) => (
-              <details key={f.q} className="group rounded-xl bg-card border border-border p-5">
+              <details
+                key={f.q}
+                className="group rounded-xl border border-white/[0.07] bg-white/[0.02] px-6 py-5 transition-colors open:border-white/[0.12] hover:border-white/[0.12]"
+              >
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-4 text-text-primary font-medium">
                   {f.q}
-                  <span className="font-mono text-text-muted transition-transform group-open:rotate-45" aria-hidden>
+                  <span
+                    className="font-mono text-text-muted transition-transform duration-200 group-open:rotate-45"
+                    aria-hidden
+                  >
                     +
                   </span>
                 </summary>
@@ -248,27 +345,37 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
         </section>
 
         {/* Closing call to action */}
-        <section className="rounded-xl bg-card border border-border p-8 sm:p-12 text-center">
-          <Kicker>{"// the next cohort"}</Kicker>
-          <h2 className="font-sans text-2xl sm:text-3xl font-semibold text-text-primary">
-            Every cohort is twelve seats. Take one.
-          </h2>
-          <p className="mt-3 text-text-secondary">
-            A room of founders who&rsquo;ve already been where you&rsquo;re going.
-          </p>
-          <div className="mt-8">
-            <PrimaryCta label={ctaLabel} />
-          </div>
-          <p className="mt-5 font-mono lowercase text-xs text-text-muted">
-            already a member?{" "}
-            <Link href="/login" className="text-amber hover:underline">
-              log in
-            </Link>
-          </p>
-        </section>
+        <Reveal>
+          <section
+            className="relative overflow-hidden rounded-2xl border border-white/[0.07] px-8 py-20 sm:py-24 text-center"
+            style={{ background: "linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0))" }}
+          >
+            <div aria-hidden className={s.aurora} style={{ opacity: 0.75 }} />
+            <div className="relative">
+              <Kicker>{"// the next cohort"}</Kicker>
+              <h2
+                className={`font-sans text-3xl sm:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] ${s.gradientText}`}
+              >
+                Every cohort is twelve seats. Take one.
+              </h2>
+              <p className="mt-4 text-text-secondary">
+                A room of founders who&rsquo;ve already been where you&rsquo;re going.
+              </p>
+              <div className="mt-9">
+                <PrimaryCta label={ctaLabel} />
+              </div>
+              <p className="mt-6 font-mono lowercase text-xs text-text-muted">
+                already a member?{" "}
+                <Link href="/login" className="text-amber hover:underline">
+                  log in
+                </Link>
+              </p>
+            </div>
+          </section>
+        </Reveal>
       </main>
 
-      <footer className="pb-10">
+      <footer className="border-t border-white/[0.06] py-10">
         <LegalLinks />
         <p className="font-mono lowercase text-[0.65rem] text-text-faint text-center mt-3">
           quorum · a private network for founders
