@@ -647,7 +647,9 @@ once something has already gone wrong.
       until there's a real member; **upgrade to Pro (daily backups, 7 days)
       before approving the first group**, since approval creates the first
       data worth keeping. PITR isn't needed at this size.
-- [ ] **[me → you]** Error monitoring. *Built 2026-09-13, branch `feat/sentry`:*
+- [x] **[me → you]** Error monitoring. *Live 2026-09-13 (`bb96e0b`): a
+      fake-signature webhook call showed up in Sentry → Issues and sent the
+      new-issue alert email.* *Built on branch `feat/sentry`:*
       `@sentry/nextjs` 10.74 via `instrumentation.ts` (server + edge),
       `instrumentation-client.ts` (browser), and `app/global-error.tsx`.
       Server `console.error` calls are forwarded too
@@ -691,7 +693,44 @@ once something has already gone wrong.
 Almost entirely Claude's, and it's what to build *while waiting* on Stripe
 activation and DNS.
 
-- [ ] **[me]** **Public landing page.** `/` currently redirects straight to
+- [ ] **[me]** **Public landing page.** *Built 2026-09-13, branch
+      `feat/landing-page`, on the owner's choices: lead with "The honest
+      version of LinkedIn", any stage (early-leaning), full pricing shown, a
+      live founding-seat counter as the only proof. Signed-out visitors get
+      `components/landing/Landing.tsx` at `/`; signed-in routing is
+      unchanged. Server-rendered with native `<details>` for the FAQ, so it
+      reads without JavaScript. Product and FAQ copy moved to
+      `lib/marketing-copy.ts`, shared with /pricing.*
+      *Same branch, the owner's flow change:* **onboarding is retired.** New
+      members go signup → confirm → pending → approved → straight into the app,
+      where the guided tour starts on its own (`startFresh` in
+      `TourContext`, for anyone who never finished the old onboarding;
+      members who finished it aren't re-toured). `/onboarding` redirects to
+      home. Its pitch (the opening line, the question, the manifesto and
+      three-part promise) is now the landing page's "why quorum" section, and
+      the referral FAQ answer was added. **Not carried over: the "founder
+      names" chapter** — eight invented members with invented results and
+      quotes, which on a public page would be fake testimonials (FTC 16 CFR
+      Part 465); they also stop being shown to members. **The growth stat:**
+      onboarding's "founders with strong peer networks grow 2-3x faster
+      (Enterprise Nation)" has no study behind it — the cited page doesn't
+      contain it. The landing page instead attributes Vistage's own claim
+      ("member companies grow 2.2x faster than non-members") with a link,
+      as its own section (`components/landing/GrowthStat.tsx`) using
+      onboarding's bar graph, animated on scroll. Drawn to scale (2.2 : 1);
+      onboarding's version drew 3 : 1 and counted to 3.0×. Renders finished
+      without JavaScript and under reduced motion.
+      **Bio** moved to an optional signup field (280 chars), copied to the
+      profile by `handle_new_user()` — **migration `017_signup_bio.sql`**.
+      **The admin's waitlist/open switch now actually works:** it had only
+      ever been saved, while every gate read a hard-coded `WAITLIST_ENABLED`
+      (deleted). `lib/platform.ts` reads `platform_status` (failing toward the
+      waitlist); in open mode a pending member is approved silently on arrival
+      (trial + cohort, no "you're in" email). Login and signup now route
+      through `/`, so the rule lives in one place. Dead code left for Phase 5:
+      the unused onboarding chapters in `components/onboarding-v2/` (the tour
+      still imports its `PricingSection`) and `components/onboarding-archived/`.
+      `/` currently redirects straight to
       `/login`, so the new domain shows a bare login box with no explanation of
       what Quorum is or why it costs $39/mo. For a product whose pitch *is* the
       filter, this is the highest-leverage item in this phase. Claude builds it;

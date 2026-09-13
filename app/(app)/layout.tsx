@@ -3,7 +3,8 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { assignUserToCohort } from "@/lib/cohorts";
 import { enforceLapse, isEligibleForCohortPlacement } from "@/lib/lapse";
 import { resolveEntitlement } from "@/lib/entitlements";
-import { WAITLIST_ENABLED } from "@/lib/flags";
+import { isWaitlistOn } from "@/lib/platform";
+import { approveUser } from "@/lib/admin/approve";
 import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
@@ -19,26 +20,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // New users must finish onboarding before reaching any app page. Fail open
-  // (skip the gate) if the table can't be read — e.g. the migration hasn't been
-  // applied yet — so a read error can never lock a user out of the app. NOTE:
-  // redirect() throws, so it must live outside the try/catch.
-  let onboardingComplete = true;
+  // Tour state. Onboarding is retired (its pitch moved to the landing page), so
+  // this no longer gates the app; it only decides whether the guided tour runs.
+  // A member who never finished the old onboarding, which is every new member
+  // now, gets the tour from step 1. Fail-safe: if the row can't be read, the
+  // tour stays hidden rather than popping up for someone who has seen it.
   let tourStep = 0;
-  let tourCompleted = true; // fail-safe: never surface the tour on a read error
+  let tourCompleted = true;
+  let startFresh = false;
   try {
-    const { data: ob } = await supabase
+    const { data: ob, error: obError } = await supabase
       .from("onboarding_progress")
       .select("completed, tour_step, tour_completed")
       .eq("user_id", user.id)
       .maybeSingle();
-    onboardingComplete = Boolean(ob?.completed);
-    tourStep = (ob?.tour_step as number | null) ?? 0;
-    tourCompleted = Boolean(ob?.tour_completed);
+    if (!obError) {
+      tourStep = (ob?.tour_step as number | null) ?? 0;
+      tourCompleted = Boolean(ob?.tour_completed);
+      startFresh = !ob?.completed;
+    }
   } catch {
-    onboardingComplete = true;
+    // keep the fail-safe defaults
   }
-  if (!onboardingComplete) redirect("/onboarding");
 
   // Record a login event for the referral 3-day activity gate. Fire-and-forget,
   // never awaited — the daily upsert dedups, and a failure must never block the
@@ -52,6 +55,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .select("id, full_name, stage, status, tier, username")
     .eq("id", user.id)
     .single();
+
+  // Open signup (admin → Settings → platform_status: open): a pending member is
+  // approved on arrival, which starts their trial and seats them in a cohort.
+  // Done before the lapse and entitlement checks below, so this very render
+  // already sees the trial. If approval fails, they're let in anyway, as they
+  // always were with the waitlist off, and the next page load retries; sending
+  // them to /pending would loop, since /pending sends everyone home when open.
+  let status = profile?.status ?? null;
+  let waitlistOn = true;
+  if (status !== "approved" && status !== "suspended") {
+    waitlistOn = await isWaitlistOn();
+    if (!waitlistOn && status === "pending") {
+      const outcome = await approveUser(createAdminClient(), user.id, { notify: false });
+      if (outcome.result === "approved") status = "approved";
+    }
+  }
 
   // Resolve (and if the grace window has run out, act on) any lapse before the
   // banner reads subscription state, so both agree on the same render.
@@ -76,8 +95,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     console.error("entitlement resolve failed:", e);
   }
 
-  if (profile?.status === "suspended") redirect("/suspended");
-  if (WAITLIST_ENABLED && profile?.status !== "approved") redirect("/pending");
+  if (status === "suspended") redirect("/suspended");
+  if (waitlistOn && status !== "approved") redirect("/pending");
 
   // Maintenance mode check (skips for admin section — admin uses its own route).
   try {
@@ -139,7 +158,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <PresenceProvider currentUserId={user.id}>
       <NotificationsProvider currentUserId={user.id} cohortId={cohortIdForDots}>
         <TierProvider>
-        <TourProvider tourStep={tourStep} tourCompleted={tourCompleted}>
+        <TourProvider tourStep={tourStep} tourCompleted={tourCompleted} startFresh={startFresh}>
         <div className="min-h-screen root-layout">
           <Sidebar
             currentUser={{
