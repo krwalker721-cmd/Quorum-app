@@ -8,6 +8,7 @@ import TerminalFooter from "@/components/ui/TerminalFooter";
 import PersonAvatar from "@/components/ui/PersonAvatar";
 import NetworkGraph from "@/components/ui/NetworkGraph";
 import HomeCheckinHero from "@/components/home/HomeCheckinHero";
+import ui from "@/components/ui/sleek.module.css";
 import { STAGE_COLOR, initials, timeAgo } from "@/lib/stage";
 
 export const dynamic = "force-dynamic";
@@ -264,13 +265,20 @@ export default async function HomePage() {
 
   return (
     <>
-      <TopBar title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <TopBar sleek title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <UpgradeToast />
 
-      <div className="page-pad" style={{ padding: "14px 24px 8px", maxWidth: 1600 }} data-tour-id="home-tiles">
+      <div
+        className={`page-pad ${ui.pageGlow}`}
+        style={{ padding: "20px 24px 8px", maxWidth: 1600 }}
+        data-tour-id="home-tiles"
+      >
         {/* Header */}
-        <div className="mb-3">
-          <h1 style={{ fontSize: 17, fontWeight: 500, color: "var(--text-primary)" }}>
+        <div className="mb-4">
+          <h1
+            className={`${ui.titleGradient} ${ui.balance}`}
+            style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15 }}
+          >
             Good to see you, {firstName}
           </h1>
           <p
@@ -318,9 +326,10 @@ export default async function HomePage() {
                 <Link
                   key={r.key}
                   href={r.href}
-                  className="flex items-center gap-2.5"
+                  className={`flex items-center gap-2.5 ${ui.row}`}
                   style={{
-                    padding: "10px 0",
+                    padding: "10px 10px",
+                    margin: "0 -10px",
                     borderBottom: i < needsRows.length - 1 ? "0.5px solid var(--border-default)" : "none",
                     textDecoration: "none",
                   }}

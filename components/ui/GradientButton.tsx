@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+import ui from "./sleek.module.css";
 
 const SOLID: CSSProperties = {
   background:
@@ -32,11 +33,15 @@ export default function GradientButton({
   className = "",
   style,
   type = "button",
+  glow = false,
 }: {
   children: ReactNode;
   href?: string;
   onClick?: () => void;
   variant?: "solid" | "ghost";
+  /** The landing page's soft amber glow. Opt-in while the sleek finish rolls
+   *  out page by page (home first). */
+  glow?: boolean;
   size?: number;
   className?: string;
   style?: CSSProperties;
@@ -58,15 +63,17 @@ export default function GradientButton({
     ...style,
   };
 
+  const classes = `${glow ? (variant === "solid" ? ui.glow : ui.glowGhost) : ""} ${className}`;
+
   if (href) {
     return (
-      <Link href={href} className={className} style={base}>
+      <Link href={href} className={classes} style={base}>
         {children}
       </Link>
     );
   }
   return (
-    <button type={type} onClick={onClick} className={className} style={base}>
+    <button type={type} onClick={onClick} className={classes} style={base}>
       {children}
     </button>
   );

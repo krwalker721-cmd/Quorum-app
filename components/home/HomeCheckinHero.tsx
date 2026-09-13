@@ -26,8 +26,8 @@ export default function HomeCheckinHero({
         >
           weekly check-in
         </p>
-        <p style={{ fontSize: 12, lineHeight: 1.4, color: "#f5ede0" }}>{prompt}</p>
-        <GradientButton onClick={() => setOpen(true)} style={{ marginTop: 10 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.45, color: "#f5ede0" }}>{prompt}</p>
+        <GradientButton glow onClick={() => setOpen(true)} style={{ marginTop: 11 }}>
           answer →
         </GradientButton>
       </Tile>

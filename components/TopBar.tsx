@@ -3,6 +3,7 @@ import NewPostButton from "@/components/NewPostButton";
 import SignOutButton from "@/components/SignOutButton";
 import TopBarTierLink from "@/components/TopBarTierLink";
 import MobileNavButton from "@/components/MobileNavButton";
+import ui from "@/components/ui/sleek.module.css";
 
 // One quiet line of context per page so the topbar orients you instead of
 // just naming the route. Falls back to nothing for unmapped pages.
@@ -21,23 +22,28 @@ export default function TopBar({
   tier,
   userId,
   defaultPostType,
+  sleek = false,
 }: {
   title: string;
   tier: string;
   userId: string;
   defaultPostType?: "cohort" | "pulse";
+  /** Glass finish from the landing page (translucent + blur). Opt-in while it
+   *  rolls out page by page (home first). */
+  sleek?: boolean;
 }) {
   const context = PAGE_CONTEXT[title];
   return (
     <div
-      className="app-topbar flex items-center justify-between px-6 sticky top-0 z-30"
+      className={`app-topbar flex items-center justify-between px-6 sticky top-0 z-30 ${sleek ? ui.glass : ""}`}
       style={{
         // Fixed height so full-bleed pages (messages, cohort room) can size
         // themselves against a known chrome height. Keep in sync with
         // --topbar-h in globals.css.
         height: "var(--topbar-h, 64px)",
-        background: "var(--bg-surface)",
-        borderBottom: "1px solid var(--border-default)",
+        ...(sleek
+          ? {}
+          : { background: "var(--bg-surface)", borderBottom: "1px solid var(--border-default)" }),
       }}
     >
       <div className="flex items-center gap-2 min-w-0">
