@@ -770,7 +770,9 @@ activation and DNS.
       - [x] Pulse: approved, on branch `feat/app-polish-pulse` (`3462b92`).
       - [x] Cohort: approved, on branch `feat/app-polish-cohort` (`c791a2c`,
             `f950094`, which also fixes zoneless timestamps; see below).
-      - [ ] Collab board (largest: ~14 files).
+      - [x] Collab board and project room: approved (`1e36b32`). Also fixed
+            overlapping owner controls, a nested link, "1 docs", and zoneless
+            times in the live line and the room's start date.
       - [ ] Vault, then Messages, Referrals, Profile, Settings.
       - [ ] The shared modals (`modal-shell` in `globals.css`): new post, room
             post, invite, and the rest. Deliberately left for one pass.
