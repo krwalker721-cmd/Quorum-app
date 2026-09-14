@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTier } from "@/contexts/TierContext";
-import TerminalFooter from "@/components/ui/TerminalFooter";
+import NoGrid from "@/components/ui/NoGrid";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
+import { parseDbTime } from "@/lib/stage";
 import {
   REFERRAL_MILESTONES,
   REFERRAL_LINK_GATES,
@@ -54,52 +57,10 @@ interface ReferralData {
 // the two used to describe different reward schemes.
 const MILESTONES = REFERRAL_MILESTONES;
 
-const statusStyles = {
-  active: {
-    background: "rgba(34,197,94,0.10)",
-    color: "#22c55e",
-    border: "1px solid rgba(34,197,94,0.20)",
-  },
-  pending: {
-    background: "rgba(245,158,11,0.10)",
-    color: "#f59e0b",
-    border: "1px solid rgba(245,158,11,0.20)",
-  },
-  inactive: {
-    background: "#21262d",
-    color: "#8b949e",
-    border: "1px solid #30363d",
-  },
-  churned: {
-    background: "#161b22",
-    color: "#484f58",
-    border: "1px solid #21262d",
-  },
-};
-
-const MONO = "JetBrains Mono, monospace";
-const SANS = "Space Grotesk, sans-serif";
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
-function relativeDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "today";
-  if (diffDays === 1) return "yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return `${Math.floor(diffDays / 30)} months ago`;
-}
-
-function getResetDate(): string {
-  const now = new Date();
-  const firstOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return firstOfNextMonth.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+// The real loop, from lib/referral-model.ts. The old version said rewards
+// "unlock as milestones hit", which described the badge ladder as the payout and
+// left out the thing that actually pays: the standing monthly bonus.
+const HOW_IT_WORKS = HOW_REFERRALS_WORK.map((step, i) => ({ n: i + 1, ...step }));
 
 const STATUS_ORDER: Record<string, number> = {
   active: 0,
@@ -108,93 +69,85 @@ const STATUS_ORDER: Record<string, number> = {
   churned: 3,
 };
 
-// ─── shared pieces ───────────────────────────────────────────────────────────
+const STATUS_CHIP: Record<string, React.CSSProperties> = {
+  active: { color: "#4ade80", borderColor: "rgba(34, 197, 94, 0.35)", background: "rgba(34, 197, 94, 0.08)" },
+  pending: { color: "#f8c56a", borderColor: "rgba(245, 158, 11, 0.35)", background: "rgba(245, 158, 11, 0.08)" },
+  inactive: {},
+  churned: { color: "var(--text-muted)" },
+};
 
-function StatusPill({ status }: { status: string }) {
-  const style = statusStyles[status as keyof typeof statusStyles] || statusStyles.inactive;
-  return (
-    <span
-      style={{
-        ...style,
-        fontFamily: MONO,
-        fontSize: "9px",
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-        padding: "3px 8px",
-        borderRadius: "3px",
-      }}
-    >
-      {status}
-    </span>
-  );
+const STATUS_LABEL: Record<string, string> = {
+  active: "Active",
+  pending: "Pending",
+  inactive: "Inactive",
+  churned: "Left",
+};
+
+const MUTED: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)" };
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+// created_at can arrive zoneless (UTC); parseDbTime reads it as UTC.
+function relativeDate(dateString: string): string {
+  const diffMs = Date.now() - parseDbTime(dateString).getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) return "today";
+  if (diffDays === 1) return "yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return `${Math.floor(diffDays / 30)} months ago`;
 }
 
 // ─── loading + error ─────────────────────────────────────────────────────────
 
-function SkeletonBlock({ width, height, style }: { width: string | number; height: number; style?: React.CSSProperties }) {
+function SkeletonBlock({ height, style }: { height: number; style?: React.CSSProperties }) {
   return (
     <div
-      style={{
-        width,
-        height,
-        background: "#21262d",
-        borderRadius: 12,
-        animation: "shimmer 1.5s infinite",
-        ...style,
-      }}
+      aria-hidden
+      style={{ height, borderRadius: 12, background: "rgba(255, 255, 255, 0.04)", ...style }}
     />
+  );
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className={`page-pad ${ui.pageGlow}`}
+      style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+    >
+      <NoGrid />
+      {children}
+    </div>
   );
 }
 
 function LoadingState() {
   return (
-    <div className="page-pad" style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
-      <style>{`@keyframes shimmer { 0% { opacity: 0.4 } 50% { opacity: 0.7 } 100% { opacity: 0.4 } }`}</style>
-      <SkeletonBlock width={200} height={32} style={{ marginBottom: 24 }} />
-      <SkeletonBlock width="100%" height={96} style={{ marginBottom: 24 }} />
-      <div style={{ display: "flex", gap: 24 }}>
-        <div style={{ flex: 1.4 }}>
-          {[0, 1, 2].map((i) => (
-            <SkeletonBlock key={i} width="100%" height={80} style={{ marginBottom: 16 }} />
-          ))}
-        </div>
-        <div style={{ flex: 1 }}>
-          {[0, 1].map((i) => (
-            <SkeletonBlock key={i} width="100%" height={120} style={{ marginBottom: 16 }} />
-          ))}
-        </div>
+    <Shell>
+      <SkeletonBlock height={34} style={{ width: 200, marginBottom: 24 }} />
+      <SkeletonBlock height={150} style={{ marginBottom: 16 }} />
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-4">
+        <SkeletonBlock height={260} />
+        <SkeletonBlock height={260} />
       </div>
-    </div>
+    </Shell>
   );
 }
 
 function ErrorState() {
   return (
-    <div
-      style={{
-        padding: "80px 24px",
-        textAlign: "center",
-        fontFamily: MONO,
-        fontSize: 13,
-        color: "#f85149",
-      }}
-    >
-      // failed to load referral data — try refreshing
-    </div>
+    <Shell>
+      <p style={{ fontSize: 14, color: "#f87171", padding: "48px 0", textAlign: "center" }}>
+        Couldn&apos;t load your referrals. Try refreshing.
+      </p>
+    </Shell>
   );
 }
-
-// ─── how it works ────────────────────────────────────────────────────────────
-
-// The real loop, from lib/referral-model.ts. The old version said rewards
-// "unlock as milestones hit", which described the badge ladder as the payout and
-// left out the thing that actually pays: the standing monthly bonus.
-const HOW_IT_WORKS = HOW_REFERRALS_WORK.map((step, i) => ({ n: i + 1, ...step }));
 
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function ReferralsDashboard() {
-  const router = useRouter();
   const { hasFullAccess } = useTier();
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -247,441 +200,311 @@ export default function ReferralsDashboard() {
   const sortedReferrals = [...referrals].sort((a, b) => {
     const orderDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
     if (orderDiff !== 0) return orderDiff;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return parseDbTime(b.created_at).getTime() - parseDbTime(a.created_at).getTime();
   });
 
   const conversionPct = totalCount > 0 ? (activeCount / totalCount) * 100 : 0;
-
+  const bonusText = bonusIsFree
+    ? "Free every month"
+    : monthlyBonus > 0
+      ? `$${monthlyBonus} off a month`
+      : "No bonus yet";
 
   return (
-    <div className="page-pad" style={{ padding: "24px", maxWidth: 960, margin: "0 auto" }}>
-      {/* ─── header — compact; the topbar already names the page ────────────── */}
-      <div style={{ marginBottom: 18 }}>
-        <h1 style={{ fontFamily: SANS, fontSize: 16, fontWeight: 500, color: "#e6edf3", margin: 0, lineHeight: 1.2 }}>
-          referrals
+    <Shell>
+      {/* Header */}
+      <div style={{ marginBottom: 22 }}>
+        <h1
+          className={ui.titleGradient}
+          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+        >
+          Referrals
         </h1>
-        <p style={{ fontFamily: MONO, fontSize: 9, color: "#6e7681", marginTop: 4, letterSpacing: "0.03em" }}>
-          bring someone who belongs here
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>
+          Bring someone who belongs here. Your membership gets cheaper while they stay.
         </p>
       </div>
 
-      {/* ─── lapsed notice ──────────────────────────────────────────────────── */}
-      {/* Gated on the entitlement bit: a card-free trial reports tier "free" and
-          must not be told its membership has lapsed. */}
+      {/* Lapsed notice. Gated on the entitlement bit: a card-free trial reports
+          tier "free" and must not be told its membership has lapsed. */}
       {!hasFullAccess && (
         <div
+          className="flex items-center justify-between gap-4 flex-wrap"
           style={{
-            background: "rgba(245,158,11,0.06)",
-            border: "1px solid rgba(245,158,11,0.22)",
+            background: "rgba(245, 158, 11, 0.05)",
+            border: "1px solid rgba(245, 158, 11, 0.22)",
             borderRadius: 12,
-            padding: "14px 16px",
-            marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
+            padding: "14px 18px",
+            marginBottom: 16,
           }}
-          className="stack-flex-sm"
         >
-          <div>
-            <p style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#f8c56a", marginBottom: 4, letterSpacing: "0.08em" }}>
-              // membership lapsed
-            </p>
-            <p style={{ fontFamily: SANS, fontSize: 13, color: "#8b949e", marginBottom: 0 }}>
-              Your referral link is paused while your membership is inactive. Reactivate to keep bringing founders in — and to keep earning your monthly bonus.
+          <div className="min-w-0" style={{ flex: "1 1 320px" }}>
+            <p style={{ fontSize: 13, fontWeight: 500, color: "#f8c56a" }}>Membership lapsed</p>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)", marginTop: 2 }}>
+              Your referral link is paused while your membership is inactive. Reactivate to keep
+              bringing founders in, and to keep your monthly bonus.
             </p>
           </div>
-          <span
-            onClick={() => router.push("/pricing")}
-            style={{ fontFamily: MONO, fontSize: 11, color: "#f8c56a", cursor: "pointer", whiteSpace: "nowrap" }}
-          >
+          <Link href="/pricing" className={ui.softBtn}>
             Reactivate →
-          </span>
+          </Link>
         </div>
       )}
 
-      {/* ─── prominent refer CTA ────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 24 }} data-tour-id="referrals-link">
-        <div
-          style={{
-            background: "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)",
-            border: "0.5px solid rgba(245,158,11,.3)",
-            borderRadius: 12,
-            padding: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 20,
-          }}
-          className="stack-flex-sm"
-        >
-          <div>
-            <div
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                color: "#f8c56a",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                marginBottom: 6,
-              }}
-            >
-              your invite link
-            </div>
-            <p style={{ fontFamily: SANS, fontSize: 14, color: "#f5ede0", margin: 0 }}>
-              Bring someone who belongs here. Get rewarded when they stay.
-            </p>
-            <p style={{ fontFamily: MONO, fontSize: 11, color: "#8b949e", marginTop: 10, letterSpacing: "0.04em" }}>
-              {totalCount} invited · <span style={{ color: "#22c55e" }}>{activeCount} joined</span> · <span style={{ color: "#f8c56a" }}>{bonusIsFree ? "free every month" : monthlyBonus > 0 ? `$${monthlyBonus} off/mo` : "no bonus yet"}</span>
-            </p>
-          </div>
-          <button
-            onClick={handleCopy}
-            disabled={!linkActive}
-            style={{
-              background: linkActive
-                ? "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))"
-                : "#21262d",
-              color: linkActive ? "#1a1204" : "#484f58",
-              fontFamily: MONO,
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "0.06em",
-              padding: "12px 24px",
-              border: "none",
-              borderRadius: 10,
-              cursor: linkActive ? "pointer" : "default",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
-            {copied ? "copied ✓" : "copy link →"}
-          </button>
-        </div>
-        {/* Which gates are still open, straight from the server's own answer.
-            Replaces a single "make your first post" line that named one of the
-            three conditions and got the unlock rule wrong. */}
-        {!linkActive && (
-          <div
-            style={{
-              background: "#161b22",
-              border: "1px solid #21262d",
-              borderRadius: "0 0 10px 10px",
-              borderTop: "none",
-              padding: "12px 16px",
-              marginTop: -2,
-            }}
-          >
-            <p
-              style={{
-                fontFamily: MONO,
-                fontSize: 9,
-                textTransform: "uppercase",
-                color: "#484f58",
-                letterSpacing: "0.1em",
-                marginBottom: 8,
-              }}
-            >
-              // unlock your link
-            </p>
-            {REFERRAL_LINK_GATES.map((gate) => {
-              const done = !!gates?.[gate.key];
-              return (
-                <div
-                  key={gate.key}
-                  style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "3px 0" }}
-                >
-                  <span
-                    style={{
-                      fontFamily: MONO,
-                      fontSize: 10,
-                      color: done ? "#22c55e" : "#484f58",
-                      flexShrink: 0,
-                      width: 12,
-                    }}
-                  >
-                    {done ? "✓" : "○"}
-                  </span>
-                  <span>
-                    <span
-                      style={{
-                        fontFamily: SANS,
-                        fontSize: 12,
-                        color: done ? "#6e7681" : "#e6edf3",
-                        display: "block",
-                        textDecoration: done ? "line-through" : "none",
-                      }}
-                    >
-                      {gate.title}
-                    </span>
-                    {!done && (
-                      <span
-                        style={{ fontFamily: SANS, fontSize: 11, color: "#6e7681", display: "block" }}
-                      >
-                        {gate.sub}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ─── two-column layout ──────────────────────────────────────────────── */}
-      <div className="stack-flex-md" style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-        {/* LEFT */}
-        <div style={{ flex: "1.4", minWidth: 0 }}>
-          {/* referral link display */}
-          <div
-            style={{
-              background: "#0d1117",
-              border: `1px solid ${linkActive ? "#30363d" : "#21262d"}`,
-              borderRadius: 12,
-              padding: "10px 14px",
-              fontFamily: MONO,
-              fontSize: 12,
-              color: linkActive ? "#8b949e" : "#484f58",
-              letterSpacing: "0.04em",
-              marginBottom: 24,
-              opacity: linkActive ? 1 : 0.5,
-              userSelect: linkActive ? "all" : "none",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {link || "quorum.app/signup?ref=••••••"}
-          </div>
-
-          {/* how it works */}
-          <p style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.1em", marginBottom: 12 }}>
-            // how it works
+      {/* Invite link: the one hero tile on the page */}
+      <div data-tour-id="referrals-link" style={{ marginBottom: 16 }}>
+        <Tile gradient kicker="Your invite link" kickerColor="#f8c56a" padding="22px 24px">
+          <p style={{ fontSize: 15, color: "var(--text-primary)" }}>
+            Bring someone who belongs here. Get rewarded when they stay.
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
-            {HOW_IT_WORKS.map((step) => (
-              <div key={step.n} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <div
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: "50%",
-                    background: "rgba(245,158,11,0.12)",
-                    border: "1px solid rgba(245,158,11,0.3)",
-                    color: "#f59e0b",
-                    fontFamily: MONO,
-                    fontSize: 11,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  {step.n}
-                </div>
-                <div>
-                  <p style={{ fontFamily: SANS, fontSize: 13, color: "#e6edf3", margin: 0 }}>{step.title}</p>
-                  <p style={{ fontFamily: SANS, fontSize: 12, color: "#6e7681", margin: 0 }}>{step.sub}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* your referrals */}
-          <p style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.1em", marginBottom: 6 }}>
-            // your referrals
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>
+            {totalCount} invited · <span style={{ color: "#4ade80" }}>{activeCount} joined</span> ·{" "}
+            <span style={{ color: "#f8c56a" }}>{bonusText}</span>
           </p>
-          {referrals.length === 0 ? (
+
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap" style={{ marginTop: 16 }}>
             <div
+              className="flex-1 min-w-0 truncate"
               style={{
-                background: "#161b22",
-                border: "1px dashed #30363d",
-                borderRadius: 12,
-                padding: 32,
-                textAlign: "center",
+                fontSize: 13,
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                background: "rgba(0, 0, 0, 0.2)",
+                color: linkActive ? "var(--text-secondary)" : "var(--text-muted)",
+                userSelect: linkActive ? "all" : "none",
+                flexBasis: 240,
               }}
             >
-              <p style={{ fontFamily: MONO, fontSize: 11, color: "#484f58", marginBottom: 8 }}>// no referrals yet</p>
-              <p style={{ fontFamily: SANS, fontSize: 13, color: "#6e7681" }}>
-                Share your link with founders who belong in this room.
-              </p>
+              {linkActive && link ? link : "Your link appears here once it unlocks."}
             </div>
-          ) : (
-            <>
-              <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginBottom: 6 }}>
-                {activeCount} of {totalCount} referrals became active
+            <button
+              type="button"
+              onClick={handleCopy}
+              disabled={!linkActive}
+              className={ui.primaryBtn}
+              style={{ padding: "10px 18px" }}
+            >
+              {copied ? "Copied ✓" : "Copy link"}
+            </button>
+          </div>
+
+          {/* Which gates are still open, straight from the server's own answer.
+              Replaces a single "make your first post" line that named one of the
+              three conditions and got the unlock rule wrong. */}
+          {!linkActive && (
+            <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(245, 158, 11, 0.18)" }}>
+              <p className={ui.label} style={{ marginBottom: 8 }}>
+                Unlock your link
               </p>
-              <div style={{ height: 3, background: "#21262d", borderRadius: 2, overflow: "hidden", marginBottom: 16 }}>
-                <div style={{ height: "100%", width: `${conversionPct}%`, background: "#22c55e" }} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {sortedReferrals.map((r) => {
-                  const s = r.status;
-                  const name = r.referred?.full_name || r.referred?.username || "founder";
-                  const username = r.referred?.username ?? "unknown";
-                  const initial = (name[0] || "?").toUpperCase();
-                  const avatarStyle: React.CSSProperties =
-                    s === "active"
-                      ? { background: "rgba(34,197,94,0.12)", color: "#22c55e" }
-                      : s === "pending"
-                      ? { background: "rgba(245,158,11,0.12)", color: "#f59e0b" }
-                      : { background: "#21262d", color: "#484f58" };
+              <div className="space-y-2">
+                {REFERRAL_LINK_GATES.map((gate) => {
+                  const done = !!gates?.[gate.key];
                   return (
-                    <div
-                      key={r.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        background: "#161b22",
-                        border: "1px solid #21262d",
-                        borderRadius: 12,
-                        padding: "14px 16px",
-                      }}
-                    >
-                      <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0 }}>
-                        <div
+                    <div key={gate.key} className="flex gap-2.5 items-start">
+                      <span
+                        aria-hidden
+                        style={{ fontSize: 13, width: 14, flexShrink: 0, color: done ? "#4ade80" : "var(--text-muted)" }}
+                      >
+                        {done ? "✓" : "○"}
+                      </span>
+                      <span>
+                        <span
                           style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "50%",
-                            ...avatarStyle,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontFamily: MONO,
-                            fontSize: 12,
-                            flexShrink: 0,
+                            display: "block",
+                            fontSize: 14,
+                            color: done ? "var(--text-muted)" : "var(--text-primary)",
+                            textDecoration: done ? "line-through" : "none",
                           }}
                         >
-                          {initial}
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <p
-                            style={{
-                              fontFamily: SANS,
-                              fontSize: 13,
-                              color: "#e6edf3",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              margin: 0,
-                            }}
-                          >
-                            {name}
-                          </p>
-                          <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", margin: 0 }}>
-                            joined {relativeDate(r.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
-                        {s === "pending" && (
-                          <span style={{ fontFamily: MONO, fontSize: 9, color: "#f59e0b" }}>// hasn&apos;t activated yet</span>
+                          {gate.title}
+                          <span className="sr-only">{done ? " (done)" : " (not yet)"}</span>
+                        </span>
+                        {!done && (
+                          <span style={{ display: "block", fontSize: 13, color: "var(--text-muted)" }}>
+                            {gate.sub}
+                          </span>
                         )}
-                        <StatusPill status={s} />
-                      </div>
+                      </span>
                     </div>
                   );
                 })}
               </div>
-            </>
+            </div>
           )}
+        </Tile>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-4 items-start">
+        {/* LEFT */}
+        <div className="min-w-0 space-y-4">
+          <Tile kicker="How it works">
+            <div className="space-y-3.5">
+              {HOW_IT_WORKS.map((step) => (
+                <div key={step.n} className="flex gap-3 items-start">
+                  <div
+                    aria-hidden
+                    className="flex items-center justify-center shrink-0"
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      background: "rgba(245, 158, 11, 0.1)",
+                      border: "1px solid rgba(245, 158, 11, 0.3)",
+                      color: "#f8c56a",
+                      fontSize: 12,
+                    }}
+                  >
+                    {step.n}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 14, color: "var(--text-primary)" }}>{step.title}</p>
+                    <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 1 }}>
+                      {step.sub}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Tile>
+
+          <Tile
+            kicker="Your referrals"
+            right={totalCount > 0 ? `${activeCount} of ${totalCount} active` : undefined}
+          >
+            {referrals.length === 0 ? (
+              <div className={ui.empty}>
+                <p className={ui.emptyTitle}>No referrals yet.</p>
+                <p className={ui.emptySub}>Share your link with founders who belong in this room.</p>
+              </div>
+            ) : (
+              <>
+                <div className={ui.barTrack} style={{ marginBottom: 14 }}>
+                  <div className={ui.barFill} style={{ width: `${conversionPct}%`, background: "#22c55e" }} />
+                </div>
+                <div className="space-y-1" style={{ margin: "0 -10px" }}>
+                  {sortedReferrals.map((r) => {
+                    const s = r.status;
+                    const name = r.referred?.full_name || r.referred?.username || "A founder";
+                    const initial = (name[0] || "?").toUpperCase();
+                    const tint =
+                      s === "active"
+                        ? { background: "rgba(34, 197, 94, 0.12)", color: "#4ade80" }
+                        : s === "pending"
+                          ? { background: "rgba(245, 158, 11, 0.12)", color: "#f8c56a" }
+                          : { background: "rgba(255, 255, 255, 0.05)", color: "var(--text-muted)" };
+                    return (
+                      <div key={r.id} className={`flex items-center gap-3 ${ui.row}`} style={{ padding: "10px" }}>
+                        <div
+                          aria-hidden
+                          className="flex items-center justify-center shrink-0"
+                          style={{ width: 34, height: 34, borderRadius: "50%", fontSize: 13, ...tint }}
+                        >
+                          {initial}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate" style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                            {name}
+                          </p>
+                          <p style={MUTED}>
+                            Joined {relativeDate(r.created_at)}
+                            {s === "pending" ? " · hasn't activated yet" : ""}
+                          </p>
+                        </div>
+                        <span className={`${ui.chip} shrink-0`} style={STATUS_CHIP[s] ?? {}}>
+                          {STATUS_LABEL[s] ?? s}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Tile>
         </div>
 
-        {/* RIGHT (sticky) */}
-        <div style={{ flex: "1", position: "sticky", top: 24, minWidth: 0 }}>
-          {/* milestones */}
-          <p style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", color: "#f59e0b", letterSpacing: "0.12em", marginBottom: 10 }}>
-            // referral milestones
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {MILESTONES.map((m) => {
-              const done = totalCount >= m.count;
-              const isTarget = !done && nextMilestone?.count === m.count;
-              return (
-                <div
-                  key={m.count}
-                  style={{
-                    background: "#161b22",
-                    border: "1px solid #21262d",
-                    borderLeft: `2px solid ${done ? "#22c55e" : isTarget ? "#f59e0b" : "#21262d"}`,
-                    borderRadius: "0 4px 4px 0",
-                    padding: "12px 14px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 10,
-                  }}
-                >
-                  <div style={{ minWidth: 0 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 11, color: done ? "#22c55e" : isTarget ? "#f59e0b" : "#8b949e" }}>
-                      {m.count} {m.count === 1 ? "referral" : "referrals"}
+        {/* RIGHT (sticky on desktop) */}
+        <div className="min-w-0 space-y-4 lg:sticky" style={{ top: "calc(var(--topbar-h, 64px) + 16px)" }}>
+          <Tile kicker="Milestones">
+            <div className="space-y-1">
+              {MILESTONES.map((m) => {
+                const done = totalCount >= m.count;
+                const isTarget = !done && nextMilestone?.count === m.count;
+                return (
+                  <div
+                    key={m.count}
+                    className="relative flex items-center justify-between gap-3"
+                    style={{ padding: "8px 0 8px 12px" }}
+                  >
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-2 bottom-2 rounded"
+                      style={{
+                        width: 2,
+                        background: done ? "#22c55e" : isTarget ? "#f59e0b" : "rgba(255, 255, 255, 0.08)",
+                      }}
+                    />
+                    <div className="min-w-0">
+                      <p style={{ fontSize: 14, color: done ? "#4ade80" : isTarget ? "#f8c56a" : "var(--text-secondary)" }}>
+                        {m.count} {m.count === 1 ? "referral" : "referrals"}
+                      </p>
+                      <p style={{ ...MUTED, marginTop: 1 }}>{m.reward}</p>
+                    </div>
+                    <span className="shrink-0" style={{ fontSize: 13 }}>
+                      {done ? (
+                        <span style={{ color: "#4ade80" }}>✓ Earned</span>
+                      ) : isTarget ? (
+                        <span style={{ color: "#f8c56a" }}>
+                          {totalCount} of {m.count}
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
+                      )}
                     </span>
-                    <p style={{ fontFamily: SANS, fontSize: 11, color: "#6e7681", margin: "2px 0 0" }}>{m.reward}</p>
                   </div>
-                  <span style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
-                    {done ? (
-                      <span style={{ fontFamily: MONO, fontSize: 10, color: "#22c55e" }}>✓ earned</span>
-                    ) : isTarget ? (
-                      <span style={{ fontFamily: MONO, fontSize: 10, color: "#f59e0b" }}>
-                        {totalCount}/{m.count}
-                      </span>
-                    ) : (
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: "#30363d" }}>—</span>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </Tile>
 
-          {/* standing bonus + the ladder */}
-          <div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 12, padding: 16, marginTop: 16 }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", color: "#484f58", letterSpacing: "0.08em" }}>
-              // your monthly bonus
-            </span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}>
+          <Tile kicker="Your monthly bonus">
+            <div className="flex items-baseline gap-2">
               {bonusIsFree ? (
-                <span style={{ fontFamily: SANS, fontSize: 28, color: "#22c55e" }}>free</span>
+                <span style={{ fontSize: 30, fontWeight: 600, color: "#4ade80" }}>Free</span>
               ) : (
                 <>
-                  <span style={{ fontFamily: SANS, fontSize: 28, color: "#f59e0b" }}>${monthlyBonus}</span>
-                  <span style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e" }}>off every month</span>
+                  <span style={{ fontSize: 30, fontWeight: 600, color: "#f8c56a" }}>${monthlyBonus}</span>
+                  <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>off every month</span>
                 </>
               )}
             </div>
-            <p style={{ fontFamily: MONO, fontSize: 10, color: "#484f58", marginTop: 4 }}>
-              // {activeCount} active {activeCount === 1 ? "referral" : "referrals"}
+            <p style={{ ...MUTED, marginTop: 4 }}>
+              {activeCount} active {activeCount === 1 ? "referral" : "referrals"}
               {!bonusIsFree && monthlyBonus > 0 ? ` · you pay $${memberPrice - monthlyBonus}` : ""}
             </p>
 
-            <div style={{ marginTop: 12, borderTop: "1px solid #21262d", paddingTop: 12 }}>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
               {[...bonusLadder].reverse().map((t) => {
                 const held = activeCount >= t.min;
-                const next = !held && activeCount < t.min;
-                const c = held ? "#f59e0b" : next ? "#8b949e" : "#484f58";
                 return (
-                  <div key={t.min} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0" }}>
-                    <span style={{ fontFamily: SANS, fontSize: 12, color: c }}>
-                      {t.min}+ active
-                    </span>
-                    <span style={{ fontFamily: MONO, fontSize: 11, color: c }}>
-                      {t.amountOff === null ? "free" : `$${t.amountOff} off / mo`}
+                  <div key={t.min} className="flex justify-between items-center" style={{ padding: "5px 0", fontSize: 13 }}>
+                    <span style={{ color: held ? "#f8c56a" : "var(--text-secondary)" }}>{t.min}+ active</span>
+                    <span style={{ color: held ? "#f8c56a" : "var(--text-muted)" }}>
+                      {t.amountOff === null ? "Free" : `$${t.amountOff} off a month`}
                     </span>
                   </div>
                 );
               })}
             </div>
 
-            <p style={{ fontFamily: SANS, fontSize: 12, color: "#8b949e", marginTop: 12, lineHeight: 1.5 }}>
-              Your bonus tracks how many of your referrals are <strong style={{ color: "#e6edf3" }}>still active</strong> —
-              it recalculates as people come and go. Fill a room of 12 and Quorum is free.
+            <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 12 }}>
+              Your bonus tracks how many of your referrals are{" "}
+              <strong style={{ color: "var(--text-primary)", fontWeight: 500 }}>still active</strong>, and
+              recalculates as people come and go. Fill a room of 12 and Quorum is free.
             </p>
-          </div>
+          </Tile>
         </div>
       </div>
-      <TerminalFooter />
-    </div>
+    </Shell>
   );
 }
