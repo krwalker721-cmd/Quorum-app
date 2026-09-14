@@ -11,6 +11,11 @@ type Sub = {
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   has_stripe_subscription: boolean;
+  /** Paid, or mid-trial. Gate on this, not the tier string (a card-free trial
+   *  reports tier "free"). */
+  has_full_access: boolean;
+  access_reason: "paid" | "trial" | "none";
+  is_trialing: boolean;
 };
 
 function fmtDate(ts: string | null): string {
@@ -29,25 +34,29 @@ function daysLeft(ts: string | null): number {
   return Math.ceil(diff / 86_400_000);
 }
 
+// There is no free tier: an account without a membership or a live trial can
+// read, but its write limits are zero. Say so, rather than naming a plan that
+// doesn't exist.
 function statusText(sub: Sub | null): string {
   if (!sub) return "Loading…";
   if (sub.cancel_at_period_end) return `Cancels ${fmtDate(sub.current_period_end)}`;
-  switch (sub.status) {
-    case "trialing": {
-      const d = daysLeft(sub.trial_ends_at);
-      if (d <= 0) return "Trial ended — add a card to keep your cohort seat";
-      return `Trial ends in ${d} ${d === 1 ? "day" : "days"}`;
-    }
-    case "active":
-      if (sub.tier === "free") return "Free tier";
-      return `Active — next billing ${fmtDate(sub.current_period_end)}`;
-    case "past_due":
-      return "Payment failed — update your card";
-    case "canceled":
-      return "Subscription cancelled";
-    default:
-      return "Free plan — read everything, post within limits";
+  if (sub.status === "past_due") return "Payment failed — update your card";
+  if (sub.status === "trialing") {
+    const d = daysLeft(sub.trial_ends_at);
+    if (d <= 0) return "Trial ended — add a card to keep your cohort seat";
+    return `Trial ends in ${d} ${d === 1 ? "day" : "days"}`;
   }
+  if (sub.access_reason === "paid") {
+    return sub.current_period_end
+      ? `Active — next billing ${fmtDate(sub.current_period_end)}`
+      : "Active";
+  }
+  if (sub.status === "canceled") return "Membership ended — rejoin to post, reply, and message";
+  return "No active membership — join to post, reply, and message";
+}
+
+function upgradeLabel(sub: Sub | null): string {
+  return sub?.is_trialing ? "Choose a plan →" : "Become a member →";
 }
 
 // Compact billing card shown only on the owner's own profile.
@@ -128,7 +137,7 @@ export default function ProfileBilling() {
         {loading
           ? "Opening…"
           : showUpgrade
-            ? "Upgrade to Member →"
+            ? upgradeLabel(sub)
             : "Manage billing & subscription →"}
       </button>
     </div>

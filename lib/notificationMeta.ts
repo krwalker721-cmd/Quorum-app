@@ -47,7 +47,9 @@ const META: Record<string, NotificationMeta> = {
     link: "/pricing",
   },
   trial_expired: {
-    message: "your trial has ended — you're now on the free tier",
+    // There is no free tier: without a membership, an account can read but
+    // not post, reply, or message.
+    message: "your trial has ended — choose a plan to keep posting and messaging",
     color: RED,
     link: "/pricing",
   },
@@ -62,7 +64,7 @@ const META: Record<string, NotificationMeta> = {
     link: "/pricing",
   },
   subscription_cancelled: {
-    message: "your subscription has been cancelled — you're on the free tier",
+    message: "your membership has ended — rejoin to keep posting and messaging",
     color: RED,
     link: "/pricing",
   },

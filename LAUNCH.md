@@ -794,15 +794,27 @@ activation and DNS.
 
 ### Phase 5 — docs drift (anytime, low risk)
 
-- [ ] **[me]** README still describes "part 1: auth + waitlist" on Next 14 — ~105
-      commits stale
-- [ ] **[me]** `.env.local.example` missing `STRIPE_MEMBER_ANNUAL_PRICE_ID` and
-      `STRIPE_FOUNDING_PRICE_ID`, both required by `lib/plans.ts`
-- [ ] **[me]** Next 16 deprecated the `middleware` convention in favor of `proxy`
-- [ ] **[me]** Dead code: `isAdminUnlocked()` on the profile page (see §5)
+- [x] **[me]** README still describes "part 1: auth + waitlist" on Next 14 — ~105
+      commits stale *(Rewritten 2026-09-13: current stack, env table, database
+      setup, deploy order, and how signup and access work.)*
+- [x] **[me]** `.env.local.example` missing `STRIPE_MEMBER_ANNUAL_PRICE_ID` and
+      `STRIPE_FOUNDING_PRICE_ID`, both required by `lib/plans.ts` *(Added, along
+      with `RESEND_API_KEY`, `CRON_SECRET`, and `NEXT_PUBLIC_SENTRY_DSN`, which
+      the code also reads.)*
+- [x] **[me]** Next 16 deprecated the `middleware` convention in favor of `proxy`
+      *(`middleware.ts` → `proxy.ts`, exporting `proxy`; same matcher.)*
+- [x] **[me]** Dead code: `isAdminUnlocked()` on the profile page (see §5)
+      *(Removed with `app/admin/session.ts`. It only widened who could see a
+      "free" tier pill, and nothing set its cookie.)*
 - [x] **[me]** **Favicon is the wrong amber.** *(Fixed 2026-09-13: `app/icon.svg`
       now uses `#f59e0b`, matching `components/LogoMark.tsx`.)*
-- [ ] **[me]** **Billing cards still describe a free tier.**
+- [x] **[me]** **Billing cards still describe a free tier.** *(Fixed
+      2026-09-13: both cards read `access_reason` from `/api/subscription`. An
+      account without access now sees "No active membership" or "Membership
+      ended", and Settings says what's paused instead of an empty usage list.
+      Trial users see "Unlimited" and "Choose a plan", not "Upgrade". The
+      trial-ended and cancelled notifications no longer say "you're now on the
+      free tier" either (`lib/notificationMeta.ts`).)*
       `components/ProfileBilling.tsx` (lines 42, 49) and
       `components/SettingsBilling.tsx` (lines 63, 71) show "Free tier" and "Free
       plan — read everything, post within limits", but there is no free tier — an

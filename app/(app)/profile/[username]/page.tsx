@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isAdminUnlocked } from "@/app/admin/session";
 import TopBar from "@/components/TopBar";
 import Avatar from "@/components/Avatar";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
@@ -79,8 +78,9 @@ export default async function ProfilePage(
   if (!profile) notFound();
 
   const isOwner = profile.id === user.id;
-  const isAdmin = await isAdminUnlocked();
-  const canSeeTier = isOwner || isAdmin;
+  // Only the owner sees their own tier when it's "free"; other viewers see
+  // member/partner labels only.
+  const canSeeTier = isOwner;
   const tab =
     searchParams.tab === "posts"
       ? "posts"
