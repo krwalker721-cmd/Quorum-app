@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ui from "@/components/ui/sleek.module.css";
 
 export default function VouchButton({
   vouchedForId,
@@ -32,17 +33,19 @@ export default function VouchButton({
 
   return (
     <button
+      type="button"
       onClick={toggle}
       disabled={busy}
-      className="font-mono lowercase text-[0.7rem] px-3 py-2 transition-colors disabled:opacity-50 whitespace-nowrap"
-      style={{
-        border: `1px solid ${active ? "#22c55e" : "var(--border)"}`,
-        color: active ? "#22c55e" : "var(--text-muted)",
-        background: active ? "rgba(34,197,94,0.06)" : "transparent",
-      }}
-      title={active ? "you vouched for them" : "vouch for them"}
+      aria-pressed={active}
+      className={ui.ghostBtn}
+      style={
+        active
+          ? { color: "#4ade80", borderColor: "rgba(34, 197, 94, 0.4)", background: "rgba(34, 197, 94, 0.08)" }
+          : undefined
+      }
+      title={active ? "You vouched for them. Click to take it back." : "Vouch for them"}
     >
-      {active ? "◉ vouched" : "◉ vouch"}
+      {active ? "Vouched ✓" : "Vouch"}
     </button>
   );
 }

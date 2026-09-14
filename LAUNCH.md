@@ -776,7 +776,13 @@ activation and DNS.
       - [x] Vault (`3984e47`, live). Also removed invented "a founder saved
             something" cards, fixed /pulse links (cards are `#post-<id>`),
             stacked Notes on phones, and read vault times as UTC.
-      - [ ] Messages, Referrals, Profile, Settings.
+      - [x] Messages (`cda4de1`), Referrals (`081c57c`), Profile: live.
+            Profile also fixes handshake dates showing the day before (a
+            `date` read as UTC midnight), a fingerprint legend whose colours
+            didn't match the chart, cohort links to a route that ignored the
+            id, blank titles for newer projects, and a link-inside-a-link on
+            the Posts tab that broke hydration.
+      - [ ] Settings.
       - [ ] The shared modals (`modal-shell` in `globals.css`): new post, room
             post, invite, and the rest. Deliberately left for one pass.
       - [ ] Update `design/REDESIGN-BUILD-GUIDE.md` to the new look.

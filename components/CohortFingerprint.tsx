@@ -1,14 +1,17 @@
 import type { Fingerprint } from "@/lib/recognition";
 
 // Axis order around the pentagon. Each axis is one post kind; the shape is the
-// proportion of the user's posts in that kind.
-const TYPES: { key: Exclude<keyof Fingerprint, "total">; color: string }[] = [
+// proportion of the user's posts in that kind. Exported so the legend beside
+// the chart uses the same colours as the dots.
+export const FINGERPRINT_TYPES: { key: Exclude<keyof Fingerprint, "total">; color: string }[] = [
   { key: "decision", color: "#f59e0b" },
   { key: "win", color: "#22c55e" },
   { key: "blocker", color: "#f85149" },
   { key: "question", color: "#58a6ff" },
   { key: "update", color: "#8b949e" },
 ];
+
+const TYPES = FINGERPRINT_TYPES;
 
 /**
  * A pentagon radar chart. Each axis represents a post kind; the plotted shape is
@@ -23,8 +26,8 @@ export default function CohortFingerprint({
 }) {
   if (fp.total === 0) {
     return (
-      <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-        post in the room and a shape will emerge.
+      <p style={{ fontSize: 13, color: "var(--text-muted)", maxWidth: size }}>
+        Post in the room and a shape will emerge.
       </p>
     );
   }
@@ -46,6 +49,7 @@ export default function CohortFingerprint({
   });
 
   const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ") + " Z";
+  const guideStroke = "rgba(255, 255, 255, 0.08)";
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
@@ -57,7 +61,7 @@ export default function CohortFingerprint({
             center + maxRadius * scale * Math.sin(angle)
           ).toFixed(1)}`;
         });
-        return <polygon key={scale} points={guide.join(" ")} fill="none" stroke="#21262d" strokeWidth={1} />;
+        return <polygon key={scale} points={guide.join(" ")} fill="none" stroke={guideStroke} strokeWidth={1} />;
       })}
 
       {/* axis spokes */}
@@ -70,14 +74,14 @@ export default function CohortFingerprint({
             y1={center}
             x2={center + maxRadius * Math.cos(angle)}
             y2={center + maxRadius * Math.sin(angle)}
-            stroke="#21262d"
+            stroke={guideStroke}
             strokeWidth={1}
           />
         );
       })}
 
       {/* the fingerprint shape */}
-      <path d={pathD} fill="rgba(245,158,11,0.08)" stroke="#f59e0b" strokeWidth={1.5} strokeLinejoin="round" />
+      <path d={pathD} fill="rgba(245,158,11,0.1)" stroke="#f59e0b" strokeWidth={1.5} strokeLinejoin="round" />
 
       {/* data points */}
       {points.map((p, i) => (

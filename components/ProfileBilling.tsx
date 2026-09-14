@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TierPill from "@/components/TierPill";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
 
 type Sub = {
   tier: "free" | "member" | "partner";
@@ -91,55 +93,17 @@ export default function ProfileBilling() {
   }
 
   return (
-    <div
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border-default)",
-        borderRadius: 4,
-        padding: 20,
-        marginTop: 16,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 12,
-        }}
-      >
-        <span className="font-sans" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
-          Billing &amp; Subscription
-        </span>
-        <TierPill tier={tier} />
-      </div>
-
-      <p
-        className="font-mono"
-        style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 16, letterSpacing: "0.04em" }}
-      >
-        {statusText(sub)}
-      </p>
-
+    <Tile kicker="Billing" right={<TierPill sleek tier={tier} />}>
+      <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>{statusText(sub)}</p>
       <button
+        type="button"
         onClick={handleManageBilling}
         disabled={loading}
-        className="font-mono billing-manage-btn"
-        style={{
-          fontSize: 11,
-          letterSpacing: "0.06em",
-          padding: "10px 16px",
-          width: "100%",
-          textAlign: "left",
-          opacity: loading ? 0.7 : 1,
-        }}
+        className={showUpgrade ? ui.softBtn : ui.ghostBtn}
+        style={{ marginTop: 14 }}
       >
-        {loading
-          ? "Opening…"
-          : showUpgrade
-            ? upgradeLabel(sub)
-            : "Manage billing & subscription →"}
+        {loading ? "Opening…" : showUpgrade ? upgradeLabel(sub) : "Manage billing →"}
       </button>
-    </div>
+    </Tile>
   );
 }
