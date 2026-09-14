@@ -1,18 +1,21 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import LogoMark from "@/components/LogoMark";
+import AuthShell, { AUTH_CARD, AUTH_ERROR, AUTH_LABEL, AUTH_LINK, sentence } from "@/components/AuthShell";
+import ui from "@/components/ui/sleek.module.css";
 import { LEGAL } from "@/lib/legal";
 
 const STAGES = [
-  { value: "idea", label: "idea" },
-  { value: "pre-seed", label: "pre-seed" },
-  { value: "seed", label: "seed" },
-  { value: "series_a", label: "series a" },
+  { value: "idea", label: "Idea" },
+  { value: "pre-seed", label: "Pre-seed" },
+  { value: "seed", label: "Seed" },
+  { value: "series_a", label: "Series A" },
 ];
+
+const HINT: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)", marginTop: 6 };
 
 export default function SignupPage() {
   const router = useRouter();
@@ -86,7 +89,7 @@ export default function SignupPage() {
     });
 
     if (signUpError) {
-      setError(signUpError.message.toLowerCase());
+      setError(sentence(signUpError.message));
       setLoading(false);
       return;
     }
@@ -119,128 +122,161 @@ export default function SignupPage() {
     router.refresh();
   }
 
+  if (awaitingConfirmation) {
+    return (
+      <AuthShell title="Check your email" subtitle={`We sent a link to ${email.trim()}.`}>
+        <div className="space-y-3" style={AUTH_CARD}>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+            Click it and your request is in. There&apos;s nothing else to do here.
+          </p>
+          <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-muted)" }}>
+            No email after a few minutes? Check spam, or{" "}
+            <Link href="/login" style={AUTH_LINK} className="hover:underline">
+              log in
+            </Link>{" "}
+            to resend it.
+          </p>
+        </div>
+      </AuthShell>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <LogoMark size={44} />
-          <h1 className="font-mono lowercase text-text-primary text-lg mt-4 tracking-wide">quorum</h1>
-          <p className="font-mono lowercase text-text-faint text-xs mt-1">request access</p>
+    <AuthShell
+      title="Request access"
+      subtitle="Tell us who you are and what you're building."
+      width={440}
+      footer={
+        <p>
+          Already have an account?{" "}
+          <Link href="/login" style={AUTH_LINK} className="hover:underline">
+            Log in
+          </Link>
+        </p>
+      }
+    >
+      {referrerName && (
+        <div
+          style={{
+            background: "rgba(34, 197, 94, 0.07)",
+            border: "1px solid rgba(34, 197, 94, 0.25)",
+            borderRadius: 12,
+            padding: "12px 16px",
+            marginBottom: 16,
+          }}
+        >
+          <p style={{ fontSize: 13, lineHeight: 1.5, color: "#4ade80" }}>
+            {referrerName} invited you to Quorum. Your first month is on them.
+          </p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4" style={AUTH_CARD}>
+        <div>
+          <label htmlFor="signup-name" style={AUTH_LABEL}>Full name</label>
+          <input
+            id="signup-name"
+            type="text"
+            autoComplete="name"
+            required
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="signup-email" style={AUTH_LABEL}>Email</label>
+          <input
+            id="signup-email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="signup-password" style={AUTH_LABEL}>Password</label>
+          <input
+            id="signup-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <p style={HINT}>At least 8 characters.</p>
+        </div>
+        <div>
+          <label htmlFor="signup-building" style={AUTH_LABEL}>What are you building?</label>
+          <input
+            id="signup-building"
+            type="text"
+            required
+            maxLength={140}
+            value={building}
+            onChange={(e) => setBuilding(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="signup-stage" style={AUTH_LABEL}>Current stage</label>
+          <select id="signup-stage" value={stage} onChange={(e) => setStage(e.target.value)}>
+            {STAGES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="signup-bio" style={AUTH_LABEL}>
+            A line about you <span style={{ color: "var(--text-muted)" }}>(optional)</span>
+          </label>
+          <textarea
+            id="signup-bio"
+            rows={2}
+            maxLength={280}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="e.g. Second-time founder, ex-product at a fintech"
+          />
         </div>
 
-        {awaitingConfirmation && (
-          <div className="bg-card border border-border p-6 space-y-3">
-            <p className="font-mono text-xs text-text-primary lowercase">confirm your email</p>
-            <p className="font-mono text-xs text-text-faint lowercase leading-relaxed">
-              we sent a link to {email.trim().toLowerCase()}. click it and you&apos;re in the
-              queue — nothing else to do here.
-            </p>
-            <p className="font-mono text-xs text-text-faint lowercase leading-relaxed">
-              no email after a few minutes? check spam, or{" "}
-              <Link href="/login" className="text-amber hover:underline">log in</Link> to
-              resend.
-            </p>
-          </div>
-        )}
+        {error && <p role="alert" style={AUTH_ERROR}>{error}</p>}
 
-        {!awaitingConfirmation && referrerName && (
-          <div
-            style={{
-              background: "rgba(34,197,94,0.06)",
-              border: "1px solid rgba(34,197,94,0.2)",
-              borderRadius: "4px",
-              padding: "12px 16px",
-              marginBottom: "24px",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "JetBrains Mono, monospace",
-                fontSize: "11px",
-                color: "#22c55e",
-                letterSpacing: "0.05em",
-                margin: 0,
-              }}
-            >
-              {referrerName} invited you to Quorum — your first month is on them.
-            </p>
-          </div>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-card border border-border p-6 space-y-4"
-          hidden={awaitingConfirmation}
+        {/* A checkbox row, so the label's global block/mono styling is reset. */}
+        <label
+          className="flex items-start gap-2.5 cursor-pointer"
+          style={{ ...AUTH_LABEL, display: "flex", marginBottom: 0, lineHeight: 1.55 }}
         >
-          <div>
-            <label>full name</label>
-            <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          </div>
-          <div>
-            <label>email</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <label>password</label>
-            <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          <div>
-            <label>what are you building?</label>
-            <input type="text" required maxLength={140} value={building} onChange={(e) => setBuilding(e.target.value)} />
-          </div>
-          <div>
-            <label>current stage</label>
-            <select value={stage} onChange={(e) => setStage(e.target.value)}>
-              {STAGES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label>a line about you <span className="text-text-faint">(optional)</span></label>
-            <textarea
-              rows={2}
-              maxLength={280}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="e.g. second-time founder, ex-product at a fintech"
-            />
-          </div>
+          <input
+            type="checkbox"
+            required
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            style={{ marginTop: 3, accentColor: "#f59e0b" }}
+          />
+          <span>
+            I agree to the{" "}
+            <Link href="/terms" target="_blank" style={AUTH_LINK} className="hover:underline">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" style={AUTH_LINK} className="hover:underline">
+              Privacy Policy
+            </Link>
+          </span>
+        </label>
 
-          {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}
-
-          <label className="flex items-start gap-2 cursor-pointer" style={{ lineHeight: 1.6 }}>
-            <input
-              type="checkbox"
-              required
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              style={{ marginTop: 3, accentColor: "var(--accent)" }}
-            />
-            <span className="font-mono text-[0.65rem] text-text-faint lowercase">
-              i agree to the{" "}
-              <Link href="/terms" target="_blank" className="text-amber hover:underline">terms</Link>
-              {" "}and{" "}
-              <Link href="/privacy" target="_blank" className="text-amber hover:underline">privacy policy</Link>
-            </span>
-          </label>
-
-          <button
-            type="submit"
-            disabled={loading || !agreed}
-            className="btn-primary w-full"
-          >
-            {loading ? "..." : "request access"}
-          </button>
-        </form>
-
-        {!awaitingConfirmation && (
-          <p className="font-mono text-xs text-text-faint lowercase text-center mt-6">
-            already have an account?{" "}
-            <Link href="/login" className="text-amber hover:underline">log in</Link>
-          </p>
-        )}
-      </div>
-    </main>
+        <button
+          type="submit"
+          disabled={loading || !agreed}
+          className={`${ui.primaryBtn} w-full`}
+          style={{ padding: "11px 16px" }}
+        >
+          {loading ? "Sending…" : "Request access"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

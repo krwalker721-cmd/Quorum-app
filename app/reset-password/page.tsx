@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import LogoMark from "@/components/LogoMark";
+import AuthShell, { AUTH_CARD, AUTH_ERROR, AUTH_LABEL, sentence } from "@/components/AuthShell";
+import ui from "@/components/ui/sleek.module.css";
 
 // Reached from a recovery link, after /auth/callback has already exchanged the
 // code for a session. The session is what authorizes updateUser() below — so if
@@ -34,11 +35,11 @@ export default function ResetPasswordPage() {
     setError(null);
 
     if (password !== confirm) {
-      setError("passwords don't match");
+      setError("Passwords don't match.");
       return;
     }
     if (password.length < 8) {
-      setError("password must be at least 8 characters");
+      setError("Use at least 8 characters.");
       return;
     }
 
@@ -48,7 +49,7 @@ export default function ResetPasswordPage() {
     setLoading(false);
 
     if (updateError) {
-      setError(updateError.message.toLowerCase());
+      setError(sentence(updateError.message));
       return;
     }
 
@@ -61,63 +62,73 @@ export default function ResetPasswordPage() {
     }, 1200);
   }
 
+  if (checking) {
+    return (
+      <AuthShell title="Choose a new password">
+        <div style={{ ...AUTH_CARD, height: 200 }} />
+      </AuthShell>
+    );
+  }
+
+  if (done) {
+    return (
+      <AuthShell title="Password updated">
+        <div style={AUTH_CARD}>
+          <p style={{ fontSize: 14, color: "#4ade80" }}>You&apos;re all set. Signing you in…</p>
+        </div>
+      </AuthShell>
+    );
+  }
+
+  if (!hasSession) {
+    return (
+      <AuthShell title="This link has expired">
+        <div className="space-y-4" style={AUTH_CARD}>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+            Reset links work once and last an hour. Request a fresh one.
+          </p>
+          <Link href="/forgot-password" className={`${ui.primaryBtn} block w-full`} style={{ padding: "11px 16px" }}>
+            Send a new link
+          </Link>
+        </div>
+      </AuthShell>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-10">
-          <LogoMark size={44} />
-          <h1 className="font-mono lowercase text-text-primary text-lg mt-4 tracking-wide">quorum</h1>
-          <p className="font-mono lowercase text-text-faint text-xs mt-1">new password</p>
+    <AuthShell title="Choose a new password">
+      <form onSubmit={handleSubmit} className="space-y-4" style={AUTH_CARD}>
+        <div>
+          <label htmlFor="reset-password" style={AUTH_LABEL}>New password</label>
+          <input
+            id="reset-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="reset-confirm" style={AUTH_LABEL}>Confirm password</label>
+          <input
+            id="reset-confirm"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
         </div>
 
-        {checking ? (
-          <div className="bg-card border border-border p-6 h-40" />
-        ) : done ? (
-          <div className="bg-card border border-border p-6 space-y-2">
-            <p className="font-mono text-xs text-green-400 lowercase">password updated</p>
-            <p className="font-mono text-xs text-text-faint lowercase">signing you in...</p>
-          </div>
-        ) : !hasSession ? (
-          <div className="bg-card border border-border p-6 space-y-3">
-            <p className="font-mono text-xs text-text-primary lowercase">link expired</p>
-            <p className="font-mono text-xs text-text-faint lowercase leading-relaxed">
-              reset links are single-use and last an hour. request a fresh one.
-            </p>
-            <Link href="/forgot-password" className="btn-primary w-full block text-center">
-              send a new link
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="bg-card border border-border p-6 space-y-4">
-            <div>
-              <label>new password</label>
-              <input
-                type="password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label>confirm password</label>
-              <input
-                type="password"
-                required
-                minLength={8}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-              />
-            </div>
+        {error && <p role="alert" style={AUTH_ERROR}>{error}</p>}
 
-            {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}
-
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? "..." : "set password"}
-            </button>
-          </form>
-        )}
-      </div>
-    </main>
+        <button type="submit" disabled={loading} className={`${ui.primaryBtn} w-full`} style={{ padding: "11px 16px" }}>
+          {loading ? "Saving…" : "Set password"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
