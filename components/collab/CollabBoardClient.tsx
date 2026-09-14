@@ -20,9 +20,8 @@ import YourWorkspace, { type WorkspaceProject } from "./YourWorkspace";
 import ProjectMenu from "./ProjectMenu";
 import StagePill from "@/components/cohort/StagePill";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import ui from "@/components/ui/sleek.module.css";
 import { onOpenComposer } from "@/lib/tour-bus";
-import GradientButton from "@/components/ui/GradientButton";
-import TerminalFooter from "@/components/ui/TerminalFooter";
 
 type Author = { id: string; full_name: string | null; stage: string | null; username: string | null };
 
@@ -91,7 +90,42 @@ function categoryFor(skill: string): string {
   return SKILL_CATEGORY_MAP[skill.toLowerCase()] ?? "other";
 }
 
+// "quick_ask" → "Quick ask", "co-founder" → "Co-founder".
+function sentence(s: string): string {
+  const t = s.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 type Tab = "projects" | "needs" | "skills";
+
+const TAB_LABEL: Record<Tab, string> = {
+  projects: "Projects",
+  needs: "Needs",
+  skills: "Skills",
+};
+
+const TAB_SUB: Record<Tab, string> = {
+  projects: "Projects looking for builders",
+  needs: "Founders asking for help",
+  skills: "Who can help with what",
+};
+
+const NAME: React.CSSProperties = { fontSize: 14, fontWeight: 500, color: "var(--text-primary)" };
+const META: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)" };
+const CARD_TITLE: React.CSSProperties = {
+  fontSize: 17,
+  fontWeight: 600,
+  letterSpacing: "-0.01em",
+  lineHeight: 1.35,
+  color: "var(--text-primary)",
+  marginTop: 12,
+};
+const CARD_BODY: React.CSSProperties = {
+  fontSize: 14,
+  lineHeight: 1.6,
+  color: "var(--text-secondary)",
+  marginTop: 6,
+};
 
 export default function CollabBoardClient({
   currentUserId,
@@ -185,108 +219,114 @@ export default function CollabBoardClient({
 
   return (
     <>
-      <PulseBar initialEvents={initialPulseEvents} />
-      {collabLocked && (
-        <div
-          style={{
-            background: "rgba(88,166,255,0.04)",
-            borderBottom: "1px solid rgba(88,166,255,0.1)",
-            padding: "8px 16px",
-            fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-            fontSize: 10,
-            color: "#484f58",
-            letterSpacing: "0.05em",
-          }}
-        >
-          // collab board is read-only without a membership — reactivate to post projects, needs, and skills
-        </div>
-      )}
-      {errorBanner && bannerVisible && (
-        <div
-          className="mx-6 mt-3 px-4 py-2 border flex items-center justify-between"
-          style={{
-            background: "rgba(248, 81, 73, 0.08)",
-            borderColor: "rgba(248, 81, 73, 0.45)",
-          }}
-        >
-          <span className="font-mono lowercase text-[0.7rem]" style={{ color: "#f85149" }}>
-            {errorBanner}
-          </span>
-          <button
-            onClick={() => setBannerVisible(false)}
-            className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
-            aria-label="dismiss"
+      <div
+        className={`page-pad ${ui.pageGlow}`}
+        style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+      >
+        {errorBanner && bannerVisible && (
+          <div
+            role="alert"
+            className="flex items-center justify-between gap-3 px-4 py-3"
+            style={{
+              marginBottom: 20,
+              borderRadius: 10,
+              border: "1px solid rgba(239,68,68,0.3)",
+              background: "rgba(239,68,68,0.06)",
+            }}
           >
-            ✕
-          </button>
-        </div>
-      )}
-      {/* Header + tabs row */}
-      <div className="page-pad" style={{ padding: "18px 24px 0", maxWidth: 1180 }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <div>
-            <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>collab board</h1>
-            <p className="font-mono" style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 3, letterSpacing: "0.03em" }}>
-              {tab === "projects"
-                ? "projects looking for builders"
-                : tab === "needs"
-                  ? "founders asking for help"
-                  : "who can help with what"}
-            </p>
+            <p style={{ fontSize: 13, color: "#f87171" }}>{errorBanner}</p>
+            <button
+              type="button"
+              onClick={() => setBannerVisible(false)}
+              className={ui.textBtn}
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 flex-wrap" style={{ marginBottom: 20 }}>
+          <div className="min-w-0">
+            <h1
+              className={ui.titleGradient}
+              style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+            >
+              Collab board
+            </h1>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>{TAB_SUB[tab]}</p>
+            <PulseBar initialEvents={initialPulseEvents} />
           </div>
           {tab !== "skills" && (
             <span data-tour-id="collab-new" style={{ display: "inline-flex" }}>
-              <GradientButton
-                variant="ghost"
+              <button
+                type="button"
                 onClick={() => openNew(tab === "needs" ? "need" : "project")}
-                style={collabLocked ? { opacity: 0.55 } : undefined}
+                className={`${ui.primaryBtn} inline-flex items-center gap-2`}
+                style={collabLocked ? { opacity: 0.6 } : undefined}
               >
                 {collabLocked && (
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <rect x="4" y="11" width="16" height="10" rx="2" />
                     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
                   </svg>
                 )}
-                + new {tab === "needs" ? "need" : "project"}
-              </GradientButton>
+                New {tab === "needs" ? "need" : "project"}
+              </button>
             </span>
           )}
         </div>
-        <div data-tour-id="collab-tabs">
+
+        {collabLocked && (
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
+            The board is read-only without a membership. Reactivate to post projects, needs, and
+            skills.
+          </p>
+        )}
+
+        <div data-tour-id="collab-tabs" style={{ marginBottom: 18 }}>
           <TabPillRow>
             {(["projects", "needs", "skills"] as const).map((t) => (
-              <TabPill key={t} active={tab === t} onClick={() => setTab(t)}>
-                {t}
+              <TabPill sleek key={t} active={tab === t} onClick={() => setTab(t)}>
+                {TAB_LABEL[t]}
               </TabPill>
             ))}
           </TabPillRow>
         </div>
-      </div>
 
-      <div className="page-pad" style={{ padding: "18px 24px 8px", maxWidth: 1180 }} data-tour-id="collab-list">
-        {tab === "projects" && (
-          <>
-            <YourWorkspace projects={workspaceProjects} />
-            <ProjectsList
-              rows={visibleProjects}
-              currentUserId={currentUserId}
-              onRespond={setRespondFor}
-              onDeleted={onItemDeleted}
-              onOpenDetail={setProjectDetail}
-            />
-          </>
-        )}
-        {tab === "needs" && (
-          <NeedsList
-            rows={visibleNeeds}
-            currentUserId={currentUserId}
-            onDeleted={onItemDeleted}
-            onOpenDetail={setNeedDetail}
-            onViewApplications={setNeedApplicationsFor}
-          />
-        )}
-        {tab === "skills" && <SkillsIndex entries={skillIndex} onOpen={setSkillFor} />}
-        <TerminalFooter />
+        <div data-tour-id="collab-list">
+          {tab === "skills" ? (
+            <SkillsIndex entries={skillIndex} onOpen={setSkillFor} />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
+              <div className="min-w-0">
+                {tab === "projects" ? (
+                  <ProjectsList
+                    rows={visibleProjects}
+                    currentUserId={currentUserId}
+                    onRespond={setRespondFor}
+                    onDeleted={onItemDeleted}
+                    onOpenDetail={setProjectDetail}
+                  />
+                ) : (
+                  <NeedsList
+                    rows={visibleNeeds}
+                    currentUserId={currentUserId}
+                    onDeleted={onItemDeleted}
+                    onOpenDetail={setNeedDetail}
+                    onViewApplications={setNeedApplicationsFor}
+                  />
+                )}
+              </div>
+              {/* Your own projects come first on a phone, where the list would
+                  otherwise bury them. */}
+              <aside className="order-first lg:order-none min-w-0">
+                <YourWorkspace projects={workspaceProjects} />
+              </aside>
+            </div>
+          )}
+        </div>
       </div>
 
       {newOpen && (
@@ -365,6 +405,39 @@ export default function CollabBoardClient({
   );
 }
 
+function EmptyTile({ title, sub, children }: { title: string; sub: string; children?: React.ReactNode }) {
+  return (
+    <div className={ui.tile} style={{ padding: "20px 22px" }}>
+      <div className={ui.empty}>
+        <p className={ui.emptyTitle}>{title}</p>
+        <p className={ui.emptySub}>{sub}</p>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// The owner's "…" menu, top right. Hover-revealed on desktop; always shown on
+// touch screens, which have no hover.
+function OwnerMenu({
+  id,
+  label,
+  onDeleted,
+}: {
+  id: string;
+  label: "project" | "need";
+  onDeleted: (id: string) => void;
+}) {
+  return (
+    <div
+      className="absolute top-3 right-3 z-10 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <ProjectMenu projectId={id} itemLabel={label} onDeleted={() => onDeleted(id)} />
+    </div>
+  );
+}
+
 function ProjectsList({
   rows,
   currentUserId,
@@ -380,20 +453,18 @@ function ProjectsList({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="empty-panel max-w-3xl">
-        <span className="empty-panel-glyph" aria-hidden>▣</span>
-        <p className="empty-panel-title">no projects on the board yet.</p>
-        <p className="empty-panel-sub">
-          someone has to go first — post what you&apos;re building and who you need.
-        </p>
+      <EmptyTile
+        title="No projects on the board yet."
+        sub="Someone has to go first. Post what you're building and who you need."
+      >
         <EmptyStateUpgradeLine>
           Upgrade to Member to post projects, needs, and find co-builders.
         </EmptyStateUpgradeLine>
-      </div>
+      </EmptyTile>
     );
   }
   return (
-    <div className="space-y-3 max-w-3xl">
+    <div className="space-y-3">
       {rows.map((p) => (
         <ProjectCard
           key={p.id}
@@ -424,6 +495,7 @@ function ProjectCard({
   const closed = project.status === "closed";
   const isMember = project.is_member || project.owner_id === currentUserId;
   const isOwner = project.owner_id === currentUserId;
+  const pending = isOwner ? project.pending_requests ?? 0 : 0;
 
   // Primary card action: members open the workspace, others open the detail
   // modal (which holds the existing request-to-join flow).
@@ -433,128 +505,92 @@ function ProjectCard({
   }
 
   return (
-    <div
-      className="project-intro-card group"
-      style={{ position: "relative" }}
+    <article
+      className={`${ui.tile} group cursor-pointer`}
+      style={{ padding: "18px 20px" }}
       onClick={primaryAction}
     >
-      <BookmarkButton itemType="project" itemId={project.id} />
-      {isOwner && (project.pending_requests ?? 0) > 0 && (
-        <span
-          className="absolute top-2 left-2 z-10 font-mono lowercase text-[0.55rem] px-2 py-0.5"
-          style={{
-            background: "rgba(245, 158, 11, 0.18)",
-            color: "#f59e0b",
-            border: "1px solid rgba(245, 158, 11, 0.55)",
-            borderRadius: 999,
-          }}
-          title={`${project.pending_requests} pending request${project.pending_requests === 1 ? "" : "s"}`}
-        >
-          {project.pending_requests} pending
-        </span>
-      )}
-      {isOwner && (
-        <div
-          className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ProjectMenu
-            projectId={project.id}
-            itemLabel="project"
-            onDeleted={() => onDeleted(project.id)}
-          />
-        </div>
-      )}
+      {isOwner && <OwnerMenu id={project.id} label="project" onDeleted={onDeleted} />}
 
-      {/* Header — like a post header */}
-      <div className="project-card-header">
-        <div className="project-avatar-wrap" onClick={(e) => e.stopPropagation()}>
+      {/* Author line */}
+      <div className="flex items-center gap-3" style={isOwner ? { paddingRight: 28 } : undefined}>
+        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
           <Avatar
             name={project.author?.full_name}
             stage={project.author?.stage}
             username={project.author?.username}
-            size={32}
+            size={34}
           />
         </div>
-        <div className="project-author-info">
-          <div className="project-author-row">
-            <span className="project-author-name">
-              {project.author?.full_name?.toLowerCase() ?? "—"}
+        <div className="min-w-0 flex items-center gap-x-1.5 gap-y-1 flex-wrap">
+          <span style={NAME}>{project.author?.full_name ?? "—"}</span>
+          <span style={META}>started a project · {timeAgo(project.created_at)} ago</span>
+          {project.category && <span className={ui.chip}>{sentence(project.category)}</span>}
+          {pending > 0 && (
+            <span className={`${ui.chip} ${ui.chipAmber}`}>
+              {pending} pending {pending === 1 ? "request" : "requests"}
             </span>
-            <span className="project-author-action">started a project</span>
-          </div>
-          <span className="project-timestamp">{timeAgo(project.created_at)} ago</span>
+          )}
         </div>
-        {project.category && (
-          <span className={`tag tag-${project.category}`}>{project.category}</span>
-        )}
       </div>
 
-      {/* Project title — bold like a post title */}
-      <div className="project-title">{project.title}</div>
-
-      {/* Description */}
+      <h3 style={CARD_TITLE}>{project.title}</h3>
       {project.description && (
-        <div className="project-description">{project.description}</div>
+        <p className="whitespace-pre-wrap" style={CARD_BODY}>
+          {project.description}
+        </p>
       )}
 
-      {/* Skills needed pills */}
       {project.skills?.length > 0 && (
-        <div className="project-skills-row">
+        <div className="flex flex-wrap gap-1.5" style={{ marginTop: 12 }}>
           {project.skills.slice(0, 6).map((skill) => (
-            <span key={skill} className="skill-pill">
-              {skill.toLowerCase()}
+            <span key={skill} className={ui.chip}>
+              {skill}
             </span>
           ))}
         </div>
       )}
 
-      {/* Interest + status row */}
-      <div className="project-meta-row">
-        <div className="project-members-stack">
-          <span className="project-member-count">{project.interest_count} interested</span>
-        </div>
-        <div className="project-status">
-          <div
-            className="status-dot"
-            style={closed ? { background: "#6e7681", boxShadow: "none" } : undefined}
-          />
-          <span className="status-label" style={closed ? { color: "#6e7681" } : undefined}>
-            {closed ? "closed" : "open"}
+      <div className={`${ui.cardFoot} flex items-center justify-between gap-3 flex-wrap`}>
+        <div className="flex items-center gap-x-3 gap-y-1 flex-wrap min-w-0" style={META}>
+          <span
+            className="inline-flex items-center gap-1.5"
+            style={{ color: closed ? "var(--text-muted)" : "var(--green)" }}
+          >
+            <span className={closed ? ui.quietDot : undefined} aria-hidden style={closed ? undefined : { width: 7, height: 7, borderRadius: 999, background: "#22c55e", flexShrink: 0 }} />
+            {closed ? "Closed" : "Open"}
           </span>
+          <span>{project.interest_count} interested</span>
+          {project.looking_for && <span>Looking for {project.looking_for}</span>}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+          <BookmarkButton itemType="project" itemId={project.id} variant="inline" />
+          {isMember ? (
+            <button
+              type="button"
+              className={ui.softBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/collab/${project.id}`);
+              }}
+            >
+              Open project →
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={ui.ghostBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenDetail(project);
+              }}
+            >
+              Request to join →
+            </button>
+          )}
         </div>
       </div>
-
-      {/* CTA footer — clear pull to join */}
-      <div className="project-card-footer">
-        <span className="project-looking-for">
-          {project.looking_for
-            ? `looking for ${project.looking_for}`
-            : `${project.interest_count} interested`}
-        </span>
-        {isMember ? (
-          <button
-            className="project-open-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/collab/${project.id}`);
-            }}
-          >
-            open project →
-          </button>
-        ) : (
-          <button
-            className="project-join-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenDetail(project);
-            }}
-          >
-            request to join →
-          </button>
-        )}
-      </div>
-    </div>
+    </article>
   );
 }
 
@@ -573,114 +609,95 @@ function NeedsList({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="empty-panel max-w-3xl">
-        <span className="empty-panel-glyph" aria-hidden>◇</span>
-        <p className="empty-panel-title">no asks posted yet.</p>
-        <p className="empty-panel-sub">
-          need an advisor, a contractor, or a second brain? say it here — this room exists to be asked.
-        </p>
-      </div>
+      <EmptyTile
+        title="No asks posted yet."
+        sub="Need an advisor, a contractor, or a second brain? Say it here. This room exists to be asked."
+      />
     );
   }
   return (
-    <div className="space-y-3 max-w-3xl">
+    <div className="space-y-3">
       {rows.map((n) => {
         const isOwner = n.owner_id === currentUserId;
         const appCount = n.application_count ?? 0;
         const helpType = n.category ?? "need";
-        const firstName = n.author?.full_name?.toLowerCase().split(" ")[0] ?? "them";
+        const firstName = n.author?.full_name?.split(" ")[0] || "them";
         return (
-          <div
+          <article
             key={n.id}
-            className="need-card group"
-            style={{ position: "relative" }}
+            className={`${ui.tile} group cursor-pointer`}
+            style={{ padding: "18px 20px" }}
             onClick={() => onOpenDetail(n)}
           >
-            <BookmarkButton itemType="project" itemId={n.id} />
-            {isOwner && (
-              <div
-                className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ProjectMenu
-                  projectId={n.id}
-                  itemLabel="need"
-                  onDeleted={() => onDeleted(n.id)}
-                />
-              </div>
-            )}
+            {isOwner && <OwnerMenu id={n.id} label="need" onDeleted={onDeleted} />}
 
-            {/* Header */}
-            <div className="need-card-header">
-              <div onClick={(e) => e.stopPropagation()}>
+            {/* Author line */}
+            <div className="flex items-center gap-3" style={isOwner ? { paddingRight: 28 } : undefined}>
+              <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                 <Avatar
                   name={n.author?.full_name}
                   stage={n.author?.stage}
                   username={n.author?.username}
-                  size={30}
+                  size={34}
                 />
               </div>
-              <div className="need-author-info">
-                <div className="need-author-row">
-                  <span className="need-author-name">
-                    {n.author?.full_name?.toLowerCase() ?? "—"}
-                  </span>
-                  <span className="need-author-action">needs help</span>
-                </div>
-                <div className="need-author-meta">
-                  <span className="need-timestamp">{timeAgo(n.created_at)} ago</span>
-                  {n.author?.stage && <span>·</span>}
-                  <StagePill stage={n.author?.stage ?? null} />
-                </div>
+              <div className="min-w-0 flex items-center gap-x-1.5 gap-y-1 flex-wrap">
+                <span style={NAME}>{n.author?.full_name ?? "—"}</span>
+                <span style={META}>needs help · {timeAgo(n.created_at)} ago</span>
+                <StagePill sleek stage={n.author?.stage ?? null} />
+                <span className={ui.chip}>{sentence(helpType)}</span>
               </div>
-              <span className={`tag tag-need-${helpType}`}>{helpType}</span>
             </div>
 
-            {/* Title */}
-            <div className="need-title">{n.title}</div>
+            <h3 style={CARD_TITLE}>{n.title}</h3>
+            {n.description && (
+              <p className="whitespace-pre-wrap" style={CARD_BODY}>
+                {n.description}
+              </p>
+            )}
 
-            {/* Description */}
-            {n.description && <div className="need-description">{n.description}</div>}
-
-            {/* Skill tags */}
             {n.skills?.length > 0 && (
-              <div className="need-tags-row">
+              <div className="flex flex-wrap gap-1.5" style={{ marginTop: 12 }}>
                 {n.skills.map((tag) => (
-                  <span key={tag} className="skill-pill">
-                    {tag.toLowerCase()}
+                  <span key={tag} className={ui.chip}>
+                    {tag}
                   </span>
                 ))}
               </div>
             )}
 
-            {/* Footer CTA */}
-            <div className="need-card-footer">
-              <span className="need-applicants">
-                {appCount > 0 ? `${appCount} applied` : "be the first to respond"}
+            <div className={`${ui.cardFoot} flex items-center justify-between gap-3 flex-wrap`}>
+              <span style={META}>
+                {appCount > 0 ? `${appCount} applied` : "Be the first to respond"}
               </span>
-              {!isOwner ? (
-                <button
-                  className="need-message-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenDetail(n);
-                  }}
-                >
-                  message {firstName} →
-                </button>
-              ) : (
-                <button
-                  className="need-view-applications-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onViewApplications(n);
-                  }}
-                >
-                  view applications →
-                </button>
-              )}
+              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                <BookmarkButton itemType="project" itemId={n.id} variant="inline" />
+                {isOwner ? (
+                  <button
+                    type="button"
+                    className={ui.softBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewApplications(n);
+                    }}
+                  >
+                    View applications →
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={ui.softBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenDetail(n);
+                    }}
+                  >
+                    Message {firstName} →
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </article>
         );
       })}
     </div>
@@ -699,15 +716,16 @@ function SkillsIndex({
 
   if (entries.length === 0) {
     return (
-      <p className="font-mono lowercase text-xs text-text-faint">
-        no skills listed yet. add yours from your profile.
-      </p>
+      <EmptyTile
+        title="No skills listed yet."
+        sub="Add yours from your profile and you'll show up here."
+      />
     );
   }
 
   const q = query.trim().toLowerCase();
   const filtered = q ? entries.filter((e) => e.skill.toLowerCase().includes(q)) : entries;
-  // Scale the per-card activity bar against the most-followed skill.
+  // Scale the per-card meter against the most-listed skill.
   const maxCount = Math.max(1, ...entries.map((e) => e.members.length));
 
   const groups = new Map<string, SkillEntry[]>();
@@ -730,76 +748,67 @@ function SkillsIndex({
   const orderedCats = CATEGORY_ORDER.filter((c) => (groups.get(c) ?? []).length > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="flex flex-wrap items-center gap-3">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="search skills..."
-          className="flex-1 min-w-[200px] px-3 py-2 font-mono lowercase text-[0.7rem] text-text-primary"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+          placeholder="Search skills"
+          aria-label="Search skills"
+          className={`${ui.search} flex-1 min-w-0 w-full sm:w-auto`}
+          style={{ maxWidth: 420 }}
         />
-        <div className="flex items-center gap-1 border" style={{ borderColor: "var(--border)" }}>
-          {(["count", "alpha"] as const).map((k) => {
-            const active = sort === k;
-            return (
-              <button
-                key={k}
-                onClick={() => setSort(k)}
-                className="font-mono lowercase text-[0.65rem] px-3 py-2"
-                style={{
-                  color: active ? "#f59e0b" : "var(--text-muted)",
-                  background: active ? "rgba(245, 158, 11, 0.08)" : "transparent",
-                }}
-              >
-                {k === "count" ? "most founders" : "alphabetical"}
-              </button>
-            );
-          })}
-        </div>
+        <TabPillRow>
+          <TabPill sleek active={sort === "count"} onClick={() => setSort("count")}>
+            Most founders
+          </TabPill>
+          <TabPill sleek active={sort === "alpha"} onClick={() => setSort("alpha")}>
+            A–Z
+          </TabPill>
+        </TabPillRow>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="font-mono lowercase text-xs text-text-faint">
-          no skills match &quot;{q}&quot;.
-        </p>
+        <p className={ui.emptyTitle}>No skills match &ldquo;{query.trim()}&rdquo;.</p>
       ) : (
-        orderedCats.map((cat) => {
-          const items = groups.get(cat) ?? [];
-          return (
-            <div key={cat}>
-              <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2">
-                # {cat}
-              </p>
-              <div className="skills-grid">
-                {items.map((e) => (
-                  <SkillCard key={e.skill} entry={e} maxCount={maxCount} onOpen={onOpen} />
-                ))}
-              </div>
+        orderedCats.map((cat) => (
+          <section key={cat}>
+            <p className={ui.label} style={{ marginBottom: 10 }}>
+              {sentence(cat)}
+            </p>
+            <div
+              className="grid gap-3"
+              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}
+            >
+              {(groups.get(cat) ?? []).map((e) => (
+                <SkillCard key={e.skill} entry={e} maxCount={maxCount} onOpen={onOpen} />
+              ))}
             </div>
-          );
-        })
+          </section>
+        ))
       )}
     </div>
   );
 }
 
-const stageColor = (stage: string): string =>
-  (({
-    idea: "#38bdf8",
-    "pre-seed": "#f59e0b",
-    seed: "#22c55e",
-    "series-a": "#a78bfa",
-    series_a: "#a78bfa",
-  } as Record<string, string>)[stage] ?? "#f59e0b");
+const stageColor = (stage: string | null): string =>
+  (stage
+    ? ({
+        idea: "#38bdf8",
+        "pre-seed": "#f59e0b",
+        seed: "#22c55e",
+        "series-a": "#a78bfa",
+        series_a: "#a78bfa",
+      } as Record<string, string>)[stage]
+    : undefined) ?? "#f59e0b";
 
-// Most common founder stage for this skill — drives the accent + activity bar.
-function topStageFor(members: SkillMember[]): string {
+// Most common founder stage for this skill (null when nobody lists a stage).
+function topStageFor(members: SkillMember[]): string | null {
   const counts: Record<string, number> = {};
   for (const m of members) {
     if (m.stage) counts[m.stage] = (counts[m.stage] ?? 0) + 1;
   }
-  let best = "pre-seed";
+  let best: string | null = null;
   let bestN = 0;
   for (const [stage, n] of Object.entries(counts)) {
     if (n > bestN) {
@@ -821,53 +830,47 @@ function SkillCard({
 }) {
   const founderCount = entry.members.length;
   const topStage = topStageFor(entry.members);
-  const activeCount = entry.members.filter((m) => m.what_they_are_building).length;
-  const category = categoryFor(entry.skill);
-  const accent = stageColor(topStage);
 
   return (
-    <div className="skill-card" onClick={() => onOpen(entry)}>
-      {/* Top accent bar — color based on most common stage for this skill */}
-      <div className="skill-accent-bar" style={{ background: accent }} />
+    <button
+      type="button"
+      className={`${ui.tile} text-left w-full`}
+      style={{ padding: "16px 18px" }}
+      onClick={() => onOpen(entry)}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.3, color: "var(--text-primary)" }}>
+          {entry.skill}
+        </span>
+        <span style={{ ...META, fontSize: 13, whiteSpace: "nowrap" }}>
+          {founderCount} {founderCount === 1 ? "founder" : "founders"}
+        </span>
+      </div>
 
-      {/* Card content */}
-      <div className="skill-card-body">
-        {/* Title + count */}
-        <div className="skill-card-top">
-          <div className="skill-name">{entry.skill.toLowerCase()}</div>
-          <span className="skill-count">{founderCount}</span>
-        </div>
-
-        {/* Stage badge */}
-        <div className="skill-stage-row">
-          <StagePill stage={topStage} />
-          <span className="skill-active-label">
-            {activeCount > 0 ? `${activeCount} active` : "none active"}
-          </span>
-        </div>
-
-        {/* Avatar stack */}
-        <div className="skill-avatars">
+      <div className="flex items-center gap-2" style={{ marginTop: 12, minHeight: 26 }}>
+        <div className="flex -space-x-2">
           {entry.members.slice(0, 5).map((f) => (
-            <span key={f.id} className="skill-av">
-              <Avatar name={f.full_name} stage={f.stage} username={f.username} size={22} />
+            <span key={f.id} className="rounded-full" style={{ border: "1.5px solid var(--bg-surface)" }}>
+              <Avatar name={f.full_name} stage={f.stage} size={24} />
             </span>
           ))}
-          {founderCount > 5 && (
-            <div className="skill-av-overflow">+{founderCount - 5}</div>
-          )}
         </div>
-
-        {/* Activity bar */}
-        <div className="skill-activity-bar">
-          <div
-            className="skill-activity-fill"
-            style={{ width: `${(founderCount / maxCount) * 100}%`, background: accent }}
-          />
-        </div>
-
-        <div className="skill-card-footer">{category} · click to see all founders</div>
+        {founderCount > 5 && <span style={META}>+{founderCount - 5}</span>}
+        <span className="ml-auto">
+          <StagePill sleek stage={topStage} />
+        </span>
       </div>
-    </div>
+
+      <div className={ui.barTrack} style={{ marginTop: 14 }}>
+        <div
+          className={ui.barFill}
+          style={{ width: `${(founderCount / maxCount) * 100}%`, background: stageColor(topStage), opacity: 0.8 }}
+        />
+      </div>
+
+      <p className={ui.tileLink} style={{ marginTop: 12 }}>
+        See {founderCount === 1 ? "founder" : "all founders"} →
+      </p>
+    </button>
   );
 }

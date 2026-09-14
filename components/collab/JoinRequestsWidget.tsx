@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
 
 export type JoinRequest = {
   id: string;
@@ -89,79 +91,66 @@ export default function JoinRequestsWidget({
   }
 
   return (
-    <div className="p-4 border" style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}>
-      <div className="flex items-center justify-between mb-3">
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint">join_requests</p>
-        {requests.length > 0 && (
-          <span
-            className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-            style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
-          >
-            {requests.length}
-          </span>
-        )}
-      </div>
+    <Tile
+      kicker="Join requests"
+      right={requests.length > 0 ? `${requests.length} pending` : undefined}
+    >
       {requests.length === 0 ? (
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint">no pending requests.</p>
+        <p className={ui.emptySub} style={{ marginTop: 0 }}>
+          No pending requests.
+        </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {requests.map((r) => (
-            <div
-              key={r.id}
-              className="p-3 border space-y-2"
-              style={{ background: "var(--card)", borderColor: "var(--border)" }}
-            >
-              <div className="flex items-center gap-2">
+            <div key={r.id} className="space-y-2">
+              <div className="flex items-center gap-2.5">
                 <Avatar
                   name={r.requester?.full_name}
                   stage={r.requester?.stage}
                   username={r.requester?.username}
-                  size={28}
+                  size={30}
                 />
-                <div className="min-w-0 flex-1">
-                  <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                    {r.requester?.full_name?.toLowerCase() ?? "—"}
-                  </p>
-                </div>
-                <StagePill stage={r.requester?.stage ?? null} />
+                <p
+                  className="min-w-0 flex-1 truncate"
+                  style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
+                >
+                  {r.requester?.full_name ?? "—"}
+                </p>
+                <StagePill sleek stage={r.requester?.stage ?? null} />
               </div>
-              <p className="text-text-secondary text-xs leading-relaxed whitespace-pre-wrap">
+              <p
+                className="whitespace-pre-wrap"
+                style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)" }}
+              >
                 {r.reason}
               </p>
               {r.what_they_offer && (
-                <span
-                  className="inline-block font-mono lowercase text-[0.6rem] px-2 py-0.5"
-                  style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-                >
-                  offers: {r.what_they_offer}
-                </span>
+                <span className={`${ui.chip} inline-block`}>Offers: {r.what_they_offer}</span>
               )}
               <div className="flex justify-end gap-2 pt-1">
                 <button
+                  type="button"
                   onClick={() => decline(r)}
                   disabled={busy === r.id}
-                  className="font-mono lowercase text-[0.65rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-                  style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+                  className={ui.ghostBtn}
+                  style={{ padding: "6px 12px" }}
                 >
-                  decline ✗
+                  Decline
                 </button>
                 <button
+                  type="button"
                   onClick={() => approve(r)}
                   disabled={busy === r.id}
-                  className="font-mono lowercase text-[0.65rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-                  style={{
-                    background: "rgba(34, 197, 94, 0.12)",
-                    color: "#22c55e",
-                    border: "1px solid rgba(34, 197, 94, 0.45)",
-                  }}
+                  className={ui.primaryBtn}
+                  style={{ padding: "6px 12px" }}
                 >
-                  approve ✓
+                  Approve
                 </button>
               </div>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </Tile>
   );
 }

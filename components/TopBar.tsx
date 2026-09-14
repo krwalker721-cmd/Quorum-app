@@ -65,10 +65,14 @@ export default function TopBar({
           <h1
             // Sleek titles give way (truncate) on narrow screens instead of
             // sliding under the post button.
-            className={`font-sans ${sleek ? "capitalize min-w-0 truncate" : "shrink-0 lowercase"}`}
+            className={`font-sans ${sleek ? "min-w-0 truncate" : "shrink-0 lowercase"}`}
             style={{ fontSize: sleek ? 15 : 16, lineHeight: 1.3, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.2px" }}
           >
-            {title.replace(/_/g, " ")}
+            {/* Sleek titles are sentence case ("Collab board"), matching the
+                page headings; CSS capitalize would give "Collab Board". */}
+            {sleek
+              ? title.charAt(0).toUpperCase() + title.slice(1).replace(/_/g, " ")
+              : title.replace(/_/g, " ")}
           </h1>
           {context && (
             <span

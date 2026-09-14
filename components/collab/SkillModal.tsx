@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
+import ui from "@/components/ui/sleek.module.css";
 
 type Member = {
   id: string;
@@ -30,6 +31,8 @@ export default function SkillPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const n = entry.members.length;
+
   return (
     <div className="fixed inset-0 z-50">
       {/* Dark overlay */}
@@ -40,48 +43,47 @@ export default function SkillPanel({
       />
       {/* Slide-in panel */}
       <aside
-        className="absolute top-0 right-0 h-full w-full max-w-md flex flex-col"
-        style={{
-          background: "var(--card-elev)",
-          borderLeft: "1px solid var(--border)",
-          boxShadow: "-12px 0 32px rgba(0,0,0,0.45)",
-          animation: "skill-panel-in 220ms ease-out",
-        }}
+        role="dialog"
+        aria-label={`Founders with ${entry.skill}`}
+        className={`absolute top-0 right-0 h-full w-full max-w-md flex flex-col ${ui.panel}`}
+        style={{ animation: "skill-panel-in 220ms ease-out" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <header
-          className="flex items-center justify-between px-6 py-5 border-b shrink-0"
-          style={{ borderColor: "var(--border)" }}
-        >
+        <header className={`flex items-start justify-between gap-3 px-6 py-5 shrink-0 ${ui.panelHead}`}>
           <div className="min-w-0">
-            <p className="modal-kicker">skill</p>
-            <h2 className="font-sans text-text-primary text-2xl lowercase truncate mt-0.5">
-              {entry.skill.toLowerCase()}
+            <p className={ui.label}>Skill</p>
+            <h2
+              className="truncate"
+              style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--text-primary)", marginTop: 2 }}
+            >
+              {entry.skill}
             </h2>
-            <p className="font-mono lowercase text-[0.65rem] text-text-faint mt-1">
-              {entry.members.length} founder{entry.members.length === 1 ? "" : "s"}
+            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
+              {n} {n === 1 ? "founder" : "founders"}
             </p>
           </div>
-          <button onClick={onClose} aria-label="close" className="modal-close-btn">
-            esc
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className={ui.ghostBtn}
+            style={{ padding: "5px 10px", fontSize: 12 }}
+          >
+            Esc
           </button>
         </header>
 
         <div className="flex-1 overflow-y-auto scroll-thin px-6 py-5 space-y-2.5">
-          {entry.members.length === 0 ? (
-            <div className="empty-panel compact">
-              <p className="empty-panel-title">no founders yet.</p>
-              <p className="empty-panel-sub">add this skill to your profile and you&apos;ll show up here.</p>
+          {n === 0 ? (
+            <div className={ui.empty}>
+              <p className={ui.emptyTitle}>No founders yet.</p>
+              <p className={ui.emptySub}>Add this skill to your profile and you&apos;ll show up here.</p>
             </div>
           ) : (
             entry.members.map((m) => {
               const online = onlineIds?.has(m.id) ?? false;
               return (
-                <div
-                  key={m.id}
-                  className="flex items-start gap-3 p-3.5 border rounded-xl"
-                  style={{ background: "var(--card)", borderColor: "var(--border)" }}
-                >
+                <div key={m.id} className={`${ui.tile} flex items-start gap-3`} style={{ padding: 14 }}>
                   <div className="relative shrink-0">
                     <Avatar name={m.full_name} stage={m.stage} username={m.username} size={40} />
                     {online && (
@@ -92,7 +94,7 @@ export default function SkillPanel({
                           width: 9,
                           height: 9,
                           background: "#22c55e",
-                          border: "2px solid var(--card)",
+                          border: "2px solid var(--bg-surface)",
                         }}
                       />
                     )}
@@ -101,23 +103,21 @@ export default function SkillPanel({
                     <div className="flex items-center gap-2 flex-wrap">
                       <Link
                         href={m.username ? `/profile/${m.username}` : "#"}
-                        className="font-mono lowercase text-xs text-text-primary truncate hover:underline"
+                        className="truncate hover:underline"
+                        style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
                       >
-                        {m.full_name?.toLowerCase() ?? "—"}
+                        {m.full_name ?? "—"}
                       </Link>
-                      <StagePill stage={m.stage} />
+                      <StagePill sleek stage={m.stage} />
                     </div>
                     {m.what_they_are_building && (
-                      <p className="text-text-secondary text-xs mt-1.5 leading-snug">
+                      <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)", marginTop: 4 }}>
                         {m.what_they_are_building}
                       </p>
                     )}
                   </div>
-                  <Link
-                    href={`/messages?to=${m.id}`}
-                    className="btn-primary self-center shrink-0"
-                  >
-                    dm →
+                  <Link href={`/messages?to=${m.id}`} className={`${ui.softBtn} self-center shrink-0`}>
+                    Message
                   </Link>
                 </div>
               );

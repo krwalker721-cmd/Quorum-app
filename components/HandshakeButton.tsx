@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import ui from "@/components/ui/sleek.module.css";
 
 export default function HandshakeButton({
   currentUserId,
@@ -10,12 +11,17 @@ export default function HandshakeButton({
   recipientName,
   defaultAgreement = "",
   projectId = null,
+  sleek = false,
 }: {
   currentUserId: string;
   recipientId: string;
   recipientName: string | null;
   defaultAgreement?: string;
   projectId?: string | null;
+  /** Sleek trigger button (sleek.module.css). Opt-in: the project room uses
+   *  it; the profile keeps the mono button until it converts. The dialog
+   *  itself waits for the shared-modals pass. */
+  sleek?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -48,13 +54,19 @@ export default function HandshakeButton({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="font-mono lowercase text-[0.7rem] px-3 py-2 border hover:border-amber transition-colors whitespace-nowrap"
-        style={{ borderColor: "var(--border)", color: "#f59e0b" }}
-      >
-         log handshake
-      </button>
+      {sleek ? (
+        <button type="button" onClick={() => setOpen(true)} className={ui.softBtn}>
+          Log handshake
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="font-mono lowercase text-[0.7rem] px-3 py-2 border hover:border-amber transition-colors whitespace-nowrap"
+          style={{ borderColor: "var(--border)", color: "#f59e0b" }}
+        >
+           log handshake
+        </button>
+      )}
 
       {open && (
         <div

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
+import NoGrid from "@/components/ui/NoGrid";
 import ProjectRoomClient from "@/components/collab/ProjectRoomClient";
 
 export const dynamic = "force-dynamic";
@@ -124,7 +125,8 @@ export default async function ProjectRoomPage(
 
   return (
     <>
-      <TopBar title="project_room" tier={tier.toUpperCase()} userId={user.id} />
+      <NoGrid />
+      <TopBar sleek title="project_room" tier={tier.toUpperCase()} userId={user.id} />
       <ProjectRoomClient
         currentUserId={user.id}
         project={{

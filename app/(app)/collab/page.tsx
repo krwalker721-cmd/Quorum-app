@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
+import NoGrid from "@/components/ui/NoGrid";
 import CollabBoardClient from "@/components/collab/CollabBoardClient";
 import type { WorkspaceProject, WorkspaceMember } from "@/components/collab/YourWorkspace";
 import type { PulseEvent } from "@/components/collab/PulseBar";
@@ -394,13 +395,13 @@ export default async function CollabPage(
       .select("id, title, name")
       .in("id", Array.from(pulseProjectIds));
     for (const p of (data ?? []) as any[]) {
-      pulseProjectMap.set(p.id, (p.title ?? p.name ?? "a project").toLowerCase());
+      pulseProjectMap.set(p.id, p.title || p.name || "a project");
     }
   }
   const uname = (id: string | null) => {
     if (!id) return "someone";
     const p = pulseUserMap.get(id);
-    return ((p?.username ?? p?.full_name ?? "someone") || "someone").toLowerCase();
+    return p?.username || p?.full_name || "someone";
   };
 
   const initialPulseEvents: PulseEvent[] = [];
@@ -451,7 +452,8 @@ export default async function CollabPage(
 
   return (
     <>
-      <TopBar title="collab_board" tier={tierLabel} userId={user.id} />
+      <NoGrid />
+      <TopBar sleek title="collab_board" tier={tierLabel} userId={user.id} />
       <CollabBoardClient
         currentUserId={user.id}
         initialTab={searchParams.tab === "needs" ? "needs" : searchParams.tab === "skills" ? "skills" : "projects"}

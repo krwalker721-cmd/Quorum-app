@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { parseDbTime } from "@/lib/stage";
+import ui from "@/components/ui/sleek.module.css";
 
 export type PulseEvent = {
   id: string;
@@ -18,6 +20,8 @@ const FADE_MS = 400;
 const HOLD_MS = 4000;
 const STALE_MS = 10 * 60 * 1000;
 
+// The board's live line, under the page title: the last ten minutes of
+// activity, one event at a time, or a quiet note when nothing is happening.
 export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[] }) {
   const [events, setEvents] = useState<PulseEvent[]>(initialEvents);
   const [idx, setIdx] = useState(0);
@@ -70,12 +74,12 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
 
   function nameOf(p: Profile | null, fallback = "someone") {
     if (!p) return fallback;
-    return (p.username ?? p.full_name?.toLowerCase() ?? fallback).toLowerCase();
+    return p.username || p.full_name || fallback;
   }
 
   function projTitle(p: ProjectMeta | null, fallback = "a project") {
     if (!p) return fallback;
-    return (p.title ?? p.name ?? fallback).toLowerCase();
+    return p.title || p.name || fallback;
   }
 
   // realtime subscriptions
@@ -210,64 +214,39 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
   }, [events[0]?.id]);
 
   const current = events[idx] ?? null;
-  const stale = useMemo(() => {
-    if (!current) return true;
-    return Date.now() - new Date(current.ts).getTime() > STALE_MS;
+  // Timestamps can arrive zoneless (UTC); parseDbTime reads them as UTC rather
+  // than local time, which kept old events "live" for hours.
+  const live = useMemo(() => {
+    if (!current) return false;
+    return Date.now() - parseDbTime(current.ts).getTime() <= STALE_MS;
   }, [current]);
 
   return (
-    <div
-      className="flex items-center gap-3 px-6"
-      style={{
-        height: 36,
-        background: "var(--card-elev)",
-        borderLeft: "2px solid #58a6ff",
-        borderBottom: "1px solid var(--border)",
-      }}
+    <p
+      className="flex items-center gap-2 min-w-0"
+      style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 10 }}
       aria-live="polite"
     >
+      <span aria-hidden className={live ? ui.liveDot : ui.quietDot} />
       <span
-        aria-hidden
-        className="inline-block rounded-full"
-        style={{
-          width: 6,
-          height: 6,
-          background: "#f59e0b",
-          animation: "pulseDot 2s ease-in-out infinite",
-        }}
-      />
-      <p
-        className="font-mono lowercase truncate"
-        style={{
-          fontSize: 10,
-          color: "#8b949e",
-          opacity: visible ? 1 : 0,
-          transition: `opacity ${FADE_MS}ms ease`,
-        }}
+        className="truncate"
+        style={{ opacity: visible ? 1 : 0, transition: `opacity ${FADE_MS}ms ease` }}
       >
-        {current && !stale ? (
+        {current && live ? (
           <>
-            <span style={{ color: "#f59e0b" }}>{current.username}</span>{" "}
+            <span style={{ color: "var(--text-primary)" }}>{current.username}</span>{" "}
             {current.text}
             {current.projectName ? (
               <>
                 {" "}
-                <span style={{ color: "var(--text-primary)" }}>{current.projectName}</span>
+                <span style={{ color: "var(--text-secondary)" }}>{current.projectName}</span>
               </>
             ) : null}
           </>
         ) : (
-          <span style={{ color: "var(--text-faint)" }}>
-            nothing happening right now — start something.
-          </span>
+          "Nothing happening right now. Start something."
         )}
-      </p>
-      <style>{`
-        @keyframes pulseDot {
-          0%, 100% { opacity: 0.4; transform: scale(0.9); }
-          50% { opacity: 1; transform: scale(1.15); }
-        }
-      `}</style>
-    </div>
+      </span>
+    </p>
   );
 }

@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/Avatar";
 import HandshakeButton from "@/components/HandshakeButton";
-import { timeAgo } from "@/lib/stage";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
+import { parseDbTime, timeAgo } from "@/lib/stage";
 import JoinRequestsWidget, { type JoinRequest } from "./JoinRequestsWidget";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
-import TerminalFooter from "@/components/ui/TerminalFooter";
 
 type Member = {
   id: string;
@@ -60,8 +61,28 @@ type Vote = {
 
 type Tab = "thread" | "docs" | "decisions";
 
+const TAB_LABEL: Record<Tab, string> = {
+  thread: "Thread",
+  docs: "Docs",
+  decisions: "Decisions",
+};
+
+const META: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)" };
+
+// A hairline panel that doesn't light up on hover (the thread, the forms):
+// large surfaces you work inside, not cards you pick.
+const PANEL: React.CSSProperties = {
+  background: "var(--bg-surface)",
+  border: "1px solid rgba(255, 255, 255, 0.07)",
+  borderRadius: 12,
+};
+
 function optLabel(o: DecisionOption) {
   return typeof o === "string" ? o : o.label;
+}
+
+function sentence(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export default function ProjectRoomClient({
@@ -106,8 +127,8 @@ export default function ProjectRoomClient({
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
 
-  // Open decisions this user hasn't voted on yet — drives the amber tab badge
-  // and the "DECISION NEEDS YOU" rail tile.
+  // Open decisions this user hasn't voted on yet — drives the amber tab count
+  // and the "a decision needs your vote" rail tile.
   const myVotedDecisionIds = new Set(
     votes.filter((v) => v.user_id === currentUserId).map((v) => v.decision_id),
   );
@@ -172,7 +193,7 @@ export default function ProjectRoomClient({
   async function kickMember(target: Member) {
     if (
       !window.confirm(
-        `remove ${target.full_name?.toLowerCase() ?? "this member"} from this project? they will lose access to the project room.`,
+        `Remove ${target.full_name ?? "this member"} from this project? They will lose access to the project room.`,
       )
     ) {
       return;
@@ -186,88 +207,74 @@ export default function ProjectRoomClient({
       setMembers((prev) => prev.filter((m) => m.id !== target.id));
     } else {
       const j = await res.json().catch(() => ({}));
-      window.alert(j?.error ?? "could not remove member");
+      window.alert(j?.error ?? "Could not remove member.");
     }
   }
 
+  const closed = project.status === "closed";
+  // created_at can arrive zoneless (UTC); parseDbTime keeps the day right
+  // near midnight.
+  const started = parseDbTime(project.created_at).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const decidedCount = decisions.filter((d) => d.status === "decided").length;
+  const messageCount = messages.filter((m) => !m.is_system).length;
+
   return (
-    <>
-      {/* Sub header bar — breadcrumb */}
-      <div
-        className="flex items-center justify-between px-6 py-3 border-b"
-        style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <Link
-            href="/collab"
-            className="font-mono uppercase hover:text-text-primary"
-            style={{ fontSize: 9, letterSpacing: "0.06em", color: "var(--text-muted)" }}
+    <div
+      className={`page-pad ${ui.pageGlow}`}
+      style={{ padding: "24px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+    >
+      <Link href="/collab" className={ui.tileLink}>
+        ← Collab board
+      </Link>
+
+      {/* Header */}
+      <div style={{ marginTop: 12, marginBottom: 20 }}>
+        <h1
+          className={`${ui.titleGradient} ${ui.balance}`}
+          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+        >
+          {project.title}
+        </h1>
+        <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap" style={{ marginTop: 10 }}>
+          <span
+            className="inline-flex items-center gap-1.5"
+            style={{ fontSize: 13, color: closed ? "var(--text-muted)" : "var(--green)" }}
           >
-            collab_board
-          </Link>
-          <span className="font-mono" style={{ fontSize: 9, color: "var(--text-disabled)" }}>/</span>
-          <span className="font-mono uppercase truncate" style={{ fontSize: 9, letterSpacing: "0.06em", color: "var(--text-secondary)" }}>
-            {project.title}
+            <span
+              aria-hidden
+              className={ui.quietDot}
+              style={closed ? undefined : { background: "#22c55e", opacity: 1 }}
+            />
+            {closed ? "Closed" : "Active"}
           </span>
+          {project.category && <span className={ui.chip}>{sentence(project.category)}</span>}
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Started {started}</span>
+          {project.looking_for && (
+            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              Looking for {project.looking_for}
+            </span>
+          )}
         </div>
-        <HandshakeProjectButton
-          currentUserId={currentUserId}
-          projectId={project.id}
-          projectTitle={project.title}
-          members={members.filter((m) => m.id !== currentUserId)}
-        />
+        {project.description && (
+          <p
+            className="whitespace-pre-wrap"
+            style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 12, maxWidth: "72ch" }}
+          >
+            {project.description}
+          </p>
+        )}
       </div>
 
-      <div className="page-pad grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ padding: "18px 24px 8px", maxWidth: 1600 }}>
-        <div className="lg:col-span-2 space-y-3">
-          {/* Project header tile */}
-          <div
-            style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12, padding: "16px 18px" }}
-          >
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{project.title}</h1>
-              {project.category && (
-                <span
-                  className="font-mono lowercase"
-                  style={{ fontSize: 9, border: "0.5px solid rgba(245,158,11,.35)", color: "#f8c56a", padding: "1px 7px", borderRadius: 10 }}
-                >
-                  {project.category}
-                </span>
-              )}
-              <span className="font-mono" style={{ fontSize: 9, color: project.status === "closed" ? "var(--text-muted)" : "var(--green)" }}>
-                {project.status === "closed" ? "closed" : "● active"}
-              </span>
-            </div>
-            {project.description && (
-              <p className="text-text-secondary text-sm mt-2 leading-relaxed whitespace-pre-wrap">
-                {project.description}
-              </p>
-            )}
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              <div className="flex" style={{ gap: 4 }}>
-                {members.map((m) => (
-                  <Avatar key={m.id} name={m.full_name} stage={m.stage} username={m.username} size={24} />
-                ))}
-              </div>
-              <span className="font-mono lowercase text-[0.65rem] text-text-faint ml-1">
-                started {new Date(project.created_at).toLocaleDateString()}
-              </span>
-              {project.looking_for && (
-                <span
-                  className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto"
-                  style={{ border: "0.5px solid var(--border-muted)", color: "var(--text-muted)", borderRadius: 10 }}
-                >
-                  {project.looking_for}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Tabs */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
+        <div className="min-w-0 space-y-4">
           <TabPillRow>
             {(["thread", "docs", "decisions"] as const).map((t) => (
-              <TabPill key={t} active={tab === t} onClick={() => setTab(t)}>
-                {t}
+              <TabPill sleek key={t} active={tab === t} onClick={() => setTab(t)}>
+                {TAB_LABEL[t]}
                 {t === "decisions" && openForMe.length > 0 && (
                   <span style={{ color: "#f8c56a", marginLeft: 6 }}>{openForMe.length}</span>
                 )}
@@ -315,75 +322,47 @@ export default function ProjectRoomClient({
         </div>
 
         {/* Right column */}
-        <aside
-          className="space-y-3 scroll-thin"
-          style={{ maxHeight: "calc(100dvh - 186px)", overflowY: "auto" }}
-        >
+        <aside className="min-w-0 space-y-4">
           {openForMe.length > 0 && (
-            <div
-              style={{
-                background: "linear-gradient(150deg, rgba(245,158,11,.16), rgba(245,158,11,.03) 60%)",
-                border: "0.5px solid rgba(245,158,11,.3)",
-                borderRadius: 12,
-                padding: "13px 15px",
-              }}
-            >
-              <p className="font-mono uppercase" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#f8c56a", marginBottom: 6 }}>
-                decision needs you
-              </p>
-              <p style={{ fontSize: 12, lineHeight: 1.4, color: "#f5ede0" }}>
-                {openForMe[0].title.toLowerCase()}
+            <Tile gradient kicker="A decision needs your vote" kickerColor="#f8c56a">
+              <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--text-primary)" }}>
+                {openForMe[0].title}
               </p>
               <button
+                type="button"
                 onClick={() => setTab("decisions")}
-                className="font-mono"
-                style={{
-                  marginTop: 10,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
-                  color: "#1a1204",
-                  padding: "6px 13px",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                }}
+                className={ui.primaryBtn}
+                style={{ marginTop: 14 }}
               >
-                cast your vote →
+                Cast your vote →
               </button>
-            </div>
+            </Tile>
           )}
-          <div style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12, padding: 16 }}>
-            <p className="font-mono uppercase" style={{ fontSize: 9, letterSpacing: "0.12em", color: "var(--text-muted)", marginBottom: 12 }}>members</p>
-            <div className="space-y-2">
+
+          <Tile kicker="Members" right={`${members.length}`}>
+            <div className="space-y-3">
               {members.map((m) => (
                 <div key={m.id} className="group/member flex items-center gap-3">
-                  <Avatar
-                    name={m.full_name}
-                    stage={m.stage}
-                    username={m.username}
-                    size={28}
-                  />
+                  <Avatar name={m.full_name} stage={m.stage} username={m.username} size={30} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                      {m.full_name?.toLowerCase() ?? "—"}
+                    <p className="truncate" style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                      {m.full_name ?? "—"}
                       {m.id === project.owner_id && (
-                        <span style={{ color: "#f8c56a", marginLeft: 6 }}>· owner</span>
+                        <span style={{ fontSize: 12, color: "#f8c56a", marginLeft: 6 }}>Owner</span>
                       )}
                       {m.id === currentUserId && (
-                        <span className="text-text-faint" style={{ marginLeft: 6 }}>· you</span>
+                        <span style={{ ...META, marginLeft: 6 }}>You</span>
                       )}
                     </p>
-                    {m.role && (
-                      <p className="font-mono lowercase text-[0.6rem] text-text-faint">{m.role}</p>
-                    )}
+                    {m.role && <p style={META}>{sentence(m.role)}</p>}
                   </div>
                   {isOwner && m.id !== currentUserId && (
                     <button
+                      type="button"
                       onClick={() => kickMember(m)}
-                      title={`remove ${m.full_name?.toLowerCase() ?? "member"}`}
-                      aria-label="remove member"
-                      className="font-mono text-[0.75rem] px-1 text-text-faint opacity-0 group-hover/member:opacity-100 hover:text-red-400 transition-all"
+                      title={`Remove ${m.full_name ?? "member"}`}
+                      aria-label={`Remove ${m.full_name ?? "member"}`}
+                      className={`${ui.textBtn} px-1 sm:opacity-0 sm:group-hover/member:opacity-100 focus:opacity-100 hover:!text-red-400`}
                     >
                       ✕
                     </button>
@@ -391,26 +370,19 @@ export default function ProjectRoomClient({
                 </div>
               ))}
             </div>
-          </div>
+          </Tile>
 
-          <div
-            className="p-4"
-            style={{ background: "rgba(88, 166, 255, 0.06)", border: "0.5px solid rgba(88, 166, 255, 0.35)", borderRadius: 12 }}
-          >
-            <p className="font-mono uppercase" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#58a6ff" }}>
-              log handshake
-            </p>
-            <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2">
-              capture a commitment scoped to this project.
+          <Tile kicker="Handshake">
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+              Log a commitment you made with someone on this project.
             </p>
             <HandshakeProjectButton
               currentUserId={currentUserId}
               projectId={project.id}
               projectTitle={project.title}
               members={members.filter((m) => m.id !== currentUserId)}
-              variant="link"
             />
-          </div>
+          </Tile>
 
           {isOwner && (
             <JoinRequestsWidget
@@ -427,18 +399,14 @@ export default function ProjectRoomClient({
             memberMap={memberMap}
           />
 
-          <div className="p-4" style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12 }}>
-            <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-3">progress</p>
-            <ProgressRow label="decisions" value={decisions.filter((d) => d.status === "decided").length} total={decisions.length} />
-            <ProgressRow label="shared_docs" value={docs.length} />
-            <ProgressRow label="messages" value={messages.filter((m) => !m.is_system).length} />
-          </div>
+          <Tile kicker="Progress">
+            <ProgressRow label="Decisions made" value={decidedCount} total={decisions.length} />
+            <ProgressRow label="Shared docs" value={docs.length} />
+            <ProgressRow label="Messages" value={messageCount} />
+          </Tile>
         </aside>
       </div>
-      <div className="page-pad" style={{ padding: "0 24px 8px", maxWidth: 1600 }}>
-        <TerminalFooter />
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -446,16 +414,18 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
   const pct = total && total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   return (
     <div className="mb-3 last:mb-0">
-      <div className="flex items-center justify-between">
-        <span className="font-mono lowercase text-[0.65rem] text-text-muted">{label}</span>
-        <span className="font-mono lowercase text-[0.65rem] text-text-primary">
+      <div className="flex items-center justify-between" style={{ fontSize: 13 }}>
+        <span style={{ color: "var(--text-secondary)" }}>{label}</span>
+        <span style={{ color: "var(--text-primary)" }}>
           {value}
-          {total !== undefined && total > 0 && `/${total}`}
+          {total !== undefined && total > 0 && (
+            <span style={{ color: "var(--text-muted)" }}> of {total}</span>
+          )}
         </span>
       </div>
       {total !== undefined && total > 0 && (
-        <div className="h-1 mt-1" style={{ background: "var(--border)" }}>
-          <div className="h-1" style={{ background: "#f59e0b", width: `${pct}%` }} />
+        <div className={ui.barTrack} style={{ marginTop: 6 }}>
+          <div className={ui.barFill} style={{ background: "#f59e0b", width: `${pct}%` }} />
         </div>
       )}
     </div>
@@ -467,25 +437,22 @@ function HandshakeProjectButton({
   projectId,
   projectTitle,
   members,
-  variant = "button",
 }: {
   currentUserId: string;
   projectId: string;
   projectTitle: string;
   members: Member[];
-  variant?: "button" | "link";
 }) {
-  const [target, setTarget] = useState(members[0] ?? null);
+  const [target] = useState(members[0] ?? null);
   if (!target) {
-    return variant === "link" ? (
-      <span className="font-mono lowercase text-[0.65rem] text-text-faint mt-3 block">
-        log agreement  (no co-members yet)
-      </span>
-    ) : null;
+    return (
+      <p style={{ ...META, marginTop: 10 }}>You can log one once someone else joins.</p>
+    );
   }
   return (
-    <div className={variant === "link" ? "mt-3" : ""}>
+    <div style={{ marginTop: 12 }}>
       <HandshakeButton
+        sleek
         currentUserId={currentUserId}
         recipientId={target.id}
         recipientName={target.full_name}
@@ -529,60 +496,38 @@ function ThreadTab({
     if (!error) setText("");
   }
 
+  const canSend = !busy && !!text.trim();
+
   return (
     <div
       className="flex flex-col"
       style={{
-        background: "var(--bg-surface)",
-        border: "0.5px solid var(--border-default)",
-        borderRadius: 12,
+        ...PANEL,
         // Fill the space left under the header/tabs so the composer stays in
         // view without the page scrolling; scrolls internally when long.
-        height: "calc(100dvh - 360px)",
-        minHeight: 300,
+        height: "calc(100dvh - 330px)",
+        minHeight: 340,
         maxHeight: 640,
         overflow: "hidden",
       }}
     >
-      {/* Thread container — mirrors the cohort room chat */}
       <div
         ref={scrollRef}
         className="scroll-thin"
         style={{
-          background: "#0d1117",
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
           padding: 16,
           display: "flex",
           flexDirection: "column",
-          gap: 12,
+          gap: 10,
         }}
       >
         {messages.length === 0 ? (
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "JetBrains Mono, monospace",
-                fontSize: 11,
-                color: "#484f58",
-                letterSpacing: "0.06em",
-              }}
-            >
-              // no messages yet
-            </p>
-            <p style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: 13, color: "#6e7681" }}>
-              Start the conversation.
-            </p>
+          <div className="flex-1 flex flex-col items-center justify-center text-center">
+            <p className={ui.emptyTitle}>No messages yet.</p>
+            <p className={ui.emptySub}>Start the conversation.</p>
           </div>
         ) : (
           messages.map((m) => {
@@ -590,8 +535,8 @@ function ThreadTab({
               return (
                 <p
                   key={m.id}
-                  className="font-mono lowercase italic text-center"
-                  style={{ fontSize: "0.65rem", color: "#484f58", alignSelf: "center" }}
+                  className="text-center"
+                  style={{ ...META, alignSelf: "center", maxWidth: "80%" }}
                 >
                   {m.content} · {timeAgo(m.created_at)} ago
                 </p>
@@ -603,23 +548,32 @@ function ThreadTab({
               <div
                 key={m.id}
                 style={{
-                  background: mine ? "rgba(245,158,11,0.06)" : "#161b22",
-                  border: `1px solid ${mine ? "rgba(245,158,11,0.12)" : "#21262d"}`,
-                  borderRadius: mine ? "12px 4px 4px 12px" : "4px 12px 12px 4px",
-                  padding: "10px 14px",
-                  maxWidth: "70%",
+                  maxWidth: "75%",
                   alignSelf: mine ? "flex-end" : "flex-start",
+                  padding: "10px 14px",
+                  ...(mine
+                    ? {
+                        border: "1px solid rgba(245, 158, 11, 0.3)",
+                        borderRadius: "16px 16px 6px 16px",
+                        background: "linear-gradient(150deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.07) 70%)",
+                        boxShadow: "0 10px 30px -20px rgba(245, 158, 11, 0.6)",
+                      }
+                    : {
+                        border: "1px solid rgba(255, 255, 255, 0.07)",
+                        borderRadius: "16px 16px 16px 6px",
+                        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%), var(--card)",
+                      }),
                 }}
               >
                 {!mine && (
-                  <p className="font-mono lowercase" style={{ fontSize: "0.6rem", color: "#484f58" }}>
-                    {sender?.full_name?.toLowerCase() ?? "—"}
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 2 }}>
+                    {sender?.full_name ?? "—"}
                   </p>
                 )}
-                <p style={{ color: "#e6edf3", fontSize: 14, whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
+                <p style={{ color: "var(--text-primary)", fontSize: 14, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
                   {m.content}
                 </p>
-                <p className="font-mono lowercase" style={{ fontSize: "0.55rem", color: "#484f58", marginTop: 4 }}>
+                <p style={{ fontSize: 11, color: mine ? "rgba(248, 197, 106, 0.75)" : "var(--text-muted)", marginTop: 4 }}>
                   {timeAgo(m.created_at)} ago
                 </p>
               </div>
@@ -628,14 +582,8 @@ function ThreadTab({
         )}
       </div>
       <div
-        style={{
-          borderTop: "1px solid #21262d",
-          padding: "12px 16px",
-          display: "flex",
-          gap: 10,
-          alignItems: "center",
-          background: "#161b22",
-        }}
+        className="flex items-center gap-2.5"
+        style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", padding: "12px 14px" }}
       >
         <input
           value={text}
@@ -646,43 +594,32 @@ function ThreadTab({
               send();
             }
           }}
-          placeholder="message..."
-          style={{
-            flex: 1,
-            background: "#0d1117",
-            border: "1px solid #21262d",
-            borderRadius: 4,
-            color: "#e6edf3",
-            fontFamily: "Space Grotesk, sans-serif",
-            fontSize: 14,
-            padding: "10px 14px",
-            outline: "none",
-            colorScheme: "dark",
-            WebkitAppearance: "none",
-          }}
+          placeholder="Message the team…"
+          aria-label="Message the team"
+          className={`${ui.search} flex-1 min-w-0`}
+          style={{ colorScheme: "dark" }}
         />
         <button
+          type="button"
           onClick={send}
-          disabled={busy || !text.trim()}
-          aria-label="send message"
+          disabled={!canSend}
+          aria-label="Send message"
+          className={ui.primaryBtn}
           style={{
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
+            padding: 0,
             borderRadius: "50%",
-            background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
-            border: "none",
-            cursor: busy || !text.trim() ? "default" : "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            opacity: busy || !text.trim() ? 0.5 : 1,
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
             <path
               d="M13 1L1 7L6 8M13 1L7 13L6 8M13 1L6 8"
-              stroke="#0d1117"
+              stroke="#1a1204"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -712,6 +649,35 @@ function isValidUrl(value: string): boolean {
   }
 }
 
+function DocIcon({ link }: { link: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className="shrink-0 flex items-center justify-center"
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        background: "rgba(255, 255, 255, 0.03)",
+        color: link ? "#58a6ff" : "#f8c56a",
+      }}
+    >
+      {link ? (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+      ) : (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 function DocsTab({
   projectId,
   currentUserId,
@@ -726,6 +692,7 @@ function DocsTab({
   onAdded: (d: Doc) => void;
 }) {
   const [open, setOpen] = useState(false);
+  // "upload" is a titled note (no file is attached); "link" carries a URL.
   const [activeTab, setActiveTab] = useState<"upload" | "link">("upload");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -760,7 +727,7 @@ function DocsTab({
       .single();
     setBusy(false);
     if (error) {
-      setErr(error.message.toLowerCase());
+      setErr(error.message);
       return;
     }
     if (data) {
@@ -772,7 +739,7 @@ function DocsTab({
   async function submitLink() {
     if (!title.trim()) return;
     if (!isValidUrl(url.trim())) {
-      setErr("please enter a valid http(s) url.");
+      setErr("Enter a valid link, starting with http:// or https://.");
       return;
     }
     setBusy(true);
@@ -792,7 +759,7 @@ function DocsTab({
       .single();
     setBusy(false);
     if (error) {
-      setErr(error.message.toLowerCase());
+      setErr(error.message);
       return;
     }
     if (data) {
@@ -804,47 +771,43 @@ function DocsTab({
   return (
     <div className="space-y-3">
       {docs.length === 0 && !open && (
-        <p className="font-mono lowercase text-xs text-text-faint">no shared docs yet.</p>
+        <div style={{ ...PANEL, padding: "18px 20px" }}>
+          <div className={ui.empty}>
+            <p className={ui.emptyTitle}>No shared docs yet.</p>
+            <p className={ui.emptySub}>Keep the links and notes your team keeps reaching for here.</p>
+          </div>
+        </div>
       )}
       {docs.map((d) => {
         const adder = d.added_by ? memberMap.get(d.added_by) : null;
         const isLink = d.doc_type === "link" && !!d.external_url;
         const domain = isLink && d.external_url ? getDomain(d.external_url) : "";
         return (
-          <div
-            key={d.id}
-            className="p-4 border flex items-start gap-3"
-            style={{
-              background: "var(--card-elev)",
-              borderColor: "var(--border)",
-              borderLeft: isLink ? "3px solid #58a6ff" : undefined,
-            }}
-          >
-            <span className="font-mono text-lg" style={{ color: isLink ? "#58a6ff" : "#f59e0b" }}>
-              {isLink ? "🔗" : "📄"}
-            </span>
+          <div key={d.id} className={`${ui.tile} flex items-start gap-3`} style={{ padding: "14px 16px" }}>
+            <DocIcon link={isLink} />
             <div className="min-w-0 flex-1">
               {isLink && d.external_url ? (
                 <a
                   href={d.external_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-text-primary text-sm lowercase hover:underline"
-                  style={{ color: "#58a6ff" }}
+                  className="hover:underline"
+                  style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
                 >
-                  {d.title.toLowerCase()}
+                  {d.title}
                 </a>
               ) : (
-                <p className="text-text-primary text-sm lowercase">{d.title.toLowerCase()}</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>{d.title}</p>
               )}
-              {domain && (
-                <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-0.5">{domain}</p>
-              )}
-              <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-1">
-                {adder?.full_name?.toLowerCase() ?? "someone"} · {timeAgo(d.created_at)} ago
+              <p style={{ ...META, marginTop: 2 }}>
+                {domain ? `${domain} · ` : ""}
+                {adder?.full_name ?? "Someone"} · {timeAgo(d.created_at)} ago
               </p>
               {d.description && (
-                <p className="text-text-secondary text-xs mt-2 leading-relaxed whitespace-pre-wrap">
+                <p
+                  className="whitespace-pre-wrap"
+                  style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 8 }}
+                >
                   {d.description}
                 </p>
               )}
@@ -854,95 +817,64 @@ function DocsTab({
       })}
 
       {open ? (
-        <div
-          className="border"
-          style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
-        >
-          <div className="flex items-center border-b" style={{ borderColor: "var(--border)" }}>
-            {(["upload", "link"] as const).map((t) => {
-              const active = activeTab === t;
-              return (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setActiveTab(t);
-                    setErr(null);
-                  }}
-                  className="font-mono lowercase text-[0.7rem] px-4 py-2"
-                  style={{
-                    color: active ? "#f59e0b" : "var(--text-muted)",
-                    borderBottom: active ? "2px solid #f59e0b" : "2px solid transparent",
-                  }}
-                >
-                  {t === "upload" ? "upload doc" : "add link"}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="p-4 space-y-3">
-            {activeTab === "link" && (
-              <input
-                placeholder="paste a link..."
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                autoFocus
-                className="w-full px-3 py-2 text-text-primary"
-                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-              />
-            )}
-            <input
-              placeholder={activeTab === "link" ? "what is this resource?" : "document title"}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              autoFocus={activeTab === "upload"}
-              className="w-full px-3 py-2 text-text-primary"
-              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-            />
-            <textarea
-              rows={3}
-              placeholder={activeTab === "link" ? "brief description..." : "description (optional)"}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-text-primary"
-              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-            />
-            {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={reset}
-                className="font-mono lowercase text-[0.7rem] px-3 py-1 text-text-faint hover:text-text-primary"
-              >
-                cancel
-              </button>
-              <button
-                onClick={activeTab === "link" ? submitLink : submitFile}
-                disabled={
-                  busy || !title.trim() || (activeTab === "link" && !url.trim())
-                }
-                className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-                style={{
-                  background: "rgba(245, 158, 11, 0.18)",
-                  color: "#f59e0b",
-                  border: "1px solid rgba(245, 158, 11, 0.55)",
-                  borderRadius: 5,
-                  boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)",
-                  fontWeight: 700,
-                  letterSpacing: "0.02em",
+        <div className="space-y-3" style={{ ...PANEL, padding: 16 }}>
+          <TabPillRow>
+            {(["upload", "link"] as const).map((t) => (
+              <TabPill
+                sleek
+                key={t}
+                active={activeTab === t}
+                onClick={() => {
+                  setActiveTab(t);
+                  setErr(null);
                 }}
               >
-                {activeTab === "link" ? "add link →" : "add"}
-              </button>
-            </div>
+                {t === "upload" ? "Note" : "Link"}
+              </TabPill>
+            ))}
+          </TabPillRow>
+          {activeTab === "link" && (
+            <input
+              placeholder="Paste a link"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              autoFocus
+              className={`${ui.search} w-full`}
+            />
+          )}
+          <input
+            placeholder={activeTab === "link" ? "What is this?" : "Title"}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            autoFocus={activeTab === "upload"}
+            className={`${ui.search} w-full`}
+          />
+          <textarea
+            rows={3}
+            placeholder={activeTab === "link" ? "A short description (optional)" : "Notes (optional)"}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={`${ui.search} w-full`}
+            style={{ resize: "vertical" }}
+          />
+          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+          <div className="flex justify-end items-center gap-3">
+            <button type="button" onClick={reset} className={ui.textBtn} style={{ fontSize: 13 }}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={activeTab === "link" ? submitLink : submitFile}
+              disabled={busy || !title.trim() || (activeTab === "link" && !url.trim())}
+              className={ui.primaryBtn}
+            >
+              {activeTab === "link" ? "Add link" : "Add note"}
+            </button>
           </div>
         </div>
       ) : (
-        <button
-          onClick={() => setOpen(true)}
-          className="w-full p-4 font-mono lowercase text-xs text-text-faint hover:text-text-primary"
-          style={{ border: "1px dashed var(--border)" }}
-        >
-          + add shared doc
+        <button type="button" onClick={() => setOpen(true)} className={`${ui.ghostBtn} w-full`}>
+          Add a shared doc
         </button>
       )}
     </div>
@@ -971,6 +903,8 @@ function DecisionsTab({
   const [description, setDescription] = useState("");
   const [optionsText, setOptionsText] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const optionCount = optionsText.split("\n").filter((s) => s.trim()).length;
 
   async function submit() {
     if (!title.trim()) return;
@@ -1053,7 +987,14 @@ function DecisionsTab({
   return (
     <div className="space-y-3">
       {decisions.length === 0 && !open && (
-        <p className="font-mono lowercase text-xs text-text-faint">no decisions yet.</p>
+        <div style={{ ...PANEL, padding: "18px 20px" }}>
+          <div className={ui.empty}>
+            <p className={ui.emptyTitle}>No decisions yet.</p>
+            <p className={ui.emptySub}>
+              Put a choice to the team. It closes when everyone has voted.
+            </p>
+          </div>
+        </div>
       )}
       {decisions.map((d) => {
         const decisionVotes = votes.filter((v) => v.decision_id === d.id);
@@ -1064,115 +1005,111 @@ function DecisionsTab({
         });
         const totalMembers = members.length;
         const totalVoted = decisionVotes.length;
+        const decided = d.status === "decided";
         return (
-          <div
-            key={d.id}
-            className="p-4"
-            style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12 }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-sans text-text-primary text-sm lowercase">{d.title.toLowerCase()}</h4>
+          <div key={d.id} className={ui.tile} style={{ padding: "16px 18px" }}>
+            <div className="flex items-start justify-between gap-3">
+              <h4 style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4, color: "var(--text-primary)" }}>
+                {d.title}
+              </h4>
               <span
-                className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-                style={{
-                  border: `1px solid ${d.status === "decided" ? "#22c55e" : "#f59e0b"}`,
-                  color: d.status === "decided" ? "#22c55e" : "#f59e0b",
-                }}
+                className={`${ui.chip} ${decided ? "" : ui.chipAmber} shrink-0`}
+                style={
+                  decided
+                    ? { color: "#4ade80", borderColor: "rgba(34, 197, 94, 0.35)", background: "rgba(34, 197, 94, 0.08)" }
+                    : undefined
+                }
               >
-                {d.status}
+                {decided ? "Decided" : "Open"}
               </span>
             </div>
             {d.description && (
-              <p className="text-text-secondary text-xs mt-1 mb-3 leading-relaxed whitespace-pre-wrap">
+              <p
+                className="whitespace-pre-wrap"
+                style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 6 }}
+              >
                 {d.description}
               </p>
             )}
-            {d.status === "decided" && d.winning_option ? (
-              <p className="font-mono lowercase text-xs mt-2">
-                <span style={{ color: "#22c55e" }}> {d.winning_option}</span>{" "}
-                <span className="text-text-faint">
-                  · {totalVoted === totalMembers ? "unanimous" : `${tally[d.winning_option] ?? 0}/${totalMembers} voted`}
+            {decided && d.winning_option ? (
+              <p style={{ fontSize: 14, marginTop: 12 }}>
+                <span style={{ color: "#4ade80" }}>✓ {d.winning_option}</span>
+                <span style={META}>
+                  {" "}
+                  · {totalVoted === totalMembers ? "Unanimous" : `${tally[d.winning_option] ?? 0} of ${totalMembers} votes`}
                 </span>
               </p>
             ) : (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {d.options.map((o) => {
-                  const label = optLabel(o);
-                  const active = myVote === label;
-                  return (
-                    <button
-                      key={label}
-                      onClick={() => vote(d, label)}
-                      className="font-mono lowercase text-[0.65rem] px-3 py-1"
-                      style={{
-                        border: `1px solid ${active ? "#f59e0b" : "var(--border)"}`,
-                        color: active ? "#f59e0b" : "var(--text-muted)",
-                        background: active ? "rgba(245, 158, 11,0.08)" : "transparent",
-                      }}
-                    >
-                      {label.toLowerCase()} {tally[label] ? `· ${tally[label]}` : ""}
-                    </button>
-                  );
-                })}
-              </div>
+              <>
+                <div className="flex flex-wrap gap-2" style={{ marginTop: 12 }}>
+                  {d.options.map((o) => {
+                    const label = optLabel(o);
+                    const active = myVote === label;
+                    return (
+                      <button
+                        type="button"
+                        key={label}
+                        onClick={() => vote(d, label)}
+                        aria-pressed={active}
+                        className={`${ui.pill}${active ? ` ${ui.pillActive}` : ""}`}
+                      >
+                        {label}
+                        {tally[label] ? ` · ${tally[label]}` : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p style={{ ...META, marginTop: 10 }}>
+                  {totalVoted} of {totalMembers} voted
+                </p>
+              </>
             )}
           </div>
         );
       })}
 
       {open ? (
-        <div
-          className="p-4 border space-y-3"
-          style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
-        >
+        <div className="space-y-3" style={{ ...PANEL, padding: 16 }}>
           <input
-            placeholder="decision title"
+            placeholder="What needs deciding?"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
-            className="w-full px-3 py-2 text-text-primary"
-            style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+            className={`${ui.search} w-full`}
           />
           <textarea
             rows={2}
-            placeholder="context (optional)"
+            placeholder="Context (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 text-text-primary"
-            style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+            className={`${ui.search} w-full`}
+            style={{ resize: "vertical" }}
           />
           <textarea
             rows={3}
-            placeholder="options (one per line, min 2)"
+            placeholder={"Options, one per line (at least two)"}
             value={optionsText}
             onChange={(e) => setOptionsText(e.target.value)}
-            className="w-full px-3 py-2 text-text-primary"
-            style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+            className={`${ui.search} w-full`}
+            style={{ resize: "vertical" }}
           />
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setOpen(false)}
-              className="font-mono lowercase text-[0.7rem] px-3 py-1 text-text-faint hover:text-text-primary"
-            >
-              cancel
+          <div className="flex justify-end items-center gap-3">
+            <button type="button" onClick={() => setOpen(false)} className={ui.textBtn} style={{ fontSize: 13 }}>
+              Cancel
             </button>
             <button
+              type="button"
               onClick={submit}
-              disabled={busy || !title.trim()}
-              className="font-mono lowercase text-[0.7rem] px-3 py-1 hover:opacity-90 disabled:opacity-50"
-              style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
+              disabled={busy || !title.trim() || optionCount < 2}
+              className={ui.primaryBtn}
             >
-              open decision
+              Open decision
             </button>
           </div>
         </div>
       ) : (
-        <button
-          onClick={() => setOpen(true)}
-          className="w-full p-4 font-mono lowercase text-xs text-text-faint hover:text-text-primary"
-          style={{ border: "1px dashed var(--border)" }}
-        >
-          + add decision
+        <button type="button" onClick={() => setOpen(true)} className={`${ui.ghostBtn} w-full`}>
+          Add a decision
         </button>
       )}
     </div>
@@ -1201,26 +1138,27 @@ function ActivityWidget({
     const who = d.created_by ? memberMap.get(d.created_by) : null;
     entries.push({
       ts: d.created_at,
-      text: `${who?.username ?? "someone"} opened decision: ${d.title}`,
+      text: `${who?.full_name ?? who?.username ?? "Someone"} opened a decision: ${d.title}`,
     });
   }
-  entries.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+  entries.sort((a, b) => parseDbTime(b.ts).getTime() - parseDbTime(a.ts).getTime());
   const recent = entries.slice(0, 6);
 
   return (
-    <div className="p-4 border" style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}>
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-3">recent_activity</p>
+    <Tile kicker="Recent activity">
       {recent.length === 0 ? (
-        <p className="font-mono lowercase text-[0.7rem] text-text-faint">no activity yet.</p>
+        <p className={ui.emptySub} style={{ marginTop: 0 }}>
+          No activity yet.
+        </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {recent.map((e, i) => (
-            <li key={i} className="font-mono lowercase text-[0.65rem] text-text-muted leading-snug">
-              {e.text} · <span className="text-text-faint">{timeAgo(e.ts)} ago</span>
+            <li key={i} style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+              {sentence(e.text)} <span style={META}>· {timeAgo(e.ts)} ago</span>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </Tile>
   );
 }
