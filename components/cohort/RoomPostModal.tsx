@@ -8,16 +8,15 @@ import { reportPosted } from "@/lib/tour-bus";
 
 type RoomType = "question" | "update" | "decision" | "win" | "blocker";
 
-const TYPES: { value: RoomType; color: string; desc: string }[] = [
-  { value: "question", color: "#38bdf8", desc: "needs input from the room" },
-  { value: "update", color: "#6e7681", desc: "here's where i'm at" },
-  { value: "decision", color: "#f59e0b", desc: "deciding something, thoughts welcome" },
-  { value: "win", color: "#22c55e", desc: "something worked" },
-  { value: "blocker", color: "#f85149", desc: "stuck on something specific" },
+const TYPES: { value: RoomType; label: string; color: string; desc: string }[] = [
+  { value: "question", label: "Question", color: "#38bdf8", desc: "Needs input from the room" },
+  { value: "update", label: "Update", color: "#8b949e", desc: "Here's where I'm at" },
+  { value: "decision", label: "Decision", color: "#f59e0b", desc: "Deciding something, thoughts welcome" },
+  { value: "win", label: "Win", color: "#22c55e", desc: "Something worked" },
+  { value: "blocker", label: "Blocker", color: "#f85149", desc: "Stuck on something specific" },
 ];
 
 export default function RoomPostModal({
-  userId,
   cohortId,
   initialContent = "",
   onClose,
@@ -38,7 +37,7 @@ export default function RoomPostModal({
 
   async function submit() {
     if (!content.trim()) return;
-    // Paywall gate — cohort posts are capped on free tier.
+    // Paywall gate — cohort posts need full access.
     const allowed = await checkAndGate("cohort_posts");
     if (!allowed) return;
     setBusy(true);
@@ -61,7 +60,7 @@ export default function RoomPostModal({
       const data = await res.json().catch(() => ({}));
       // An entitlement 403 gets the upgrade overlay, not an inline error.
       if (handleGateResponse("cohort_posts", data)) return;
-      setErr((data.error || "failed to post").toLowerCase());
+      setErr(data.error || "Couldn't post that. Try again.");
       return;
     }
     if (anon) {
@@ -79,110 +78,112 @@ export default function RoomPostModal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-label="New room post"
         className="modal-shell w-full max-w-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="modal-kicker">cohort room</p>
-            <h2 className="modal-title">new room post</h2>
+            <p className="modal-kicker">Cohort room</p>
+            <h2 className="modal-title">New room post</h2>
           </div>
-          <button onClick={onClose} className="modal-close-btn">
-            esc
+          <button type="button" onClick={onClose} className="modal-close-btn">
+            Esc
           </button>
         </div>
 
         <div className="modal-shell-body">
-        <div>
-          <label>type</label>
-          <div className="grid grid-cols-2 gap-2 mt-1">
-            {TYPES.map((t) => {
-              const active = type === t.value;
-              return (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setType(t.value)}
-                  className="option-card font-mono lowercase px-3 py-2.5"
-                  style={{
-                    borderColor: active ? t.color : undefined,
-                    background: active ? `${t.color}14` : undefined,
-                  }}
-                >
-                  <p
-                    className="text-[0.8rem]"
-                    style={{ color: active ? t.color : "var(--text-primary)" }}
+          <div>
+            <label>Type</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              {TYPES.map((t) => {
+                const active = type === t.value;
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setType(t.value)}
+                    aria-pressed={active}
+                    className="option-card px-3 py-2.5"
+                    style={{
+                      borderColor: active ? t.color : undefined,
+                      background: active ? `${t.color}14` : undefined,
+                    }}
                   >
-                    {t.value}
-                  </p>
-                  <p className="text-[0.6rem] text-text-faint mt-0.5">{t.desc}</p>
-                </button>
-              );
-            })}
+                    <p style={{ fontSize: 14, color: active ? t.color : "var(--text-primary)" }}>{t.label}</p>
+                    <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{t.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label>content</label>
-          <textarea
-            rows={5}
-            placeholder="what's on your mind?"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            autoFocus
-          />
-        </div>
-
-        <div className="flex items-start gap-3">
-          <button
-            type="button"
-            onClick={() => setAnon((v) => !v)}
-            aria-pressed={anon}
-            className="relative shrink-0"
-            style={{
-              width: 34,
-              height: 18,
-              borderRadius: 9999,
-              background: anon ? "#f59e0b" : "var(--border)",
-              transition: "background 150ms ease",
-            }}
-          >
-            <span
-              style={{
-                position: "absolute",
-                top: 2,
-                left: anon ? 18 : 2,
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                background: "#fff",
-                transition: "left 150ms ease",
-              }}
+          <div>
+            <label htmlFor="room-post-content">What&apos;s happening?</label>
+            <textarea
+              id="room-post-content"
+              rows={5}
+              placeholder="What's on your mind?"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              autoFocus
             />
-          </button>
-          <div className="text-[0.7rem] leading-snug">
-            <p className="font-mono lowercase text-text-secondary">
-              post anonymously
-            </p>
-            <p className="font-mono lowercase text-text-faint">
-              the room sees the post but not your name
-            </p>
           </div>
-        </div>
 
-        {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              role="switch"
+              onClick={() => setAnon((v) => !v)}
+              aria-checked={anon}
+              aria-label="Post anonymously"
+              className="relative shrink-0"
+              style={{
+                width: 34,
+                height: 20,
+                padding: 0,
+                border: "none",
+                borderRadius: 9999,
+                background: anon ? "#f59e0b" : "rgba(255, 255, 255, 0.12)",
+                transition: "background 150ms ease",
+              }}
+            >
+              <span
+                style={{
+                  position: "absolute",
+                  top: 3,
+                  left: anon ? 17 : 3,
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  background: anon ? "#1a1204" : "#fff",
+                  transition: "left 150ms ease",
+                }}
+              />
+            </button>
+            <div style={{ lineHeight: 1.4 }}>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Post anonymously</p>
+              <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                The room sees the post but not your name.
+              </p>
+            </div>
+          </div>
+
+          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
         </div>
 
         <div className="modal-shell-foot">
-          <button onClick={onClose} className="btn-ghost" disabled={busy}>
-            cancel
+          <button type="button" onClick={onClose} className="btn-ghost" disabled={busy}>
+            Cancel
           </button>
           <button
+            type="button"
             onClick={submit}
             disabled={busy || !content.trim()}
             className="btn-primary"
           >
-            {busy ? "..." : "post to room "}
+            {busy ? "Posting…" : "Post to room"}
           </button>
         </div>
       </div>

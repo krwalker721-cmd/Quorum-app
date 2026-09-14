@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 import type { ProjectRow } from "./CollabBoardClient";
 
 const OFFER_OPTIONS = ["co-thinker", "technical", "design", "sales-growth", "advisor"];
+const MIN_REASON = 20;
+
+function sentence(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 export default function JoinRequestModal({
   project,
@@ -34,7 +39,8 @@ export default function JoinRequestModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, busy]);
 
-  const reasonOk = reason.trim().length >= 20;
+  const length = reason.trim().length;
+  const reasonOk = length >= MIN_REASON;
 
   async function submit() {
     if (!reasonOk || busy) return;
@@ -49,7 +55,7 @@ export default function JoinRequestModal({
     });
     if (error) {
       setBusy(false);
-      setErr(error.message.toLowerCase());
+      setErr(error.message);
       return;
     }
     // Notify the project owner
@@ -73,69 +79,66 @@ export default function JoinRequestModal({
       onClick={() => !busy && onClose()}
     >
       <div
+        role="dialog"
+        aria-label={`Request to join ${project.title}`}
         className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="modal-kicker">request to join</p>
+            <p className="modal-kicker">Request to join</p>
             <h3 className="modal-title truncate">{project.title}</h3>
             <p className="modal-subtitle">
-              the project owner reads this — say something only you could say.
+              The project owner reads this, so say something only you could say.
             </p>
           </div>
-          <button onClick={onClose} className="modal-close-btn" aria-label="close">
-            esc
+          <button type="button" onClick={onClose} className="modal-close-btn" aria-label="Close">
+            Esc
           </button>
         </div>
 
         <div className="modal-shell-body">
           <div>
-            <label>why do you want to join this project?</label>
+            <label htmlFor="join-reason">Why do you want to join this project?</label>
             <textarea
+              id="join-reason"
               rows={5}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="share why you're a good fit…"
+              placeholder="Share why you're a good fit…"
               autoFocus
             />
-            <p
-              className="font-mono lowercase text-[0.6rem] mt-1.5"
-              style={{ color: reasonOk ? "#22c55e" : "var(--text-faint)" }}
-            >
-              {reasonOk ? "✓ " : ""}{reason.trim().length}/20 characters
+            <p style={{ fontSize: 12, marginTop: 6, color: reasonOk ? "#4ade80" : "var(--text-muted)" }}>
+              {reasonOk ? "✓ Enough to send" : `At least ${MIN_REASON} characters · ${length} so far`}
             </p>
           </div>
 
           <div>
-            <label>what can you offer?</label>
+            <label>What can you offer?</label>
             <div className="flex flex-wrap gap-2 mt-1">
               {OFFER_OPTIONS.map((o) => (
                 <button
                   key={o}
                   type="button"
                   onClick={() => setOffer(o)}
+                  aria-pressed={offer === o}
                   className={`option-chip${offer === o ? " selected" : ""}`}
                 >
-                  {o}
+                  {sentence(o)}
                 </button>
               ))}
             </div>
           </div>
 
-          {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
         </div>
 
         <div className="modal-shell-foot">
-          <button onClick={onClose} className="btn-ghost" disabled={busy}>
-            cancel
+          <button type="button" onClick={onClose} className="btn-ghost" disabled={busy}>
+            Cancel
           </button>
-          <button
-            onClick={submit}
-            disabled={!reasonOk || busy}
-            className="btn-primary"
-          >
-            {busy ? "…" : "send request →"}
+          <button type="button" onClick={submit} disabled={!reasonOk || busy} className="btn-primary">
+            {busy ? "Sending…" : "Send request →"}
           </button>
         </div>
       </div>

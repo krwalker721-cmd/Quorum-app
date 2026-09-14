@@ -28,7 +28,7 @@ export default function RespondModal({
       .insert({ project_id: project.id, user_id: userId, note: note.trim() || null });
     if (e1 && !e1.message.toLowerCase().includes("duplicate")) {
       setBusy(false);
-      setErr(e1.message.toLowerCase());
+      setErr(e1.message);
       return;
     }
     if (project.owner_id && note.trim()) {
@@ -48,20 +48,22 @@ export default function RespondModal({
       onClick={() => !busy && onClose()}
     >
       <div
+        role="dialog"
+        aria-label={`Respond to ${project.title}`}
         className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="modal-kicker">respond</p>
-            <h2 className="modal-title truncate">{project.title.toLowerCase()}</h2>
+            <p className="modal-kicker">Respond</p>
+            <h2 className="modal-title truncate">{project.title}</h2>
             <p className="modal-subtitle">
-              a short note to {project.author?.full_name?.toLowerCase() ?? "the author"} explaining
-              why you&apos;d be a fit. they&apos;ll be notified via dm.
+              A short note to {project.author?.full_name ?? "the author"} on why you&apos;d be a fit.
+              They&apos;ll get it as a direct message.
             </p>
           </div>
-          <button onClick={onClose} className="modal-close-btn">
-            esc
+          <button type="button" onClick={onClose} className="modal-close-btn">
+            Esc
           </button>
         </div>
 
@@ -69,19 +71,20 @@ export default function RespondModal({
           <textarea
             rows={5}
             autoFocus
-            placeholder="i'd be a good fit because..."
+            aria-label="Your note"
+            placeholder="I'd be a good fit because…"
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
-          {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
         </div>
 
         <div className="modal-shell-foot">
-          <button onClick={onClose} className="btn-ghost" disabled={busy}>
-            cancel
+          <button type="button" onClick={onClose} className="btn-ghost" disabled={busy}>
+            Cancel
           </button>
-          <button onClick={submit} disabled={busy} className="btn-primary">
-            {busy ? "..." : "send "}
+          <button type="button" onClick={submit} disabled={busy} className="btn-primary">
+            {busy ? "Sending…" : "Send"}
           </button>
         </div>
       </div>

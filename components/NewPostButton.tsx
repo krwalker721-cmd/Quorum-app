@@ -13,6 +13,12 @@ import { onOpenComposer, reportPosted } from "@/lib/tour-bus";
 const TAGS = ["decision", "mindset", "hiring", "growth", "real_talk", "ops", "fundraising"];
 const ROOM_TYPES = ["question", "update", "decision", "win", "blocker"] as const;
 
+// "real_talk" → "Real talk"
+function sentence(s: string) {
+  const t = s.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export default function NewPostButton({
   userId,
   defaultPostType = "cohort",
@@ -77,7 +83,7 @@ export default function NewPostButton({
     if (!content.trim()) return;
     // Guard: cohort posts require membership (mirrors the server-side RLS).
     if (postType === "cohort" && (myCohortIds?.length ?? 0) === 0) {
-      setErr("join a cohort to post here.");
+      setErr("Join a cohort to post there.");
       return;
     }
     // Paywall gate — check the cap before we attempt the insert.
@@ -118,7 +124,7 @@ export default function NewPostButton({
         setOpen(false);
         return;
       }
-      setErr((data.error || "failed to create post").toLowerCase());
+      setErr(data.error || "Couldn't post that. Try again.");
       return;
     }
     if (anon) {
@@ -167,34 +173,33 @@ export default function NewPostButton({
           onClick={() => !busy && setOpen(false)}
         >
           <div
+            role="dialog"
+            aria-label={isPulse ? "Post to the community" : "New post"}
             className="modal-shell w-full max-w-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-shell-head">
               <div className="min-w-0">
-                <p className="modal-kicker">{isPulse ? "pulse" : "new post"}</p>
+                <p className="modal-kicker">{isPulse ? "Pulse" : "New post"}</p>
                 <h2 className="modal-title">
-                  {isPulse ? "post to the community" : "what's on your mind?"}
+                  {isPulse ? "Post to the community" : "What's on your mind?"}
                 </h2>
                 {isPulse && (
                   <p className="modal-subtitle">
-                    this goes to every founder on quorum. make it worth their attention.
+                    This goes to every founder on Quorum. Make it worth their attention.
                   </p>
                 )}
               </div>
-              <button onClick={() => setOpen(false)} className="modal-close-btn">
-                esc
+              <button type="button" onClick={() => setOpen(false)} className="modal-close-btn">
+                Esc
               </button>
             </div>
 
             <div className="modal-shell-body">
               <textarea
                 rows={5}
-                placeholder={
-                  isPulse
-                    ? "say something real…"
-                    : "what's on your mind?"
-                }
+                aria-label="Your post"
+                placeholder={isPulse ? "Say something real…" : "What's on your mind?"}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 autoFocus
@@ -202,7 +207,7 @@ export default function NewPostButton({
 
               {isPulse ? (
                 <div>
-                  <label>type</label>
+                  <label>Type</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                     {ROOM_TYPES.map((t) => {
                       const active = roomType === t;
@@ -212,6 +217,7 @@ export default function NewPostButton({
                           key={t}
                           type="button"
                           onClick={() => setRoomType(t)}
+                          aria-pressed={active}
                           className="option-card"
                           style={{
                             minHeight: 44,
@@ -220,17 +226,11 @@ export default function NewPostButton({
                             background: active ? `${color}11` : undefined,
                           }}
                         >
-                          <p
-                            className="font-mono lowercase text-[0.75rem]"
-                            style={{ color: active ? color : "var(--text-primary)" }}
-                          >
-                            {t}
+                          <p style={{ fontSize: 14, color: active ? color : "var(--text-primary)" }}>
+                            {sentence(t)}
                           </p>
-                          <p
-                            className="font-sans lowercase text-text-faint mt-0.5"
-                            style={{ fontSize: "10.5px" }}
-                          >
-                            {ROOM_TYPE_LABEL[t]}
+                          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                            {sentence(ROOM_TYPE_LABEL[t] ?? "")}
                           </p>
                         </button>
                       );
@@ -239,7 +239,7 @@ export default function NewPostButton({
                 </div>
               ) : (
                 <div>
-                  <label>tag</label>
+                  <label>Tag</label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {TAGS.map((t) => {
                       const active = tag === t;
@@ -248,9 +248,10 @@ export default function NewPostButton({
                           key={t}
                           type="button"
                           onClick={() => setTag(t)}
+                          aria-pressed={active}
                           className={`option-chip${active ? " selected" : ""}`}
                         >
-                          {t}
+                          {sentence(t)}
                         </button>
                       );
                     })}
@@ -261,7 +262,7 @@ export default function NewPostButton({
               {/* Destination selector — hidden when locked to pulse */}
               {!isPulse && (
                 <div>
-                  <label>destination</label>
+                  <label>Post to</label>
                   <div className="flex gap-2 mt-1">
                     {(["cohort", "pulse"] as const).map((d) => {
                       const active = postType === d;
@@ -272,23 +273,24 @@ export default function NewPostButton({
                           type="button"
                           onClick={() => !disabled && setPostType(d)}
                           disabled={disabled}
-                          title={disabled ? "join a cohort to post here" : undefined}
+                          aria-pressed={active}
+                          title={disabled ? "Join a cohort to post there" : undefined}
                           className={`option-chip flex-1${active ? " selected" : ""}`}
                           style={{
-                            borderRadius: "var(--radius-ctl)",
-                            padding: "7px 12px",
+                            borderRadius: 10,
+                            padding: "8px 12px",
                             opacity: disabled ? 0.35 : 1,
                             cursor: disabled ? "not-allowed" : "pointer",
                           }}
                         >
-                          {d === "cohort" ? "cohort_feed" : "pulse"}
+                          {d === "cohort" ? "Your cohort" : "Pulse"}
                         </button>
                       );
                     })}
                   </div>
                   {inNoCohort && (
-                    <p className="font-mono lowercase text-text-faint mt-1.5" style={{ fontSize: "10px" }}>
-                      join a cohort to post here
+                    <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+                      Join a cohort to post there.
                     </p>
                   )}
                 </div>
@@ -297,59 +299,59 @@ export default function NewPostButton({
               <div className="flex items-start gap-3">
                 <button
                   type="button"
+                  role="switch"
                   onClick={() => setAnon((v) => !v)}
-                  aria-pressed={anon}
+                  aria-checked={anon}
+                  aria-label="Post anonymously"
                   className="relative shrink-0"
                   style={{
                     flex: "0 0 34px",
                     width: 34,
-                    minWidth: 34,
-                    maxWidth: 34,
-                    height: 18,
-                    minHeight: 18,
-                    maxHeight: 18,
+                    height: 20,
                     padding: 0,
+                    border: "none",
                     borderRadius: 9999,
-                    background: anon ? "#f59e0b" : "var(--border)",
+                    background: anon ? "#f59e0b" : "rgba(255, 255, 255, 0.12)",
                     transition: "background 150ms ease",
                   }}
                 >
                   <span
                     style={{
                       position: "absolute",
-                      top: 2,
-                      left: anon ? 18 : 2,
+                      top: 3,
+                      left: anon ? 17 : 3,
                       width: 14,
                       height: 14,
                       borderRadius: "50%",
-                      background: "#fff",
+                      background: anon ? "#1a1204" : "#fff",
                       transition: "left 150ms ease",
                     }}
                   />
                 </button>
-                <div className="text-[0.7rem] leading-snug" style={{ flex: "1 1 auto", minWidth: 0 }}>
-                  <p className="font-mono lowercase text-text-secondary">post anonymously</p>
-                  <p className="font-mono lowercase text-text-faint">
-                    {isPulse
-                      ? "the community sees your words, not your name"
-                      : "your cohort sees the post but not your name"}
+                <div style={{ flex: "1 1 auto", minWidth: 0, lineHeight: 1.4 }}>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Post anonymously</p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    {isPulse || postType === "pulse"
+                      ? "The community sees your words, not your name."
+                      : "Your cohort sees the post but not your name."}
                   </p>
                 </div>
               </div>
 
-              {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+              {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
             </div>
 
             <div className="modal-shell-foot">
-              <button onClick={() => setOpen(false)} className="btn-ghost" disabled={busy}>
-                cancel
+              <button type="button" onClick={() => setOpen(false)} className="btn-ghost" disabled={busy}>
+                Cancel
               </button>
               <button
+                type="button"
                 onClick={submit}
                 disabled={busy || !content.trim()}
                 className="btn-primary"
               >
-                {busy ? "..." : isPulse ? "post to the room " : "post "}
+                {busy ? "Posting…" : "Post"}
               </button>
             </div>
           </div>

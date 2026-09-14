@@ -788,8 +788,15 @@ activation and DNS.
             seven notification switches that nothing read are gone, leaving
             the trial-ending email, which works; profile visibility lives in
             one place instead of two out-of-sync copies.
-      - [ ] The shared modals (`modal-shell` in `globals.css`): new post, room
-            post, invite, and the rest. Deliberately left for one pass.
+      - [x] The shared modals, in one pass: the `modal-shell` classes in
+            `globals.css` carry the finish (form controls and buttons are
+            restyled only inside `.modal-shell`), and every dialog's copy is
+            sentence case. The paywall and delete confirmation match.
+            **Removed from the weekly check-in:** after submitting, it showed
+            "what two of your cohort members shared this week" — two invented
+            founders with made-up wins. It now says where the check-in goes.
+            Also: a textarea placed directly in a dialog's body collapsed to
+            one line on short screens.
       - [ ] Update `design/REDESIGN-BUILD-GUIDE.md` to the new look.
 
       **How it's built.** Everything is opt-in so unconverted pages don't
