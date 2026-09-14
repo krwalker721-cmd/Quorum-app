@@ -797,7 +797,12 @@ activation and DNS.
             founders with made-up wins. It now says where the check-in goes.
             Also: a textarea placed directly in a dialog's body collapsed to
             one line on short screens.
-      - [ ] Update `design/REDESIGN-BUILD-GUIDE.md` to the new look.
+      - [x] `design/REDESIGN-BUILD-GUIDE.md` rewritten to the sleek finish:
+            the rules (amber marks the one thing to do, static not animated,
+            no invented numbers/people/controls), the `sleek.module.css`
+            classes, the dialog recipe, and each page's structure. Pricing
+            and the auth pages (login, signup, pending) are the only screens
+            still in the old finish.
 
       **How it's built.** Everything is opt-in so unconverted pages don't
       change: `<NoGrid />`, `<TopBar sleek>`, and a `sleek` prop on shared
