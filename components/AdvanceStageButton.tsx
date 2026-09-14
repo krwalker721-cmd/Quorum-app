@@ -3,9 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { STAGE_COLOR } from "@/lib/stage";
+import ui from "@/components/ui/sleek.module.css";
 
 const ORDER = ["idea", "pre-seed", "seed", "series_a"] as const;
 type Stage = (typeof ORDER)[number];
+
+const STAGE_LABEL: Record<Stage, string> = {
+  idea: "Idea",
+  "pre-seed": "Pre-seed",
+  seed: "Seed",
+  series_a: "Series A",
+};
 
 function nextStage(s: Stage): Stage | null {
   const i = ORDER.indexOf(s);
@@ -13,28 +21,22 @@ function nextStage(s: Stage): Stage | null {
   return ORDER[i + 1];
 }
 
-function StagePillSwatch({
-  stage,
-  dim = false,
-  glow = false,
-}: {
-  stage: Stage;
-  dim?: boolean;
-  glow?: boolean;
-}) {
+function StageSwatch({ stage, dim = false }: { stage: Stage; dim?: boolean }) {
   const color = STAGE_COLOR[stage] ?? "#6e7681";
   return (
     <span
-      className="font-mono lowercase text-[0.75rem] px-3 py-1.5 inline-flex items-center"
       style={{
+        fontSize: 14,
+        padding: "6px 14px",
+        borderRadius: 999,
         border: `1px solid ${color}`,
-        color: dim ? "rgba(255,255,255,0.45)" : color,
-        background: dim ? "transparent" : `${color}14`,
-        opacity: dim ? 0.55 : 1,
-        boxShadow: glow ? `0 0 14px ${color}55, 0 0 4px ${color}33` : undefined,
+        color: dim ? "var(--text-muted)" : color,
+        background: dim ? "transparent" : `${color}1a`,
+        opacity: dim ? 0.6 : 1,
+        boxShadow: dim ? undefined : `0 0 16px ${color}40`,
       }}
     >
-      {stage}
+      {STAGE_LABEL[stage]}
     </span>
   );
 }
@@ -57,7 +59,7 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setErr(data.error ?? "could not advance");
+      setErr(data.error ?? "Couldn't advance your stage.");
       return;
     }
     setOpen(false);
@@ -69,14 +71,10 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-mono lowercase text-[0.7rem] px-2.5 py-1 transition-colors"
-        style={{
-          border: "1px solid rgba(245, 158, 11,0.4)",
-          color: "#f59e0b",
-          background: "transparent",
-        }}
+        className={ui.softBtn}
+        style={{ padding: "4px 10px", fontSize: 12 }}
       >
-        advance stage
+        Advance stage
       </button>
 
       {open && (
@@ -86,51 +84,47 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
           onClick={() => !busy && setOpen(false)}
         >
           <div
-            className="w-full max-w-md border p-6 space-y-5"
-            style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+            role="dialog"
+            aria-label="Advance your stage"
+            className="w-full max-w-md p-6 space-y-5"
+            style={{
+              background: "var(--card-elev)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: 14,
+              boxShadow: "0 24px 60px -20px rgba(0, 0, 0, 0.7)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <p className="font-mono lowercase text-xs text-text-muted">
-                advance stage
-              </p>
+              <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>Advance your stage</p>
               <button
+                type="button"
                 onClick={() => !busy && setOpen(false)}
-                className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-primary"
+                className={ui.textBtn}
+                style={{ fontSize: 13 }}
               >
-                close
+                Close
               </button>
             </div>
 
             <div className="flex items-center gap-3 justify-center py-2">
-              <StagePillSwatch stage={cur} dim />
-              <span className="font-mono text-text-faint"></span>
-              <StagePillSwatch stage={next} glow />
+              <StageSwatch stage={cur} dim />
+              <span aria-hidden style={{ color: "var(--text-muted)" }}>→</span>
+              <StageSwatch stage={next} />
             </div>
 
-            <p className="font-mono lowercase text-[0.7rem] text-text-muted text-center leading-relaxed">
-              advancing your stage is permanent — make sure you&apos;re ready
+            <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--text-secondary)", textAlign: "center" }}>
+              This is permanent, so make sure you&apos;re ready.
             </p>
 
-            {err && (
-              <p className="font-mono text-xs text-red-400 lowercase">{err}</p>
-            )}
+            {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
 
             <div className="flex justify-end gap-2 pt-1">
-              <button
-                onClick={() => setOpen(false)}
-                disabled={busy}
-                className="font-mono lowercase text-xs px-4 py-2 border disabled:opacity-50"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-              >
-                not yet
+              <button type="button" onClick={() => setOpen(false)} disabled={busy} className={ui.ghostBtn}>
+                Not yet
               </button>
-              <button
-                onClick={confirm}
-                disabled={busy}
-                className="btn-primary"
-              >
-                {busy ? "..." : `advance to ${next} `}
+              <button type="button" onClick={confirm} disabled={busy} className={ui.primaryBtn}>
+                {busy ? "Advancing…" : `Advance to ${STAGE_LABEL[next]}`}
               </button>
             </div>
           </div>

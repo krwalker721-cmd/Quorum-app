@@ -1,27 +1,26 @@
 "use client";
 
-import Link from "next/link";
 import PostCard, { type PostWithAuthor } from "@/components/PostCard";
+import ui from "@/components/ui/sleek.module.css";
 
+// Posts render as plain cards. They used to be wrapped in a <Link> to the feed,
+// but PostCard's avatar is itself a link, and a link inside a link is invalid
+// HTML that broke hydration. The card's Share action copies the post's link.
 export default function ProfilePostsList({ posts }: { posts: PostWithAuthor[] }) {
   if (!posts || posts.length === 0) {
     return (
-      <div className="empty-panel compact">
-        <p className="empty-panel-title">no posts yet.</p>
-        <p className="empty-panel-sub">when they share something with the room, it shows up here.</p>
+      <div className={ui.tile} style={{ padding: "20px 22px" }}>
+        <div className={ui.empty}>
+          <p className={ui.emptyTitle}>No posts yet.</p>
+          <p className={ui.emptySub}>When they share something with the room, it shows up here.</p>
+        </div>
       </div>
     );
   }
   return (
     <>
       {posts.map((p) => (
-        <Link
-          key={p.id}
-          href={`/${p.post_type === "pulse" ? "pulse" : "home"}#post-${p.id}`}
-          className="block hover:opacity-90 transition-opacity"
-        >
-          <PostCard post={p} />
-        </Link>
+        <PostCard key={p.id} sleek post={p} />
       ))}
     </>
   );

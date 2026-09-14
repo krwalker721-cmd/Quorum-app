@@ -3,18 +3,21 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import Avatar from "@/components/Avatar";
+import NoGrid from "@/components/ui/NoGrid";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
-import TerminalFooter from "@/components/ui/TerminalFooter";
 import StagePill from "@/components/cohort/StagePill";
 import TierPill from "@/components/TierPill";
 import ProfileBilling from "@/components/ProfileBilling";
 import ProfilePostsList from "@/components/ProfilePostsList";
 import HandshakeButton from "@/components/HandshakeButton";
-import CohortFingerprint from "@/components/CohortFingerprint";
+import CohortFingerprint, { FINGERPRINT_TYPES } from "@/components/CohortFingerprint";
 import VouchedBadge from "@/components/VouchedBadge";
 import VouchButton from "@/components/VouchButton";
 import AdvanceStageButton from "@/components/AdvanceStageButton";
 import SkillsEditor from "@/components/collab/SkillsEditor";
+import { parseDbTime } from "@/lib/stage";
 import {
   getCohortFingerprint,
   getFavoriteTag,
@@ -30,13 +33,25 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function formatDate(ts: string) {
-  return new Date(ts).toLocaleDateString(undefined, {
+// A date-only value ("2026-09-13", e.g. handshakes.date) is read as that local
+// day; new Date() would take it as UTC midnight and show the day before in the
+// Americas. Timestamps can arrive zoneless, so they go through parseDbTime.
+function formatDay(ts: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ts);
+  const date = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : parseDbTime(ts);
+  return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 }
+
+function sentence(s: string) {
+  const t = s.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+const BODY: React.CSSProperties = { fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)" };
 
 export default async function ProfilePage(
   props: {
@@ -135,15 +150,15 @@ export default async function ProfilePage(
   // Skills — canonical source is profiles.skills (text[])
   const skills = ((profile as any).skills ?? []) as string[];
 
-  // Projects — owned + joined
+  // Projects — owned + joined. Newer projects store `title`; older ones `name`.
   const { data: ownedProjects } = await supabase
     .from("projects")
-    .select("id, name, description, status, created_at")
+    .select("id, title, name, description, status, created_at")
     .eq("owner_id", profile.id);
 
   const { data: joinedRows } = await supabase
     .from("project_members")
-    .select("projects(id, name, description, status, created_at, owner_id)")
+    .select("projects(id, title, name, description, status, created_at, owner_id)")
     .eq("user_id", profile.id);
 
   const joinedProjects = (joinedRows ?? [])
@@ -152,7 +167,8 @@ export default async function ProfilePage(
 
   const projects = [...(ownedProjects ?? []), ...joinedProjects] as {
     id: string;
-    name: string;
+    title: string | null;
+    name: string | null;
     description: string | null;
     status: string | null;
     created_at: string;
@@ -255,108 +271,89 @@ export default async function ProfilePage(
     (handshakeProjects ?? []).map((p: any) => [p.id, p.title ?? p.name ?? null])
   );
 
+  const hasMirror = !!(responseMirror && responseMirror.total > 0) || !!mostActive || longestStreak > 0 || !!favoriteTag;
+
   return (
     <>
-      <TopBar title="profile" tier={myTier.toUpperCase()} userId={user.id} />
-      <section className="max-w-3xl mx-auto px-6 py-10">
-        {/* Header card */}
-        <div
-          className="p-6 flex items-start gap-5"
-          style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-default)", borderRadius: 12 }}
-        >
-          <Avatar
-            name={profile.full_name}
-            stage={profile.stage}
-            size={72}
-            depthRing={depthRing}
-            anniversary={anniversary}
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h1 className="font-sans lowercase text-text-primary text-2xl">
-                  {profile.full_name?.toLowerCase() ?? "—"}
-                </h1>
-                <p className="font-mono lowercase text-[0.7rem] text-text-faint mt-1">
-                  @{profile.username}
-                </p>
-                <div className="mt-3 flex items-center gap-3 flex-wrap">
-                  <StagePill stage={profile.stage} />
-                  {isOwner && <AdvanceStageButton currentStage={profile.stage} />}
-                  {/* Owner/admin see any tier (incl. free); other viewers only
-                      see member/partner — free is the default and adds no value
-                      as a label on someone else's profile. */}
-                  {(canSeeTier ||
-                    profile.tier === "member" ||
-                    profile.tier === "partner") && <TierPill tier={profile.tier} />}
-                  {handshakeCount > 0 && (
-                    <span
-                      className="font-mono text-[0.8rem]"
-                      style={{ color: "#8b949e" }}
-                      aria-label={`${handshakeCount} handshakes`}
-                    >
-                       {handshakeCount}
-                    </span>
-                  )}
-                  {vouchers.length > 0 && (
-                    <VouchedBadge vouchers={vouchers} />
-                  )}
-                </div>
-              </div>
-              {!isOwner && (
-                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                  <VouchButton
-                    vouchedForId={profile.id}
-                    alreadyVouched={!!myVouchExists}
-                  />
-                  <HandshakeButton
-                    currentUserId={user.id}
-                    recipientId={profile.id}
-                    recipientName={profile.full_name}
-                  />
-                  <Link
-                    href={`/messages?to=${profile.id}`}
-                    className="font-mono lowercase text-[0.7rem] px-3.5 py-2 hover:opacity-90 whitespace-nowrap"
-                    style={{ background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))", color: "#1a1204", border: "none", borderRadius: 8, fontWeight: 500 }}
+      <NoGrid />
+      <TopBar sleek title="profile" tier={myTier.toUpperCase()} userId={user.id} />
+      <section
+        className={`page-pad ${ui.pageGlow}`}
+        style={{ padding: "28px 32px 40px", maxWidth: 1080, margin: "0 auto" }}
+      >
+        {/* Header */}
+        <div className={ui.tile} style={{ padding: 24 }}>
+          <div className="flex items-start gap-5">
+            <Avatar
+              name={profile.full_name}
+              stage={profile.stage}
+              size={76}
+              depthRing={depthRing}
+              anniversary={anniversary}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="min-w-0">
+                  <h1
+                    className={`${ui.titleGradient} ${ui.balance}`}
+                    style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
                   >
-                    message →
-                  </Link>
+                    {profile.full_name ?? "—"}
+                  </h1>
+                  <p className="truncate" style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
+                    @{profile.username}
+                  </p>
                 </div>
-              )}
-              {isOwner && (
-                <Link
-                  href="/settings"
-                  data-tour-id="profile-edit"
-                  className="shrink-0 hover:opacity-80"
-                  style={{
-                    fontFamily: "JetBrains Mono, monospace",
-                    fontSize: 10,
-                    color: "#484f58",
-                    letterSpacing: "0.06em",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  ⚙ settings →
-                </Link>
-              )}
+                {isOwner ? (
+                  <Link href="/settings" data-tour-id="profile-edit" className={`${ui.tileLink} shrink-0`}>
+                    Settings →
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <VouchButton vouchedForId={profile.id} alreadyVouched={!!myVouchExists} />
+                    <HandshakeButton
+                      sleek
+                      currentUserId={user.id}
+                      recipientId={profile.id}
+                      recipientName={profile.full_name}
+                    />
+                    <Link href={`/messages?to=${profile.id}`} className={ui.primaryBtn}>
+                      Message
+                    </Link>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 14 }}>
+                <StagePill sleek stage={profile.stage} />
+                {isOwner && <AdvanceStageButton currentStage={profile.stage} />}
+                {/* Owners see their tier (incl. free); other viewers only see
+                    member/partner — free adds nothing as a label on someone
+                    else's profile. */}
+                {(canSeeTier ||
+                  profile.tier === "member" ||
+                  profile.tier === "partner") && <TierPill sleek tier={profile.tier} />}
+                {handshakeCount > 0 && (
+                  <span className={ui.chip}>
+                    {handshakeCount} {handshakeCount === 1 ? "handshake" : "handshakes"}
+                  </span>
+                )}
+                {vouchers.length > 0 && <VouchedBadge vouchers={vouchers} />}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mt-6">
+        <div style={{ margin: "22px 0 18px" }}>
           <TabPillRow>
-            <TabPill active={tab === "about"} href={`/profile/${profile.username}`}>
-              about
+            <TabPill sleek active={tab === "about"} href={`/profile/${profile.username}`}>
+              About
             </TabPill>
-            <TabPill active={tab === "posts"} href={`/profile/${profile.username}?tab=posts`}>
-              posts
+            <TabPill sleek active={tab === "posts"} href={`/profile/${profile.username}?tab=posts`}>
+              Posts
             </TabPill>
-            <TabPill active={tab === "handshakes"} href={`/profile/${profile.username}?tab=handshakes`}>
-              handshakes
+            <TabPill sleek active={tab === "handshakes"} href={`/profile/${profile.username}?tab=handshakes`}>
+              Handshakes
               {handshakes.length > 0 && (
                 <span style={{ color: "#f8c56a", marginLeft: 6 }}>{handshakes.length}</span>
               )}
@@ -366,265 +363,222 @@ export default async function ProfilePage(
 
         {tab === "about" ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-card border border-border rounded-xl p-5">
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint">building</p>
-                <p className="text-text-secondary text-sm mt-2">
-                  {profile.what_they_are_building ?? "—"}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Tile kicker="Building">
+                <p style={BODY}>{profile.what_they_are_building ?? "—"}</p>
+              </Tile>
+              <Tile kicker="Trust score">
+                <p style={{ fontSize: 24, fontWeight: 600, color: "#f8c56a", lineHeight: 1.1 }}>
+                  {profile.trust_score ?? 0}
                 </p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-5">
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint">trust_score</p>
-                <p className="font-mono text-amber text-sm mt-2">{profile.trust_score ?? 0}</p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-5">
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint">joined</p>
-                <p className="font-mono lowercase text-text-secondary text-sm mt-2">
-                  {formatDate(profile.created_at)}
-                </p>
-              </div>
+              </Tile>
+              <Tile kicker="Joined">
+                <p style={{ fontSize: 15, color: "var(--text-primary)" }}>{formatDay(profile.created_at)}</p>
+              </Tile>
             </div>
 
-            {/* Cohort fingerprint — abstract shape from post type distribution */}
-            <div className="bg-card border border-border rounded-xl p-5 mt-6 flex items-center gap-6">
-              <div className="shrink-0">
-                <CohortFingerprint fp={fingerprint} />
-              </div>
-              <div className="min-w-0">
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-                  {isOwner ? "your cohort fingerprint" : "cohort fingerprint"}
-                </p>
-                <p className="font-mono lowercase text-[0.7rem] text-text-muted mt-2 leading-relaxed">
-                  a shape from how they show up in the room.
-                </p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#38bdf8" }}>question</span>
-                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#6e7681" }}>update</span>
-                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#f59e0b" }}>decision</span>
-                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#22c55e" }}>win</span>
-                  <span className="font-mono lowercase text-[0.55rem]" style={{ color: "#a78bfa" }}>blocker</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Private mirror — owner only */}
-            {isOwner && (
-              <div className="bg-card border border-border rounded-xl p-5 mt-6 space-y-2.5">
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2">
-                  mirror
-                </p>
-                {responseMirror && responseMirror.total > 0 && (
-                  <p className="font-mono lowercase text-[0.75rem] text-text-muted">
-                    {responseMirror.returned} of the last {responseMirror.total} people you helped came back to update you.
-                  </p>
-                )}
-                {mostActive && (
-                  <p className="font-mono lowercase text-[0.75rem] text-text-muted">
-                    {mostActive}
-                  </p>
-                )}
-                {longestStreak > 0 && (
-                  <p className="font-mono lowercase text-[0.75rem] text-text-muted">
-                    your longest streak was {longestStreak} {longestStreak === 1 ? "week" : "weeks"}.
-                  </p>
-                )}
-                {favoriteTag && (
-                  <p className="font-mono lowercase text-[0.75rem]" style={{ color: "#f59e0b" }}>
-                    you keep coming back to {favoriteTag}.
-                  </p>
-                )}
-                {!responseMirror && !mostActive && longestStreak === 0 && !favoriteTag && (
-                  <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-                    more will appear as you post and check in.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Cohorts */}
-            <div className="bg-card border border-border rounded-xl p-5 mt-6">
-              <p className="font-mono lowercase text-[0.65rem] text-text-faint">cohorts</p>
-              {cohorts.length === 0 ? (
-                <p className="font-mono lowercase text-xs text-text-faint mt-3">
-                  not in a cohort yet.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {cohorts.map((c) => (
-                    <Link
-                      key={c.id}
-                      href={`/cohort?id=${c.id}`}
-                      className="font-mono lowercase text-[0.7rem] px-2.5 py-1.5 border hover:border-amber transition-colors"
-                      style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
-                    >
-                      # {c.name.toLowerCase()}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Skills */}
-            <div className="bg-card border border-border rounded-xl p-5 mt-6" data-tour-id="profile-skills">
-              <p className="font-mono lowercase text-[0.65rem] text-text-faint">skills</p>
-              {isOwner ? (
-                <SkillsEditor userId={profile.id} skills={skills} />
-              ) : skills.length === 0 ? (
-                <p className="font-mono lowercase text-xs text-text-faint mt-3">
-                  no skills listed.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {skills.map((s) => (
-                    <span
-                      key={s}
-                      className="font-mono lowercase text-[0.7rem] px-2.5 py-1"
-                      style={{
-                        border: "1px solid rgba(245, 158, 11,0.35)",
-                        color: "#f59e0b",
-                        background: "rgba(245, 158, 11,0.06)",
-                      }}
-                    >
-                      {s.toLowerCase()}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Project contributions */}
-            <div className="bg-card border border-border rounded-xl p-5 mt-6">
-              <p className="font-mono lowercase text-[0.65rem] text-text-faint">contributions</p>
-              {projects.length === 0 ? (
-                <p className="font-mono lowercase text-xs text-text-faint mt-3">
-                  no project contributions yet.
-                </p>
-              ) : (
-                <div className="space-y-3 mt-3">
-                  {projects.map((p) => (
-                    <div
-                      key={p.id}
-                      className="p-3 border rounded-lg flex items-start justify-between gap-4"
-                      style={{ borderColor: "var(--border)", background: "var(--card-elev)" }}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-text-primary text-sm lowercase">
-                          {p.name.toLowerCase()}
-                        </p>
-                        {p.description && (
-                          <p className="text-text-muted text-xs mt-1">{p.description}</p>
-                        )}
-                      </div>
-                      <span
-                        className="font-mono lowercase text-[0.6rem] px-2 py-0.5 border whitespace-nowrap"
-                        style={{
-                          color: p.status === "completed" ? "#22c55e" : "#f59e0b",
-                          borderColor:
-                            p.status === "completed" ? "#22c55e" : "#f59e0b",
-                        }}
-                      >
-                        {p.status ?? "active"}
-                      </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start" style={{ marginTop: 16 }}>
+              <div className="space-y-4 min-w-0">
+                {/* Cohort fingerprint — a shape from the mix of post types */}
+                <Tile kicker={isOwner ? "Your cohort fingerprint" : "Cohort fingerprint"}>
+                  <div className="flex items-center gap-5 flex-wrap">
+                    <div className="shrink-0">
+                      <CohortFingerprint fp={fingerprint} size={128} />
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <div className="min-w-0" style={{ flex: "1 1 160px" }}>
+                      <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+                        A shape from how {isOwner ? "you show" : "they show"} up in the room.
+                      </p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1.5" style={{ marginTop: 10 }}>
+                        {FINGERPRINT_TYPES.map((t) => (
+                          <span key={t.key} className="inline-flex items-center gap-1.5" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                            <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, background: t.color }} />
+                            {sentence(t.key)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Tile>
 
-            {/* Billing — own profile only */}
-            {isOwner && <ProfileBilling />}
-            <TerminalFooter />
+                {/* Skills */}
+                <div data-tour-id="profile-skills">
+                  <Tile kicker="Skills">
+                    {isOwner ? (
+                      <SkillsEditor userId={profile.id} skills={skills} />
+                    ) : skills.length === 0 ? (
+                      <p className={ui.emptySub} style={{ marginTop: 0 }}>No skills listed.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {skills.map((s) => (
+                          <span key={s} className={`${ui.chip} ${ui.chipAmber}`}>
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </Tile>
+                </div>
+
+                {/* Project contributions */}
+                <Tile kicker="Contributions" right={projects.length > 0 ? `${projects.length}` : undefined}>
+                  {projects.length === 0 ? (
+                    <p className={ui.emptySub} style={{ marginTop: 0 }}>No project contributions yet.</p>
+                  ) : (
+                    <div className="space-y-1" style={{ margin: "0 -10px" }}>
+                      {projects.map((p) => {
+                        const title = p.title || p.name || "Untitled project";
+                        const status = p.status ?? "open";
+                        const inner = (
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+                                {title}
+                              </p>
+                              {p.description && (
+                                <p className="line-clamp-2" style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 2 }}>
+                                  {p.description}
+                                </p>
+                              )}
+                            </div>
+                            <span
+                              className={`${ui.chip} ${status === "open" ? ui.chipAmber : ""} shrink-0`}
+                              style={
+                                status === "completed"
+                                  ? { color: "#4ade80", borderColor: "rgba(34, 197, 94, 0.35)" }
+                                  : undefined
+                              }
+                            >
+                              {sentence(status)}
+                            </span>
+                          </div>
+                        );
+                        // Only members can open a project room; on your own profile
+                        // every listed project is one you belong to.
+                        return isOwner ? (
+                          <Link key={p.id} href={`/collab/${p.id}`} className={`block ${ui.row}`} style={{ padding: 10 }}>
+                            {inner}
+                          </Link>
+                        ) : (
+                          <div key={p.id} className={ui.row} style={{ padding: 10 }}>
+                            {inner}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Tile>
+              </div>
+
+              <div className="space-y-4 min-w-0">
+                {/* Private mirror — owner only */}
+                {isOwner && (
+                  <Tile kicker="Mirror" right="Only you see this">
+                    <div className="space-y-2">
+                      {responseMirror && responseMirror.total > 0 && (
+                        <p style={BODY}>
+                          {responseMirror.returned} of the last {responseMirror.total} people you helped came
+                          back to update you.
+                        </p>
+                      )}
+                      {mostActive && <p style={BODY}>{sentence(mostActive)}</p>}
+                      {longestStreak > 0 && (
+                        <p style={BODY}>
+                          Your longest streak was {longestStreak} {longestStreak === 1 ? "week" : "weeks"}.
+                        </p>
+                      )}
+                      {favoriteTag && (
+                        <p style={{ ...BODY, color: "#f8c56a" }}>You keep coming back to {favoriteTag}.</p>
+                      )}
+                      {!hasMirror && (
+                        <p className={ui.emptySub} style={{ marginTop: 0 }}>
+                          More will appear as you post and check in.
+                        </p>
+                      )}
+                    </div>
+                  </Tile>
+                )}
+
+                {/* Cohorts */}
+                <Tile kicker="Cohorts">
+                  {cohorts.length === 0 ? (
+                    <p className={ui.emptySub} style={{ marginTop: 0 }}>Not in a cohort yet.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {cohorts.map((c) =>
+                        // A cohort room is members-only, so only your own
+                        // cohorts link through.
+                        isOwner ? (
+                          <Link key={c.id} href={`/cohort/${c.id}`} className={`${ui.chip} hover:text-text-primary`}>
+                            {c.name}
+                          </Link>
+                        ) : (
+                          <span key={c.id} className={ui.chip}>
+                            {c.name}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </Tile>
+
+                {/* Billing — own profile only */}
+                {isOwner && <ProfileBilling />}
+              </div>
+            </div>
           </>
         ) : tab === "posts" ? (
-          <div className="mt-6 space-y-3">
+          <div className="space-y-3" style={{ maxWidth: 760 }}>
             <ProfilePostsList posts={posts as any} />
           </div>
+        ) : handshakes.length === 0 ? (
+          <div className={ui.tile} style={{ padding: "20px 22px", maxWidth: 760 }}>
+            <div className={ui.empty}>
+              <p className={ui.emptyTitle}>
+                {isOwner ? "No handshakes logged yet." : "No handshakes between you yet."}
+              </p>
+              <p className={ui.emptySub}>
+                Log agreements with founders you trust, from their profile or a project room.
+              </p>
+            </div>
+          </div>
         ) : (
-          <div className="mt-6">
-            {handshakes.length === 0 ? (
-              <div className="bg-card border border-border rounded-xl p-6">
-                <p className="font-mono lowercase text-xs text-text-faint">
-                  no handshakes logged yet. use ◈ to record agreements with founders you trust.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {handshakes.map((h: any) => {
-                  const otherId =
-                    h.initiator_id === profile.id ? h.recipient_id : h.initiator_id;
-                  const other = otherById.get(otherId) as any;
-                  const projectName = h.project_id ? projectNameById.get(h.project_id) : null;
-                  return (
-                    <div
-                      key={h.id}
-                      className="p-4 border rounded-lg flex items-start gap-3"
-                      style={{
-                        borderColor: "rgba(245, 158, 11,0.25)",
-                        background: "var(--card-elev)",
-                      }}
-                    >
-                      <span
-                        className="font-mono text-[1rem] shrink-0 mt-0.5"
-                        style={{ color: "#f59e0b" }}
-                        aria-hidden
-                      >
-                        ◈
-                      </span>
+          <div className="space-y-3" style={{ maxWidth: 760 }}>
+            {handshakes.map((h: any) => {
+              const otherId = h.initiator_id === profile.id ? h.recipient_id : h.initiator_id;
+              const other = otherById.get(otherId) as any;
+              const projectName = h.project_id ? projectNameById.get(h.project_id) : null;
+              const name = other?.full_name ?? "—";
+              return (
+                <div key={h.id} className={`${ui.tile} flex items-start gap-3`} style={{ padding: "14px 16px" }}>
+                  <Avatar name={other?.full_name} stage={other?.stage} username={other?.username} size={34} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {other?.username ? (
-                        <Link href={`/profile/${other.username}`} className="shrink-0">
-                          <Avatar
-                            name={other?.full_name}
-                            stage={other?.stage}
-                            username={other?.username}
-                            size={32}
-                          />
+                        <Link
+                          href={`/profile/${other.username}`}
+                          className="truncate hover:underline"
+                          style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
+                        >
+                          {name}
                         </Link>
                       ) : (
-                        <Avatar
-                          name={other?.full_name}
-                          stage={other?.stage}
-                          username={other?.username}
-                          size={32}
-                        />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {other?.username ? (
-                            <Link
-                              href={`/profile/${other.username}`}
-                              className="font-mono lowercase text-[0.75rem] text-text-primary truncate hover:text-amber transition-colors"
-                            >
-                              {other?.full_name?.toLowerCase() ?? "—"}
-                            </Link>
-                          ) : (
-                            <p className="font-mono lowercase text-[0.75rem] text-text-primary truncate">
-                              {other?.full_name?.toLowerCase() ?? "—"}
-                            </p>
-                          )}
-                          {projectName && (
-                            <span
-                              className="font-mono lowercase text-[0.55rem] px-1.5 py-0.5"
-                              style={{
-                                border: "1px solid rgba(88, 166, 255, 0.4)",
-                                color: "#58a6ff",
-                              }}
-                            >
-                              in project: {String(projectName).toLowerCase()}
-                            </span>
-                          )}
-                          <span className="font-mono lowercase text-[0.6rem] text-text-faint ml-auto shrink-0">
-                            {formatDate(h.date)}
-                          </span>
-                        </div>
-                        <p className="text-text-secondary text-[0.85rem] mt-2 leading-snug whitespace-pre-wrap">
-                          {h.agreement}
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+                          {name}
                         </p>
-                      </div>
+                      )}
+                      {projectName && <span className={ui.chip}>In {String(projectName)}</span>}
+                      <span className="ml-auto shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                        {formatDay(h.date)}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    <p className="whitespace-pre-wrap" style={{ ...BODY, marginTop: 6 }}>
+                      {h.agreement}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
