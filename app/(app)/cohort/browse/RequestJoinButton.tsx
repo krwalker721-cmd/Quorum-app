@@ -1,8 +1,16 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ui from "@/components/ui/sleek.module.css";
+
+const STATUS: Record<string, { label: string; color: string }> = {
+  member: { label: "Member", color: "var(--green)" },
+  pending: { label: "Requested", color: "var(--text-muted)" },
+  approved: { label: "Approved", color: "var(--green)" },
+  declined: { label: "Declined", color: "#f87171" },
+};
 
 export default function RequestJoinButton({
   cohortId,
@@ -19,18 +27,13 @@ export default function RequestJoinButton({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  if (isMember) {
-    return <span className="font-mono lowercase text-[0.65rem] text-green">member</span>;
-  }
-
-  if (status === "pending") {
-    return <span className="font-mono lowercase text-[0.65rem] text-text-faint">requested</span>;
-  }
-  if (status === "approved") {
-    return <span className="font-mono lowercase text-[0.65rem] text-green">approved</span>;
-  }
-  if (status === "declined") {
-    return <span className="font-mono lowercase text-[0.65rem] text-red-400">declined</span>;
+  const shown = isMember ? STATUS.member : status ? STATUS[status] : null;
+  if (shown) {
+    return (
+      <span className="shrink-0" style={{ fontSize: 13, color: shown.color }}>
+        {shown.label}
+      </span>
+    );
   }
 
   async function request() {
@@ -42,22 +45,18 @@ export default function RequestJoinButton({
       .insert({ cohort_id: cohortId, user_id: userId });
     setBusy(false);
     if (error) {
-      setErr(error.message.toLowerCase());
+      setErr(error.message);
       return;
     }
     router.refresh();
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        onClick={request}
-        disabled={busy}
-        className="btn-primary whitespace-nowrap"
-      >
-        {busy ? "..." : "request to join"}
+    <div className="flex flex-col items-end gap-1 shrink-0">
+      <button onClick={request} disabled={busy} className={ui.primaryBtn}>
+        {busy ? "Requesting…" : "Request to join"}
       </button>
-      {err && <p className="font-mono lowercase text-[0.6rem] text-red-400">{err}</p>}
+      {err && <p className="text-red-400" style={{ fontSize: 12 }}>{err}</p>}
     </div>
   );
 }

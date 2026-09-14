@@ -4,12 +4,13 @@ import { usePathname } from "next/navigation";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
 
 const ITEMS = [
-  { href: "/cohort", label: "room" },
-  { href: "/cohort/browse", label: "browse" },
-  { href: "/cohort/create", label: "create" },
-  { href: "/cohort/invite", label: "invite" },
+  { href: "/cohort", label: "Room" },
+  { href: "/cohort/browse", label: "Browse" },
+  { href: "/cohort/create", label: "Create" },
+  { href: "/cohort/invite", label: "Invite" },
 ];
 
+// Every cohort page is in the sleek finish, so the sub-nav is too.
 export default function CohortNav() {
   const pathname = usePathname();
   return (
@@ -17,8 +18,7 @@ export default function CohortNav() {
       className="flex items-center px-6 border-b"
       style={{
         height: "var(--subnav-h, 40px)",
-        background: "var(--card)",
-        borderColor: "var(--border)",
+        borderColor: "var(--border-default)",
       }}
     >
       <TabPillRow>
@@ -34,7 +34,7 @@ export default function CohortNav() {
                   ))
               : pathname === i.href;
           return (
-            <TabPill key={i.href} href={i.href} active={active}>
+            <TabPill key={i.href} href={i.href} active={active} sleek style={{ padding: "6px 12px" }}>
               {i.label}
             </TabPill>
           );

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
+import NoGrid from "@/components/ui/NoGrid";
 import CohortNav from "@/components/cohort/CohortNav";
 import CohortRoomClient from "@/components/cohort/CohortRoomClient";
 import {
@@ -164,7 +165,9 @@ export default async function CohortRoomPage(
 
   return (
     <>
+      <NoGrid />
       <TopBar
+        sleek
         title="cohort"
         tier={(profile?.tier ?? "free").toUpperCase()}
         userId={user.id}

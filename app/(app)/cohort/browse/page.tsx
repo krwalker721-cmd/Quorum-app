@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import CohortNav from "@/components/cohort/CohortNav";
+import NoGrid from "@/components/ui/NoGrid";
+import ui from "@/components/ui/sleek.module.css";
 import RequestJoinButton from "./RequestJoinButton";
 
 export const dynamic = "force-dynamic";
@@ -37,34 +39,56 @@ export default async function BrowseCohortsPage() {
 
   const requestMap = new Map((myRequests ?? []).map((r) => [r.cohort_id, r.status]));
   const memberSet = new Set((myMemberships ?? []).map((m) => m.cohort_id));
+  // The empty state keys off the open list. It used to key off every cohort,
+  // so a platform whose cohorts were all invite-only showed a blank page.
+  const open = ((cohorts ?? []) as Cohort[]).filter((c) => c.is_open);
 
   return (
     <>
-      <TopBar title="cohort" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <NoGrid />
+      <TopBar sleek title="cohort" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <CohortNav />
       <section className="max-w-3xl mx-auto px-6 py-10">
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint">cohort/browse</p>
-        <h1 className="font-sans lowercase text-text-primary text-2xl mt-1">open cohorts</h1>
-        <p className="text-text-muted text-sm mt-2">request to join any open cohort.</p>
+        <h1
+          className={ui.titleGradient}
+          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+        >
+          Open cohorts
+        </h1>
+        <p className="text-text-secondary mt-2" style={{ fontSize: 14 }}>
+          Request to join any open cohort.
+        </p>
 
         <div className="space-y-3 mt-6">
-          {(!cohorts || cohorts.length === 0) && (
-            <p className="font-mono lowercase text-xs text-text-faint">no cohorts yet.</p>
+          {open.length === 0 && (
+            <div className={`${ui.tile} text-center`} style={{ padding: "28px 22px" }}>
+              <p className={ui.emptyTitle}>No open cohorts right now.</p>
+              <p className={ui.emptySub}>Create one, or ask a member for an invite link.</p>
+            </div>
           )}
-          {(cohorts as Cohort[] | null)?.filter((c) => c.is_open).map((c) => {
+          {open.map((c) => {
             const status = requestMap.get(c.id);
             const isMember = memberSet.has(c.id);
             return (
               <div
                 key={c.id}
-                className="p-5 border flex items-start justify-between gap-6"
-                style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+                className={`${ui.tile} flex items-start justify-between gap-6`}
+                style={{ padding: "18px 20px" }}
               >
                 <div className="min-w-0">
-                  <p className="font-sans lowercase text-text-primary text-base">{c.name.toLowerCase()}</p>
-                  <p className="text-text-muted text-sm mt-1">{c.description ?? "—"}</p>
-                  <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-2">
-                    open · {new Date(c.created_at).toLocaleDateString()}
+                  <p className="text-text-primary" style={{ fontSize: 16, fontWeight: 500 }}>
+                    {c.name}
+                  </p>
+                  <p className="text-text-secondary mt-1" style={{ fontSize: 14, lineHeight: 1.5 }}>
+                    {c.description ?? "No description yet."}
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>
+                    Open · started{" "}
+                    {new Date(c.created_at).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
                   </p>
                 </div>
                 <RequestJoinButton

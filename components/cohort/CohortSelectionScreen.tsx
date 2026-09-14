@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import ui from "@/components/ui/sleek.module.css";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/stage";
 
@@ -77,28 +78,27 @@ export default function CohortSelectionScreen({
   }
 
   return (
-    <div className="px-6 py-8 max-w-5xl mx-auto">
+    <div className={`px-8 py-8 max-w-5xl mx-auto ${ui.pageGlow}`}>
       <h1
-        className="font-sans lowercase text-text-primary"
-        style={{ fontSize: "2rem", lineHeight: 1.15 }}
+        className={ui.titleGradient}
+        style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
       >
-        your cohorts
+        Your cohorts
       </h1>
-      <p className="text-text-muted text-sm mt-2">
-        you&apos;re in {cohorts.length} cohorts. pick a room to enter.
+      <p className="text-text-secondary mt-2" style={{ fontSize: 14 }}>
+        You&apos;re in {cohorts.length} cohorts. Pick a room to enter.
       </p>
 
       {error === "not_member" && (
         <div
-          className="mt-4 px-3 py-2 border-l-2"
+          className="mt-4 px-4 py-3"
           style={{
-            borderLeftColor: "#f87171",
+            borderRadius: 10,
+            border: "1px solid rgba(239,68,68,0.3)",
             background: "rgba(239,68,68,0.06)",
           }}
         >
-          <p className="font-mono lowercase text-[0.7rem]" style={{ color: "#f87171" }}>
-            you are not a member of this cohort
-          </p>
+          <p style={{ fontSize: 13, color: "#f87171" }}>You&apos;re not a member of that cohort.</p>
         </div>
       )}
 
@@ -110,24 +110,24 @@ export default function CohortSelectionScreen({
               key={c.id}
               type="button"
               onClick={() => enter(c.id)}
-              className="text-left p-5 border transition-colors hover:border-amber"
-              style={{
-                background: "var(--card-elev)",
-                borderColor: "var(--border)",
-              }}
+              className={`${ui.tile} text-left`}
+              style={{ padding: "20px 22px" }}
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="font-sans lowercase text-text-primary text-lg truncate">
-                  {c.name.toLowerCase()}
+                <p className="text-text-primary truncate" style={{ fontSize: 18, fontWeight: 600 }}>
+                  {c.name}
                 </p>
                 {n > 0 && (
                   <span
-                    className="shrink-0 font-mono text-[0.6rem] lowercase px-2 py-0.5"
+                    className="shrink-0"
                     style={{
-                      background: "rgba(245, 158, 11, 0.18)",
-                      color: "#f59e0b",
-                      border: "1px solid rgba(245, 158, 11, 0.55)",
-                      borderRadius: 5,
+                      fontSize: 11,
+                      lineHeight: 1.6,
+                      padding: "0 8px",
+                      borderRadius: 999,
+                      background: "rgba(245, 158, 11, 0.14)",
+                      color: "#f8c56a",
+                      border: "1px solid rgba(245, 158, 11, 0.35)",
                     }}
                   >
                     {n} new
@@ -141,7 +141,7 @@ export default function CohortSelectionScreen({
                     <div
                       key={m.id}
                       className="rounded-full"
-                      style={{ border: "1.5px solid var(--card-elev)" }}
+                      style={{ border: "1.5px solid var(--bg-surface)" }}
                     >
                       <Avatar
                         name={m.full_name}
@@ -152,24 +152,16 @@ export default function CohortSelectionScreen({
                     </div>
                   ))}
                 </div>
-                <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-                  {c.memberCount}{" "}
-                  {c.memberCount === 1 ? "member" : "members"}
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                  {c.memberCount} {c.memberCount === 1 ? "member" : "members"}
                 </span>
               </div>
 
               <div className="flex items-center justify-between mt-4">
-                <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-                  {c.lastActivity
-                    ? `active ${timeAgo(c.lastActivity)} ago`
-                    : "no activity yet"}
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                  {c.lastActivity ? `Active ${timeAgo(c.lastActivity)} ago` : "No activity yet"}
                 </span>
-                <span
-                  className="font-mono lowercase text-[0.7rem]"
-                  style={{ color: "#f59e0b" }}
-                >
-                  enter room →
-                </span>
+                <span style={{ fontSize: 13, color: "#f8c56a" }}>Enter room →</span>
               </div>
             </button>
           );

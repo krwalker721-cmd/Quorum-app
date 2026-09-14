@@ -374,6 +374,83 @@
   font-size: 13px;
 }
 
+/* The solid amber button for a page's main action, where <GradientButton>
+   doesn't fit (form submits, disabled states). */
+.primaryBtn {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: none;
+  color: #1a1204;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(245, 158, 11, 0.75));
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.45),
+    0 8px 24px -10px rgba(245, 158, 11, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  transition: filter 0.15s ease;
+}
+.primaryBtn:hover {
+  filter: brightness(1.08);
+}
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  filter: none;
+}
+
+/* ── Cohort room. The chat floor is built from global classes (globals.css)
+   that other screens don't use; inside .room they take the sleek finish. */
+.room :global(.bubble-name) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.room :global(.bubble-text) {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.room :global(.bubble-theirs) {
+  border-color: rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%),
+    var(--bg-surface);
+}
+.room :global(.bubble-time) {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.room :global(.bubble-tag) {
+  font-size: 11px;
+  padding: 0 8px;
+  text-transform: capitalize;
+}
+.room :global(.date-separator span) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.room :global(.cohort-message-input) {
+  font-size: 14px;
+  padding: 10px 16px;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.room :global(.cohort-input-bar) {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+:global([data-theme="high-contrast"]) .room :global(.bubble-theirs) {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tile,
   .tile::before,
@@ -385,7 +462,8 @@
   .pill,
   .textBtn,
   .ghostBtn,
-  .composer {
+  .composer,
+  .primaryBtn {
     transition: none;
   }
   .glow:active {

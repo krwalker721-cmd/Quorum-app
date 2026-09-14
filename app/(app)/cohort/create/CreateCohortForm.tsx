@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import ui from "@/components/ui/sleek.module.css";
 
 export default function CreateCohortForm({ userId }: { userId: string }) {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="bg-card border border-border p-6 space-y-4">
+    <form onSubmit={submit} className={`${ui.tile} space-y-4`} style={{ padding: 24 }}>
       <div>
         <label>name</label>
         <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={60} autoFocus />
@@ -78,22 +79,16 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
             }}
           />
         </button>
-        <div className="text-[0.7rem] leading-snug">
-          <p className="font-mono lowercase text-text-secondary">
-            {isOpen ? "open · anyone can request to join" : "invite-only · join by invite link"}
-          </p>
-        </div>
+        <p className="text-text-secondary" style={{ fontSize: 13, lineHeight: 1.5 }}>
+          {isOpen ? "Open: anyone can request to join" : "Invite-only: people join by invite link"}
+        </p>
       </div>
 
-      {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+      {err && <p className="text-red-400" style={{ fontSize: 13 }}>{err}</p>}
 
       <div className="flex justify-end pt-1">
-        <button
-          type="submit"
-          disabled={busy || !name.trim()}
-          className="btn-primary"
-        >
-          {busy ? "..." : "create "}
+        <button type="submit" disabled={busy || !name.trim()} className={ui.primaryBtn}>
+          {busy ? "Creating…" : "Create cohort"}
         </button>
       </div>
     </form>
