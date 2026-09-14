@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
+import NoGrid from "@/components/ui/NoGrid";
+import ui from "@/components/ui/sleek.module.css";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/stage";
 import { usePaywall } from "@/hooks/usePaywall";
@@ -33,6 +35,12 @@ type Message = {
   created_at: string;
 };
 
+const HAIRLINE = "1px solid rgba(255, 255, 255, 0.06)";
+
+function displayName(p: Partner) {
+  return p.full_name || p.username || "—";
+}
+
 export default function MessagesClient({
   currentUserId,
   conversations: initialConversations,
@@ -42,7 +50,6 @@ export default function MessagesClient({
   conversations: Conversation[];
   initialPartnerId: string | null;
 }) {
-  const router = useRouter();
   const { hasFullAccess, hadTrial, isLoading: tierLoading } = useTier();
   const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
@@ -61,6 +68,7 @@ export default function MessagesClient({
   const supabase = useMemo(() => createClient(), []);
   const selected =
     conversations.find((c) => c.partner.id === selectedId)?.partner ?? null;
+  const unreadCount = conversations.filter((c) => c.unread).length;
 
   // Whether DMs are closed for this account. Was an "80% of your monthly
   // messages used" bar, which could never appear: an unentitled account's cap is
@@ -190,7 +198,7 @@ export default function MessagesClient({
 
   async function send() {
     if (!draft.trim() || !selectedId) return;
-    // Paywall gate — DMs are capped on free tier. Check before sending.
+    // Paywall gate — DMs need full access. Check before sending.
     const allowed = await checkAndGate("messages");
     if (!allowed) return;
     setSending(true);
@@ -243,334 +251,288 @@ export default function MessagesClient({
     });
   }
 
+  const canSend = !sending && !!draft.trim();
+
   return (
     <div className="flex flex-col app-pane">
+      <NoGrid />
       {showMessagesLocked && (
         <div
+          className="flex items-center justify-between gap-3 flex-wrap"
           style={{
-            background: "rgba(245,158,11,0.04)",
-            borderBottom: "1px solid rgba(245,158,11,0.1)",
-            padding: "8px 16px",
-            fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 10,
-            color: "#484f58",
-            letterSpacing: "0.05em",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            padding: "10px 20px",
+            background: "rgba(245, 158, 11, 0.05)",
+            borderBottom: "1px solid rgba(245, 158, 11, 0.15)",
           }}
         >
-          <span>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
             {hadTrial
-              ? "// your trial has ended — upgrade to keep sending messages"
-              : "// direct messages are part of Member"}
+              ? "Your trial has ended. Choose a plan to keep sending messages."
+              : "Direct messages are part of a membership."}
           </span>
-          <button
-            type="button"
-            onClick={() => router.push("/pricing")}
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              fontSize: 10,
-              letterSpacing: "0.05em",
-              color: "#f59e0b",
-              padding: 0,
-            }}
-          >
-            upgrade for unlimited →
-          </button>
+          <Link href="/pricing" className={ui.tileLink} style={{ color: "#f8c56a" }}>
+            See plans →
+          </Link>
         </div>
       )}
       <div className="msg-split flex flex-1 min-h-0" data-selected={selected ? "1" : "0"}>
-      {/* LEFT — inbox */}
-      <div
-        className="msg-list flex flex-col border-r shrink-0"
-        style={{
-          width: "clamp(230px, 30%, 320px)",
-          background: "var(--bg-elevated)",
-          borderColor: "var(--border-default)",
-        }}
-      >
-        <div className="px-4 pt-4 pb-2">
-          <p className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">
-            inbox
-          </p>
-        </div>
-        <div className="px-3 pb-2 relative">
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="search founders to message..."
-            className="w-full font-mono lowercase text-[0.7rem] px-2.5 py-1.5 placeholder:text-text-muted"
-            style={{
-              background: "var(--card)",
-              border: "1px solid #30363d",
-              color: "var(--text-primary)",
-              outline: "none",
-              borderRadius: 4,
-            }}
-          />
-          {searchQuery.trim() !== "" && (
-            <div
-              className="absolute left-3 right-3 mt-1 z-30 max-h-72 overflow-y-auto scroll-thin"
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border-default)",
-                borderRadius: 4,
-                boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
-              }}
-            >
-              {searchLoading && searchResults.length === 0 && (
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint px-3 py-2">
-                  searching...
-                </p>
-              )}
-              {!searchLoading && searchResults.length === 0 && (
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint px-3 py-2">
-                  no founders match.
-                </p>
-              )}
-              {searchResults.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => openConversationWith(r)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-[rgba(245,158,11,0.06)]"
-                >
-                  <Avatar
-                    name={r.full_name}
-                    stage={r.stage}
-                    size={28}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                      {r.username ?? r.full_name?.toLowerCase() ?? "—"}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <StagePill stage={r.stage} />
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="flex-1 overflow-y-auto scroll-thin">
-          {conversations.length === 0 && (
-            <div className="px-3 py-4">
-              <div className="empty-panel compact">
-                <span className="empty-panel-glyph" aria-hidden>✉</span>
-                <p className="empty-panel-title">no conversations yet.</p>
-                <p className="empty-panel-sub">search above to find a founder worth talking to.</p>
+        {/* LEFT — inbox */}
+        <div
+          className="msg-list flex flex-col shrink-0"
+          style={{
+            width: "clamp(240px, 30%, 330px)",
+            background: "var(--bg-surface)",
+            borderRight: HAIRLINE,
+          }}
+        >
+          <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+            <span className={ui.label}>Inbox</span>
+            {unreadCount > 0 && (
+              <span className={`${ui.chip} ${ui.chipAmber}`}>{unreadCount} unread</span>
+            )}
+          </div>
+          <div className="px-3 pb-2 relative">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search founders to message"
+              aria-label="Search founders to message"
+              className={`${ui.search} w-full`}
+              style={{ fontSize: 13, padding: "8px 12px" }}
+            />
+            {searchQuery.trim() !== "" && (
+              <div className={`absolute left-3 right-3 mt-1 z-30 max-h-72 overflow-y-auto scroll-thin ${ui.menu}`}>
+                {searchLoading && searchResults.length === 0 && (
+                  <p className={ui.emptySub} style={{ padding: "6px 10px", marginTop: 0 }}>
+                    Searching…
+                  </p>
+                )}
+                {!searchLoading && searchResults.length === 0 && (
+                  <p className={ui.emptySub} style={{ padding: "6px 10px", marginTop: 0 }}>
+                    No founders match.
+                  </p>
+                )}
+                {searchResults.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => openConversationWith(r)}
+                    className={`${ui.menuItem} flex items-center gap-2.5`}
+                  >
+                    <Avatar name={r.full_name} stage={r.stage} size={28} />
+                    <span className="min-w-0 flex-1 truncate" style={{ color: "var(--text-primary)" }}>
+                      {displayName(r)}
+                    </span>
+                    <StagePill sleek stage={r.stage} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto scroll-thin pb-2">
+            {conversations.length === 0 && (
+              <div className={ui.empty} style={{ padding: "12px 16px" }}>
+                <p className={ui.emptyTitle}>No conversations yet.</p>
+                <p className={ui.emptySub}>Search above to find a founder worth talking to.</p>
                 <EmptyStateUpgradeLine>
                   Messaging is for members. Reactivate to keep your direct lines open.
                 </EmptyStateUpgradeLine>
               </div>
-            </div>
-          )}
-          {conversations.map((c) => {
-            const active = c.partner.id === selectedId;
-            return (
-              <button
-                key={c.partner.id}
-                onClick={() => setSelectedId(c.partner.id)}
-                className="w-full flex items-start gap-3 px-3 py-3 text-left transition-colors border-b"
-                style={{
-                  background: active ? "rgba(245, 158, 11, 0.06)" : "transparent",
-                  borderLeft: active ? "3px solid #f59e0b" : "3px solid transparent",
-                  borderBottom: "0.5px solid var(--border-default)",
-                }}
-              >
-                <Avatar
-                  name={c.partner.full_name}
-                  stage={c.partner.stage}
-                  size={36}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 justify-between">
-                    <p className="font-mono lowercase text-[0.75rem] text-text-primary truncate">
-                      {c.partner.full_name?.toLowerCase() ?? "—"}
-                    </p>
-                    {c.lastAt && (
-                      <span className="font-mono lowercase text-[0.55rem] text-text-faint shrink-0">
-                        {timeAgo(c.lastAt)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <StagePill stage={c.partner.stage} />
-                    {c.unread && (
-                      <span
-                        className="ml-auto w-2 h-2 rounded-full"
-                        style={{ background: "var(--green)" }}
-                      />
-                    )}
-                  </div>
-                  {c.last && (
-                    <p className="font-mono lowercase text-[0.65rem] text-text-muted truncate mt-1">
-                      {c.last}
-                    </p>
+            )}
+            {conversations.map((c) => {
+              const active = c.partner.id === selectedId;
+              return (
+                <button
+                  key={c.partner.id}
+                  type="button"
+                  onClick={() => setSelectedId(c.partner.id)}
+                  aria-current={active ? "true" : undefined}
+                  className={`relative flex items-start gap-3 text-left ${ui.row}`}
+                  style={{
+                    width: "calc(100% - 16px)",
+                    margin: "0 8px 2px",
+                    padding: "10px 12px",
+                    background: active ? "rgba(245, 158, 11, 0.08)" : undefined,
+                  }}
+                >
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-2.5 bottom-2.5 rounded"
+                      style={{ width: 2, background: "#f59e0b", boxShadow: "0 0 8px rgba(245, 158, 11, 0.6)" }}
+                    />
                   )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* RIGHT — thread */}
-      <div className="msg-thread flex-1 flex flex-col min-w-0">
-        {selected ? (
-          <>
-            <div
-              className="flex items-center justify-between px-6 py-3 border-b"
-              style={{ borderColor: "var(--border)" }}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(null)}
-                  className="msg-back font-mono"
-                  aria-label="back to conversations"
-                >
-                  ‹
-                </button>
-                <Avatar
-                  name={selected.full_name}
-                  stage={selected.stage}
-                  username={selected.username}
-                  size={32}
-                />
-                <div className="min-w-0">
-                  <p className="font-mono lowercase text-sm text-text-primary truncate">
-                    {selected.full_name?.toLowerCase() ?? "—"}
-                  </p>
-                  <div className="mt-0.5">
-                    <StagePill stage={selected.stage} />
-                  </div>
-                </div>
-              </div>
-              {selected.username && (
-                <button
-                  type="button"
-                  onClick={() => router.push(`/profile/${selected.username}`)}
-                  className="font-mono"
-                  style={{ fontSize: 10, color: "var(--blue)", whiteSpace: "nowrap" }}
-                >
-                  view profile →
-                </button>
-              )}
-            </div>
-
-            <div
-              ref={scrollRef}
-              className="flex-1 overflow-y-auto scroll-thin px-6 py-6 space-y-3"
-            >
-              {messages.length === 0 && (
-                <div className="flex flex-col items-center text-center mt-12 gap-1">
-                  <p className="font-sans lowercase text-[0.85rem] text-text-secondary">
-                    this is the start of something.
-                  </p>
-                  <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-                    say hi — founders here actually reply.
-                  </p>
-                </div>
-              )}
-              {messages.map((m) => {
-                const mine = m.sender_id === currentUserId;
-                return (
-                  <div
-                    key={m.id}
-                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
-                  >
-                    <div className="max-w-[70%]">
-                      <div
-                        className="px-3.5 py-2.5"
+                  <Avatar name={c.partner.full_name} stage={c.partner.stage} size={38} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 justify-between">
+                      <p
+                        className="truncate"
+                        style={{ fontSize: 14, fontWeight: c.unread ? 600 : 500, color: "var(--text-primary)" }}
+                      >
+                        {displayName(c.partner)}
+                      </p>
+                      {c.lastAt && (
+                        <span className="shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                          {timeAgo(c.lastAt)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5" style={{ marginTop: 4 }}>
+                      <StagePill sleek stage={c.partner.stage} />
+                      {c.unread && (
+                        <span
+                          aria-label="unread"
+                          className="ml-auto w-2 h-2 rounded-full"
+                          style={{ background: "var(--green)" }}
+                        />
+                      )}
+                    </div>
+                    {c.last && (
+                      <p
+                        className="truncate"
                         style={{
-                          background: mine
-                            ? "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))"
-                            : "var(--bg-elevated)",
-                          border: mine ? "none" : "0.5px solid var(--border-default)",
-                          borderRadius: mine ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                          color: mine ? "#1a1204" : "var(--text-primary)",
+                          fontSize: 13,
+                          marginTop: 4,
+                          color: c.unread ? "var(--text-secondary)" : "var(--text-muted)",
                         }}
                       >
-                        <p className="text-[0.88rem] leading-relaxed whitespace-pre-wrap">
-                          {m.content}
-                        </p>
-                      </div>
-                      <p
-                        className={`font-mono lowercase text-[0.55rem] text-text-faint mt-1 ${
-                          mine ? "text-right" : "text-left"
-                        }`}
-                      >
-                        {timeAgo(m.created_at)} ago
+                        {c.last}
                       </p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* RIGHT — thread */}
+        <div className="msg-thread flex-1 flex flex-col min-w-0">
+          {selected ? (
+            <>
+              <div
+                className="flex items-center justify-between gap-3 px-6 py-3"
+                style={{ borderBottom: HAIRLINE }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(null)}
+                    className="msg-back"
+                    aria-label="Back to conversations"
+                    style={{ fontSize: 20, color: "var(--text-muted)" }}
+                  >
+                    ‹
+                  </button>
+                  <Avatar
+                    name={selected.full_name}
+                    stage={selected.stage}
+                    username={selected.username}
+                    size={34}
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate" style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+                      {displayName(selected)}
+                    </p>
+                    <div style={{ marginTop: 2 }}>
+                      <StagePill sleek stage={selected.stage} />
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+                {selected.username && (
+                  <Link
+                    href={`/profile/${selected.username}`}
+                    className={`${ui.tileLink} shrink-0`}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    View profile →
+                  </Link>
+                )}
+              </div>
 
-            <div
-              className="border-t px-6 py-3 flex items-center gap-3"
-              style={{ borderColor: "var(--border-default)" }}
-            >
-              <input
-                placeholder="message..."
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  background: "var(--bg-elevated)",
-                  border: "0.5px solid var(--border-default)",
-                  borderRadius: 20,
-                  color: "var(--text-primary)",
-                  fontSize: 13,
-                  padding: "9px 16px",
-                  outline: "none",
-                }}
-              />
-              <button
-                onClick={send}
-                disabled={sending || !draft.trim()}
-                className="font-mono whitespace-nowrap"
-                style={{
-                  fontSize: 11,
-                  fontWeight: 500,
-                  background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
-                  color: "#1a1204",
-                  padding: "8px 18px",
-                  borderRadius: 16,
-                  border: "none",
-                  cursor: sending || !draft.trim() ? "default" : "pointer",
-                  opacity: sending || !draft.trim() ? 0.5 : 1,
-                }}
+              <div
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto scroll-thin px-6 py-6 space-y-3"
               >
-                send
-              </button>
+                {messages.length === 0 && (
+                  <div className="flex flex-col items-center text-center" style={{ marginTop: 48 }}>
+                    <p className={ui.emptyTitle}>This is the start of something.</p>
+                    <p className={ui.emptySub}>Say hi. Founders here actually reply.</p>
+                  </div>
+                )}
+                {messages.map((m) => {
+                  const mine = m.sender_id === currentUserId;
+                  return (
+                    <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                      <div style={{ maxWidth: "75%" }}>
+                        <div
+                          style={{
+                            padding: "10px 14px",
+                            ...(mine
+                              ? {
+                                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                                  borderRadius: "16px 16px 6px 16px",
+                                  background:
+                                    "linear-gradient(150deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.07) 70%)",
+                                  boxShadow: "0 10px 30px -20px rgba(245, 158, 11, 0.6)",
+                                }
+                              : {
+                                  border: "1px solid rgba(255, 255, 255, 0.07)",
+                                  borderRadius: "16px 16px 16px 6px",
+                                  background:
+                                    "linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%), var(--bg-surface)",
+                                }),
+                          }}
+                        >
+                          <p
+                            className="whitespace-pre-wrap"
+                            style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-primary)" }}
+                          >
+                            {m.content}
+                          </p>
+                        </div>
+                        <p
+                          className={mine ? "text-right" : "text-left"}
+                          style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}
+                        >
+                          {timeAgo(m.created_at)} ago
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="px-6 py-3 flex items-center gap-2.5" style={{ borderTop: HAIRLINE }}>
+                <input
+                  placeholder="Write a message…"
+                  aria-label={`Message ${displayName(selected)}`}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      send();
+                    }
+                  }}
+                  className={`${ui.search} flex-1 min-w-0`}
+                />
+                <button type="button" onClick={send} disabled={!canSend} className={ui.primaryBtn}>
+                  Send
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center px-6">
+              <div className="text-center" style={{ maxWidth: 360 }}>
+                <p className={ui.emptyTitle}>Your direct lines live here.</p>
+                <p className={ui.emptySub}>
+                  Pick a conversation, or start one from a founder&apos;s profile.
+                </p>
+              </div>
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center px-6">
-            <div className="empty-panel" style={{ maxWidth: 360, border: "none", background: "transparent" }}>
-              <span className="empty-panel-glyph" aria-hidden>✉</span>
-              <p className="empty-panel-title">your direct lines live here.</p>
-              <p className="empty-panel-sub">
-                pick a conversation on the left, or start one from a founder&apos;s profile.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       </div>
 
       {paywallState.isOpen && (

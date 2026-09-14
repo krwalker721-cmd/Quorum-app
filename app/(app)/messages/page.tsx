@@ -76,7 +76,7 @@ export default async function MessagesPage(
 
   return (
     <>
-      <TopBar title="messages" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <TopBar sleek title="messages" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <MessagesClient
         currentUserId={user.id}
         conversations={conversations}
