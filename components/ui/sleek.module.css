@@ -416,11 +416,26 @@
   font-size: 14px;
   line-height: 1.6;
 }
+/* Rounded bubbles with the small corner by the speaker's avatar (rows align
+   to the bottom, so that's the bottom corner on their side). */
+.room :global(.bubble) {
+  padding: 10px 14px;
+}
 .room :global(.bubble-theirs) {
   border-color: rgba(255, 255, 255, 0.07);
+  border-radius: 16px 16px 16px 6px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%),
     var(--bg-surface);
+}
+.room :global(.bubble-mine) {
+  border-color: rgba(245, 158, 11, 0.3);
+  border-radius: 16px 16px 6px 16px;
+  background: linear-gradient(150deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.07) 70%);
+  box-shadow: 0 10px 30px -20px rgba(245, 158, 11, 0.6);
+}
+.room :global(.bubble-mine .bubble-time) {
+  color: rgba(248, 197, 106, 0.75);
 }
 .room :global(.bubble-time) {
   font-size: 11px;

@@ -42,9 +42,21 @@ export function initials(name: string | null | undefined) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || name.slice(0, 2).toUpperCase();
 }
 
+// Several tables (posts among them, supabase/schema.sql) use `timestamp`
+// without a time zone. The database clock is UTC, but those values come back
+// with no "Z", and `new Date()` reads a zoneless string as local time: a post
+// made a minute ago looked hours in the future ("-14353s ago"). Treat a
+// zoneless string as UTC.
+export function parseDbTime(ts: string | Date): Date {
+  if (typeof ts !== "string") return ts;
+  const zoned = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(ts);
+  return new Date(zoned ? ts : `${ts.replace(" ", "T")}Z`);
+}
+
 export function timeAgo(ts: string | Date) {
-  const d = typeof ts === "string" ? new Date(ts) : ts;
-  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  const d = parseDbTime(ts);
+  // Clamped at zero, so a slightly fast clock never shows a negative age.
+  const s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
   if (s < 60) return `${s}s`;
   if (s < 3600) return `${Math.floor(s / 60)}m`;
   if (s < 86400) return `${Math.floor(s / 3600)}h`;

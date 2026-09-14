@@ -6,7 +6,7 @@ import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import { createClient } from "@/lib/supabase/client";
 import { usePresence } from "@/components/PresenceProvider";
-import { timeAgo, TAG_COLOR } from "@/lib/stage";
+import { parseDbTime, timeAgo, TAG_COLOR } from "@/lib/stage";
 import RoomPostModal from "@/components/cohort/RoomPostModal";
 import InviteModal from "@/components/cohort/InviteModal";
 import FounderAgreements from "@/components/cohort/FounderAgreements";
@@ -75,8 +75,8 @@ const TYPE_STYLE: Record<
 };
 
 function isDifferentDay(a: string, b: string): boolean {
-  const da = new Date(a);
-  const db = new Date(b);
+  const da = parseDbTime(a);
+  const db = parseDbTime(b);
   return (
     da.getFullYear() !== db.getFullYear() ||
     da.getMonth() !== db.getMonth() ||
@@ -85,7 +85,7 @@ function isDifferentDay(a: string, b: string): boolean {
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
+  const d = parseDbTime(iso);
   const today = new Date();
   const yest = new Date();
   yest.setDate(today.getDate() - 1);
