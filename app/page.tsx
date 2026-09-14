@@ -5,10 +5,9 @@ import { isWaitlistOn } from "@/lib/platform";
 import { approveUser } from "@/lib/admin/approve";
 import Landing from "@/components/landing/Landing";
 
+// The title, description, and preview card come from the root layout.
 export const metadata: Metadata = {
-  title: "quorum — a private network for founders",
-  description:
-    "A private network of founders sharing real decisions, wins, and blockers, anchored by a cohort of twelve you meet every week.",
+  alternates: { canonical: "/" },
 };
 
 export default async function RootPage() {
