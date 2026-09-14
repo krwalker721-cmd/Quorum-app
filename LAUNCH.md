@@ -782,7 +782,12 @@ activation and DNS.
             didn't match the chart, cohort links to a route that ignored the
             id, blank titles for newer projects, and a link-inside-a-link on
             the Posts tab that broke hydration.
-      - [ ] Settings.
+      - [x] Settings. Also: font size and reduce motion now survive a reload
+            (ThemeProvider re-applies them); the theme picker offers the real
+            Standard / High contrast modes instead of "light (coming soon)";
+            seven notification switches that nothing read are gone, leaving
+            the trial-ending email, which works; profile visibility lives in
+            one place instead of two out-of-sync copies.
       - [ ] The shared modals (`modal-shell` in `globals.css`): new post, room
             post, invite, and the rest. Deliberately left for one pass.
       - [ ] Update `design/REDESIGN-BUILD-GUIDE.md` to the new look.

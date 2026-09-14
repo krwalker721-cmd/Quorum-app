@@ -21,7 +21,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <TopBar title="settings" tier={tier.toUpperCase()} userId={user.id} />
+      <TopBar sleek title="settings" tier={tier.toUpperCase()} userId={user.id} />
       <SettingsClient
         initialName={profile?.full_name ?? ""}
         initialEmail={user.email ?? ""}
