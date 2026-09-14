@@ -27,45 +27,45 @@ export default function ConfirmDeleteModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center px-4"
-      style={{ background: "rgba(0,0,0,0.6)" }}
+      className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center px-4"
       onClick={() => !busy && onClose()}
     >
       <div
-        className="w-full max-w-sm border p-6"
-        style={{
-          background: "var(--bg-elevated)",
-          borderColor: "var(--border-muted)",
-          borderRadius: "var(--radius-modal)",
-          boxShadow: "var(--shadow-modal)",
-        }}
+        role="alertdialog"
+        aria-label={`Delete this ${itemLabel}?`}
+        className="modal-shell w-full max-w-sm"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="modal-kicker" style={{ color: "#f85149" }}>destructive action</p>
-        <p className="font-sans lowercase text-text-primary text-base mt-1.5">
-          delete this {itemLabel}?
-        </p>
-        <p className="font-sans lowercase text-text-secondary text-xs mt-1">
-          this cannot be undone.
-        </p>
-        <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} disabled={busy} className="btn-ghost">
-            cancel
+        <div className="modal-shell-head" style={{ borderBottom: "none", paddingBottom: 6 }}>
+          <div className="min-w-0">
+            <p className="modal-kicker" style={{ color: "#f87171" }}>
+              Can&apos;t be undone
+            </p>
+            <h2 className="modal-title">Delete this {itemLabel}?</h2>
+            <p className="modal-subtitle">It&apos;s gone for good, for everyone.</p>
+          </div>
+        </div>
+        <div className="modal-shell-foot" style={{ borderTop: "none", background: "transparent", paddingTop: 16 }}>
+          <button type="button" onClick={onClose} disabled={busy} className="btn-ghost">
+            Cancel
           </button>
           <button
+            type="button"
             onClick={handle}
             disabled={busy}
-            className="font-mono lowercase text-[0.7rem] px-4 py-1.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="disabled:opacity-50"
             style={{
-              background: "rgba(239,68,68,0.16)",
+              fontSize: 13,
+              fontWeight: 500,
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "1px solid rgba(239, 68, 68, 0.5)",
+              background: "rgba(239, 68, 68, 0.16)",
               color: "#f87171",
-              border: "1px solid rgba(239,68,68,0.50)",
-              borderRadius: "var(--radius-ctl)",
-              fontWeight: 700,
-              letterSpacing: "0.02em",
+              cursor: busy ? "default" : "pointer",
             }}
           >
-            {busy ? "deleting..." : "delete"}
+            {busy ? "Deleting…" : "Delete"}
           </button>
         </div>
       </div>

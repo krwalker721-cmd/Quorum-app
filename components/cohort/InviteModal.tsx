@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function InviteModal({
@@ -38,7 +39,7 @@ export default function InviteModal({
     });
     setBusy(false);
     if (error) {
-      setErr(error.message?.toLowerCase() ?? "failed");
+      setErr(error.message ?? "Couldn't create the invite.");
       return;
     }
     setLink(`${origin}/join/cohort/${cohortId}`);
@@ -59,106 +60,95 @@ export default function InviteModal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-label="Invite a founder"
         className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="modal-kicker">cohort</p>
-            <h2 className="modal-title">invite a founder</h2>
+            <p className="modal-kicker">Cohort</p>
+            <h2 className="modal-title">Invite a founder</h2>
             <p className="modal-subtitle">
-              cohorts work because everyone was vouched for. invite someone you&apos;d trust with the truth.
+              Cohorts work because everyone was vouched for. Invite someone you&apos;d trust with
+              the truth.
             </p>
           </div>
-          <button onClick={onClose} className="modal-close-btn">
-            esc
+          <button type="button" onClick={onClose} className="modal-close-btn">
+            Esc
           </button>
         </div>
 
         <div className="modal-shell-body">
-        {cohorts.length === 0 ? (
-          <p className="font-mono lowercase text-xs text-text-faint">
-            you&apos;re not in any cohorts yet. create one from{" "}
-            <a className="text-amber hover:underline" href="/cohort/create">
-              cohort/create
-            </a>
-            .
-          </p>
-        ) : (
-          <>
-            <div>
-              <label>cohort</label>
-              <select
-                value={cohortId}
-                onChange={(e) => setCohortId(e.target.value)}
-              >
-                {cohorts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name.toLowerCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label>email (optional)</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="someone@example.com"
-              />
-            </div>
-
-            {err && (
-              <p className="font-mono text-xs text-red-400 lowercase">{err}</p>
-            )}
-
-            <div className="flex flex-wrap gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => generate({ withEmail: false })}
-                disabled={busy || !cohortId}
-                className="btn-ghost disabled:opacity-50"
-              >
-                copy unique invite link
-              </button>
-              <button
-                type="button"
-                onClick={() => generate({ withEmail: true })}
-                disabled={busy || !cohortId || !email.trim()}
-                className="btn-primary"
-              >
-                create email invite
-              </button>
-            </div>
-
-            {link && (
-              <div
-                className="pt-3 space-y-2 border-t"
-                style={{ borderColor: "var(--border)" }}
-              >
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-                  share this link
-                </p>
-                <div className="flex gap-2">
-                  <input value={link} readOnly className="flex-1" />
-                  <button
-                    onClick={copy}
-                    type="button"
-                    className="btn-primary whitespace-nowrap"
-                  >
-                    {copied ? "copied" : "copy"}
-                  </button>
-                </div>
-                {/* Nothing here sends an email; say so, as /cohort/invite does. */}
-                <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-                  quorum doesn&apos;t send the email for you yet. copy the link and send it yourself.
-                </p>
+          {cohorts.length === 0 ? (
+            <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+              You&apos;re not in a cohort yet.{" "}
+              <Link href="/cohort/create" style={{ color: "#f8c56a" }} className="hover:underline">
+                Create one →
+              </Link>
+            </p>
+          ) : (
+            <>
+              <div>
+                <label htmlFor="invite-cohort">Cohort</label>
+                <select id="invite-cohort" value={cohortId} onChange={(e) => setCohortId(e.target.value)}>
+                  {cohorts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
-          </>
-        )}
+
+              <div>
+                <label htmlFor="invite-email">Email (optional)</label>
+                <input
+                  id="invite-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="someone@example.com"
+                />
+              </div>
+
+              {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => generate({ withEmail: false })}
+                  disabled={busy || !cohortId}
+                  className="btn-ghost disabled:opacity-50"
+                >
+                  Create invite link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => generate({ withEmail: true })}
+                  disabled={busy || !cohortId || !email.trim()}
+                  className="btn-primary"
+                >
+                  Create email invite
+                </button>
+              </div>
+
+              {link && (
+                <div className="space-y-2" style={{ paddingTop: 14, borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Share this link</p>
+                  <div className="flex gap-2">
+                    <input value={link} readOnly aria-label="Invite link" className="flex-1" />
+                    <button onClick={copy} type="button" className="btn-primary whitespace-nowrap">
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                  {/* Nothing here sends an email; say so, as /cohort/invite does. */}
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    Quorum doesn&apos;t send the email for you yet. Copy the link and send it yourself.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

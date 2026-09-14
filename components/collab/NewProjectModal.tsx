@@ -7,6 +7,12 @@ const PROJECT_CATEGORIES = ["growth", "fundraising", "hiring", "product", "ops"]
 const NEED_CATEGORIES = ["quick_ask", "need"];
 const LOOKING_FOR = ["co-thinker", "technical", "design", "sales-growth", "advisor"];
 
+// "quick_ask" → "Quick ask", "co-thinker" → "Co-thinker"
+function sentence(s: string) {
+  const t = s.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export default function NewProjectModal({
   postType,
   initialTitle = "",
@@ -56,7 +62,7 @@ export default function NewProjectModal({
         onUpgradeRequired();
         return;
       }
-      setErr((data.error || "failed to create").toLowerCase());
+      setErr(data.error || "Couldn't post that. Try again.");
       return;
     }
     // Let a waiting tour step know the post actually landed.
@@ -72,31 +78,34 @@ export default function NewProjectModal({
       onClick={() => !busy && onClose()}
     >
       <div
+        role="dialog"
+        aria-label={postType === "project" ? "Post a project" : "Post an ask"}
         className="modal-shell w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="modal-kicker">collab_board</p>
+            <p className="modal-kicker">Collab board</p>
             <h2 className="modal-title">
-              {postType === "project" ? "post a project" : "post an ask"}
+              {postType === "project" ? "Post a project" : "Post an ask"}
             </h2>
             <p className="modal-subtitle">
               {postType === "project"
-                ? "tell the room what you're building and who you need."
-                : "be specific — specific asks get answered."}
+                ? "Tell the room what you're building and who you need."
+                : "Be specific. Specific asks get answered."}
             </p>
           </div>
-          <button onClick={onClose} className="modal-close-btn">
-            esc
+          <button type="button" onClick={onClose} className="modal-close-btn">
+            Esc
           </button>
         </div>
 
         <div className="modal-shell-body">
           <div>
-            <label>title</label>
+            <label htmlFor="collab-title">Title</label>
             <input
-              placeholder={postType === "project" ? "what are you building?" : "what do you need?"}
+              id="collab-title"
+              placeholder={postType === "project" ? "What are you building?" : "What do you need?"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
@@ -104,26 +113,28 @@ export default function NewProjectModal({
           </div>
 
           <div>
-            <label>description</label>
+            <label htmlFor="collab-description">Description</label>
             <textarea
+              id="collab-description"
               rows={4}
-              placeholder="give it enough detail to act on…"
+              placeholder="Give it enough detail to act on…"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           <div>
-            <label>category</label>
+            <label>Category</label>
             <div className="flex flex-wrap gap-2 mt-1">
               {categories.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setCategory(c)}
+                  aria-pressed={category === c}
                   className={`option-chip${category === c ? " selected" : ""}`}
                 >
-                  {c}
+                  {sentence(c)}
                 </button>
               ))}
             </div>
@@ -131,35 +142,37 @@ export default function NewProjectModal({
 
           {postType === "project" && (
             <div>
-              <label>looking_for</label>
+              <label>Looking for</label>
               <div className="flex flex-wrap gap-2 mt-1">
                 {LOOKING_FOR.map((l) => (
                   <button
                     key={l}
                     type="button"
                     onClick={() => setLookingFor(l)}
+                    aria-pressed={lookingFor === l}
                     className={`option-chip${lookingFor === l ? " selected" : ""}`}
                   >
-                    {l}
+                    {sentence(l)}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
         </div>
 
         <div className="modal-shell-foot">
-          <button onClick={onClose} className="btn-ghost" disabled={busy}>
-            cancel
+          <button type="button" onClick={onClose} className="btn-ghost" disabled={busy}>
+            Cancel
           </button>
           <button
+            type="button"
             onClick={submit}
             disabled={busy || !title.trim()}
             className="btn-primary"
           >
-            {busy ? "..." : "post "}
+            {busy ? "Posting…" : "Post"}
           </button>
         </div>
       </div>

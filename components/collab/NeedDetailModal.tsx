@@ -4,8 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/Avatar";
+import ui from "@/components/ui/sleek.module.css";
 import { timeAgo } from "@/lib/stage";
 import type { ProjectRow } from "./CollabBoardClient";
+
+function sentence(s: string) {
+  const t = s.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
 
 export default function NeedDetailModal({
   need,
@@ -55,7 +61,7 @@ export default function NeedDetailModal({
     });
     if (sysErr) {
       setBusy(false);
-      setErr(sysErr.message.toLowerCase());
+      setErr(sysErr.message);
       return;
     }
     const { error: msgErr } = await supabase.from("messages").insert({
@@ -65,7 +71,7 @@ export default function NeedDetailModal({
     });
     if (msgErr) {
       setBusy(false);
-      setErr(msgErr.message.toLowerCase());
+      setErr(msgErr.message);
       return;
     }
 
@@ -89,89 +95,81 @@ export default function NeedDetailModal({
       onClick={() => !busy && onClose()}
     >
       <div
+        role="dialog"
+        aria-label={need.title}
         className="modal-shell w-full max-w-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-shell-head">
           <div className="min-w-0">
-            <p className="modal-kicker">ask</p>
+            <p className="modal-kicker">Ask</p>
             <h3 className="modal-title">{need.title}</h3>
           </div>
-          <button onClick={onClose} className="modal-close-btn" aria-label="close">
-            esc
+          <button type="button" onClick={onClose} className="modal-close-btn" aria-label="Close">
+            Esc
           </button>
         </div>
 
         <div className="modal-shell-body">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Avatar
-            name={need.author?.full_name}
-            stage={need.author?.stage}
-            username={need.author?.username}
-            size={28}
-          />
-          <span className="font-mono lowercase text-[0.7rem] text-text-primary">
-            {need.author?.full_name?.toLowerCase() ?? "—"}
-          </span>
-          <span className="font-mono lowercase text-[0.6rem] text-text-faint">
-            · {timeAgo(need.created_at)} ago
-          </span>
-          {need.category && (
-            <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 ml-auto rounded-full"
-              style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-            >
-              {need.category}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Avatar
+              name={need.author?.full_name}
+              stage={need.author?.stage}
+              username={need.author?.username}
+              size={30}
+            />
+            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+              {need.author?.full_name ?? "—"}
             </span>
-          )}
-          {need.looking_for && (
-            <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5 rounded-full"
-              style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-            >
-              {need.looking_for}
-            </span>
-          )}
-        </div>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>· {timeAgo(need.created_at)} ago</span>
+            {need.category && <span className={`${ui.chip} sm:ml-auto`}>{sentence(need.category)}</span>}
+            {need.looking_for && <span className={ui.chip}>{sentence(need.looking_for)}</span>}
+          </div>
 
-        {need.description && (
-          <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
-            {need.description}
-          </p>
-        )}
-
-        <div className="border-t pt-4" style={{ borderColor: "var(--border)" }}>
-          {isOwner ? (
-            <p className="font-mono lowercase text-xs text-text-faint">
-              this is your ask. use &quot;view applications&quot; on the card to see applicants.
+          {need.description && (
+            <p className="whitespace-pre-wrap" style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+              {need.description}
             </p>
-          ) : (
-            <>
-              <label>how can you help?</label>
-              <textarea
-                rows={4}
-                value={response}
-                onChange={(e) => setResponse(e.target.value)}
-                placeholder="quick note on how you can help…"
-                autoFocus
-              />
-              {err && <p className="font-mono text-xs text-red-400 lowercase mt-2">{err}</p>}
-            </>
           )}
-        </div>
+
+          <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: 16 }}>
+            {isOwner ? (
+              <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                This is your ask. Use &ldquo;View applications&rdquo; on its card to see who&apos;s
+                responded.
+              </p>
+            ) : (
+              <>
+                <label htmlFor="need-response">How can you help?</label>
+                <textarea
+                  id="need-response"
+                  rows={4}
+                  value={response}
+                  onChange={(e) => setResponse(e.target.value)}
+                  placeholder="A quick note on how you can help…"
+                  autoFocus
+                />
+                <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+                  This opens a direct message with {need.author?.full_name?.split(" ")[0] || "them"}.
+                </p>
+                {err && <p style={{ fontSize: 13, color: "#f87171", marginTop: 8 }}>{err}</p>}
+              </>
+            )}
+          </div>
         </div>
 
         {!isOwner && (
           <div className="modal-shell-foot">
-            <button onClick={onClose} className="btn-ghost" disabled={busy}>
-              cancel
+            <button type="button" onClick={onClose} className="btn-ghost" disabled={busy}>
+              Cancel
             </button>
             <button
+              type="button"
               onClick={apply}
               disabled={busy || !response.trim()}
               className="btn-primary"
             >
-              {busy ? "…" : "apply →"}
+              {busy ? "Sending…" : "Send →"}
             </button>
           </div>
         )}

@@ -41,6 +41,8 @@ const INCLUDED = [
 
 type Plan = "member" | "member_annual" | "founding";
 
+const SANS = "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif";
+
 /**
  * The upgrade decision, rendered over whatever the founder was doing.
  *
@@ -92,17 +94,25 @@ export default function PaywallModal({
   }
 
   const busy = loadingPlan !== null;
+  const quietBtn: React.CSSProperties = {
+    background: "transparent",
+    border: "none",
+    fontFamily: SANS,
+    fontSize: 13,
+    color: "var(--text-muted)",
+    cursor: "pointer",
+  };
 
   return (
     <div
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Upgrade your plan"
+      aria-label="Become a member"
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.72)",
+        background: "rgba(1, 4, 9, 0.72)",
         backdropFilter: "blur(4px)",
         WebkitBackdropFilter: "blur(4px)",
         zIndex: 1000,
@@ -116,130 +126,103 @@ export default function PaywallModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "var(--bg-surface)",
-          border: "1px solid var(--border-default)",
-          borderRadius: 12,
+          background:
+            "linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 30%), var(--bg-elevated)",
+          border: "1px solid rgba(255, 255, 255, 0.09)",
+          borderRadius: 14,
+          boxShadow: "0 30px 80px -30px rgba(0, 0, 0, 0.8)",
           padding: 28,
           maxWidth: 560,
           width: "100%",
           position: "relative",
           margin: "auto",
+          fontFamily: SANS,
         }}
       >
-        {/* Top accent bar */}
+        {/* The amber top edge, as on every dialog */}
         <div
+          aria-hidden
           style={{
             position: "absolute",
             top: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: "var(--accent)",
-            borderRadius: "12px 12px 0 0",
+            left: "16%",
+            right: "16%",
+            height: 1,
+            background: "linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.55), transparent)",
           }}
         />
 
         <button
+          type="button"
           onClick={onClose}
-          aria-label="close"
-          className="font-mono"
+          aria-label="Close"
           style={{
             position: "absolute",
             top: 14,
             right: 16,
             background: "transparent",
             border: "none",
-            color: "var(--text-disabled)",
+            color: "var(--text-muted)",
             cursor: "pointer",
-            fontSize: 18,
+            fontSize: 20,
             lineHeight: 1,
           }}
         >
           ×
         </button>
 
-        <p
-          className="font-mono uppercase"
-          style={{
-            fontSize: 10,
-            color: "var(--accent)",
-            letterSpacing: "0.12em",
-            marginBottom: 10,
-          }}
-        >
-          // upgrade your plan
-        </p>
+        <p style={{ fontSize: 13, fontWeight: 500, color: "#f8c56a", marginBottom: 8 }}>Membership</p>
 
         <h2
-          className="font-sans"
           style={{
             fontSize: 22,
+            fontWeight: 600,
+            letterSpacing: "-0.02em",
             color: "var(--text-primary)",
             marginBottom: 6,
             lineHeight: 1.25,
           }}
         >
-          Upgrade your plan to keep going
+          Become a member to keep going
         </h2>
 
-        <p
-          className="font-sans"
-          style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 4 }}
-        >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 4 }}>
           {FEATURE_LINE[feature]}
         </p>
 
         {hadTrial && (
-          <p
-            className="font-mono"
-            style={{ fontSize: 10, color: "var(--text-disabled)", marginBottom: 4 }}
-          >
-            // your trial has ended — pick a plan to pick up where you left off
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 4 }}>
+            Your trial has ended. Pick a plan to pick up where you left off.
           </p>
         )}
 
         {/* What Member is */}
         <div
           style={{
-            background: "var(--bg-base)",
-            border: "1px solid var(--border-default)",
-            borderRadius: 10,
+            background: "rgba(0, 0, 0, 0.2)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: 12,
             padding: 16,
             margin: "18px 0",
           }}
         >
-          <p
-            className="font-mono uppercase"
-            style={{
-              fontSize: 9,
-              color: "var(--accent)",
-              letterSpacing: "0.1em",
-              marginBottom: 10,
-            }}
-          >
-            what you get
+          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 10 }}>
+            What you get
           </p>
           {INCLUDED.map((item) => (
-            <div
-              key={item}
-              style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 7 }}
-            >
+            <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 7 }}>
               <span
+                aria-hidden
                 style={{
                   width: 5,
                   height: 5,
                   borderRadius: "50%",
                   background: "#22c55e",
                   flexShrink: 0,
-                  marginTop: 6,
+                  marginTop: 7,
                 }}
               />
-              <span
-                className="font-sans"
-                style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}
-              >
-                {item}
-              </span>
+              <span style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.45 }}>{item}</span>
             </div>
           ))}
         </div>
@@ -248,117 +231,88 @@ export default function PaywallModal({
             server-side by lib/plans.ts. */}
         <div className="paywall-plans" style={{ display: "flex", gap: 10 }}>
           <button
+            type="button"
             onClick={() => startCheckout("member")}
             disabled={busy}
-            className="font-mono"
             style={{
               flex: 2,
-              padding: "14px 16px",
+              padding: "13px 16px",
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
+              background: "linear-gradient(135deg, rgba(245,158,11,.95), rgba(245,158,11,.75))",
+              boxShadow:
+                "0 0 0 1px rgba(245, 158, 11, 0.45), 0 8px 24px -10px rgba(245, 158, 11, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
               color: "#1a1204",
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "0.04em",
+              fontFamily: SANS,
+              fontSize: 14,
+              fontWeight: 600,
               cursor: busy ? "default" : "pointer",
               opacity: busy ? 0.7 : 1,
             }}
           >
-            {loadingPlan === "member"
-              ? "Loading..."
-              : `Become a Member — $${PRICING.member.monthly}/mo →`}
+            {loadingPlan === "member" ? "Loading…" : `Become a member — $${PRICING.member.monthly}/mo →`}
           </button>
           <button
+            type="button"
             onClick={() => startCheckout("founding")}
             disabled={busy}
-            className="font-mono"
             style={{
               flex: 1,
-              padding: "14px 16px",
+              padding: "13px 16px",
               borderRadius: 10,
-              background: "transparent",
+              background: "rgba(255, 255, 255, 0.03)",
               color: "var(--text-primary)",
-              border: "1px solid var(--border-default)",
-              fontSize: 12,
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              fontFamily: SANS,
+              fontSize: 14,
               cursor: busy ? "default" : "pointer",
               opacity: busy ? 0.7 : 1,
             }}
             title={`Founding rate — first ${FOUNDING_SEATS} members, locked for life`}
           >
-            {loadingPlan === "founding"
-              ? "Loading..."
-              : `Founding — $${PRICING.founding.monthly}/mo`}
+            {loadingPlan === "founding" ? "Loading…" : `Founding — $${PRICING.founding.monthly}/mo`}
           </button>
         </div>
 
         <button
+          type="button"
           onClick={() => startCheckout("member_annual")}
           disabled={busy}
-          className="font-mono"
           style={{
             display: "block",
             width: "100%",
-            marginTop: 10,
+            marginTop: 12,
             background: "transparent",
             border: "none",
             padding: 0,
-            fontSize: 11,
-            color: "var(--accent)",
+            fontFamily: SANS,
+            fontSize: 13,
+            color: "#f8c56a",
             cursor: busy ? "default" : "pointer",
             textAlign: "center",
           }}
         >
           {loadingPlan === "member_annual"
-            ? "Loading..."
-            : `or $${PRICING.member.annual}/year — 2 months free →`}
+            ? "Loading…"
+            : `Or $${PRICING.member.annual}/year — 2 months free →`}
         </button>
 
         {error && (
-          <p
-            className="font-mono"
-            style={{ fontSize: 11, color: "#f85149", marginTop: 12, textAlign: "center" }}
-          >
-            {error}
-          </p>
+          <p style={{ fontSize: 13, color: "#f87171", marginTop: 12, textAlign: "center" }}>{error}</p>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 18,
-            marginTop: 18,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, marginTop: 18 }}>
           <button
+            type="button"
             onClick={() => {
               router.push("/pricing");
               onClose();
             }}
-            className="font-mono"
-            style={{
-              background: "transparent",
-              border: "none",
-              fontSize: 11,
-              color: "var(--text-disabled)",
-              cursor: "pointer",
-            }}
+            style={quietBtn}
           >
             Compare plans →
           </button>
-          <button
-            onClick={onClose}
-            className="font-mono"
-            style={{
-              background: "transparent",
-              border: "none",
-              fontSize: 11,
-              color: "var(--text-disabled)",
-              cursor: "pointer",
-            }}
-          >
+          <button type="button" onClick={onClose} style={quietBtn}>
             Not now
           </button>
         </div>
