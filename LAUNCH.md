@@ -773,7 +773,10 @@ activation and DNS.
       - [x] Collab board and project room: approved (`1e36b32`). Also fixed
             overlapping owner controls, a nested link, "1 docs", and zoneless
             times in the live line and the room's start date.
-      - [ ] Vault, then Messages, Referrals, Profile, Settings.
+      - [x] Vault (`3984e47`, live). Also removed invented "a founder saved
+            something" cards, fixed /pulse links (cards are `#post-<id>`),
+            stacked Notes on phones, and read vault times as UTC.
+      - [ ] Messages, Referrals, Profile, Settings.
       - [ ] The shared modals (`modal-shell` in `globals.css`): new post, room
             post, invite, and the rest. Deliberately left for one pass.
       - [ ] Update `design/REDESIGN-BUILD-GUIDE.md` to the new look.
