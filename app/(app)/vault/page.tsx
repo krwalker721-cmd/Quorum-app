@@ -208,7 +208,7 @@ export default async function Vault(
 
   return (
     <>
-      <TopBar title="vault" tier={tier} userId={user.id} />
+      <TopBar sleek title="vault" tier={tier} userId={user.id} />
       <VaultPage
         currentUserId={user.id}
         initialTab={tab}

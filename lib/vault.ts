@@ -1,5 +1,7 @@
 // Vault — shared types for the rebuilt vault system.
 
+import { parseDbTime } from "@/lib/stage";
+
 export const NOTE_TAGS = [
   "decision",
   "hiring",
@@ -112,8 +114,10 @@ export function noteFirstLine(content: unknown): string {
   return nl === -1 ? all : all.slice(0, nl);
 }
 
+// Post timestamps can arrive zoneless (UTC); parseDbTime reads them as UTC
+// instead of local time.
 export function shortTimeAgo(iso: string): string {
-  const t = new Date(iso).getTime();
+  const t = parseDbTime(iso).getTime();
   const diff = Math.max(0, Date.now() - t);
   const sec = Math.floor(diff / 1000);
   if (sec < 60) return `${sec}s`;

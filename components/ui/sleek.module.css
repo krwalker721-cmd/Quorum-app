@@ -587,6 +587,61 @@
   border-left-color: rgba(255, 255, 255, 0.2);
 }
 
+/* ── Vault */
+
+/* A small dropdown menu (note actions, slash commands, tag picker). */
+.menu {
+  background: var(--card-elev);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  padding: 4px;
+}
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+/* The note editor. Tiptap and its toolbar are styled by global classes
+   (globals.css); inside .editor they take the sleek finish. */
+.editor :global(.tiptap) {
+  font-size: 14px;
+  padding: 16px 24px;
+}
+.editor :global(.tiptap p.is-editor-empty:first-child::before) {
+  color: var(--text-muted);
+}
+.editor :global(.editor-toolbar) {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+}
+.editor :global(.toolbar-btn) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  padding: 5px 9px;
+  border-radius: 6px;
+}
+.editor :global(.toolbar-btn.active) {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f8c56a;
+}
+.editor :global(.toolbar-divider) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tile,
   .tile::before,
