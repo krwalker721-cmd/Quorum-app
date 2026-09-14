@@ -39,15 +39,16 @@ export default function ProjectMenu({
     <div ref={ref} className="relative">
       <button
         type="button"
-        aria-label="actions"
+        aria-label={`${itemLabel} actions`}
+        aria-expanded={open}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="p-1 text-text-faint hover:text-text-primary"
+        className="p-1 rounded-md text-text-muted hover:text-text-primary"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <circle cx="5" cy="12" r="1.6" />
           <circle cx="12" cy="12" r="1.6" />
           <circle cx="19" cy="12" r="1.6" />
@@ -55,8 +56,13 @@ export default function ProjectMenu({
       </button>
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 z-30 min-w-[180px] border"
-          style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+          className="absolute right-0 top-full mt-1 z-30 min-w-[180px] p-1"
+          style={{
+            background: "var(--card-elev)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: 10,
+            boxShadow: "0 16px 40px -12px rgba(0, 0, 0, 0.6)",
+          }}
         >
           <button
             type="button"
@@ -66,10 +72,10 @@ export default function ProjectMenu({
               setOpen(false);
               setConfirm(true);
             }}
-            className="block w-full text-left font-mono lowercase text-[0.7rem] px-3 py-2"
-            style={{ color: "#f87171" }}
+            className="block w-full text-left px-3 py-2 rounded-md hover:bg-white/5"
+            style={{ fontSize: 13, color: "#f87171" }}
           >
-            delete {itemLabel}
+            Delete {itemLabel}
           </button>
         </div>
       )}
