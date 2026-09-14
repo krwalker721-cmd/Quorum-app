@@ -4,7 +4,7 @@ import { LEGAL } from "@/lib/legal";
 import s from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "privacy policy — quorum",
+  title: "Privacy policy",
   description: "What Quorum collects, why, who can see it, and how to control it.",
 };
 

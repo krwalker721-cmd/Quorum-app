@@ -5,7 +5,7 @@ import { FOUNDING_SEATS, TRIAL_DAYS } from "@/lib/pricing";
 import s from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "terms of service — quorum",
+  title: "Terms of service",
   description: "The agreement between you and Quorum.",
 };
 

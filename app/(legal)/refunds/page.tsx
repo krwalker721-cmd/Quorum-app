@@ -5,7 +5,7 @@ import { LAPSE_GRACE_DAYS } from "@/lib/pricing";
 import s from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "refunds & cancellation — quorum",
+  title: "Refunds & cancellation",
   description: "How cancelling works, and why Quorum doesn’t issue refunds.",
 };
 

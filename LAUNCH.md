@@ -742,20 +742,20 @@ activation and DNS.
       what Quorum is or why it costs $39/mo. For a product whose pitch *is* the
       filter, this is the highest-leverage item in this phase. Claude builds it;
       **[you]** own the positioning and copy decisions.
-- [ ] **[me]** `error.tsx`, `not-found.tsx`, `global-error.tsx`
-      *(`global-error.tsx` added with Sentry, 2026-09-13; the other two remain)*
-- [ ] **[me]** `public/` directory: `robots.txt`, OG image
-- [ ] **[me]** `metadataBase` + `openGraph` in the root layout — links shared to
-      Twitter, LinkedIn, or Slack currently render as a bare URL
-- [ ] **[me]** **`/pricing` renders nothing without JavaScript in production.**
-      Found 2026-09-12. `PricingBody` calls `useSearchParams()` under a
-      page-wide `Suspense`, so the production build bails out of pre-rendering
-      the whole page (the HTML carries Next's `BAILOUT_TO_CLIENT_SIDE_RENDERING`
-      marker). The served HTML is an 8 KB shell with no heading, prices, or
-      renewal notice. Browsers are fine (verified), but link previews, search
-      engines, and any non-JS reviewer see an empty page. Fix: read the search
-      param in a small child component inside its own `Suspense`, so the rest
-      of the page prerenders.
+- [x] **[me]** `error.tsx`, `not-found.tsx`, `global-error.tsx`
+      *(Done 2026-09-13. `global-error.tsx` first, with Sentry; `error.tsx`
+      also reports to Sentry. Both of the new pages use
+      `components/StatusPage.tsx`, the landing page's finish.)*
+- [x] **[me]** `robots.txt`, OG image *(Done 2026-09-13, as file conventions
+      rather than a `public/` directory: `app/robots.ts`, `app/sitemap.ts`, and
+      `app/opengraph-image.tsx`, a 1200×630 card generated at build time.)*
+- [x] **[me]** `metadataBase` + `openGraph` in the root layout *(Done
+      2026-09-13. Titles now follow "Page · Quorum".)*
+- [x] **[me]** **`/pricing` renders nothing without JavaScript in production.**
+      *(Fixed 2026-09-13. `app/pricing/page.tsx` is now a server page that reads
+      `?canceled` and renders `PricingClient`, so there is no
+      `useSearchParams()` and no bail-out: the served HTML carries the heading,
+      prices, and renewal notice.)*
 - [ ] **[me → you]** Analytics — Claude wires it, you create the account
 
 ### Phase 5 — docs drift (anytime, low risk)
@@ -766,10 +766,8 @@ activation and DNS.
       `STRIPE_FOUNDING_PRICE_ID`, both required by `lib/plans.ts`
 - [ ] **[me]** Next 16 deprecated the `middleware` convention in favor of `proxy`
 - [ ] **[me]** Dead code: `isAdminUnlocked()` on the profile page (see §5)
-- [ ] **[me]** **Favicon is the wrong amber.** `app/icon.svg` draws the logo mark
-      in `#e8702a`, but the design token and `components/LogoMark.tsx` both use
-      `#f59e0b`. Same mark, two different oranges depending on whether you're
-      looking at the browser tab or the page.
+- [x] **[me]** **Favicon is the wrong amber.** *(Fixed 2026-09-13: `app/icon.svg`
+      now uses `#f59e0b`, matching `components/LogoMark.tsx`.)*
 - [ ] **[me]** **Billing cards still describe a free tier.**
       `components/ProfileBilling.tsx` (lines 42, 49) and
       `components/SettingsBilling.tsx` (lines 63, 71) show "Free tier" and "Free
