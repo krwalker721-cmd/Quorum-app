@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/stage";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
+import ui from "@/components/ui/sleek.module.css";
 
 type Reply = {
   id: string;
@@ -33,6 +34,7 @@ export default function ReplyThread({
   currentUserId,
   onCollapse,
   variant = "attached",
+  sleek = false,
 }: {
   postId: string;
   postType: string;
@@ -40,6 +42,8 @@ export default function ReplyThread({
   currentUserId?: string | null;
   onCollapse: () => void;
   variant?: "attached" | "inline";
+  /** Matches a sleek PostCard (sleek.module.css). */
+  sleek?: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const { paywallState, checkAndGate, handleGateResponse, closePaywall } = usePaywall();
@@ -151,17 +155,31 @@ export default function ReplyThread({
   }
 
   return (
-    <div className={`reply-thread ${variant}`}>
+    <div className={`reply-thread ${variant}${sleek ? ` ${ui.thread}` : ""}`}>
       <div className="reply-thread-head">
-        <p className="font-mono lowercase text-[0.6rem] text-text-faint">
-          {loading
-            ? "loading replies…"
-            : replies.length === 0
-              ? "no replies yet — start the thread"
-              : `${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
-        </p>
-        <button onClick={onCollapse} className="reply-btn" style={{ fontSize: 10 }}>
-          collapse ↑
+        {sleek ? (
+          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            {loading
+              ? "Loading replies…"
+              : replies.length === 0
+                ? "No replies yet. Start the thread."
+                : `${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
+          </p>
+        ) : (
+          <p className="font-mono lowercase text-[0.6rem] text-text-faint">
+            {loading
+              ? "loading replies…"
+              : replies.length === 0
+                ? "no replies yet — start the thread"
+                : `${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
+          </p>
+        )}
+        <button
+          onClick={onCollapse}
+          className={sleek ? ui.textBtn : "reply-btn"}
+          style={sleek ? undefined : { fontSize: 10 }}
+        >
+          {sleek ? "Collapse ↑" : "collapse ↑"}
         </button>
       </div>
 
@@ -184,14 +202,37 @@ export default function ReplyThread({
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                {r.is_anonymous ? "anonymous" : r.author?.full_name?.toLowerCase() ?? "—"}
+              <span
+                className={
+                  sleek
+                    ? "text-text-primary truncate"
+                    : "font-mono lowercase text-[0.7rem] text-text-primary truncate"
+                }
+                style={sleek ? { fontSize: 13, fontWeight: 500 } : undefined}
+              >
+                {r.is_anonymous
+                  ? sleek
+                    ? "Anonymous"
+                    : "anonymous"
+                  : (sleek ? r.author?.full_name : r.author?.full_name?.toLowerCase()) ?? "—"}
               </span>
-              <span className="font-mono lowercase text-[0.55rem] text-text-faint ml-auto shrink-0">
+              <span
+                className={
+                  sleek
+                    ? "text-text-faint ml-auto shrink-0"
+                    : "font-mono lowercase text-[0.55rem] text-text-faint ml-auto shrink-0"
+                }
+                style={sleek ? { fontSize: 12 } : undefined}
+              >
                 {timeAgo(r.created_at)} ago
               </span>
             </div>
-            <p className="text-text-secondary text-[0.82rem] mt-1 leading-snug whitespace-pre-wrap">
+            <p
+              className={`text-text-secondary mt-1 whitespace-pre-wrap ${
+                sleek ? "leading-relaxed" : "text-[0.82rem] leading-snug"
+              }`}
+              style={sleek ? { fontSize: 14 } : undefined}
+            >
               {r.content}
             </p>
           </div>
@@ -204,7 +245,7 @@ export default function ReplyThread({
       <div className="reply-input-row">
         <textarea
           rows={1}
-          placeholder="write a reply..."
+          placeholder={sleek ? "Write a reply…" : "write a reply..."}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -247,7 +288,7 @@ export default function ReplyThread({
           disabled={busy || !text.trim()}
           className="reply-submit-btn"
         >
-          {busy ? "…" : "reply →"}
+          {busy ? "…" : sleek ? "Reply →" : "reply →"}
         </button>
       </div>
 

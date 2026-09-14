@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Avatar from "@/components/Avatar";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
 import { STAGE_COLOR } from "@/lib/stage";
 
 export default async function MostHelpfulThisWeek() {
@@ -40,72 +42,37 @@ export default async function MostHelpfulThisWeek() {
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
   return (
-    <div
-      className="side-widget"
-      style={{ "--w-accent": "#22c55e" } as React.CSSProperties}
-    >
-      <div className="side-widget-head">
-        <span className="side-widget-glyph" aria-hidden>▲</span>
-        <p className="side-widget-label">most_helpful_this_week</p>
-      </div>
+    <Tile kicker="Most helpful this week">
       {top.length === 0 ? (
-        <div className="empty-panel compact">
-          <p className="empty-panel-title">no replies yet this week.</p>
-          <p className="empty-panel-sub">answer someone&apos;s question and your name goes here.</p>
+        <div className={ui.empty}>
+          <p className={ui.emptyTitle}>No replies yet this week.</p>
+          <p className={ui.emptySub}>Answer someone&apos;s question and your name shows up here.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {top.map(([id, count]) => {
             const p = profileMap.get(id);
             if (!p) return null;
+            const stageColor = (p.stage && STAGE_COLOR[p.stage]) || "var(--text-muted)";
             return (
-              <div key={id} className="flex items-center gap-2.5">
-                <div
-                  className="rounded-full"
-                  style={{
-                    padding: 2,
-                    background: "rgba(245, 158, 11, 0.35)",
-                  }}
-                >
-                  <Avatar
-                    name={p.full_name}
-                    stage={p.stage}
-                    username={p.username}
-                    size={22}
-                  />
+              <div key={id} className="flex items-center gap-3">
+                <div className="rounded-full" style={{ padding: 2, background: "rgba(245, 158, 11, 0.35)" }}>
+                  <Avatar name={p.full_name} stage={p.stage} username={p.username} size={26} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-mono lowercase text-[0.7rem] text-text-secondary truncate">
-                    {p.full_name?.toLowerCase() ?? "—"}
+                  <p className="truncate" style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                    {p.full_name ?? "—"}
                   </p>
-                  <div className="flex items-center gap-2">
-                    {p.stage && (
-                      <span
-                        className="font-mono lowercase text-[0.55rem] px-1.5 py-0.5"
-                        style={{
-                          border: `1px solid ${STAGE_COLOR[p.stage] ?? "#6e7681"}`,
-                          color: STAGE_COLOR[p.stage] ?? "#6e7681",
-                        }}
-                      >
-                        {p.stage}
-                      </span>
-                    )}
-                    <span className="font-mono lowercase text-[0.6rem] text-text-faint">
-                      {count} {count === 1 ? "reply" : "replies"}
-                    </span>
-                  </div>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                    {p.stage && <span style={{ color: stageColor }}>{p.stage} · </span>}
+                    {count} {count === 1 ? "reply" : "replies"}
+                  </p>
                 </div>
               </div>
             );
           })}
         </div>
       )}
-      <p
-        className="font-sans lowercase text-[0.65rem] text-text-faint mt-4 pt-3 border-t"
-        style={{ borderColor: "var(--border)" }}
-      >
-        founders showing up for the room
-      </p>
-    </div>
+    </Tile>
   );
 }

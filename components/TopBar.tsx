@@ -63,7 +63,9 @@ export default function TopBar({
         )}
         <div className={`flex items-baseline gap-3 min-w-0 ${sleek ? "" : "mt-0.5"}`}>
           <h1
-            className={`font-sans shrink-0 ${sleek ? "capitalize" : "lowercase"}`}
+            // Sleek titles give way (truncate) on narrow screens instead of
+            // sliding under the post button.
+            className={`font-sans ${sleek ? "capitalize min-w-0 truncate" : "shrink-0 lowercase"}`}
             style={{ fontSize: sleek ? 15 : 16, lineHeight: 1.3, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.2px" }}
           >
             {title.replace(/_/g, " ")}

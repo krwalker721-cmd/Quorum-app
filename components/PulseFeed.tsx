@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import PostCard, { PostWithAuthor } from "@/components/PostCard";
 import PulseEmptyState from "@/components/pulse/PulseEmptyState";
 import PulseUpgradeNudge from "@/components/pulse/PulseUpgradeNudge";
+import ui from "@/components/ui/sleek.module.css";
 
 const PAGE = 20;
 
@@ -153,42 +154,36 @@ export default function PulseFeed({
   }
 
   if (posts.length === 0) {
-    return <PulseEmptyState userId={currentUserId} />;
+    return <PulseEmptyState />;
   }
 
   return (
-    <div className="space-y-4 pulse-feed-container">
+    <div className="space-y-3">
       {/* Free-tier (non-trial) cap nudge — self-hides otherwise. */}
       <PulseUpgradeNudge />
 
       {tagFilter && (
         <div
-          className="flex items-center justify-between px-4 py-3 border rounded-xl"
-          style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)", maxWidth: 680 }}
+          className={`flex items-center justify-between ${ui.tile}`}
+          style={{ padding: "10px 12px 10px 18px" }}
         >
-          <p className="font-mono lowercase text-[0.7rem] text-text-muted">
-            filtered by{" "}
-            <span style={{ color: "#f59e0b" }}>#{tagFilter}</span>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            Filtered by <span style={{ color: "#f59e0b" }}>#{tagFilter}</span>
           </p>
-          <button
-            onClick={clearFilter}
-            className="font-mono lowercase text-[0.65rem] px-2.5 py-1 border rounded-lg hover:border-amber transition-colors"
-            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-          >
-            clear filter
+          <button onClick={clearFilter} className={ui.ghostBtn} style={{ padding: "6px 12px" }}>
+            Clear filter
           </button>
         </div>
       )}
 
       {filtered.length === 0 ? (
-        <div className="empty-panel" style={{ maxWidth: 680 }}>
-          <span className="empty-panel-glyph" aria-hidden>#</span>
-          <p className="empty-panel-title">
-            nothing here yet for {tagFilter ? `#${tagFilter}` : modeFilter}.
+        <div className={`${ui.tile} text-center`} style={{ padding: "32px 22px" }}>
+          <p className={ui.emptyTitle}>
+            Nothing here yet for {tagFilter ? `#${tagFilter}` : modeFilter}.
           </p>
-          <p className="empty-panel-sub">try clearing the filter to see the whole room.</p>
-          <button onClick={clearFilter} className="empty-panel-cta">
-            clear filter →
+          <p className={ui.emptySub}>Clear the filter to see the whole room.</p>
+          <button onClick={clearFilter} className={ui.ghostBtn} style={{ marginTop: 14 }}>
+            Clear filter
           </button>
         </div>
       ) : (
@@ -200,19 +195,15 @@ export default function PulseFeed({
             onDeleted={(id) => setPosts((prev) => prev.filter((x) => x.id !== id))}
             expanded={expandedId === p.id}
             onToggleReplies={onToggleReplies}
+            sleek
           />
         ))
       )}
 
       {!done && filtered.length > 0 && !tagFilter && !modeFilter && (
         <div className="pt-2 flex justify-center">
-          <button
-            onClick={loadMore}
-            disabled={busy}
-            className="font-mono lowercase text-[0.7rem] px-4 py-2 border rounded-lg hover:border-amber transition-colors disabled:opacity-50"
-            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-          >
-            {busy ? "loading…" : "load more "}
+          <button onClick={loadMore} disabled={busy} className={ui.ghostBtn}>
+            {busy ? "Loading…" : "Load more"}
           </button>
         </div>
       )}

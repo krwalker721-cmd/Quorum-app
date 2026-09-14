@@ -4,10 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
 
 const FILTERS = [
-  { key: "all", label: "all" },
-  { key: "decisions", label: "decisions" },
-  { key: "blockers", label: "blockers" },
-  { key: "unanswered", label: "unanswered" },
+  { key: "all", label: "All" },
+  { key: "decisions", label: "Decisions" },
+  { key: "blockers", label: "Blockers" },
+  { key: "unanswered", label: "Unanswered" },
 ] as const;
 
 /**
@@ -24,8 +24,8 @@ export default function PulseFilterTabs() {
       {FILTERS.map((f) => (
         <TabPill
           key={f.key}
+          sleek
           active={active === f.key}
-          radius={14}
           onClick={() => router.push(f.key === "all" ? "/pulse" : `/pulse?filter=${f.key}`)}
         >
           {f.label}
