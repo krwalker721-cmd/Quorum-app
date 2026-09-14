@@ -1,55 +1,27 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTier } from "@/contexts/TierContext";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
 
-// Subtle "member feature" nudge shown in the vault to accounts with no live
-// entitlement. Hidden for paid members and for anyone mid-trial.
+// Shown in the vault to accounts with no live entitlement. Hidden for paid
+// members and for anyone mid-trial.
 export default function VaultUpgradeNudge() {
-  const router = useRouter();
   const { hasFullAccess, isLoading } = useTier();
 
   if (isLoading) return null;
   if (hasFullAccess) return null;
 
   return (
-    <div
-      style={{
-        background: "#161b22",
-        border: "1px solid #21262d",
-        borderRadius: 4,
-        padding: "14px 16px",
-        marginTop: 16,
-      }}
-    >
-      <p
-        className="font-mono"
-        style={{ fontSize: 9, color: "#f59e0b", marginBottom: 6, letterSpacing: "0.05em" }}
-      >
-        // member feature
+    <Tile kicker="Part of a membership" kickerColor="#f8c56a" style={{ marginTop: 20, maxWidth: 820 }}>
+      <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)" }}>
+        You can read everything here. Writing notes and building collections open up with a
+        membership.
       </p>
-      <p
-        className="font-sans"
-        style={{ fontSize: 12, color: "#6e7681", marginBottom: 12, lineHeight: 1.5 }}
-      >
-        Upgrade to Member for unlimited notes, collections, and community wisdom
-        access.
-      </p>
-      <button
-        type="button"
-        onClick={() => router.push("/pricing")}
-        className="font-mono"
-        style={{
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontSize: 10,
-          color: "#f59e0b",
-          padding: 0,
-        }}
-      >
-        upgrade to member →
-      </button>
-    </div>
+      <Link href="/pricing" className={ui.softBtn} style={{ display: "inline-block", marginTop: 14 }}>
+        See membership →
+      </Link>
+    </Tile>
   );
 }

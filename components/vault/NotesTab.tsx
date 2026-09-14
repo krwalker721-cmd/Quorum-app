@@ -8,33 +8,37 @@ import {
   type NoteRow,
   type NoteCollectionRow,
 } from "@/lib/vault";
+import { parseDbTime } from "@/lib/stage";
 import dynamic from "next/dynamic";
 import NoteEditorBoundary from "./NoteEditorBoundary";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
 import EmptyStateUpgradeLine from "@/components/EmptyStateUpgradeLine";
+import ui from "@/components/ui/sleek.module.css";
+
+// A hairline panel that doesn't light up on hover: surfaces you work inside.
+const PANEL: React.CSSProperties = {
+  background: "var(--bg-surface)",
+  border: "1px solid rgba(255, 255, 255, 0.07)",
+  borderRadius: 12,
+};
 
 // Tiptap is a client-only library — disable SSR for it entirely to avoid
 // hydration mismatches surfacing as the generic Next.js error overlay.
 const NoteEditor = dynamic(() => import("./NoteEditor"), {
   ssr: false,
   loading: () => (
-    <div
-      className="border min-h-[600px] flex items-center justify-center"
-      style={{ background: "var(--card)", borderColor: "var(--border)" }}
-    >
-      <p className="font-mono lowercase text-[0.7rem] text-text-faint">
-        loading editor...
-      </p>
+    <div className="min-h-[480px] md:min-h-[600px] flex items-center justify-center" style={PANEL}>
+      <p className={ui.emptySub}>Loading editor…</p>
     </div>
   ),
 });
 
 const PROMPTS = [
-  "what decision are you sitting on right now?",
-  "what did you learn this week that you don't want to forget?",
-  "what would you tell yourself 6 months ago?",
+  "What decision are you sitting on right now?",
+  "What did you learn this week that you don't want to forget?",
+  "What would you tell yourself six months ago?",
 ];
 
 export default function NotesTab({
@@ -65,7 +69,7 @@ export default function NotesTab({
   }, [notes, search]);
 
   async function createNote() {
-    // Paywall gate — creating a NEW note is capped on free tier. Editing an
+    // Paywall gate — creating a NEW note needs full access. Editing an
     // existing note is never gated.
     const allowed = await checkAndGate("vault_notes");
     if (!allowed) return;
@@ -126,7 +130,7 @@ export default function NotesTab({
   }
 
   async function createCollection() {
-    const name = prompt("collection name?");
+    const name = prompt("Collection name");
     if (!name) return;
     const res = await fetch("/api/vault/collections", {
       method: "POST",
@@ -152,99 +156,92 @@ export default function NotesTab({
     return { byCol, uncategorized };
   }, [filtered]);
 
+  const rowProps = (n: NoteRow) => ({
+    note: n,
+    active: n.id === activeId,
+    onOpen: () => setActiveId(n.id),
+    onDelete: () => deleteNote(n.id),
+    collections,
+    onMove: (cid: string | null) => moveToCollection(n.id, cid),
+  });
+
   return (
-    <div className="flex gap-4 min-h-[600px]">
-      {/* left panel */}
+    // Side by side on desktop; stacked on a phone, where a fixed-width list
+    // beside the editor wouldn't fit.
+    <div className="flex flex-col md:flex-row gap-4 md:min-h-[600px]">
       <aside
-        className="w-[260px] shrink-0 border flex flex-col"
-        style={{ background: "var(--card)", borderColor: "var(--border)" }}
+        className="w-full md:w-[270px] shrink-0 flex flex-col max-h-[340px] md:max-h-none"
+        style={PANEL}
       >
-        <div className="p-3 border-b" style={{ borderColor: "var(--border)" }}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-mono lowercase text-[0.65rem] text-text-faint tracking-wider">
-              your_notes
-            </span>
+        <div className="p-3" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+            <span className={ui.label}>Your notes</span>
             <button
+              type="button"
               onClick={createNote}
-              className="font-mono lowercase text-[0.65rem] text-amber hover:opacity-80"
+              className={ui.softBtn}
+              style={{ padding: "5px 10px", fontSize: 12 }}
             >
-              + new note
+              New note
             </button>
           </div>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="search notes…"
-            className="w-full bg-transparent border px-2 py-1.5 text-[0.75rem] text-text-secondary focus:outline-none focus:border-amber"
-            style={{ borderColor: "var(--border)" }}
+            placeholder="Search notes"
+            aria-label="Search notes"
+            className={`${ui.search} w-full`}
+            style={{ fontSize: 13, padding: "7px 12px" }}
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto scroll-thin">
+        <div className="flex-1 overflow-y-auto scroll-thin py-1.5">
           {collections.map((c) => {
             const items = grouped.byCol[c.id] ?? [];
             const isCollapsed = collapsed[c.id];
             return (
-              <div key={c.id} className="border-b" style={{ borderColor: "var(--border)" }}>
+              <div key={c.id}>
                 <button
                   type="button"
                   onClick={() => setCollapsed((p) => ({ ...p, [c.id]: !p[c.id] }))}
-                  className="w-full text-left font-mono lowercase text-[0.65rem] text-text-faint px-3 py-2 hover:text-text-muted flex items-center justify-between"
+                  aria-expanded={!isCollapsed}
+                  className="w-full text-left px-4 py-1.5 flex items-center justify-between hover:text-text-primary"
+                  style={{ fontSize: 12, color: "var(--text-muted)" }}
                 >
-                  <span>
-                    {isCollapsed ? "" : ""} {c.name.toLowerCase()}
+                  <span className="truncate">
+                    <span aria-hidden style={{ display: "inline-block", width: 12 }}>
+                      {isCollapsed ? "▸" : "▾"}
+                    </span>
+                    {c.name}
                   </span>
                   <span>{items.length}</span>
                 </button>
-                {!isCollapsed && (
-                  <div>
-                    {items.map((n) => (
-                      <NoteRowItem
-                        key={n.id}
-                        note={n}
-                        active={n.id === activeId}
-                        onOpen={() => setActiveId(n.id)}
-                        onDelete={() => deleteNote(n.id)}
-                        collections={collections}
-                        onMove={(cid) => moveToCollection(n.id, cid)}
-                      />
-                    ))}
-                  </div>
-                )}
+                {!isCollapsed && items.map((n) => <NoteRowItem key={n.id} {...rowProps(n)} />)}
               </div>
             );
           })}
 
-          <div>
-            {grouped.uncategorized.map((n) => (
-              <NoteRowItem
-                key={n.id}
-                note={n}
-                active={n.id === activeId}
-                onOpen={() => setActiveId(n.id)}
-                onDelete={() => deleteNote(n.id)}
-                collections={collections}
-                onMove={(cid) => moveToCollection(n.id, cid)}
-              />
-            ))}
-            {filtered.length === 0 && notes.length > 0 && (
-              <p className="font-mono lowercase text-[0.7rem] text-text-faint px-3 py-3">
-                no matches.
-              </p>
-            )}
-          </div>
+          {grouped.uncategorized.map((n) => (
+            <NoteRowItem key={n.id} {...rowProps(n)} />
+          ))}
+          {filtered.length === 0 && notes.length > 0 && (
+            <p className={ui.emptySub} style={{ padding: "8px 16px" }}>
+              No notes match.
+            </p>
+          )}
         </div>
 
         <button
+          type="button"
           onClick={createCollection}
-          className="font-mono lowercase text-[0.65rem] text-text-faint hover:text-text-muted px-3 py-2 text-left border-t"
-          style={{ borderColor: "var(--border)" }}
+          className={`${ui.textBtn} text-left`}
+          // Inline padding: .textBtn zeroes it, and would beat Tailwind's px/py.
+          style={{ fontSize: 13, padding: "10px 16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}
         >
-          + new collection
+          + New collection
         </button>
       </aside>
 
-      {/* right panel */}
       <div className="flex-1 min-w-0">
         {activeNote ? (
           <NoteEditorBoundary key={activeNote.id}>
@@ -306,19 +303,32 @@ function NoteRowItem({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [menuOpen]);
 
+  // updated_at can arrive zoneless (UTC); parseDbTime keeps the day right.
+  const updated = parseDbTime(note.updated_at).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+
   return (
     <div
       ref={ref}
       onClick={onOpen}
-      className="relative px-3 py-2 cursor-pointer border-l-2"
-      style={{
-        borderColor: active ? "#58a6ff" : "transparent",
-        background: active ? "rgba(88, 166, 255, 0.08)" : "transparent",
-      }}
+      className={`relative mx-2 px-3 py-2 cursor-pointer rounded-lg ${ui.row}`}
+      style={active ? { background: "rgba(245, 158, 11, 0.08)" } : undefined}
     >
+      {active && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-2 bottom-2 rounded"
+          style={{ width: 2, background: "#f59e0b", boxShadow: "0 0 8px rgba(245, 158, 11, 0.6)" }}
+        />
+      )}
       <div className="flex items-center justify-between gap-2">
-        <p className="font-sans lowercase text-[0.85rem] text-text-primary truncate flex-1 min-w-0">
-          {note.title || "untitled note"}
+        <p
+          className="truncate flex-1 min-w-0"
+          style={{ fontSize: 14, fontWeight: 500, color: note.title ? "var(--text-primary)" : "var(--text-muted)" }}
+        >
+          {note.title || "Untitled note"}
         </p>
         <button
           type="button"
@@ -326,61 +336,62 @@ function NoteRowItem({
             e.stopPropagation();
             setMenuOpen((v) => !v);
           }}
-          className="text-text-faint hover:text-text-primary px-1"
-          aria-label="note actions"
+          className="px-1 text-text-muted hover:text-text-primary"
+          aria-label="Note actions"
+          aria-expanded={menuOpen}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
             <circle cx="5" cy="12" r="1.6" />
             <circle cx="12" cy="12" r="1.6" />
             <circle cx="19" cy="12" r="1.6" />
           </svg>
         </button>
       </div>
-      <p className="font-mono lowercase text-[0.6rem] text-text-faint mt-0.5">
-        {new Date(note.updated_at).toLocaleDateString()}
+      <p className="truncate" style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+        {updated}
+        {firstLine ? ` · ${firstLine}` : ""}
       </p>
-      {firstLine && (
-        <p className="text-[0.75rem] text-text-faint mt-0.5 truncate">{firstLine}</p>
-      )}
 
       {menuOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-2 top-8 z-30 min-w-[180px] border"
-          style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+          className={`absolute right-2 top-9 z-30 min-w-[190px] ${ui.menu}`}
         >
-          <div className="p-2 border-b" style={{ borderColor: "var(--border)" }}>
-            <p className="font-mono lowercase text-[0.6rem] text-text-faint mb-1">move to</p>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", padding: "4px 10px 2px" }}>Move to</p>
+          <button
+            type="button"
+            onClick={() => {
+              onMove(null);
+              setMenuOpen(false);
+            }}
+            className={ui.menuItem}
+          >
+            No collection
+          </button>
+          {collections.map((c) => (
             <button
+              type="button"
+              key={c.id}
               onClick={() => {
-                onMove(null);
+                onMove(c.id);
                 setMenuOpen(false);
               }}
-              className="block w-full text-left font-mono lowercase text-[0.65rem] text-text-muted hover:text-text-primary px-1 py-0.5"
+              className={ui.menuItem}
             >
-              none
+              {c.name}
             </button>
-            {collections.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => {
-                  onMove(c.id);
-                  setMenuOpen(false);
-                }}
-                className="block w-full text-left font-mono lowercase text-[0.65rem] text-text-muted hover:text-text-primary px-1 py-0.5"
-              >
-                {c.name.toLowerCase()}
-              </button>
-            ))}
-          </div>
+          ))}
+          <div style={{ height: 1, background: "rgba(255, 255, 255, 0.06)", margin: "4px 0" }} />
           <button
+            type="button"
             onClick={() => {
               setMenuOpen(false);
               onDelete();
             }}
-            className="block w-full text-left font-mono lowercase text-[0.65rem] text-red-400 hover:opacity-80 px-3 py-2"
+            className={ui.menuItem}
+            style={{ color: "#f87171" }}
           >
-            delete note
+            Delete note
           </button>
         </div>
       )}
@@ -389,80 +400,37 @@ function NoteRowItem({
 }
 
 function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolean }) {
-  const [promptIdx, setPromptIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setPromptIdx((i) => (i + 1) % PROMPTS.length), 8000);
-    return () => clearInterval(t);
-  }, []);
-
   return (
-    <div
-      className="relative overflow-hidden border h-full min-h-[600px] flex items-center justify-center"
-      style={{
-        borderColor: "var(--border)",
-        backgroundImage:
-          "linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)",
-        backgroundSize: "22px 22px, 22px 22px",
-        backgroundColor: "var(--card)",
-      }}
-    >
-      <GhostNoteOutlines />
-      <div className="relative z-10 text-center px-6 max-w-md">
-        {!hasAny && (
+    <div className="h-full min-h-[420px] md:min-h-[600px] flex items-center justify-center" style={PANEL}>
+      <div className="text-center px-6 max-w-md">
+        {hasAny ? (
+          <p className={ui.emptyTitle}>Pick a note, or start a new one.</p>
+        ) : (
           <>
-            <p className="text-text-secondary text-sm leading-relaxed mb-1">your thinking space.</p>
-            <p className="text-text-muted text-sm leading-relaxed">
-              notes you write here are entirely private.
+            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
+              Your thinking space.
             </p>
-            <p className="text-text-muted text-sm leading-relaxed mb-5">
-              capture decisions, frameworks, retrospectives — anything worth organizing.
+            <p className={ui.emptySub} style={{ marginTop: 6 }}>
+              Notes are private to you. Capture decisions, frameworks, and retrospectives:
+              anything worth keeping.
             </p>
-            <EmptyStateUpgradeLine>
-              Notes are for members. Reactivate to keep writing.
-            </EmptyStateUpgradeLine>
+            <EmptyStateUpgradeLine>Notes are for members. Reactivate to keep writing.</EmptyStateUpgradeLine>
           </>
         )}
-        <button
-          onClick={onCreate}
-          className="vault-breathe font-mono lowercase text-xs px-5 py-2.5 mt-2"
-          style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
-        >
-          + new note
+        <button type="button" onClick={onCreate} className={ui.primaryBtn} style={{ marginTop: 18 }}>
+          New note
         </button>
-        <p
-          key={promptIdx}
-          className="vault-prompt-cycle font-sans italic text-text-faint text-[0.85rem] mt-6"
-        >
-          {PROMPTS[promptIdx]}
-        </p>
+        {!hasAny && (
+          <div style={{ marginTop: 22 }}>
+            <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Not sure where to start?</p>
+            {PROMPTS.map((p) => (
+              <p key={p} style={{ fontSize: 13, fontStyle: "italic", color: "var(--text-secondary)", marginTop: 6 }}>
+                {p}
+              </p>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
-
-function GhostNoteOutlines() {
-  const cards = [
-    { top: "8%", left: "6%", w: 140 },
-    { top: "14%", right: "8%", w: 120 },
-    { top: "62%", left: "12%", w: 160 },
-    { top: "70%", right: "14%", w: 130 },
-    { top: "38%", left: "44%", w: 110 },
-  ];
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      {cards.map((c, i) => (
-        <div
-          key={i}
-          className="absolute border"
-          style={{
-            ...c,
-            width: c.w,
-            height: 86,
-            borderColor: "rgba(255,255,255,0.04)",
-            background: "rgba(255,255,255,0.015)",
-          }}
-        />
-      ))}
     </div>
   );
 }

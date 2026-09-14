@@ -5,8 +5,9 @@ import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import { createClient } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/useIsAdmin";
-import { TAG_COLOR } from "@/lib/stage";
 import { shortTimeAgo } from "@/lib/vault";
+import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import ui from "@/components/ui/sleek.module.css";
 import type { WisdomItem } from "./VaultPage";
 
 type GhostPost = {
@@ -17,6 +18,16 @@ type GhostPost = {
   author: any;
   created_at: string;
 };
+
+// "real_talk" → "Real talk"
+function sentence(s: string) {
+  const t = s.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+function replies(n: number) {
+  return `${n} ${n === 1 ? "reply" : "replies"}`;
+}
 
 export default function CommunityWisdomTab({
   items,
@@ -30,7 +41,7 @@ export default function CommunityWisdomTab({
   const isAdmin = useIsAdmin();
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState<string>("all");
-  const [tick, setTick] = useState<string | null>(null);
+  const [tick, setTick] = useState(false);
 
   const tags = useMemo(() => {
     const s = new Set<string>();
@@ -50,73 +61,60 @@ export default function CommunityWisdomTab({
     });
   }, [items, search, tag]);
 
-  // ticker — live pulse insert signal
+  // A quiet live line whenever someone posts on Pulse.
   useEffect(() => {
     const supabase = createClient();
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const ch = supabase
       .channel("vault:wisdom-ticker")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "posts", filter: "post_type=eq.pulse" },
         () => {
-          setTick("a founder just posted something on pulse worth reading");
-          setTimeout(() => setTick(null), 6000);
+          setTick(true);
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => setTick(false), 6000);
         },
       )
       .subscribe();
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(ch);
     };
   }, []);
 
   return (
-    <div>
+    <div style={{ maxWidth: 820 }}>
       {tick && (
-        <div
-          className="mb-4 px-3 py-2 border-l-2 vault-toast"
-          style={{
-            borderLeftColor: "#f59e0b",
-            background: "rgba(245, 158, 11,0.05)",
-            color: "var(--text-muted)",
-          }}
-        >
-          <p className="font-mono lowercase text-[0.7rem]">{tick}</p>
+        <p className="flex items-center gap-2" style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 14 }}>
+          <span aria-hidden className={ui.liveDot} />
+          A founder just posted on Pulse.
+        </p>
+      )}
+
+      {items.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap" style={{ marginBottom: 16 }}>
+          <TabPillRow>
+            {tags.map((t) => (
+              <TabPill sleek key={t} active={tag === t} onClick={() => setTag(t)}>
+                {t === "all" ? "All" : sentence(t)}
+              </TabPill>
+            ))}
+          </TabPillRow>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search"
+            aria-label="Search community wisdom"
+            className={`${ui.search} w-full sm:w-64 sm:ml-auto`}
+          />
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {tags.map((t) => {
-          const active = tag === t;
-          return (
-            <button
-              key={t}
-              onClick={() => setTag(t)}
-              className="font-mono lowercase text-[0.65rem] px-3 py-1.5 border transition-colors"
-              style={{
-                borderColor: active ? "#f59e0b" : "var(--border)",
-                color: active ? "#f59e0b" : "var(--text-faint)",
-                background: active ? "rgba(245, 158, 11,0.06)" : "transparent",
-              }}
-            >
-              {t}
-            </button>
-          );
-        })}
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="search…"
-          className="ml-auto bg-transparent border px-3 py-1.5 text-[0.75rem] text-text-secondary focus:outline-none focus:border-amber"
-          style={{ borderColor: "var(--border)", minWidth: 200 }}
-        />
-      </div>
-
-      {filtered.length === 0 ? (
-        <WisdomEmpty
-          topRepliedPulse={topRepliedPulse}
-          pulseRecent={pulseRecent}
-          isAdmin={isAdmin}
-        />
+      {items.length === 0 ? (
+        <WisdomEmpty topRepliedPulse={topRepliedPulse} pulseRecent={pulseRecent} isAdmin={isAdmin} />
+      ) : filtered.length === 0 ? (
+        <p className={ui.emptyTitle}>Nothing matches that.</p>
       ) : (
         <div className="space-y-3">
           {filtered.map((w) => (
@@ -129,80 +127,56 @@ export default function CommunityWisdomTab({
 }
 
 function WisdomCard({ item }: { item: WisdomItem }) {
-  const color = item.post.tag ? TAG_COLOR[item.post.tag] ?? "#6e7681" : "#6e7681";
+  const author = item.post.author;
   return (
-    <article
-      className="p-4 border"
-      style={{ background: "var(--card-elev)", borderColor: "var(--border-amber)" }}
-    >
-      <header className="flex items-center gap-3 mb-2">
-        {item.post.author ? (
-          <Avatar
-            name={item.post.author.full_name}
-            stage={item.post.author.stage}
-            username={item.post.author.username}
-            size={32}
-          />
+    <article className={ui.tile} style={{ padding: "16px 18px" }}>
+      <header className="flex items-center gap-3">
+        {author ? (
+          <Avatar name={author.full_name} stage={author.stage} username={author.username} size={32} />
         ) : (
           <div
-            className="w-8 h-8 flex items-center justify-center font-mono text-[0.6rem] lowercase"
-            style={{ background: "var(--card)", color: "var(--text-faint)", borderRadius: "50%" }}
+            className="shrink-0 flex items-center justify-center"
+            style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--card)", color: "var(--text-muted)", fontSize: 11 }}
           >
-            ??
+            ?
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="font-mono lowercase text-xs text-text-primary truncate">
-            {item.post.author?.full_name?.toLowerCase() ?? "anonymous"}
+          <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+            {author?.full_name ?? "Anonymous"}
           </p>
-          <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            posted {shortTimeAgo(item.post.created_at)} ago
+          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            Posted {shortTimeAgo(item.post.created_at)} ago
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {item.post.tag && (
-            <span
-              className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-              style={{ border: `1px solid ${color}`, color }}
-            >
-              {item.post.tag}
-            </span>
-          )}
-          <span
-            className="font-mono lowercase text-[0.6rem] px-2 py-0.5"
-            style={{ border: "1px solid #f59e0b", color: "#f59e0b" }}
-          >
-            vaulted
-          </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {item.post.tag && <span className={ui.chip}>{sentence(item.post.tag)}</span>}
+          <span className={`${ui.chip} ${ui.chipAmber}`}>In the vault</span>
         </div>
       </header>
 
-      <p className="text-text-secondary text-[0.92rem] leading-relaxed whitespace-pre-wrap">
+      <p
+        className="whitespace-pre-wrap"
+        style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 12 }}
+      >
         {item.post.content}
       </p>
 
-      <footer className="flex items-center justify-between mt-3">
-        <span className="font-mono lowercase text-[0.65rem] text-text-faint">
-           {item.post.reply_count} {item.post.reply_count === 1 ? "reply" : "replies"} ·
-          vaulted {shortTimeAgo(item.approved_at)} ago
+      {(item.nominator || item.nomination_reason) && (
+        <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 10 }}>
+          Nominated by {item.nominator?.full_name ?? "a member"}
+          {item.nomination_reason ? ` — “${item.nomination_reason}”` : ""}
+        </p>
+      )}
+
+      <footer className={`${ui.cardFoot} flex items-center justify-between gap-3 flex-wrap`}>
+        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          {replies(item.post.reply_count)} · kept {shortTimeAgo(item.approved_at)} ago
         </span>
-        <Link
-          href={`/pulse#${item.post_id}`}
-          className="font-mono lowercase text-[0.7rem] text-amber hover:opacity-80"
-        >
-          view full conversation
+        <Link href={`/pulse#post-${item.post_id}`} className={ui.tileLink}>
+          View the conversation →
         </Link>
       </footer>
-
-      {(item.nominator || item.nomination_reason) && (
-        <div
-          className="mt-3 pt-3 border-t font-mono lowercase text-[0.65rem] text-text-faint"
-          style={{ borderColor: "var(--border)" }}
-        >
-          nominated by {item.nominator?.full_name?.toLowerCase() ?? "anonymous"}
-          {item.nomination_reason ? ` — "${item.nomination_reason}"` : ""}
-        </div>
-      )}
     </article>
   );
 }
@@ -218,39 +192,32 @@ function WisdomEmpty({
 }) {
   return (
     <div className="space-y-5">
-      <div
-        className="p-8 border text-center"
-        style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
-      >
-        <p className="text-text-secondary text-sm leading-relaxed">nothing here yet.</p>
-        <p className="text-text-muted text-sm leading-relaxed mt-1">
-          when a conversation on Pulse is worth preserving forever,
-          <br />
-          it gets nominated to the vault.
-        </p>
-        <p className="text-text-muted text-sm leading-relaxed mt-3">
-          the best insights don't disappear here — they get kept.
-        </p>
-        {/* Nominating is admin-only — only admins see the actionable prompt. */}
-        {isAdmin && (
-          <Link
-            href="/pulse"
-            className="inline-block font-mono lowercase text-[0.7rem] text-amber hover:opacity-80 mt-5"
-          >
-            {pulseRecent} posts on pulse right now that could end up here
-          </Link>
-        )}
+      <div className={ui.tile} style={{ padding: "28px 24px" }}>
+        <div className="text-center">
+          <p className={ui.emptyTitle}>Nothing here yet.</p>
+          <p className={ui.emptySub} style={{ maxWidth: 440, margin: "4px auto 0" }}>
+            When a conversation on Pulse is worth keeping, it gets nominated to the vault, so the
+            best insights don&apos;t scroll away.
+          </p>
+          {/* Nominating is admin-only, so only admins get the actionable prompt. */}
+          {isAdmin && (
+            <Link href="/pulse" className={ui.tileLink} style={{ display: "inline-block", marginTop: 14 }}>
+              {pulseRecent} Pulse {pulseRecent === 1 ? "post" : "posts"} in the last day could end
+              up here →
+            </Link>
+          )}
+        </div>
       </div>
 
-      {/* The "most replied to" previews are a nomination prompt — admins only. */}
+      {/* The most-replied previews are a nomination prompt: admins only. */}
       {isAdmin && topRepliedPulse.length > 0 && (
         <div>
-          <p className="font-mono lowercase text-[0.65rem] text-text-faint mb-2 tracking-wider">
-            most_replied_to · last 7 days
+          <p className={ui.label} style={{ marginBottom: 10 }}>
+            Most replied to · last 7 days
           </p>
           <div className="space-y-3">
             {topRepliedPulse.map((p) => (
-              <GhostPreview key={p.id} post={p} />
+              <NominationPreview key={p.id} post={p} />
             ))}
           </div>
         </div>
@@ -259,18 +226,10 @@ function WisdomEmpty({
   );
 }
 
-function GhostPreview({ post }: { post: GhostPost }) {
+function NominationPreview({ post }: { post: GhostPost }) {
   return (
-    <article
-      className="p-4 border relative"
-      style={{
-        background: "var(--card-elev)",
-        borderColor: "var(--border)",
-        filter: "blur(0.6px)",
-        opacity: 0.78,
-      }}
-    >
-      <header className="flex items-center gap-3 mb-2">
+    <article className={ui.tile} style={{ padding: "14px 16px" }}>
+      <header className="flex items-center gap-3">
         {post.author && (
           <Avatar
             name={post.author.full_name}
@@ -279,26 +238,20 @@ function GhostPreview({ post }: { post: GhostPost }) {
             size={28}
           />
         )}
-        <p className="font-mono lowercase text-xs text-text-faint flex-1 truncate">
-          {post.author?.full_name?.toLowerCase() ?? "anonymous"}
+        <p className="flex-1 truncate" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          {post.author?.full_name ?? "Anonymous"}
         </p>
-        <span className="font-mono lowercase text-[0.6rem] text-text-faint">
-           {post.reply_count}
-        </span>
+        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{replies(post.reply_count)}</span>
       </header>
-      <p className="text-text-muted text-[0.9rem] leading-relaxed line-clamp-3 whitespace-pre-wrap">
-        {post.content.slice(0, 220)}
-        {post.content.length > 220 && "…"}
+      <p
+        className="line-clamp-3 whitespace-pre-wrap"
+        style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 10 }}
+      >
+        {post.content}
       </p>
-      <div className="mt-3">
-        <Link
-          href={`/pulse#${post.id}`}
-          className="font-mono lowercase text-[0.7rem] px-3 py-1 inline-block"
-          style={{ background: "rgba(245, 158, 11, 0.18)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.55)", borderRadius: 5, boxShadow: "0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 8px rgba(245, 158, 11, 0.06)", fontWeight: 700, letterSpacing: "0.02em" }}
-        >
-          nominate this
-        </Link>
-      </div>
+      <Link href={`/pulse#post-${post.id}`} className={ui.softBtn} style={{ display: "inline-block", marginTop: 12 }}>
+        Nominate this
+      </Link>
     </article>
   );
 }

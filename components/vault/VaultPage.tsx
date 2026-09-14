@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import LibraryTab from "./LibraryTab";
 import NotesTab from "./NotesTab";
 import CommunityWisdomTab from "./CommunityWisdomTab";
 import VaultUpgradeNudge from "./VaultUpgradeNudge";
+import NoGrid from "@/components/ui/NoGrid";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
-import TerminalFooter from "@/components/ui/TerminalFooter";
+import ui from "@/components/ui/sleek.module.css";
 import type { NoteRow, NoteCollectionRow } from "@/lib/vault";
 
 export type LibraryItem = {
@@ -45,6 +46,12 @@ export type WisdomItem = {
 };
 
 type Tab = "library" | "notes" | "community_wisdom";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "library", label: "Library" },
+  { id: "notes", label: "Notes" },
+  { id: "community_wisdom", label: "Community wisdom" },
+];
 
 export default function VaultPage({
   currentUserId,
@@ -119,30 +126,38 @@ export default function VaultPage({
   }, []);
 
   return (
-    <div className="px-6 py-6 max-w-6xl mx-auto">
-      {/* Compact header — one context line instead of the old h1 + stat strip
-          (the topbar already names the page). */}
-      <header className="mb-1">
-        <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>vault</h1>
-        <p
-          className="font-mono"
-          style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 4, letterSpacing: "0.03em" }}
+    <div
+      className={`page-pad ${ui.pageGlow}`}
+      style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+    >
+      <NoGrid />
+      <header style={{ marginBottom: 20 }}>
+        <h1
+          className={ui.titleGradient}
+          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
         >
+          Vault
+        </h1>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>
+          Save what matters, write what you think, and keep what the community learns.
+        </p>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
           {liveStats.savedByCommunity} saved · {liveStats.notesWritten}{" "}
-          {liveStats.notesWritten === 1 ? "note" : "notes"} · {liveStats.wisdomPreserved} wisdom
+          {liveStats.notesWritten === 1 ? "note" : "notes"} · {liveStats.wisdomPreserved} in
+          community wisdom
         </p>
       </header>
 
-      <Tabs tab={tab} setTab={setTab} />
+      <TabPillRow>
+        {TABS.map((t) => (
+          <TabPill sleek key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
+            {t.label}
+          </TabPill>
+        ))}
+      </TabPillRow>
 
-      <div className="mt-6">
-        {tab === "library" && (
-          <LibraryTab
-            items={library}
-            currentUserId={currentUserId}
-            communitySaved={liveStats.savedByCommunity}
-          />
-        )}
+      <div style={{ marginTop: 20 }}>
+        {tab === "library" && <LibraryTab items={library} />}
         {tab === "notes" && (
           <NotesTab
             currentUserId={currentUserId}
@@ -159,31 +174,8 @@ export default function VaultPage({
         )}
       </div>
 
-      {/* Free-tier (non-trial) nudge — self-hides for paid and trial users. */}
+      {/* Nudge for accounts with no live entitlement; hidden for paid and trial. */}
       <VaultUpgradeNudge />
-      <TerminalFooter />
-    </div>
-  );
-}
-
-function Tabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
-  const list: { id: Tab; label: string }[] = useMemo(
-    () => [
-      { id: "library", label: "library" },
-      { id: "notes", label: "notes" },
-      { id: "community_wisdom", label: "community wisdom" },
-    ],
-    [],
-  );
-  return (
-    <div className="mt-5">
-      <TabPillRow>
-        {list.map((t) => (
-          <TabPill key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
-            {t.label}
-          </TabPill>
-        ))}
-      </TabPillRow>
     </div>
   );
 }
