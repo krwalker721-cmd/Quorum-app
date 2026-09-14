@@ -108,6 +108,8 @@ function CardForm({
           paymentMethodId,
           customerId: setup.customerId,
           renewalConsent: agreed,
+          // This form only offers Member monthly; the route resolves the price.
+          plan: "member",
         }),
       });
       const subJson = await subRes.json();
