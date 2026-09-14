@@ -20,7 +20,7 @@ export default async function Page() {
 
   return (
     <>
-      <TopBar title="referrals" tier={tier} userId={user.id} />
+      <TopBar sleek title="referrals" tier={tier} userId={user.id} />
       <ReferralsDashboard />
     </>
   );
