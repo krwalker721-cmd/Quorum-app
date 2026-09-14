@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SettingsBilling from "@/components/SettingsBilling";
-
-const MONO = "JetBrains Mono, monospace";
-const SANS = "Space Grotesk, sans-serif";
+import { useTheme } from "@/components/ThemeProvider";
+import NoGrid from "@/components/ui/NoGrid";
+import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import ui from "@/components/ui/sleek.module.css";
 
 type SectionKey =
   | "account"
@@ -17,118 +18,146 @@ type SectionKey =
   | "danger";
 
 const SECTIONS: { key: SectionKey; label: string }[] = [
-  { key: "account", label: "account" },
-  { key: "billing", label: "billing" },
-  { key: "notifications", label: "notifications" },
-  { key: "appearance", label: "appearance" },
-  { key: "privacy", label: "privacy" },
-  { key: "danger", label: "danger zone" },
+  { key: "account", label: "Account" },
+  { key: "billing", label: "Billing" },
+  { key: "notifications", label: "Notifications" },
+  { key: "appearance", label: "Appearance" },
+  { key: "privacy", label: "Privacy" },
+  { key: "danger", label: "Danger zone" },
 ];
 
-const NOTIFICATION_FIELDS: { key: string; label: string }[] = [
-  { key: "email_trial_ending", label: "receive email when trial is ending" },
-  { key: "email_payment_failed", label: "receive email when payment fails" },
-  { key: "email_referral_activates", label: "receive email when referral activates" },
-  { key: "email_milestone", label: "receive email when milestone reached" },
-  { key: "inapp_cohort", label: "in-app: cohort activity" },
-  { key: "inapp_pulse", label: "in-app: pulse replies" },
-  { key: "inapp_messages", label: "in-app: messages" },
-  { key: "inapp_referrals", label: "in-app: referral updates" },
-];
-
+// Keys shared with ThemeProvider (which re-applies them on load) and Sidebar.
 const FONT_SIZE_KEY = "quorum-font-size";
 const REDUCE_MOTION_KEY = "quorum-reduce-motion";
 const SIDEBAR_COLLAPSED_KEY = "quorum-sidebar-collapsed";
 
-const cardStyle: React.CSSProperties = {
-  background: "#161b22",
-  border: "0.5px solid #21262d",
+const RED = "#f87171";
+const GREEN = "#4ade80";
+
+// A hairline panel that doesn't light up on hover: forms you work inside.
+const PANEL: React.CSSProperties = {
+  background: "var(--bg-surface)",
+  border: "1px solid rgba(255, 255, 255, 0.07)",
   borderRadius: 12,
   padding: 24,
   marginBottom: 16,
 };
 
-const inputStyle: React.CSSProperties = {
-  background: "#0d1117",
-  border: "0.5px solid #30363d",
-  borderRadius: 8,
-  color: "#e6edf3",
-  fontFamily: SANS,
-  fontSize: 14,
-  padding: "10px 14px",
-  outline: "none",
-  colorScheme: "dark",
-  width: "100%",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontFamily: MONO,
-  fontSize: 11,
-  color: "#8b949e",
-  letterSpacing: "0.04em",
+// Explicit font, case, and spacing: the global `label` style is lowercase mono.
+const LABEL: React.CSSProperties = {
+  fontFamily: "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif",
+  textTransform: "none",
+  letterSpacing: 0,
+  fontSize: 13,
+  color: "var(--text-secondary)",
   display: "block",
   marginBottom: 6,
 };
 
-const amberBtn: React.CSSProperties = {
-  background: "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
-  color: "#1a1204",
-  fontFamily: MONO,
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: "0.06em",
-  padding: "9px 16px",
-  border: "none",
-  borderRadius: 8,
-  cursor: "pointer",
-};
+const NOTE: React.CSSProperties = { fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 6 };
 
-const sectionHeading: React.CSSProperties = {
-  fontFamily: SANS,
-  fontSize: 16,
-  color: "#e6edf3",
-  marginBottom: 16,
-};
-
-const noteStyle: React.CSSProperties = {
-  fontFamily: MONO,
-  fontSize: 10,
-  color: "#484f58",
-  marginTop: 6,
-};
+function Section({
+  title,
+  children,
+  danger = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  danger?: boolean;
+}) {
+  return (
+    <section
+      style={
+        danger
+          ? { ...PANEL, borderColor: "rgba(248, 81, 73, 0.25)", background: "rgba(248, 81, 73, 0.03)" }
+          : PANEL
+      }
+    >
+      <h2 style={{ fontSize: 16, fontWeight: 600, color: danger ? RED : "var(--text-primary)", marginBottom: 18 }}>
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
 
 // ─── toggle ──────────────────────────────────────────────────────────────────
 
-function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
+function Toggle({
+  enabled,
+  onChange,
+  label,
+}: {
+  enabled: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
   return (
-    <div
-      onClick={() => onChange(!enabled)}
+    <button
+      type="button"
       role="switch"
       aria-checked={enabled}
+      aria-label={label}
+      onClick={() => onChange(!enabled)}
+      className="shrink-0"
       style={{
-        width: 36,
-        height: 20,
-        borderRadius: 10,
-        background: enabled ? "#f59e0b" : "#21262d",
+        width: 38,
+        height: 22,
+        borderRadius: 999,
+        border: "none",
+        padding: 0,
+        background: enabled ? "#f59e0b" : "rgba(255, 255, 255, 0.12)",
+        boxShadow: enabled ? "0 0 12px -2px rgba(245, 158, 11, 0.6)" : undefined,
         position: "relative",
         cursor: "pointer",
         transition: "background 0.2s",
-        flexShrink: 0,
       }}
     >
-      <div
+      <span
+        aria-hidden
         style={{
           position: "absolute",
-          width: 14,
-          height: 14,
+          width: 16,
+          height: 16,
           borderRadius: "50%",
-          background: "#e6edf3",
+          background: enabled ? "#1a1204" : "#e6edf3",
           top: 3,
           left: enabled ? 19 : 3,
           transition: "left 0.2s",
         }}
       />
+    </button>
+  );
+}
+
+function ToggleRow({
+  label,
+  note,
+  enabled,
+  onChange,
+}: {
+  label: string;
+  note?: string;
+  enabled: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4" style={{ padding: "10px 0" }}>
+      <div className="min-w-0">
+        <p style={{ fontSize: 14, color: "var(--text-primary)" }}>{label}</p>
+        {note && <p style={{ ...NOTE, marginTop: 2 }}>{note}</p>}
+      </div>
+      <Toggle enabled={enabled} onChange={onChange} label={label} />
     </div>
+  );
+}
+
+function Message({ msg }: { msg: { text: string; ok: boolean } | null }) {
+  if (!msg) return null;
+  return (
+    <p role="status" style={{ fontSize: 13, color: msg.ok ? GREEN : RED, marginTop: 16 }}>
+      {msg.text}
+    </p>
   );
 }
 
@@ -154,61 +183,51 @@ function ConfirmModal({
   return (
     <div
       onClick={onCancel}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.6)",
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-      }}
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)", zIndex: 100 }}
     >
       <div
+        role="dialog"
+        aria-label={heading}
         onClick={(e) => e.stopPropagation()}
-        style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 10, padding: 28, maxWidth: 420, width: "100%" }}
+        className="w-full"
+        style={{
+          maxWidth: 440,
+          padding: 26,
+          borderRadius: 14,
+          background: "var(--card-elev)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          boxShadow: "0 24px 60px -20px rgba(0, 0, 0, 0.7)",
+        }}
       >
-        <h3 style={{ fontFamily: SANS, fontSize: 18, color: "#e6edf3", margin: 0 }}>{heading}</h3>
-        <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", marginTop: 10, lineHeight: 1.5 }}>{description}</p>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{heading}</h3>
+        <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 10 }}>{description}</p>
         {requireText && (
           <input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
-            placeholder={`type ${requireText} to confirm`}
+            placeholder={`Type ${requireText} to confirm`}
+            aria-label={`Type ${requireText} to confirm`}
             autoFocus
-            style={{ ...inputStyle, marginTop: 16, fontFamily: MONO }}
+            className={`${ui.search} w-full`}
+            style={{ marginTop: 16 }}
           />
         )}
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              background: "transparent",
-              border: "1px solid #21262d",
-              color: "#8b949e",
-              fontFamily: MONO,
-              fontSize: 11,
-              padding: "9px 16px",
-              borderRadius: 10,
-              cursor: "pointer",
-            }}
-          >
-            cancel
+        <div className="flex gap-2.5 justify-end" style={{ marginTop: 20 }}>
+          <button type="button" onClick={onCancel} className={ui.ghostBtn}>
+            Cancel
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={!canConfirm}
+            className={ui.ghostBtn}
             style={{
               background: "#f85149",
-              border: "none",
-              color: "#e6edf3",
-              fontFamily: MONO,
-              fontSize: 11,
-              padding: "9px 16px",
-              borderRadius: 10,
-              cursor: canConfirm ? "pointer" : "default",
+              borderColor: "#f85149",
+              color: "#fff",
               opacity: canConfirm ? 1 : 0.4,
+              cursor: canConfirm ? "pointer" : "default",
             }}
           >
             {confirmLabel}
@@ -236,50 +255,55 @@ export default function SettingsClient({
   const [section, setSection] = useState<SectionKey>("account");
 
   return (
-    <div className="settings-shell page-pad" style={{ display: "flex", gap: 32, maxWidth: 1040, margin: "0 auto", padding: "40px 24px", alignItems: "flex-start" }}>
-      {/* left nav */}
-      <nav className="settings-nav" style={{ width: 160, flexShrink: 0, position: "sticky", top: 24 }}>
-        {SECTIONS.map((s) => {
-          const active = section === s.key;
-          return (
-            <button
-              key={s.key}
-              onClick={() => setSection(s.key)}
-              style={{
-                display: "block",
-                width: "100%",
-                textAlign: "left",
-                fontFamily: MONO,
-                fontSize: 11,
-                letterSpacing: "0.04em",
-                color: active ? "#f8c56a" : "#8b949e",
-                background: active ? "rgba(245,158,11,.08)" : "transparent",
-                border: "none",
-                borderRadius: 8,
-                borderLeft: `2px solid ${active ? "#f59e0b" : "transparent"}`,
-                padding: "8px 12px",
-                marginBottom: 2,
-                cursor: "pointer",
-              }}
-            >
-              {s.label}
-            </button>
-          );
-        })}
-      </nav>
+    <div
+      className={`page-pad ${ui.pageGlow}`}
+      style={{ padding: "28px 32px 40px", maxWidth: 1080, margin: "0 auto" }}
+    >
+      <NoGrid />
+      <h1
+        className={ui.titleGradient}
+        style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+      >
+        Settings
+      </h1>
 
-      {/* content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {section === "account" && (
-          <AccountSection initialName={initialName} initialEmail={initialEmail} initialVisible={initialVisible} />
-        )}
-        {section === "billing" && <SettingsBilling />}
-        {section === "notifications" && (
-          <NotificationsSection initial={initialNotificationPrefs} />
-        )}
-        {section === "appearance" && <AppearanceSection />}
-        {section === "privacy" && <PrivacySection initialVisible={initialVisible} />}
-        {section === "danger" && <DangerSection router={router} />}
+      <div className="settings-shell" style={{ display: "flex", gap: 32, alignItems: "flex-start", marginTop: 22 }}>
+        {/* Section nav: a column on desktop, a scrolling strip on phones
+            (.settings-nav in globals.css). */}
+        <nav
+          className="settings-nav"
+          aria-label="Settings sections"
+          style={{ width: 180, flexShrink: 0, position: "sticky", top: "calc(var(--topbar-h, 64px) + 16px)" }}
+        >
+          {SECTIONS.map((s) => {
+            const active = section === s.key;
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setSection(s.key)}
+                aria-current={active ? "page" : undefined}
+                className={`${ui.navItem}${active ? ` ${ui.navItemActive}` : ""} w-full whitespace-nowrap`}
+                style={{
+                  border: "none",
+                  cursor: "pointer",
+                  ...(s.key === "danger" ? { color: active ? RED : "rgba(248, 113, 113, 0.8)" } : {}),
+                }}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {section === "account" && <AccountSection initialName={initialName} initialEmail={initialEmail} />}
+          {section === "billing" && <SettingsBilling />}
+          {section === "notifications" && <NotificationsSection initial={initialNotificationPrefs} />}
+          {section === "appearance" && <AppearanceSection />}
+          {section === "privacy" && <PrivacySection initialVisible={initialVisible} />}
+          {section === "danger" && <DangerSection router={router} />}
+        </div>
       </div>
     </div>
   );
@@ -290,18 +314,15 @@ export default function SettingsClient({
 function AccountSection({
   initialName,
   initialEmail,
-  initialVisible,
 }: {
   initialName: string;
   initialEmail: string;
-  initialVisible: boolean;
 }) {
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
-  const [visible, setVisible] = useState(initialVisible);
-  const [msg, setMsg] = useState<{ text: string; color: string } | null>(null);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   async function saveName() {
     const supabase = createClient();
@@ -310,104 +331,109 @@ function AccountSection({
     } = await supabase.auth.getUser();
     if (!user) return;
     const { error } = await supabase.from("profiles").update({ full_name: name }).eq("id", user.id);
-    setMsg(error ? { text: "could not save name", color: "#f85149" } : { text: "name saved", color: "#22c55e" });
+    setMsg(error ? { text: "Couldn't save your name.", ok: false } : { text: "Name saved.", ok: true });
   }
 
   async function saveEmail() {
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ email });
-    setMsg(error ? { text: error.message.toLowerCase(), color: "#f85149" } : { text: "confirmation sent to your new email", color: "#22c55e" });
+    setMsg(error ? { text: error.message, ok: false } : { text: "Confirmation sent to your new email.", ok: true });
   }
 
   async function savePassword() {
     if (pw !== pw2) {
-      setMsg({ text: "passwords do not match", color: "#f85149" });
+      setMsg({ text: "Passwords don't match.", ok: false });
       return;
     }
     if (pw.length < 6) {
-      setMsg({ text: "password must be at least 6 characters", color: "#f85149" });
+      setMsg({ text: "Use at least 6 characters.", ok: false });
       return;
     }
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password: pw });
     if (error) {
-      setMsg({ text: error.message.toLowerCase(), color: "#f85149" });
+      setMsg({ text: error.message, ok: false });
     } else {
       setPw("");
       setPw2("");
-      setMsg({ text: "password updated", color: "#22c55e" });
+      setMsg({ text: "Password updated.", ok: true });
     }
   }
 
-  async function saveVisibility(v: boolean) {
-    setVisible(v);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from("profiles").update({ is_visible: v }).eq("id", user.id);
-  }
-
   return (
-    <div style={cardStyle}>
-      <h2 style={sectionHeading}>Account</h2>
-
-      {/* name */}
-      <div style={{ marginBottom: 20 }}>
-        <label style={labelStyle}>full name</label>
-        <div className="field-row" style={{ display: "flex", gap: 10 }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
-          <button onClick={saveName} style={amberBtn}>
-            save
+    <Section title="Account">
+      <div style={{ marginBottom: 22 }}>
+        <label htmlFor="settings-name" style={LABEL}>Full name</label>
+        <div className="field-row flex gap-2.5">
+          <input
+            id="settings-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={`${ui.search} flex-1 min-w-0`}
+          />
+          <button type="button" onClick={saveName} className={ui.primaryBtn}>
+            Save
           </button>
         </div>
       </div>
 
-      {/* email */}
-      <div style={{ marginBottom: 20 }}>
-        <label style={labelStyle}>email address</label>
-        <div className="field-row" style={{ display: "flex", gap: 10 }}>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
-          <button onClick={saveEmail} style={amberBtn}>
-            update email →
+      <div style={{ marginBottom: 22 }}>
+        <label htmlFor="settings-email" style={LABEL}>Email address</label>
+        <div className="field-row flex gap-2.5">
+          <input
+            id="settings-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={`${ui.search} flex-1 min-w-0`}
+          />
+          <button type="button" onClick={saveEmail} className={ui.primaryBtn}>
+            Update email
           </button>
         </div>
-        <p style={noteStyle}>// a confirmation will be sent to your new email</p>
+        <p style={NOTE}>We&apos;ll send a confirmation to the new address.</p>
       </div>
 
-      {/* password */}
-      <div style={{ marginBottom: 20 }}>
-        <label style={labelStyle}>new password</label>
-        <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...inputStyle, marginBottom: 10 }} />
-        <label style={labelStyle}>confirm new password</label>
-        <div className="field-row" style={{ display: "flex", gap: 10 }}>
-          <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} style={inputStyle} />
-          <button onClick={savePassword} style={amberBtn}>
-            update password →
+      <div>
+        <label htmlFor="settings-pw" style={LABEL}>New password</label>
+        <input
+          id="settings-pw"
+          type="password"
+          autoComplete="new-password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          className={`${ui.search} w-full`}
+          style={{ marginBottom: 12 }}
+        />
+        <label htmlFor="settings-pw2" style={LABEL}>Confirm new password</label>
+        <div className="field-row flex gap-2.5">
+          <input
+            id="settings-pw2"
+            type="password"
+            autoComplete="new-password"
+            value={pw2}
+            onChange={(e) => setPw2(e.target.value)}
+            className={`${ui.search} flex-1 min-w-0`}
+          />
+          <button type="button" onClick={savePassword} className={ui.primaryBtn}>
+            Update password
           </button>
         </div>
       </div>
 
-      {/* visibility */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 8 }}>
-        <span style={{ fontFamily: MONO, fontSize: 12, color: "#8b949e" }}>Show my profile to other members</span>
-        <Toggle enabled={visible} onChange={saveVisibility} />
-      </div>
-
-      {msg && <p style={{ fontFamily: MONO, fontSize: 11, color: msg.color, marginTop: 16 }}>{msg.text}</p>}
-    </div>
+      <Message msg={msg} />
+    </Section>
   );
 }
 
 // ─── notifications ───────────────────────────────────────────────────────────
 
+// Only the trial-ending email reads this preference today
+// (lib/email/trial-reminders.ts). The other switches that used to be here were
+// saved but never read, so they're gone until something honours them; any
+// values already stored are kept when saving.
 function NotificationsSection({ initial }: { initial: Record<string, boolean> | null }) {
-  const [prefs, setPrefs] = useState<Record<string, boolean>>(() => {
-    const base: Record<string, boolean> = {};
-    NOTIFICATION_FIELDS.forEach((f) => (base[f.key] = initial?.[f.key] ?? true));
-    return base;
-  });
+  const [trialEmail, setTrialEmail] = useState(initial?.email_trial_ending ?? true);
   const [saved, setSaved] = useState(false);
 
   async function save() {
@@ -416,51 +442,59 @@ function NotificationsSection({ initial }: { initial: Record<string, boolean> | 
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from("profiles").update({ notification_preferences: prefs }).eq("id", user.id);
+      await supabase
+        .from("profiles")
+        .update({ notification_preferences: { ...(initial ?? {}), email_trial_ending: trialEmail } })
+        .eq("id", user.id);
     }
-    try {
-      localStorage.setItem("quorum-notification-prefs", JSON.stringify(prefs));
-    } catch {}
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
 
   return (
-    <div style={cardStyle}>
-      <h2 style={sectionHeading}>Notification Preferences</h2>
-      {NOTIFICATION_FIELDS.map((f) => (
-        <div
-          key={f.key}
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}
-        >
-          <span style={{ fontFamily: MONO, fontSize: 12, color: "#8b949e" }}>{f.label}</span>
-          <Toggle enabled={prefs[f.key]} onChange={(v) => setPrefs((p) => ({ ...p, [f.key]: v }))} />
-        </div>
-      ))}
-      <button onClick={save} style={{ ...amberBtn, marginTop: 16 }}>
-        {saved ? "saved ✓" : "save preferences"}
+    <Section title="Notifications">
+      <ToggleRow
+        label="Email me before my trial ends"
+        note="A reminder a few days before a card-free trial runs out."
+        enabled={trialEmail}
+        onChange={setTrialEmail}
+      />
+      <p style={{ ...NOTE, marginTop: 8 }}>
+        That&apos;s the only notification you can switch off for now. Account and payment emails,
+        and in-app notifications, always come through.
+      </p>
+      <button type="button" onClick={save} className={ui.primaryBtn} style={{ marginTop: 16 }}>
+        {saved ? "Saved ✓" : "Save"}
       </button>
-    </div>
+    </Section>
   );
 }
 
 // ─── appearance ──────────────────────────────────────────────────────────────
 
+const FONT_SIZES = [
+  { key: "small", label: "Small" },
+  { key: "default", label: "Default" },
+  { key: "large", label: "Large" },
+] as const;
+type FontSize = (typeof FONT_SIZES)[number]["key"];
+
 function AppearanceSection() {
-  const [fontSize, setFontSize] = useState<"small" | "default" | "large">("default");
+  const { mode, toggle } = useTheme();
+  const [fontSize, setFontSize] = useState<FontSize>("default");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     try {
-      const fs = (localStorage.getItem(FONT_SIZE_KEY) as "small" | "default" | "large") || "default";
-      setFontSize(fs);
+      const fs = localStorage.getItem(FONT_SIZE_KEY);
+      setFontSize(fs === "small" || fs === "large" ? fs : "default");
       setReduceMotion(localStorage.getItem(REDUCE_MOTION_KEY) === "1");
       setSidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
     } catch {}
   }, []);
 
-  function applyFontSize(size: "small" | "default" | "large") {
+  function applyFontSize(size: FontSize) {
     setFontSize(size);
     try {
       localStorage.setItem(FONT_SIZE_KEY, size);
@@ -485,59 +519,61 @@ function AppearanceSection() {
     } catch {}
   }
 
-  const themeCard = (selected: boolean, disabled: boolean, label: string): React.CSSProperties => ({
-    background: "#161b22",
-    border: `1px solid ${selected ? "#f59e0b" : "#21262d"}`,
-    borderRadius: 10,
-    padding: 16,
-    cursor: disabled ? "default" : "pointer",
-    textAlign: "center",
-    flex: 1,
-    opacity: disabled ? 0.5 : 1,
-    fontFamily: MONO,
-    fontSize: 10,
-    color: selected ? "#f59e0b" : "#8b949e",
-  });
-
-  const pill = (active: boolean): React.CSSProperties => ({
-    fontFamily: MONO,
-    fontSize: 11,
-    padding: "6px 14px",
-    borderRadius: 10,
-    border: `1px solid ${active ? "#f59e0b" : "#21262d"}`,
-    color: active ? "#f59e0b" : "#8b949e",
-    background: "transparent",
-    cursor: "pointer",
-  });
+  const themeOption = (key: "normal" | "high-contrast", label: string, sub: string) => {
+    const selected = mode === key;
+    return (
+      <button
+        type="button"
+        onClick={() => !selected && toggle()}
+        aria-pressed={selected}
+        className="text-left flex-1"
+        style={{
+          minWidth: 0,
+          padding: "14px 16px",
+          borderRadius: 10,
+          cursor: selected ? "default" : "pointer",
+          border: `1px solid ${selected ? "rgba(245, 158, 11, 0.45)" : "rgba(255, 255, 255, 0.08)"}`,
+          background: selected ? "rgba(245, 158, 11, 0.08)" : "rgba(255, 255, 255, 0.02)",
+        }}
+      >
+        <p style={{ fontSize: 14, color: selected ? "#f8c56a" : "var(--text-primary)" }}>{label}</p>
+        <p style={{ ...NOTE, marginTop: 2 }}>{sub}</p>
+      </button>
+    );
+  };
 
   return (
-    <div style={cardStyle}>
-      <h2 style={sectionHeading}>Appearance</h2>
-
-      <p style={{ ...labelStyle, marginTop: 4 }}>theme</p>
-      <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-        <div style={themeCard(true, false, "dark")}>dark</div>
-        <div style={themeCard(false, true, "light")}>light (coming soon)</div>
+    <Section title="Appearance">
+      <p style={LABEL}>Theme</p>
+      <div className="flex gap-3 flex-wrap sm:flex-nowrap" style={{ marginBottom: 22 }}>
+        {themeOption("normal", "Standard", "The default dark finish.")}
+        {themeOption("high-contrast", "High contrast", "Brighter borders and text.")}
       </div>
 
-      <p style={labelStyle}>font size</p>
-      <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-        {(["small", "default", "large"] as const).map((s) => (
-          <button key={s} onClick={() => applyFontSize(s)} style={pill(fontSize === s)}>
-            {s}
-          </button>
-        ))}
+      <p style={LABEL}>Text size</p>
+      <div style={{ marginBottom: 18 }}>
+        <TabPillRow>
+          {FONT_SIZES.map((s) => (
+            <TabPill sleek key={s.key} active={fontSize === s.key} onClick={() => applyFontSize(s.key)}>
+              {s.label}
+            </TabPill>
+          ))}
+        </TabPillRow>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
-        <span style={{ fontFamily: MONO, fontSize: 12, color: "#8b949e" }}>Reduce motion</span>
-        <Toggle enabled={reduceMotion} onChange={applyReduceMotion} />
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
-        <span style={{ fontFamily: MONO, fontSize: 12, color: "#8b949e" }}>Collapsed sidebar by default</span>
-        <Toggle enabled={sidebarCollapsed} onChange={applySidebar} />
-      </div>
-    </div>
+      <ToggleRow
+        label="Reduce motion"
+        note="Turns off transitions and animations across the app."
+        enabled={reduceMotion}
+        onChange={applyReduceMotion}
+      />
+      <ToggleRow
+        label="Start with the sidebar collapsed"
+        note="Takes effect the next time a page loads."
+        enabled={sidebarCollapsed}
+        onChange={applySidebar}
+      />
+    </Section>
   );
 }
 
@@ -545,7 +581,6 @@ function AppearanceSection() {
 
 function PrivacySection({ initialVisible }: { initialVisible: boolean }) {
   const [visible, setVisible] = useState(initialVisible);
-  const [expanded, setExpanded] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   async function saveVisibility(v: boolean) {
@@ -591,54 +626,32 @@ function PrivacySection({ initialVisible }: { initialVisible: boolean }) {
   }
 
   return (
-    <div style={cardStyle}>
-      <h2 style={sectionHeading}>Privacy</h2>
-
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", marginBottom: 16 }}>
-        <span style={{ fontFamily: MONO, fontSize: 12, color: "#8b949e" }}>Show my profile to other members</span>
-        <Toggle enabled={visible} onChange={saveVisibility} />
-      </div>
+    <Section title="Privacy">
+      <ToggleRow
+        label="Show my profile to other members"
+        enabled={visible}
+        onChange={saveVisibility}
+      />
 
       <button
+        type="button"
         onClick={downloadData}
         disabled={exporting}
-        style={{
-          background: "transparent",
-          border: "1px solid #21262d",
-          color: "#8b949e",
-          fontFamily: MONO,
-          fontSize: 11,
-          padding: "9px 16px",
-          borderRadius: 10,
-          cursor: "pointer",
-          marginBottom: 16,
-        }}
+        className={ui.ghostBtn}
+        style={{ marginTop: 12 }}
       >
-        {exporting ? "preparing…" : "Download my data"}
+        {exporting ? "Preparing…" : "Download my data"}
       </button>
 
-      <div>
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "#8b949e",
-            fontFamily: MONO,
-            fontSize: 11,
-            cursor: "pointer",
-            padding: 0,
-          }}
-        >
-          {expanded ? "▾" : "▸"} What data we store
-        </button>
-        {expanded && (
-          <p style={{ fontFamily: SANS, fontSize: 13, color: "#6e7681", marginTop: 10, lineHeight: 1.7 }}>
-            We store your profile info, posts and replies, messages, usage data, and login events.
-          </p>
-        )}
-      </div>
-    </div>
+      <details style={{ marginTop: 18 }}>
+        <summary className="cursor-pointer" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          What data we store
+        </summary>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-muted)", marginTop: 8 }}>
+          We store your profile info, posts and replies, messages, usage data, and login events.
+        </p>
+      </details>
+    </Section>
   );
 }
 
@@ -656,7 +669,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
     } = await supabase.auth.getUser();
     if (!user) return;
     const { error } = await supabase.from("cohort_members").delete().eq("user_id", user.id);
-    setMsg(error ? "could not leave cohort" : "you have left your cohort");
+    setMsg(error ? "Couldn't leave your cohort." : "You've left your cohort.");
   }
 
   async function deleteAccount() {
@@ -673,49 +686,43 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
     // when their card is still on file is the wrong thing to say.
     const detail = await res
       .json()
-      .then((j) => (typeof j?.error === "string" ? j.error.toLowerCase() : null))
+      .then((j) => (typeof j?.error === "string" ? j.error : null))
       .catch(() => null);
-    setMsg(detail ?? "could not delete account — contact support");
+    setMsg(detail ?? "Couldn't delete your account. Contact support.");
   }
 
   const dangerBtn: React.CSSProperties = {
-    border: "1px solid #f85149",
-    color: "#f85149",
+    color: RED,
+    borderColor: "rgba(248, 81, 73, 0.5)",
     background: "transparent",
-    fontFamily: MONO,
-    fontSize: 11,
-    padding: "9px 16px",
-    borderRadius: 10,
-    cursor: "pointer",
   };
 
   return (
-    <div style={{ ...cardStyle, border: "1px solid rgba(248,81,73,0.2)", background: "rgba(248,81,73,0.02)" }}>
-      <h2 style={{ ...sectionHeading, color: "#f85149" }}>Danger Zone</h2>
-
+    <Section title="Danger zone" danger>
       <div style={{ marginBottom: 24 }}>
-        <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", marginBottom: 10 }}>
+        <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)", marginBottom: 12 }}>
           Remove yourself from your current cohort. You can join a new one.
         </p>
-        <button onClick={() => setModal("leave")} style={dangerBtn}>
+        <button type="button" onClick={() => setModal("leave")} className={ui.ghostBtn} style={dangerBtn}>
           Leave cohort
         </button>
       </div>
 
       <div>
-        <p style={{ fontFamily: SANS, fontSize: 14, color: "#8b949e", marginBottom: 10 }}>
-          Permanently delete your account and all your data. Any subscription ends immediately, without a refund for the rest of the period. This cannot be undone.
+        <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)", marginBottom: 12 }}>
+          Permanently delete your account and all your data. Any subscription ends immediately, without
+          a refund for the rest of the period. This cannot be undone.
         </p>
-        <button onClick={() => setModal("delete")} style={dangerBtn}>
+        <button type="button" onClick={() => setModal("delete")} className={ui.ghostBtn} style={dangerBtn}>
           Delete account
         </button>
       </div>
 
-      {msg && <p style={{ fontFamily: MONO, fontSize: 11, color: "#8b949e", marginTop: 16 }}>{msg}</p>}
+      {msg && <p role="status" style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 16 }}>{msg}</p>}
 
       {modal === "leave" && (
         <ConfirmModal
-          heading="Are you sure?"
+          heading="Leave your cohort?"
           description="You'll be removed from your current cohort and lose access to its private room. You can join a new cohort later."
           confirmLabel="Leave cohort"
           onConfirm={leaveCohort}
@@ -724,7 +731,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
       )}
       {modal === "delete" && (
         <ConfirmModal
-          heading="Are you sure?"
+          heading="Delete your account?"
           description="This permanently deletes your account and all of your data. Any subscription is cancelled immediately, and the rest of your paid period isn't refunded — to keep access until it ends, cancel your membership first and delete afterwards. This cannot be undone."
           confirmLabel="Delete account"
           requireText="DELETE"
@@ -732,6 +739,6 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
           onCancel={() => setModal(null)}
         />
       )}
-    </div>
+    </Section>
   );
 }
