@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import CohortNav from "@/components/cohort/CohortNav";
+import NoGrid from "@/components/ui/NoGrid";
+import ui from "@/components/ui/sleek.module.css";
 import InviteForm from "./InviteForm";
 
 export const dynamic = "force-dynamic";
@@ -30,19 +33,27 @@ export default async function InvitePage() {
 
   return (
     <>
-      <TopBar title="cohort" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
+      <NoGrid />
+      <TopBar sleek title="cohort" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <CohortNav />
       <section className="max-w-xl mx-auto px-6 py-10">
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint">cohort/invite</p>
-        <h1 className="font-sans lowercase text-text-primary text-2xl mt-1">invite to a cohort</h1>
-        <p className="text-text-muted text-sm mt-2">
-          generate an invite link or send to an email. only cohorts you belong to can be invited to.
+        <h1
+          className={ui.titleGradient}
+          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+        >
+          Invite to a cohort
+        </h1>
+        <p className="text-text-secondary mt-2" style={{ fontSize: 14, lineHeight: 1.6 }}>
+          Create an invite link to share. You can only invite people to cohorts you belong to.
         </p>
 
         {cohorts.length === 0 ? (
-          <p className="font-mono lowercase text-xs text-text-faint mt-6">
-            you&apos;re not in any cohorts yet. create one or join one from{" "}
-            <a className="text-amber hover:underline" href="/cohort/browse">browse</a>.
+          <p className="text-text-secondary mt-6" style={{ fontSize: 14 }}>
+            You&apos;re not in any cohorts yet. Create one, or join one from{" "}
+            <Link className="text-amber hover:underline" href="/cohort/browse">
+              Browse
+            </Link>
+            .
           </p>
         ) : (
           <div className="mt-6">

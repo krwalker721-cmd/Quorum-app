@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import ui from "@/components/ui/sleek.module.css";
 
 export default function InviteForm({
   cohorts,
@@ -16,6 +17,7 @@ export default function InviteForm({
   const [err, setErr] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -37,7 +39,7 @@ export default function InviteForm({
     });
     setBusy(false);
     if (error) {
-      setErr(error.message?.toLowerCase() ?? "failed");
+      setErr(error.message ?? "failed");
       return;
     }
     setLink(`${origin}/join/cohort/${cohortId}`);
@@ -47,16 +49,18 @@ export default function InviteForm({
     if (!link) return;
     try {
       await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     } catch {}
   }
 
   return (
-    <div className="bg-card border border-border p-6 space-y-4">
+    <div className={`${ui.tile} space-y-4`} style={{ padding: 24 }}>
       <div>
         <label>cohort</label>
         <select value={cohortId} onChange={(e) => setCohortId(e.target.value)}>
           {cohorts.map((c) => (
-            <option key={c.id} value={c.id}>{c.name.toLowerCase()}</option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
       </div>
@@ -71,45 +75,43 @@ export default function InviteForm({
         />
       </div>
 
-      {err && <p className="font-mono text-xs text-red-400 lowercase">{err}</p>}
+      {err && <p className="text-red-400" style={{ fontSize: 13 }}>{err}</p>}
 
+      {/* Neither button sends an email: Quorum has no invite email yet. The
+          email one records who the invite is for; both hand back a link. */}
       <div className="flex flex-wrap gap-2 pt-1">
         <button
           type="button"
           onClick={() => generate({ withEmail: false })}
           disabled={busy || !cohortId}
-          className="font-mono lowercase text-[0.7rem] px-3 py-2 border disabled:opacity-50"
-          style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+          className={ui.ghostBtn}
         >
-          generate link
+          Generate link
         </button>
         <button
           type="button"
           onClick={() => generate({ withEmail: true })}
           disabled={busy || !cohortId || !email.trim()}
-          className="btn-primary"
+          className={ui.primaryBtn}
         >
-          invite by email
+          Create email invite
         </button>
       </div>
 
       {link && (
-        <div className="pt-3 space-y-2 border-t" style={{ borderColor: "var(--border)" }}>
-          <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-            invite link · share this with the person you&apos;re inviting
+        <div className="pt-4 space-y-2 border-t" style={{ borderColor: "var(--border-default)" }}>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            Invite link. Share it with the person you&apos;re inviting.
           </p>
           <div className="flex gap-2">
             <input value={link} readOnly className="flex-1" />
-            <button
-              onClick={copy}
-              type="button"
-              className="btn-primary whitespace-nowrap"
-            >
-              copy
+            <button onClick={copy} type="button" className={ui.primaryBtn}>
+              {copied ? "Copied" : "Copy"}
             </button>
           </div>
-          <p className="font-mono lowercase text-[0.6rem] text-text-faint">
-            note: sending the email is a manual step for now — copy the link and send it from your inbox.
+          <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+            Quorum doesn&apos;t send the email for you yet. Copy the link and send it from your own
+            inbox.
           </p>
         </div>
       )}

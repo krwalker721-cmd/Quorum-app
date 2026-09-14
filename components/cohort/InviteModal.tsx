@@ -129,7 +129,7 @@ export default function InviteModal({
                 disabled={busy || !cohortId || !email.trim()}
                 className="btn-primary"
               >
-                invite by email
+                create email invite
               </button>
             </div>
 
@@ -151,6 +151,10 @@ export default function InviteModal({
                     {copied ? "copied" : "copy"}
                   </button>
                 </div>
+                {/* Nothing here sends an email; say so, as /cohort/invite does. */}
+                <p className="font-mono lowercase text-[0.65rem] text-text-faint">
+                  quorum doesn&apos;t send the email for you yet. copy the link and send it yourself.
+                </p>
               </div>
             )}
           </>

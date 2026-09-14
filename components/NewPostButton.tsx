@@ -7,6 +7,7 @@ import { ROOM_TYPE_COLOR, ROOM_TYPE_LABEL } from "@/lib/stage";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
 import Avatar from "@/components/Avatar";
+import ui from "@/components/ui/sleek.module.css";
 import { onOpenComposer, reportPosted } from "@/lib/tour-bus";
 
 const TAGS = ["decision", "mindset", "hiring", "growth", "real_talk", "ops", "fundraising"];
@@ -134,32 +135,24 @@ export default function NewPostButton({
   return (
     <>
       {variant === "composer" ? (
-        <button
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2.5 w-full text-left"
-          style={{
-            padding: "10px 12px",
-            background: "var(--bg-surface)",
-            border: "0.5px solid var(--border-default)",
-            borderRadius: 24,
-          }}
-        >
-          <Avatar name={currentUserName ?? null} size={28} />
-          <span style={{ flex: 1, fontSize: 12, color: "var(--text-muted)" }}>
+        // Only Pulse renders the composer, so it takes the sleek finish directly.
+        <button onClick={() => setOpen(true)} className={ui.composer}>
+          <Avatar name={currentUserName ?? null} size={30} />
+          <span style={{ flex: 1, fontSize: 14, color: "var(--text-muted)" }}>
             Share what you&apos;re working through…
           </span>
           <span
-            className="font-mono"
+            className={ui.glow}
             style={{
-              fontSize: 10,
+              fontSize: 13,
               fontWeight: 500,
-              background: "linear-gradient(135deg,rgba(245,158,11,.92),rgba(245,158,11,.72))",
+              background: "linear-gradient(135deg, rgba(245,158,11,.95), rgba(245,158,11,.75))",
               color: "#1a1204",
-              padding: "6px 14px",
-              borderRadius: 16,
+              padding: "8px 16px",
+              borderRadius: 8,
             }}
           >
-            post
+            Post
           </span>
         </button>
       ) : (

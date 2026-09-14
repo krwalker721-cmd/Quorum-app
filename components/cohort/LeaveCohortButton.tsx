@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ui from "@/components/ui/sleek.module.css";
 
 export default function LeaveCohortButton({
   cohortId,
@@ -37,21 +38,19 @@ export default function LeaveCohortButton({
 
   return (
     <>
+      {/* The colour lives in the styled-jsx rule, not inline, so the hover
+          colour can actually win. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full text-center font-mono lowercase text-[0.65rem] py-1.5 leave-cohort-btn"
-        style={{
-          background: "transparent",
-          border: "none",
-          color: "#9b6b6b",
-          cursor: "pointer",
-        }}
+        className={`${ui.textBtn} leave-cohort-btn w-full text-center`}
+        style={{ padding: "6px 0" }}
       >
-        leave cohort
+        Leave cohort
       </button>
       <style jsx>{`
         .leave-cohort-btn {
+          color: #b07777;
           text-decoration: none;
         }
         .leave-cohort-btn:hover {
@@ -68,44 +67,41 @@ export default function LeaveCohortButton({
           onClick={() => !busy && setOpen(false)}
         >
           <div
-            className="w-full max-w-sm border p-6"
-            style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+            className={`${ui.tile} w-full max-w-sm`}
+            style={{ padding: 24 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="font-mono lowercase text-text-primary text-sm">
-              leave this cohort?
+            <p className="text-text-primary" style={{ fontSize: 15, fontWeight: 600 }}>
+              Leave this cohort?
             </p>
-            <p className="text-text-muted text-[0.85rem] leading-relaxed mt-3">
-              are you sure you want to leave this cohort? you&apos;ll immediately
-              lose access to its posts, messages, and room. you can join or be
-              invited to another cohort later.
+            <p className="text-text-secondary mt-3" style={{ fontSize: 14, lineHeight: 1.6 }}>
+              You&apos;ll immediately lose access to its posts, messages, and room. You can join
+              or be invited to another cohort later.
             </p>
             {err && (
-              <p className="font-mono text-xs text-red-400 lowercase mt-3">
+              <p className="text-red-400 mt-3" style={{ fontSize: 13 }}>
                 {err}
               </p>
             )}
             <div className="flex justify-end gap-2 mt-5">
-              <button
-                onClick={() => setOpen(false)}
-                disabled={busy}
-                className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-              >
-                cancel
+              <button onClick={() => setOpen(false)} disabled={busy} className={ui.ghostBtn}>
+                Cancel
               </button>
               <button
                 onClick={confirm}
                 disabled={busy}
-                className="font-mono lowercase text-[0.7rem] px-3 py-1.5"
                 style={{
-                  background: "rgba(239,68,68,0.18)",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  padding: "8px 16px",
+                  borderRadius: 8,
+                  background: "rgba(239,68,68,0.16)",
                   color: "#f87171",
-                  border: "1px solid rgba(239,68,68,0.55)",
-                  fontWeight: 700,
+                  border: "1px solid rgba(239,68,68,0.5)",
+                  cursor: busy ? "default" : "pointer",
                 }}
               >
-                {busy ? "leaving..." : "leave cohort"}
+                {busy ? "Leaving…" : "Leave cohort"}
               </button>
             </div>
           </div>

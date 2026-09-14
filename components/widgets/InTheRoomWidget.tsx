@@ -1,3 +1,4 @@
+import Tile from "@/components/ui/Tile";
 import InTheRoomGrid from "@/components/pulse/InTheRoomGrid";
 
 type Member = {
@@ -9,16 +10,11 @@ type Member = {
 
 export default function InTheRoomWidget({ members }: { members: Member[] }) {
   return (
-    <div
-      className="side-widget"
-      style={{ "--w-accent": "#22c55e" } as React.CSSProperties}
+    <Tile
+      kicker="In the room"
+      right={members.length > 0 ? `${members.length} ${members.length === 1 ? "member" : "members"}` : undefined}
     >
-      <div className="side-widget-head">
-        <span className="side-widget-glyph" aria-hidden>●</span>
-        <p className="side-widget-label">in_the_room</p>
-        {members.length > 0 && <span className="side-widget-meta">{members.length}</span>}
-      </div>
-      <InTheRoomGrid members={members} max={12} size={24} showCount />
-    </div>
+      <InTheRoomGrid members={members} max={12} size={28} showCount />
+    </Tile>
   );
 }

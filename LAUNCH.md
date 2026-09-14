@@ -17,24 +17,30 @@ If you are picking this up cold, this is the state of the world:
 - **Pricing:** $39/mo Member, $390/yr, $19/mo founding rate for the first 100
   seats, $99/mo Partner (not shipped). 30-day card-free trial, 45 if referred.
   There is no free tier — an unentitled account has a write limit of 0.
-- **Where it runs today:** `https://quorum-app-kappa.vercel.app`. The launch
-  domain **`quorumhq.co`** was bought 2026-07-31 through Vercel (Vercel is
-  registrar, DNS, and host) and already serves HTTPS on the apex — but it is not
-  yet the canonical URL. `NEXT_PUBLIC_APP_URL`, Supabase's Site URL, and the
-  Stripe webhook endpoint all still point at the `.vercel.app` host until the
-  Phase 1 atomic cutover.
+- **Where it runs today:** `https://quorumhq.co`, live Stripe, since the Phase 1
+  cutover on 2026-09-13. The old `quorum-app-kappa.vercel.app` host still
+  resolves but is no longer canonical.
 - **Repo:** `main` is the deploy branch; Vercel auto-deploys from it via the
   GitHub integration (`krwalker721-cmd/Quorum-app`). No Vercel CLI or token is
   configured locally.
-- **Status:** the six launch blockers in §5 are fixed, deployed, and verified in
-  production. Migration 014 is applied. Nothing in this document is done yet.
+- **Status (2026-09-13):** Phases 0–4 are done apart from the items marked open.
+  Migrations 001–017 are applied. **Phase 6's payment tests were skipped at
+  the owner's call** (see Phase 6). What's left, and whose it is:
+  - **[me]** Finish the in-app redesign (tracker at the end of Phase 4), then
+    Phase 5.
+  - **[you]** Database backups (Supabase Pro) before approving the first group;
+    the DBA certificate; a `support@` inbox; the Stripe Tax decision; analytics
+    account (optional).
 - **Read §7 before touching the database or deploying** — the migration and
   deploy workflow here has a specific ordering requirement that will break signup
   if ignored.
 - **Design language**, if any UI work comes up: dark, boxed tiles, amber as the
-  single accent, green for live/positive only, mono micro-labels as seasoning.
-  `design/REDESIGN-BUILD-GUIDE.md` is the authority; don't reintroduce a rainbow
-  of accent colors.
+  single accent, green for live/positive only. Pages are moving to the
+  landing page's "sleek" finish (`components/ui/sleek.module.css`): hairline
+  top-lit tiles, a glass topbar, gradient page titles, sentence-case labels at
+  13–14px instead of tiny uppercase mono. See the redesign tracker in Phase 4.
+  `design/REDESIGN-BUILD-GUIDE.md` predates this and still needs updating to
+  match; don't reintroduce a rainbow of accent colors.
 
 ---
 
@@ -757,6 +763,32 @@ activation and DNS.
       `useSearchParams()` and no bail-out: the served HTML carries the heading,
       prices, and renewal notice.)*
 - [ ] **[me → you]** Analytics — Claude wires it, you create the account
+- [ ] **[me]** **In-app redesign: the sleek finish, page by page.** The owner
+      asked for the landing page's look inside the app. One page at a time,
+      each shown in the preview and approved before the next.
+      - [x] Sidebar and Home: live (`8be4899`).
+      - [x] Pulse: approved, on branch `feat/app-polish-pulse` (`3462b92`).
+      - [x] Cohort: approved, on branch `feat/app-polish-cohort` (`c791a2c`,
+            `f950094`, which also fixes zoneless timestamps; see below).
+      - [ ] Collab board (largest: ~14 files).
+      - [ ] Vault, then Messages, Referrals, Profile, Settings.
+      - [ ] The shared modals (`modal-shell` in `globals.css`): new post, room
+            post, invite, and the rest. Deliberately left for one pass.
+      - [ ] Update `design/REDESIGN-BUILD-GUIDE.md` to the new look.
+
+      **How it's built.** Everything is opt-in so unconverted pages don't
+      change: `<NoGrid />`, `<TopBar sleek>`, and a `sleek` prop on shared
+      components (`PostCard`, `ReplyThread`, `TabPill`, `StagePill`). A
+      component only one page uses is restyled directly. Check each page at
+      desktop width and at 375px.
+
+      **Timestamps.** `posts.created_at` (and likely other tables' columns) is
+      `timestamp` without a time zone, so values arrive with no "Z" and browsers
+      read them as local time. `lib/stage.ts` `parseDbTime()` treats them as
+      UTC, and `timeAgo()` uses it. A few client-side `toLocaleDateString()`
+      calls (project room, vault notes) still read them raw and can show the
+      wrong day near midnight. The clean fix is a migration to `timestamptz`,
+      offered to the owner as optional.
 
 ### Phase 5 — docs drift (anytime, low risk)
 
@@ -779,6 +811,11 @@ activation and DNS.
 
 Do not announce until every one of these passes **on the real domain**. Mostly
 yours, because most of them need a real inbox or a real card.
+
+> **Skipped at the owner's call (2026-09-13).** The live-card tests below were
+> not run. The first real payments are therefore the first test of those paths:
+> watch the Stripe webhook delivery log and Sentry closely for the first few
+> sign-ups (Phase 7), and verify the live webhook secret on the first real card.
 
 - [x] **[you]** Full signup, with email confirmation on, from a clean browser
       *Passed 2026-09-13 on `quorumhq.co`:* signed up in a private window,

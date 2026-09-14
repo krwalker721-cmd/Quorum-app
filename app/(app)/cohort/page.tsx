@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
+import NoGrid from "@/components/ui/NoGrid";
 import CohortNav from "@/components/cohort/CohortNav";
 import NoCohortEmptyState from "@/components/cohort/NoCohortEmptyState";
 import CohortSelectionScreen, {
@@ -40,7 +41,9 @@ export default async function CohortPage(
   if (cohortIds.length === 0) {
     return (
       <>
+        <NoGrid />
         <TopBar
+          sleek
           title="cohort"
           tier={(profile?.tier ?? "free").toUpperCase()}
           userId={user.id}
@@ -109,7 +112,9 @@ export default async function CohortPage(
 
   return (
     <>
+      <NoGrid />
       <TopBar
+        sleek
         title="cohort"
         tier={(profile?.tier ?? "free").toUpperCase()}
         userId={user.id}

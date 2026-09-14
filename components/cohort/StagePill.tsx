@@ -10,16 +10,27 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export default function StagePill({ stage }: { stage: string | null }) {
+export default function StagePill({
+  stage,
+  sleek = false,
+}: {
+  stage: string | null;
+  /** Rounded, readable sans-serif pill (sleek.module.css pages). Opt-in: the
+   *  profile, messages, and collab screens still use the mono pill. */
+  sleek?: boolean;
+}) {
   if (!stage) return null;
   const color = STAGE_COLOR[stage] ?? "#6e7681";
   return (
     <span
-      className="font-mono lowercase text-[0.55rem] px-1.5 py-0.5"
+      className={sleek ? undefined : "font-mono lowercase text-[0.55rem] px-1.5 py-0.5"}
       style={{
         border: `1px solid ${hexToRgba(color, 0.3)}`,
         color,
         background: hexToRgba(color, 0.1),
+        ...(sleek
+          ? { fontSize: 11, lineHeight: 1.6, padding: "0 7px", borderRadius: 999, whiteSpace: "nowrap" }
+          : {}),
       }}
     >
       {stage}

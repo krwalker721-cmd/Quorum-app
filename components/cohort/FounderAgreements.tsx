@@ -1,28 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import ui from "@/components/ui/sleek.module.css";
 
 const ITEMS = [
-  { glyph: "✦", key: "warm_intro", label: "warm intro", body: "send a warm intro to a cohort member who'd benefit from someone in your network." },
-  { glyph: "◈", key: "handshake", label: "handshake", body: "agree to a recurring check-in with a cohort member — a structured commitment." },
-  { glyph: "◉", key: "vouch", label: "vouch", body: "publicly vouch for a cohort member — adds to their trust_score." },
+  { glyph: "✦", key: "warm_intro", label: "Warm intro", body: "Send a warm intro to a cohort member who'd benefit from someone in your network." },
+  { glyph: "◈", key: "handshake", label: "Handshake", body: "Agree to a recurring check-in with a cohort member: a structured commitment." },
+  { glyph: "◉", key: "vouch", label: "Vouch", body: "Publicly vouch for a cohort member. It adds to their trust score." },
 ];
 
 export default function FounderAgreements() {
   const [open, setOpen] = useState<string | null>(null);
   const active = ITEMS.find((i) => i.key === open);
   return (
-    <div className="px-3 py-4 border-t" style={{ borderColor: "var(--border)" }}>
-      <p className="font-mono lowercase text-[0.65rem] text-text-faint px-1 mb-2">founder_agreements</p>
-      <div className="space-y-1">
+    <div className="px-3 py-4 border-t" style={{ borderColor: "var(--border-default)" }}>
+      <p className={ui.sideMeta} style={{ padding: "0 8px", marginBottom: 6 }}>
+        Founder agreements
+      </p>
+      <div>
         {ITEMS.map((i) => (
           <button
             key={i.key}
             onClick={() => setOpen(i.key)}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+            className={`${ui.navItem} w-full text-left`}
+            style={{ padding: "7px 8px", fontSize: 13 }}
           >
-            <span className="text-amber text-sm">{i.glyph}</span>
-            <span className="font-mono lowercase text-[0.7rem] text-text-muted">{i.label}</span>
+            <span className="text-amber" style={{ fontSize: 13 }}>{i.glyph}</span>
+            <span>{i.label}</span>
           </button>
         ))}
       </div>
@@ -34,22 +38,18 @@ export default function FounderAgreements() {
           onClick={() => setOpen(null)}
         >
           <div
-            className="w-full max-w-sm border p-6"
-            style={{ background: "var(--card-elev)", borderColor: "var(--border)" }}
+            className={`${ui.tile} w-full max-w-sm`}
+            style={{ padding: 24 }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-amber text-lg">{active.glyph}</span>
-              <p className="font-mono lowercase text-text-secondary text-sm">{active.label}</p>
+              <span className="text-amber" style={{ fontSize: 16 }}>{active.glyph}</span>
+              <p className="text-text-primary" style={{ fontSize: 15, fontWeight: 600 }}>{active.label}</p>
             </div>
-            <p className="text-text-muted text-[0.85rem] leading-relaxed">{active.body}</p>
+            <p className="text-text-secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>{active.body}</p>
             <div className="flex justify-end mt-5">
-              <button
-                onClick={() => setOpen(null)}
-                className="font-mono lowercase text-[0.7rem] px-3 py-1.5 border"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-              >
-                close
+              <button onClick={() => setOpen(null)} className={ui.ghostBtn}>
+                Close
               </button>
             </div>
           </div>

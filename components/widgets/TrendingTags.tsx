@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { ROOM_TYPE_COLOR, TAG_COLOR } from "@/lib/stage";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
 
 export default async function TrendingTags() {
   const supabase = await createClient();
@@ -20,32 +21,24 @@ export default async function TrendingTags() {
   }
   const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
-  function colorFor(tag: string, rank: number) {
+  function colorFor(rank: number) {
     if (rank === 0) return "#f59e0b";
-    if (rank < 3) return "rgba(245, 158, 11, 0.7)";
-    return "#6e7681";
+    if (rank < 3) return "rgba(245, 158, 11, 0.75)";
+    return "var(--text-muted)";
   }
   function sizeFor(rank: number) {
-    if (rank === 0) return "1.15rem";
-    if (rank === 1) return "0.95rem";
-    if (rank === 2) return "0.85rem";
-    return "0.7rem";
+    if (rank === 0) return 16;
+    if (rank === 1) return 14;
+    if (rank === 2) return 13;
+    return 12;
   }
 
   return (
-    <div
-      className="side-widget"
-      style={{ "--w-accent": "#38bdf8" } as React.CSSProperties}
-    >
-      <div className="side-widget-head">
-        <span className="side-widget-glyph" aria-hidden>#</span>
-        <p className="side-widget-label">trending_tags</p>
-        {ranked.length > 0 && <span className="side-widget-meta">7d</span>}
-      </div>
+    <Tile kicker="Trending tags" right={ranked.length > 0 ? "Last 7 days" : undefined}>
       {ranked.length === 0 ? (
-        <div className="empty-panel compact">
-          <p className="empty-panel-title">no tags trending yet.</p>
-          <p className="empty-panel-sub">tags pick up as the week&apos;s conversations build.</p>
+        <div className={ui.empty}>
+          <p className={ui.emptyTitle}>No tags trending yet.</p>
+          <p className={ui.emptySub}>Tags pick up as the week&apos;s conversations build.</p>
         </div>
       ) : (
         <div className="flex flex-wrap gap-x-3 gap-y-2 items-baseline">
@@ -53,19 +46,15 @@ export default async function TrendingTags() {
             <Link
               key={tag}
               href={`/pulse?tag=${encodeURIComponent(tag)}`}
-              className="font-mono lowercase hover:underline transition-opacity"
-              style={{
-                color: colorFor(tag, rank),
-                fontSize: sizeFor(rank),
-                opacity: rank < 3 ? 1 : 0.7,
-              }}
-              title={`${count} posts`}
+              className="hover:underline"
+              style={{ color: colorFor(rank), fontSize: sizeFor(rank) }}
+              title={`${count} ${count === 1 ? "post" : "posts"}`}
             >
               #{tag}
             </Link>
           ))}
         </div>
       )}
-    </div>
+    </Tile>
   );
 }

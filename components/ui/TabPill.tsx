@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+import ui from "./sleek.module.css";
 
 /**
  * Tab pill row. Active = amber ghost fill; inactive = hairline border + muted.
@@ -12,6 +13,7 @@ export function TabPill({
   onClick,
   radius = 8,
   style,
+  sleek = false,
 }: {
   children: ReactNode;
   active?: boolean;
@@ -19,7 +21,22 @@ export function TabPill({
   onClick?: () => void;
   radius?: number;
   style?: CSSProperties;
+  /** The landing page's finish (sleek.module.css). Opt-in per page. */
+  sleek?: boolean;
 }) {
+  if (sleek) {
+    const cls = `${ui.pill}${active ? ` ${ui.pillActive}` : ""}`;
+    return href ? (
+      <Link href={href} className={cls} style={style}>
+        {children}
+      </Link>
+    ) : (
+      <button type="button" onClick={onClick} className={cls} style={style}>
+        {children}
+      </button>
+    );
+  }
+
   const base: CSSProperties = {
     fontFamily: "var(--font-mono)",
     fontSize: 10,

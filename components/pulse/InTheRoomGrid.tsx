@@ -2,6 +2,7 @@
 
 import Avatar from "@/components/Avatar";
 import { usePresence } from "@/components/PresenceProvider";
+import ui from "@/components/ui/sleek.module.css";
 
 type Member = {
   id: string;
@@ -28,15 +29,15 @@ export default function InTheRoomGrid({
 
   if (onlineMembers.length === 0) {
     return (
-      <div className="empty-panel compact">
-        <p className="empty-panel-title">nobody&apos;s in the room right now.</p>
-        <p className="empty-panel-sub">posts left now get read when the room wakes up.</p>
+      <div className={ui.empty}>
+        <p className={ui.emptyTitle}>Nobody&apos;s here right now.</p>
+        <p className={ui.emptySub}>Posts left now get read when the room wakes up.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {visible.map((m) => (
           <div key={m.id} className="relative">
@@ -54,16 +55,14 @@ export default function InTheRoomGrid({
           </div>
         ))}
         {overflow > 0 && (
-          <span
-            className="font-mono lowercase text-[0.65rem] text-text-faint flex items-center px-1"
-          >
+          <span className="flex items-center px-1" style={{ fontSize: 12, color: "var(--text-muted)" }}>
             +{overflow} more
           </span>
         )}
       </div>
       {showCount && (
-        <p className="font-mono lowercase text-[0.65rem] text-text-faint">
-          {onlineMembers.length} founders active right now
+        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          {onlineMembers.length} {onlineMembers.length === 1 ? "founder" : "founders"} here right now
         </p>
       )}
     </div>

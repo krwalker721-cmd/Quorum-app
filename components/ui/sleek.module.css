@@ -240,6 +240,232 @@
   color: var(--text-muted);
 }
 
+/* ── Feeds, filters, and composers (Pulse first; opt-in elsewhere) */
+
+/* Filter pills: <TabPill sleek>. Sentence case, readable, fully rounded. */
+.pill {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.pill:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+.pillActive,
+.pillActive:hover {
+  color: #f8c56a;
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+:global([data-theme="high-contrast"]) .pill {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Quiet text actions on a card (reply, share, collapse). */
+.textBtn {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.textBtn:hover {
+  color: var(--text-primary);
+}
+
+/* A bordered secondary button (load more, clear filter). */
+.ghostBtn {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.ghostBtn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-primary);
+}
+.ghostBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The wide "share what you're working through" composer pill. */
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%),
+    var(--bg-surface);
+  cursor: text;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.composer:hover {
+  border-color: rgba(245, 158, 11, 0.24);
+  box-shadow: 0 14px 40px -26px rgba(245, 158, 11, 0.4);
+}
+:global([data-theme="high-contrast"]) .composer {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Empty states inside a tile: plain sentences, no dashed box. */
+.empty {
+  padding: 4px 0;
+}
+.emptyTitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.emptySub {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* A small rounded label (a post's room type). */
+.chip {
+  font-size: 11px;
+  line-height: 1.7;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* The reply thread attached under a sleek post card: the card's hairline
+   instead of the global border, and sans-serif controls. */
+.thread {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+.thread :global(.reply-textarea),
+.thread :global(.reply-submit-btn) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+}
+.thread :global(.reply-textarea) {
+  font-size: 14px;
+}
+.thread :global(.reply-submit-btn) {
+  font-size: 13px;
+}
+
+/* The solid amber button for a page's main action, where <GradientButton>
+   doesn't fit (form submits, disabled states). */
+.primaryBtn {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: none;
+  color: #1a1204;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(245, 158, 11, 0.75));
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.45),
+    0 8px 24px -10px rgba(245, 158, 11, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  transition: filter 0.15s ease;
+}
+.primaryBtn:hover {
+  filter: brightness(1.08);
+}
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  filter: none;
+}
+
+/* ── Cohort room. The chat floor is built from global classes (globals.css)
+   that other screens don't use; inside .room they take the sleek finish. */
+.room :global(.bubble-name) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.room :global(.bubble-text) {
+  font-size: 14px;
+  line-height: 1.6;
+}
+/* Rounded bubbles with the small corner by the speaker's avatar (rows align
+   to the bottom, so that's the bottom corner on their side). */
+.room :global(.bubble) {
+  padding: 10px 14px;
+}
+.room :global(.bubble-theirs) {
+  border-color: rgba(255, 255, 255, 0.07);
+  border-radius: 16px 16px 16px 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%),
+    var(--bg-surface);
+}
+.room :global(.bubble-mine) {
+  border-color: rgba(245, 158, 11, 0.3);
+  border-radius: 16px 16px 6px 16px;
+  background: linear-gradient(150deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.07) 70%);
+  box-shadow: 0 10px 30px -20px rgba(245, 158, 11, 0.6);
+}
+.room :global(.bubble-mine .bubble-time) {
+  color: rgba(248, 197, 106, 0.75);
+}
+.room :global(.bubble-time) {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.room :global(.bubble-tag) {
+  font-size: 11px;
+  padding: 0 8px;
+  text-transform: capitalize;
+}
+.room :global(.date-separator span) {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.room :global(.cohort-message-input) {
+  font-size: 14px;
+  padding: 10px 16px;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.room :global(.cohort-input-bar) {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+:global([data-theme="high-contrast"]) .room :global(.bubble-theirs) {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tile,
   .tile::before,
@@ -247,7 +473,12 @@
   .glowGhost,
   .row,
   .navItem,
-  .partnerLine {
+  .partnerLine,
+  .pill,
+  .textBtn,
+  .ghostBtn,
+  .composer,
+  .primaryBtn {
     transition: none;
   }
   .glow:active {

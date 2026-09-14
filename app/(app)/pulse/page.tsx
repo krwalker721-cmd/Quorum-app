@@ -6,7 +6,8 @@ import PulseFilterTabs from "@/components/pulse/PulseFilterTabs";
 import InTheRoomWidget from "@/components/widgets/InTheRoomWidget";
 import MostHelpfulThisWeek from "@/components/widgets/MostHelpfulThisWeek";
 import TrendingTags from "@/components/widgets/TrendingTags";
-import TerminalFooter from "@/components/ui/TerminalFooter";
+import NoGrid from "@/components/ui/NoGrid";
+import ui from "@/components/ui/sleek.module.css";
 import { PostWithAuthor } from "@/components/PostCard";
 import { hasDepthRing, isAnniversary, postsMovedTheRoomBatch } from "@/lib/recognition";
 
@@ -112,31 +113,47 @@ export default async function PulsePage() {
   });
 
   const initial = decorated.slice(0, PAGE);
+  // Conversations with a reply in the last two hours: a real count, not presence.
   const activeNow = decorated.filter((p) => p.isActive).length;
 
   return (
     <>
+      <NoGrid />
       <TopBar
+        sleek
         title="pulse"
         tier={(profile?.tier ?? "free").toUpperCase()}
         userId={user.id}
         defaultPostType="pulse"
       />
-      <div className="page-pad" style={{ padding: "18px 24px 8px", maxWidth: 1600 }}>
-        {/* Header line */}
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <h1 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>pulse</h1>
-          <span className="font-mono" style={{ fontSize: 9, color: activeNow > 0 ? "var(--green)" : "var(--text-muted)" }}>
-            {activeNow > 0 ? `● ${activeNow} active now` : "quiet right now"}
-          </span>
+      <div
+        className={`page-pad ${ui.pageGlow}`}
+        style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: 22 }}>
+          <h1
+            className={ui.titleGradient}
+            style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+          >
+            Pulse
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>
+            Real decisions, wins, and blockers from every founder on Quorum ·{" "}
+            {activeNow > 0 ? (
+              <span style={{ color: "var(--green)" }}>
+                {activeNow} active {activeNow === 1 ? "conversation" : "conversations"}
+              </span>
+            ) : (
+              "quiet right now"
+            )}
+          </p>
         </div>
 
-        <div
-          className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4"
-        >
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4">
           <div>
             {/* Composer pill + filter tabs */}
-            <div style={{ marginBottom: 8 }} data-tour-id="pulse-composer">
+            <div data-tour-id="pulse-composer">
               <NewPostButton
                 userId={user.id}
                 defaultPostType="pulse"
@@ -144,7 +161,7 @@ export default async function PulsePage() {
                 currentUserName={profile?.full_name ?? null}
               />
             </div>
-            <div style={{ margin: "12px 0" }}>
+            <div style={{ margin: "16px 0" }}>
               <PulseFilterTabs />
             </div>
             <PulseFeed
@@ -153,13 +170,12 @@ export default async function PulsePage() {
               currentUserId={user.id}
             />
           </div>
-          <aside className="space-y-3">
+          <aside className="space-y-4">
             <InTheRoomWidget members={members.filter((m) => m.id !== user.id)} />
             <MostHelpfulThisWeek />
             <TrendingTags />
           </aside>
         </div>
-        <TerminalFooter />
       </div>
     </>
   );

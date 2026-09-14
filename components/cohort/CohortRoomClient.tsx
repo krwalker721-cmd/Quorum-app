@@ -6,7 +6,7 @@ import Avatar from "@/components/Avatar";
 import StagePill from "@/components/cohort/StagePill";
 import { createClient } from "@/lib/supabase/client";
 import { usePresence } from "@/components/PresenceProvider";
-import { timeAgo, TAG_COLOR } from "@/lib/stage";
+import { parseDbTime, timeAgo, TAG_COLOR } from "@/lib/stage";
 import RoomPostModal from "@/components/cohort/RoomPostModal";
 import InviteModal from "@/components/cohort/InviteModal";
 import FounderAgreements from "@/components/cohort/FounderAgreements";
@@ -16,6 +16,7 @@ import Meter from "@/components/Meter";
 import Link from "next/link";
 import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
+import ui from "@/components/ui/sleek.module.css";
 import { useTier } from "@/contexts/TierContext";
 import { onOpenComposer, reportPosted } from "@/lib/tour-bus";
 import {
@@ -74,8 +75,8 @@ const TYPE_STYLE: Record<
 };
 
 function isDifferentDay(a: string, b: string): boolean {
-  const da = new Date(a);
-  const db = new Date(b);
+  const da = parseDbTime(a);
+  const db = parseDbTime(b);
   return (
     da.getFullYear() !== db.getFullYear() ||
     da.getMonth() !== db.getMonth() ||
@@ -84,7 +85,7 @@ function isDifferentDay(a: string, b: string): boolean {
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
+  const d = parseDbTime(iso);
   const today = new Date();
   const yest = new Date();
   yest.setDate(today.getDate() - 1);
@@ -322,11 +323,11 @@ export default function CohortRoomClient({
   const me = authorMap.get(currentUserId) ?? null;
   const myWin = checkins[currentUserId]?.weekly_win ?? null;
   const statRows: [string, string | number][] = [
-    ["replies given", myStats.repliesGiven],
-    ["handshakes", myStats.handshakes],
-    ["moved the room", myStats.movedTheRoom],
+    ["Replies given", myStats.repliesGiven],
+    ["Handshakes", myStats.handshakes],
+    ["Moved the room", myStats.movedTheRoom],
     [
-      "in cohort",
+      "In cohort",
       myStats.daysInCohort == null ? "—" : `${myStats.daysInCohort} days`,
     ],
   ];
@@ -377,22 +378,14 @@ export default function CohortRoomClient({
       {showBreadcrumb && (
         <div
           className="px-6 border-b flex items-center"
-          style={{
-            height: "var(--subnav-h, 40px)",
-            background: "var(--card)",
-            borderColor: "var(--border)",
-          }}
+          style={{ height: "var(--subnav-h, 40px)", borderColor: "var(--border-default)" }}
         >
-          <Link
-            href="/cohort"
-            className="font-mono lowercase text-[0.7rem] hover:text-amber transition-colors"
-            style={{ color: "var(--text-muted)" }}
-          >
-            ← cohorts
+          <Link href="/cohort" className={ui.tileLink}>
+            ← All cohorts
           </Link>
         </div>
       )}
-      <div className={`flex app-pane ${showBreadcrumb ? "with-subnav-2" : "with-subnav"}`}>
+      <div className={`flex app-pane ${showBreadcrumb ? "with-subnav-2" : "with-subnav"} ${ui.room}`}>
         {/* LEFT — roster */}
         <aside
           data-tour-id="cohort-members"
@@ -404,9 +397,9 @@ export default function CohortRoomClient({
           }}
         >
           <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "var(--border-default)" }}>
-            <p className="font-mono lowercase text-[0.65rem] text-text-faint">room</p>
-            <p className="font-sans lowercase text-text-primary text-base mt-0.5 truncate">
-              {roomName.toLowerCase()}
+            <p className={ui.sideMeta}>Room</p>
+            <p className="font-sans text-text-primary truncate" style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>
+              {roomName}
             </p>
           </div>
           <div className="flex-1 overflow-y-auto scroll-thin px-2 py-2">
@@ -437,11 +430,12 @@ export default function CohortRoomClient({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <p
-                        className={`font-mono lowercase text-[0.7rem] truncate ${
+                        className={`truncate ${
                           f?.consistencyGhost ? "consistency-ghost" : "text-text-primary"
                         }`}
+                        style={{ fontSize: 13 }}
                       >
-                        {m.full_name?.toLowerCase() ?? "—"}
+                        {m.full_name ?? "—"}
                       </p>
                       {f?.questionResponder && (
                         <span
@@ -456,16 +450,13 @@ export default function CohortRoomClient({
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <StagePill stage={m.stage} />
-                      <span className="font-mono lowercase text-[0.55rem] text-amber">
+                      <StagePill stage={m.stage} sleek />
+                      <span className="text-amber" style={{ fontSize: 11 }} title="Trust score">
                         +{m.trust_score ?? 0}
                       </span>
                       {typeof f?.tenureDays === "number" && (
-                        <span
-                          className="font-mono lowercase text-[0.55rem]"
-                          style={{ color: "#6e7681" }}
-                        >
-                          in cohort {f.tenureDays} days
+                        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                          {f.tenureDays} days in
                         </span>
                       )}
                     </div>
@@ -488,18 +479,15 @@ export default function CohortRoomClient({
             className="border-t px-3 py-3 space-y-2"
             style={{ borderColor: "var(--border)" }}
           >
-            <button
-              onClick={() => setInviteOpen(true)}
-              className="btn-primary w-full"
-            >
-              + invite to cohort
+            <button onClick={() => setInviteOpen(true)} className={`${ui.primaryBtn} w-full`}>
+              Invite to cohort
             </button>
             <Link
               href="/cohort/browse"
-              className="block w-full text-center font-mono lowercase text-[0.65rem] px-3 py-1.5 border hover:border-amber transition-colors"
-              style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+              className={`${ui.ghostBtn} block w-full text-center`}
+              style={{ padding: "7px 14px" }}
             >
-              find a cohort
+              Find a cohort
             </Link>
           </div>
           <FounderAgreements />
@@ -515,15 +503,15 @@ export default function CohortRoomClient({
           {/* ZONE 1 — Status board */}
           <section
             data-tour-id="cohort-checkins"
-            className={`border-b px-6 ${statusOpen ? "py-4" : "py-2.5"}`}
-            style={{ background: "var(--card)", borderColor: "var(--border)" }}
+            className={`border-b px-6 ${statusOpen ? "py-4" : "py-3"}`}
+            style={{ borderColor: "var(--border-default)" }}
           >
             <div className={`flex items-center justify-between ${statusOpen ? "mb-3" : ""}`}>
               <button
                 onClick={toggleStatus}
                 aria-expanded={statusOpen}
-                title={statusOpen ? "collapse status board" : "expand status board"}
-                className="flex items-center gap-1.5 font-mono lowercase text-[0.65rem] text-text-secondary tracking-wider hover:text-amber transition-colors"
+                title={statusOpen ? "Collapse check-ins" : "Expand check-ins"}
+                className={`flex items-center gap-2 ${ui.label} hover:text-text-primary transition-colors`}
               >
                 <span
                   className="inline-block transition-transform"
@@ -532,9 +520,9 @@ export default function CohortRoomClient({
                 >
                   ›
                 </span>
-                status_board · this week
+                This week&apos;s check-ins
                 {!statusOpen && (
-                  <span className="text-text-disabled ml-1">({members.length})</span>
+                  <span className="text-text-muted ml-1">({members.length})</span>
                 )}
               </button>
             </div>
@@ -547,13 +535,15 @@ export default function CohortRoomClient({
                 return (
                   <div
                     key={m.id}
-                    className="shrink-0 p-3 border"
+                    className="shrink-0"
                     style={{
-                      width: 240,
-                      background: "var(--card-elev)",
-                      borderColor: hasCheckin
-                        ? "rgba(245, 158, 11,0.35)"
-                        : "var(--border)",
+                      width: 250,
+                      padding: "14px 16px",
+                      borderRadius: 12,
+                      border: `1px solid ${hasCheckin ? "rgba(245, 158, 11, 0.3)" : "rgba(255, 255, 255, 0.07)"}`,
+                      background: hasCheckin
+                        ? "linear-gradient(150deg, rgba(245,158,11,.1), rgba(245,158,11,.02) 60%), var(--bg-surface)"
+                        : "linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0) 45%), var(--bg-surface)",
                     }}
                   >
                     <div className="flex items-center gap-2">
@@ -574,35 +564,30 @@ export default function CohortRoomClient({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-mono lowercase text-[0.7rem] text-text-primary truncate">
-                          {m.full_name?.toLowerCase() ?? "—"}
+                        <p className="text-text-primary truncate" style={{ fontSize: 14, fontWeight: 500 }}>
+                          {m.full_name ?? "—"}
                         </p>
-                        <StagePill stage={m.stage} />
+                        <div className="mt-1">
+                          <StagePill stage={m.stage} sleek />
+                        </div>
                       </div>
                     </div>
                     <div className="mt-3">
-                      <p className="font-mono lowercase text-[0.55rem] text-text-faint">
-                        this week&apos;s win
-                      </p>
+                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>This week&apos;s win</p>
                       {hasCheckin && c.weekly_win ? (
-                        <p className="text-[0.78rem] text-text-secondary mt-1 leading-snug">
+                        <p className="text-text-secondary mt-1" style={{ fontSize: 13, lineHeight: 1.5 }}>
                           {c.weekly_win}
                         </p>
                       ) : (
-                        <p
-                          className="text-[0.78rem] mt-1 leading-snug"
-                          style={{ color: "#6e7681" }}
-                        >
-                          hasn&apos;t checked in yet
+                        <p className="mt-1" style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)" }}>
+                          Hasn&apos;t checked in yet
                         </p>
                       )}
                     </div>
                     {hasCheckin && c.decision && (
-                      <div className="mt-2">
-                        <p className="font-mono lowercase text-[0.55rem] text-text-faint">
-                          working on
-                        </p>
-                        <p className="text-[0.75rem] text-text-muted mt-1 leading-snug">
+                      <div className="mt-2.5">
+                        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Working on</p>
+                        <p className="text-text-secondary mt-1" style={{ fontSize: 13, lineHeight: 1.5 }}>
                           {c.decision}
                         </p>
                       </div>
@@ -617,20 +602,18 @@ export default function CohortRoomClient({
           {/* ZONE 2 — Discussion floor (group chat) */}
           <section data-tour-id="cohort-floor" className="flex-1 px-6 py-5 discussion-floor">
             <div className="flex items-center justify-between mb-2">
-              <p className="font-mono lowercase text-[0.7rem] text-text-faint tracking-wider">
-                discussion_floor
-              </p>
-              <button onClick={() => setPostOpen(true)} className="btn-primary">
-                + post to room
+              <p className={ui.label}>Discussion</p>
+              <button onClick={() => setPostOpen(true)} className={ui.primaryBtn}>
+                + Post to room
               </button>
             </div>
 
             <div className="bubbles-container max-w-3xl xl:max-w-none">
               {chronological.length === 0 && (
-                <div className="empty-panel my-4">
-                  <p className="empty-panel-title">the room is quiet.</p>
-                  <p className="empty-panel-sub">
-                    this is your private floor — no performance, no audience. open the conversation.
+                <div className={`${ui.tile} my-4 text-center`} style={{ padding: "32px 24px" }}>
+                  <p className={ui.emptyTitle}>The room is quiet.</p>
+                  <p className={ui.emptySub}>
+                    This is your private floor: no performance, no audience. Start the conversation.
                   </p>
                 </div>
               )}
@@ -693,13 +676,13 @@ export default function CohortRoomClient({
                         {!isMine && (
                           <div className="bubble-meta-top">
                             {isAnon ? (
-                              <span className="bubble-name anon">anonymous</span>
+                              <span className="bubble-name anon">Anonymous</span>
                             ) : (
                               <>
                                 <span className="bubble-name">
-                                  {author?.full_name?.toLowerCase() ?? "—"}
+                                  {author?.full_name ?? "—"}
                                 </span>
-                                <StagePill stage={author?.stage ?? null} />
+                                <StagePill stage={author?.stage ?? null} sleek />
                               </>
                             )}
                           </div>
@@ -768,18 +751,14 @@ export default function CohortRoomClient({
             {showPostingLocked && (
               <div
                 className="max-w-3xl xl:max-w-none"
-                style={{
-                  fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-                  fontSize: 9,
-                  color: "#f59e0b",
-                  letterSpacing: "0.05em",
-                  padding: "4px 0",
-                  textAlign: "right",
-                }}
+                style={{ fontSize: 12, color: "#f8c56a", padding: "6px 0", textAlign: "right" }}
               >
                 {hadTrial
-                  ? "// your trial has ended — upgrade to post to your room"
-                  : "// posting to your room is part of Member"}
+                  ? "Your trial has ended. Upgrade to post to your room."
+                  : "Posting to your room is part of Member."}{" "}
+                <Link href="/pricing" className="underline">
+                  See plans
+                </Link>
               </div>
             )}
 
@@ -788,7 +767,7 @@ export default function CohortRoomClient({
               <Avatar name={me?.full_name} stage={me?.stage} size={28} />
               <textarea
                 className="cohort-message-input"
-                placeholder="message the room..."
+                placeholder="Message the room…"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyDown={(e) => {
@@ -832,27 +811,22 @@ export default function CohortRoomClient({
             >
               <span className="text-[0.8rem]" aria-hidden>‹</span>
               <span
-                className="font-mono lowercase text-[0.6rem] tracking-wider"
-                style={{ writingMode: "vertical-rl" }}
+                style={{ writingMode: "vertical-rl", fontSize: 12 }}
               >
-                your_stats
+                Your stats
               </span>
             </button>
           ) : (
           <div className="p-4">
-            <div
-              className="side-widget"
-              style={{ "--w-accent": "#22c55e" } as React.CSSProperties}
-            >
-              <div className="side-widget-head">
-                <span className="side-widget-glyph">◆</span>
-                <p className="side-widget-label">your_stats</p>
+            <div className={ui.tile} style={{ padding: 18 }}>
+              <div className="flex items-center" style={{ marginBottom: 14 }}>
+                <p className={ui.label}>Your stats</p>
                 <button
                   onClick={toggleStats}
                   aria-expanded
-                  title="collapse your stats"
-                  className="ml-auto font-mono text-[0.8rem] leading-none hover:text-amber transition-colors"
-                  style={{ color: "var(--text-faint)" }}
+                  title="Collapse your stats"
+                  className="ml-auto leading-none hover:text-text-primary transition-colors"
+                  style={{ color: "var(--text-muted)", fontSize: 14 }}
                 >
                   ›
                 </button>
@@ -867,11 +841,11 @@ export default function CohortRoomClient({
                   size={36}
                 />
                 <div className="min-w-0">
-                  <p className="font-mono lowercase text-[0.72rem] text-text-primary truncate">
-                    {me?.full_name?.toLowerCase() ?? "you"}
+                  <p className="text-text-primary truncate" style={{ fontSize: 14, fontWeight: 500 }}>
+                    {me?.full_name ?? "You"}
                   </p>
                   <div className="mt-1">
-                    <StagePill stage={me?.stage ?? null} />
+                    <StagePill stage={me?.stage ?? null} sleek />
                   </div>
                 </div>
               </div>
@@ -879,10 +853,8 @@ export default function CohortRoomClient({
               {/* trust */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-mono lowercase text-[0.6rem] text-text-faint tracking-wider">
-                    trust
-                  </span>
-                  <span className="font-mono text-[0.7rem] text-text-secondary">
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Trust score</span>
+                  <span className="text-text-secondary" style={{ fontSize: 13 }}>
                     {myStats.trustScore}
                     <span className="text-text-faint"> / 120</span>
                   </span>
@@ -899,12 +871,12 @@ export default function CohortRoomClient({
                     borderRadius: "var(--radius-ctl)",
                   }}
                 >
-                  <p className="font-mono lowercase text-[0.55rem] text-text-faint">
-                    streak
-                  </p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Streak</p>
                   <p className="text-text-primary text-lg leading-tight mt-0.5">
                     {myStats.streakWeeks}
-                    <span className="text-[0.6rem] text-text-faint"> wks</span>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      {myStats.streakWeeks === 1 ? " week" : " weeks"}
+                    </span>
                   </p>
                 </div>
                 <div
@@ -914,9 +886,7 @@ export default function CohortRoomClient({
                     borderRadius: "var(--radius-ctl)",
                   }}
                 >
-                  <p className="font-mono lowercase text-[0.55rem] text-text-faint">
-                    posts this week
-                  </p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Posts this week</p>
                   <p className="text-text-primary text-lg leading-tight mt-0.5">
                     {myStats.postsThisWeek}
                   </p>
@@ -928,7 +898,7 @@ export default function CohortRoomClient({
                 {statRows.map(([label, value], i) => (
                   <div
                     key={label}
-                    className="flex items-center justify-between py-2 font-mono lowercase"
+                    className="flex items-center justify-between py-2"
                     style={{
                       borderBottom:
                         i < statRows.length - 1
@@ -936,10 +906,10 @@ export default function CohortRoomClient({
                           : "none",
                     }}
                   >
-                    <span className="text-[0.68rem] text-text-secondary">
+                    <span className="text-text-secondary" style={{ fontSize: 13 }}>
                       {label}
                     </span>
-                    <span className="text-[0.72rem] text-text-primary">
+                    <span className="text-text-primary" style={{ fontSize: 13 }}>
                       {value}
                     </span>
                   </div>
@@ -952,10 +922,10 @@ export default function CohortRoomClient({
                   className="mt-4 pt-3"
                   style={{ borderTop: "1px solid var(--border-default)" }}
                 >
-                  <p className="font-mono lowercase text-[0.55rem] text-text-faint mb-1">
-                    this week&apos;s win
+                  <p className="mb-1" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    This week&apos;s win
                   </p>
-                  <p className="text-[0.72rem] text-text-secondary leading-snug">
+                  <p className="text-text-secondary" style={{ fontSize: 13, lineHeight: 1.5 }}>
                     {myWin}
                   </p>
                 </div>
