@@ -3,17 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import LogoMark from "@/components/LogoMark";
+import AuthShell, { AUTH_CARD, AUTH_LABEL, AUTH_LINK } from "@/components/AuthShell";
+import ui from "@/components/ui/sleek.module.css";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const supabase = createClient();
@@ -33,50 +32,47 @@ export default function ForgotPasswordPage() {
     setSent(true);
   }
 
+  const footer = (
+    <p>
+      Remembered it?{" "}
+      <Link href="/login" style={AUTH_LINK} className="hover:underline">
+        Log in
+      </Link>
+    </p>
+  );
+
+  if (sent) {
+    return (
+      <AuthShell title="Check your inbox" footer={footer}>
+        <div style={AUTH_CARD}>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+            If an account exists for {email.trim()}, a reset link is on its way. It expires in an
+            hour, and works in the browser you requested it from.
+          </p>
+        </div>
+      </AuthShell>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-10">
-          <LogoMark size={44} />
-          <h1 className="font-mono lowercase text-text-primary text-lg mt-4 tracking-wide">quorum</h1>
-          <p className="font-mono lowercase text-text-faint text-xs mt-1">reset password</p>
+    <AuthShell title="Reset your password" subtitle="We'll email you a link to choose a new one." footer={footer}>
+      <form onSubmit={handleSubmit} className="space-y-4" style={AUTH_CARD}>
+        <div>
+          <label htmlFor="forgot-email" style={AUTH_LABEL}>Email</label>
+          <input
+            id="forgot-email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
 
-        {sent ? (
-          <div className="bg-card border border-border p-6 space-y-3">
-            <p className="font-mono text-xs text-text-primary lowercase">
-              check your inbox
-            </p>
-            <p className="font-mono text-xs text-text-faint lowercase leading-relaxed">
-              if an account exists for {email.trim().toLowerCase()}, a reset link is on its
-              way. it expires in an hour.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="bg-card border border-border p-6 space-y-4">
-            <div>
-              <label>email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}
-
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? "..." : "send reset link"}
-            </button>
-          </form>
-        )}
-
-        <p className="font-mono text-xs text-text-faint lowercase text-center mt-6">
-          remembered it?{" "}
-          <Link href="/login" className="text-amber hover:underline">log in</Link>
-        </p>
-      </div>
-    </main>
+        <button type="submit" disabled={loading} className={`${ui.primaryBtn} w-full`} style={{ padding: "11px 16px" }}>
+          {loading ? "Sending…" : "Send reset link"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

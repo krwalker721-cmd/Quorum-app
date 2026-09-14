@@ -7,7 +7,6 @@ import { usePaywall } from "@/hooks/usePaywall";
 import PaywallModal from "@/components/PaywallModal";
 import { timeAgo } from "@/lib/stage";
 import NewProjectModal from "./NewProjectModal";
-import RespondModal from "./RespondModal";
 import SkillModal from "./SkillModal";
 import NeedDetailModal from "./NeedDetailModal";
 import NeedApplicationsPanel from "./NeedApplicationsPanel";
@@ -176,7 +175,6 @@ export default function CollabBoardClient({
   const [tourDraft, setTourDraft] = useState("");
   const [newOpen, setNewOpen] = useState(false);
   const [newType, setNewType] = useState<"project" | "need">("project");
-  const [respondFor, setRespondFor] = useState<ProjectRow | null>(null);
   const [skillFor, setSkillFor] = useState<SkillEntry | null>(null);
   const [needDetail, setNeedDetail] = useState<ProjectRow | null>(null);
   const [needApplicationsFor, setNeedApplicationsFor] = useState<ProjectRow | null>(null);
@@ -305,7 +303,6 @@ export default function CollabBoardClient({
                   <ProjectsList
                     rows={visibleProjects}
                     currentUserId={currentUserId}
-                    onRespond={setRespondFor}
                     onDeleted={onItemDeleted}
                     onOpenDetail={setProjectDetail}
                   />
@@ -345,17 +342,6 @@ export default function CollabBoardClient({
           onUpgradeRequired={() => {
             setNewOpen(false);
             openPaywall("collab_posts");
-          }}
-        />
-      )}
-      {respondFor && (
-        <RespondModal
-          project={respondFor}
-          userId={currentUserId}
-          onClose={() => setRespondFor(null)}
-          onResponded={() => {
-            setRespondFor(null);
-            router.refresh();
           }}
         />
       )}
@@ -441,13 +427,11 @@ function OwnerMenu({
 function ProjectsList({
   rows,
   currentUserId,
-  onRespond,
   onDeleted,
   onOpenDetail,
 }: {
   rows: ProjectRow[];
   currentUserId: string;
-  onRespond: (p: ProjectRow) => void;
   onDeleted: (id: string) => void;
   onOpenDetail: (p: ProjectRow) => void;
 }) {
@@ -470,7 +454,6 @@ function ProjectsList({
           key={p.id}
           project={p}
           currentUserId={currentUserId}
-          onRespond={onRespond}
           onDeleted={onDeleted}
           onOpenDetail={onOpenDetail}
         />
@@ -487,7 +470,6 @@ function ProjectCard({
 }: {
   project: ProjectRow;
   currentUserId: string;
-  onRespond: (p: ProjectRow) => void;
   onDeleted: (id: string) => void;
   onOpenDetail: (p: ProjectRow) => void;
 }) {
@@ -560,7 +542,7 @@ function ProjectCard({
             <span className={closed ? ui.quietDot : undefined} aria-hidden style={closed ? undefined : { width: 7, height: 7, borderRadius: 999, background: "#22c55e", flexShrink: 0 }} />
             {closed ? "Closed" : "Open"}
           </span>
-          <span>{project.interest_count} interested</span>
+          {project.interest_count > 0 && <span>{project.interest_count} interested</span>}
           {project.looking_for && <span>Looking for {project.looking_for}</span>}
         </div>
         <div className="flex items-center gap-1.5 shrink-0 ml-auto">

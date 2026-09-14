@@ -1,11 +1,12 @@
-﻿"use client";
+"use client";
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import LogoMark from "@/components/LogoMark";
+import AuthShell, { AUTH_CARD, AUTH_ERROR, AUTH_LABEL, AUTH_LINK, sentence } from "@/components/AuthShell";
 import LegalLinks from "@/components/LegalLinks";
+import ui from "@/components/ui/sleek.module.css";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,7 +18,8 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   // Seeded from ?error= so a dead auth link (expired reset, spent confirmation)
   // explains itself here instead of dumping the user on a blank login form.
-  const [error, setError] = useState<string | null>(searchParams.get("error"));
+  const seeded = searchParams.get("error");
+  const [error, setError] = useState<string | null>(seeded ? sentence(seeded) : null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +29,7 @@ function LoginForm() {
 
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      setError(signInError.message.toLowerCase());
+      setError(sentence(signInError.message));
       setLoading(false);
       return;
     }
@@ -40,32 +42,39 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card border border-border p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" style={AUTH_CARD}>
       <div>
-        <label>email</label>
-        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <label htmlFor="login-email" style={AUTH_LABEL}>Email</label>
+        <input
+          id="login-email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </div>
       <div>
         <div className="flex items-baseline justify-between">
-          <label>password</label>
-          <Link
-            href="/forgot-password"
-            className="font-mono text-[0.65rem] text-text-faint lowercase hover:text-amber"
-          >
-            forgot?
+          <label htmlFor="login-password" style={AUTH_LABEL}>Password</label>
+          <Link href="/forgot-password" className={ui.tileLink} style={{ fontSize: 12 }}>
+            Forgot?
           </Link>
         </div>
-        <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input
+          id="login-password"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
       </div>
 
-      {error && <p className="font-mono text-xs text-red-400 lowercase">{error}</p>}
+      {error && <p role="alert" style={AUTH_ERROR}>{error}</p>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="btn-primary w-full"
-      >
-        {loading ? "..." : "log in"}
+      <button type="submit" disabled={loading} className={`${ui.primaryBtn} w-full`} style={{ padding: "11px 16px" }}>
+        {loading ? "Logging in…" : "Log in"}
       </button>
     </form>
   );
@@ -73,25 +82,24 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-10">
-          <LogoMark size={44} />
-          <h1 className="font-mono lowercase text-text-primary text-lg mt-4 tracking-wide">quorum</h1>
-          <p className="font-mono lowercase text-text-faint text-xs mt-1">log in</p>
-        </div>
-
-        <Suspense fallback={<div className="bg-card border border-border p-6 h-48" />}>
-          <LoginForm />
-        </Suspense>
-
-        <p className="font-mono text-xs text-text-faint lowercase text-center mt-6">
-          no account?{" "}
-          <Link href="/signup" className="text-amber hover:underline">request access</Link>
-        </p>
-
-        <LegalLinks className="mt-8" />
-      </div>
-    </main>
+    <AuthShell
+      title="Welcome back"
+      subtitle="Log in to your room."
+      footer={
+        <>
+          <p>
+            No account?{" "}
+            <Link href="/signup" style={AUTH_LINK} className="hover:underline">
+              Request access
+            </Link>
+          </p>
+          <LegalLinks className="mt-8" />
+        </>
+      }
+    >
+      <Suspense fallback={<div style={{ ...AUTH_CARD, height: 240 }} />}>
+        <LoginForm />
+      </Suspense>
+    </AuthShell>
   );
 }

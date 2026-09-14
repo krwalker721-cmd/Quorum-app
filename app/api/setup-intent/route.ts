@@ -4,6 +4,20 @@ import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
 import { PRICING } from "@/lib/pricing";
 import { LEGAL } from "@/lib/legal";
+import { isPlanKey, resolvePlanPrice, type PlanKey } from "@/lib/plans";
+
+// Plans this card path can start, and the price each one names in the consent
+// record. Partner isn't offered here.
+type CardPlan = Exclude<PlanKey, "partner">;
+const CARD_PLAN_PRICE: Record<CardPlan, string> = {
+  member: `$${PRICING.member.monthly}/month`,
+  member_annual: `$${PRICING.member.annual}/year`,
+  founding: `$${PRICING.founding.monthly}/month`,
+};
+
+function isCardPlan(v: unknown): v is CardPlan {
+  return isPlanKey(v) && v !== "partner";
+}
 
 // POST — create a SetupIntent so a referred user can save a card without being
 // charged. The SetupIntent is created on demand (when the user clicks "claim"),
@@ -65,11 +79,22 @@ export async function PUT(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { paymentMethodId, customerId, renewalConsent } = (await req.json()) as {
+  const { paymentMethodId, customerId, renewalConsent, plan: rawPlan } = (await req.json()) as {
     paymentMethodId?: string;
     customerId?: string;
     renewalConsent?: boolean;
+    plan?: string;
   };
+
+  // A plan KEY, resolved to a price server-side exactly as /api/checkout does,
+  // so what's charged always matches the plan named in the consent text. This
+  // route used to hardcode STRIPE_MEMBER_PRICE_ID whatever plan was chosen.
+  // No plan means Member (the referred free-month form); a plan this path
+  // doesn't offer (Partner) is refused rather than quietly swapped for Member.
+  if (rawPlan !== undefined && !isCardPlan(rawPlan)) {
+    return NextResponse.json({ error: "That plan isn't available here." }, { status: 400 });
+  }
+  const plan: CardPlan = rawPlan ?? "member";
 
   if (!paymentMethodId || !customerId) {
     return NextResponse.json(
@@ -90,10 +115,13 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  const priceId = process.env.STRIPE_MEMBER_PRICE_ID;
-  if (!priceId) {
-    return NextResponse.json({ error: "No price ID configured" }, { status: 400 });
+  // Enforces founding-seat availability too. The seat itself is claimed by the
+  // webhook when the subscription is created (metadata.plan === "founding").
+  const resolved = await resolvePlanPrice(plan);
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
+  const priceId = resolved.priceId;
 
   try {
     // Attach the card and make it the default for future invoices.
@@ -128,9 +156,11 @@ export async function PUT(req: NextRequest) {
       default_payment_method: paymentMethodId,
       metadata: {
         supabase_user_id: user.id,
+        // Read by the webhook (founding seat) and the billing summary.
+        plan,
         renewal_consent_at: new Date().toISOString(),
         renewal_consent_terms:
-          `Free until trial end, then $${PRICING.member.monthly}/month, renewing until ` +
+          `Free until trial end, then ${CARD_PLAN_PRICE[plan]}, renewing until ` +
           `cancelled. Terms of Service effective ${LEGAL.effectiveDate}.`,
       },
     });

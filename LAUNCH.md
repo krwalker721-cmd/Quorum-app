@@ -763,7 +763,7 @@ activation and DNS.
       `useSearchParams()` and no bail-out: the served HTML carries the heading,
       prices, and renewal notice.)*
 - [ ] **[me → you]** Analytics — Claude wires it, you create the account
-- [ ] **[me]** **In-app redesign: the sleek finish, page by page.** The owner
+- [x] **[me]** **In-app redesign: the sleek finish, page by page.** The owner
       asked for the landing page's look inside the app. One page at a time,
       each shown in the preview and approved before the next.
       - [x] Sidebar and Home: live (`8be4899`).
@@ -803,6 +803,10 @@ activation and DNS.
             classes, the dialog recipe, and each page's structure. Pricing
             and the auth pages (login, signup, pending) are the only screens
             still in the old finish.
+      - [x] Sign-in pages: login, signup, pending, forgot and reset password
+            share `components/AuthShell.tsx` (2026-09-14). Errors show as
+            written, not forced lowercase.
+      - [ ] Pricing — the last screen in the old finish.
 
       **How it's built.** Everything is opt-in so unconverted pages don't
       change: `<NoGrid />`, `<TopBar sleek>`, and a `sleek` prop on shared
@@ -878,8 +882,20 @@ yours, because most of them need a real inbox or a real card.
       referrer's coupon actually attaches in Stripe
 - [ ] **[you]** Account deletion → confirm the Stripe subscription genuinely
       cancels
-- [ ] **[me]** Route-level and redirect verification over HTTP; migration marker
+- [x] **[me]** Route-level and redirect verification over HTTP; migration marker
       probes; confirm the six fixed blockers hold in production
+      *Done 2026-09-14 against `quorumhq.co`, read-only. Public pages 200;
+      member pages 307 → /login; `www` → apex; unknown paths 404. Signed-out
+      calls to subscription, usage, referrals, checkout, setup-intent, account
+      delete, and admin get 401/403; both crons 401; the unsigned webhook 400.
+      A bogus reset link lands on the plain cross-device message (#1). Every
+      migration 004–017 answers its marker (`my_cohort_ids`,
+      `my_creator_cohort_ids`, `handshake_count`, and tables/columns through
+      `profiles.bio`). As an anonymous caller, check_ins, handshakes,
+      profiles, subscriptions, and messages return no rows (#4, #5). Not
+      probed, since they need writes or a real account: the signup trigger
+      (#2 — covered by the real signup above), delete tearing down billing
+      (#3), and the privileged-column clamp (#6).*
 
 ### Phase 7 — first week
 
@@ -1014,6 +1030,10 @@ is just scoped to one flow.
    status, invoices) and keep mutations — change card, cancel, switch plan — going
    to the portal. Stripe handles proration, dunning, and failed-payment recovery
    correctly; that logic is where self-built billing quietly breaks.
+   ✅ *Decided 2026-09-14 (the owner took this recommendation), and the read
+   side is built: Settings → Billing shows plan and price, the next or first
+   charge, the card on file, discounts, and the last six invoices, from
+   `GET /api/billing`. Every change still opens the portal.*
 
 **Hard line:** never put raw card `<input>` fields on a Quorum form. Card entry
 stays inside Stripe's iframe (Elements, as today). That is what keeps this in PCI
@@ -1024,7 +1044,11 @@ stays inside Stripe's iframe (Elements, as today). That is what keeps this in PC
 - **`/api/setup-intent` (PUT) hardcodes `STRIPE_MEMBER_PRICE_ID`** — it always
   creates a Member *monthly* subscription regardless of the plan chosen. Harmless
   for the referral flow it was written for; a real bug the moment anything else
-  routes through it. **[me]**
+  routes through it. **[me]** ✅ *Fixed 2026-09-14: the route takes a plan
+  key and resolves it through `resolvePlanPrice()` like `/api/checkout` (so
+  founding-seat availability is enforced), refuses Partner, stamps the plan on
+  the subscription so the webhook claims a founding seat, and names the real
+  price in the consent record.*
 - **`CardElement` is Stripe's legacy API.** `PaymentElement` is current and adds
   Apple Pay, Google Pay, and Link — wallets lift conversion. Migrate when the
   billing page gets built, not before. **[me]**
@@ -1055,6 +1079,7 @@ Shipped in `main` @ `2605f8b`; schema in `supabase/migrations/014_launch_privacy
   community; now that handshake rows are private it only shows your own. If the
   ambient signal is wanted back, it needs the same `SECURITY DEFINER` treatment
   as `handshake_count()`. **[me → you]** — code plus a small migration.
+  *Decided 2026-09-14: keep it as is.*
 - **Dead code.** `app/(app)/profile/[username]/page.tsx` calls
   `isAdminUnlocked()`, which reads a cookie nothing sets anymore (the admin panel
   moved to `localStorage`). The admin-only vault-nomination affordance on
@@ -1068,10 +1093,11 @@ All **[you]**:
 
 - **Partner tier** — "coming soon" in four places, but `/api/checkout` accepts
   `plan: "partner"` and the price ID is configured. Ship it or close the path.
+  *Still deciding (2026-09-14) — left exactly as is.*
 - **Waitlist cadence** — see §4b.
 - **Trial notification** — see §4a.
-- **Billing surface** — see §4c. Whether to converge on an in-app billing page or
-  keep delegating to Stripe's hosted Checkout and Customer Portal.
+- **Billing surface** — see §4c. ✅ *Decided 2026-09-14: own the reads, keep
+  the writes on Stripe's portal (built).*
 - **Landing page positioning** — Claude can build the page; the pitch is yours.
 
 ---

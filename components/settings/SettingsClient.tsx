@@ -345,8 +345,9 @@ function AccountSection({
       setMsg({ text: "Passwords don't match.", ok: false });
       return;
     }
-    if (pw.length < 6) {
-      setMsg({ text: "Use at least 6 characters.", ok: false });
+    // Same rule as signup and password reset.
+    if (pw.length < 8) {
+      setMsg({ text: "Use at least 8 characters.", ok: false });
       return;
     }
     const supabase = createClient();
