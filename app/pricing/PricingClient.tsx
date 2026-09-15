@@ -9,8 +9,10 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { PRICING, FOUNDING_SEATS, TRIAL_DAYS, LAPSE_GRACE_DAYS } from "@/lib/pricing";
+import { PRICING, FOUNDING_SEATS, TRIAL_DAYS } from "@/lib/pricing";
 import LegalLinks from "@/components/LegalLinks";
+import NoGrid from "@/components/ui/NoGrid";
+import ui from "@/components/ui/sleek.module.css";
 import { PRODUCT_BLOCKS, FAQ_ITEMS } from "@/lib/marketing-copy";
 
 // Publishable key is safe to expose. If it's missing the card form simply won't
@@ -35,16 +37,19 @@ type Sub = {
   partner_waitlist: boolean;
 };
 
+const HAIRLINE = "1px solid rgba(255, 255, 255, 0.07)";
+const SANS = "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif";
+
 const cardElementOptions = {
   style: {
     base: {
       color: "#e6edf3",
       fontFamily: "Space Grotesk, sans-serif",
-      fontSize: "14px",
-      "::placeholder": { color: "#484f58" },
+      fontSize: "15px",
+      "::placeholder": { color: "#6e7681" },
       backgroundColor: "transparent",
     },
-    invalid: { color: "#f85149" },
+    invalid: { color: "#f87171" },
   },
 };
 
@@ -100,7 +105,7 @@ function CardForm({
 
       const paymentMethodId = setupIntent?.payment_method as string;
 
-      // 3. Create the subscription with the 30-day trial.
+      // 3. Create the subscription, starting when the trial ends.
       const subRes = await fetch("/api/setup-intent", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -125,86 +130,70 @@ function CardForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--accent)",
-        borderRadius: 12,
-        padding: 24,
-        marginTop: 16,
-      }}
-    >
-      <p
-        className="font-sans"
-        style={{ fontSize: 16, color: "var(--text-primary)", marginBottom: 6 }}
-      >
+    <form onSubmit={handleSubmit} className={ui.tileHero} style={{ padding: 24, marginTop: 20 }}>
+      <p style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
         Add your card to claim your free month
       </p>
-      <p
-        className="font-mono"
-        style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 20 }}
-      >
+      <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", marginBottom: 18 }}>
         {`You won’t be charged until ${chargeDate ?? "your trial ends"}. Then your membership renews automatically at $${PRICING.member.monthly}/month until you cancel — cancel before ${chargeDate ?? "then"} to pay nothing.`}
       </p>
 
       <div
         style={{
-          border: "1px solid var(--border-default)",
-          borderRadius: 12,
-          padding: "12px 14px",
-          background: "var(--bg-base)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          borderRadius: 10,
+          padding: "13px 14px",
+          background: "rgba(0, 0, 0, 0.25)",
           marginBottom: 16,
         }}
       >
         <CardElement options={cardElementOptions} />
       </div>
 
+      {/* A checkbox row: the global `label` rule is lowercase mono, so the
+          font and case are set here. */}
       <label
-        style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 16, cursor: "pointer", lineHeight: 1.6 }}
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "flex-start",
+          marginBottom: 16,
+          cursor: "pointer",
+          lineHeight: 1.6,
+          fontFamily: SANS,
+          textTransform: "none",
+          letterSpacing: 0,
+          fontSize: 13,
+          color: "var(--text-secondary)",
+        }}
       >
         <input
           type="checkbox"
           checked={agreed}
           onChange={(e) => setAgreed(e.target.checked)}
-          style={{ marginTop: 3, accentColor: "var(--accent)" }}
+          style={{ marginTop: 3, accentColor: "#f59e0b" }}
         />
         <span>
           {`I agree that my membership starts automatically on ${chargeDate ?? "the day my trial ends"} and renews at $${PRICING.member.monthly}/month until I cancel. Cancelling before then costs nothing.`}{" "}
-          <a href="/terms" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>
+          <a href="/terms" target="_blank" rel="noreferrer" style={{ color: "#f8c56a" }}>
             Terms
           </a>
         </span>
       </label>
 
-      {error && (
-        <p className="font-mono" style={{ fontSize: 11, color: "#f85149", marginBottom: 12 }}>
-          {error}
-        </p>
-      )}
+      {error && <p style={{ fontSize: 13, color: "#f87171", marginBottom: 12 }}>{error}</p>}
 
       <button
         type="submit"
         disabled={loading || done || !stripe || !agreed}
-        className="font-mono"
+        className={`${ui.primaryBtn} w-full`}
         style={{
-          width: "100%",
-          background: done ? "#22c55e" : "var(--accent)",
-          color: "#0d1117",
-          fontSize: 12,
-          letterSpacing: "0.04em",
           padding: "12px 16px",
-          borderRadius: 12,
-          border: "none",
-          cursor: loading || done ? "default" : "pointer",
-          opacity: loading ? 0.7 : 1,
+          fontSize: 14,
+          ...(done ? { background: "#22c55e", boxShadow: "none" } : {}),
         }}
       >
-        {done
-          ? "Free month active ✓"
-          : loading
-            ? "Activating..."
-            : "Activate my free month →"}
+        {done ? "Free month active ✓" : loading ? "Activating…" : "Activate my free month →"}
       </button>
     </form>
   );
@@ -261,7 +250,8 @@ const PARTNER_FEATURES: Feat[] = [
   { name: "Priority support", desc: "Direct access when you need it" },
 ];
 
-// Feature comparison rows. Values render as ✓ / limited text / — / "soon".
+// Feature comparison rows. Values render as ✓ / — / "soon". (The first column's
+// key is `free` for history; it is the Founding plan.)
 const COMPARISON_ROWS: { feature: string; free: string; member: string; partner: string }[] = [
   { feature: "Cohort seat", free: "✓", member: "✓", partner: "✓" },
   { feature: "Read all content", free: "✓", member: "✓", partner: "✓" },
@@ -281,41 +271,29 @@ const COMPARISON_ROWS: { feature: string; free: string; member: string; partner:
 ];
 
 function ComparisonValue({ value }: { value: string }) {
-  let color = "#8b949e";
-  if (value === "✓") color = "#22c55e";
-  else if (value === "—") color = "#30363d";
-  else if (value === "soon") color = "#a78bfa";
-  return (
-    <span className="font-mono" style={{ fontSize: 11, color, textAlign: "center" }}>
-      {value}
-    </span>
-  );
+  if (value === "✓") return <span style={{ fontSize: 15, color: "#4ade80" }} aria-label="Included">✓</span>;
+  if (value === "—") return <span style={{ fontSize: 15, color: "var(--text-muted)", opacity: 0.6 }} aria-label="Not included">—</span>;
+  return <span style={{ fontSize: 12, color: "#a78bfa" }}>Soon</span>;
 }
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div
-      onClick={() => setOpen((v) => !v)}
-      style={{
-        background: "#161b22",
-        border: "1px solid #21262d",
-        borderRadius: 12,
-        padding: "16px 20px",
-        marginBottom: 8,
-        cursor: "pointer",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <span className="font-sans" style={{ fontSize: 14, color: "#e6edf3" }}>
-          {q}
-        </span>
-        <span className="font-mono" style={{ fontSize: 12, color: "#484f58" }}>
+    <div className={ui.tile} style={{ marginBottom: 8 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full text-left flex justify-between items-center gap-3"
+        style={{ padding: "16px 20px", background: "none", border: "none", cursor: "pointer" }}
+      >
+        <span style={{ fontSize: 15, color: "var(--text-primary)" }}>{q}</span>
+        <span aria-hidden style={{ fontSize: 18, lineHeight: 1, color: "var(--text-muted)" }}>
           {open ? "−" : "+"}
         </span>
-      </div>
+      </button>
       {open && (
-        <p className="font-sans" style={{ fontSize: 13, color: "#8b949e", marginTop: 10, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--text-secondary)", padding: "0 20px 16px" }}>
           {a}
         </p>
       )}
@@ -323,21 +301,67 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-function Feature({ feat, nameColor, descColor, bullet }: { feat: Feat; nameColor: string; descColor: string; bullet: string }) {
+function FeatureList({ items, dim = false }: { items: Feat[]; dim?: boolean }) {
   return (
-    <li style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 12 }}>
-      <span style={{ color: bullet, lineHeight: 1.4 }}>•</span>
-      <span>
-        <span className="font-sans" style={{ fontSize: 13, color: nameColor, display: "block" }}>
-          {feat.name}
-        </span>
-        <span className="font-sans" style={{ fontSize: 12, color: descColor, display: "block", lineHeight: 1.4 }}>
-          {feat.desc}
-        </span>
-      </span>
-    </li>
+    <ul style={{ listStyle: "none", padding: 0, margin: 0 }} className="space-y-3">
+      {items.map((f) => (
+        <li key={f.name} className="flex gap-2.5 items-start">
+          <span
+            aria-hidden
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: 999,
+              marginTop: 8,
+              flexShrink: 0,
+              background: dim ? "var(--text-muted)" : "#f59e0b",
+            }}
+          />
+          <span>
+            <span style={{ display: "block", fontSize: 14, color: dim ? "var(--text-secondary)" : "var(--text-primary)" }}>
+              {f.name}
+            </span>
+            <span style={{ display: "block", fontSize: 13, lineHeight: 1.45, color: "var(--text-muted)" }}>
+              {f.desc}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
+
+function PlanHeader({
+  label,
+  labelColor,
+  price,
+  chip,
+  blurb,
+}: {
+  label: string;
+  labelColor?: string;
+  price: number;
+  chip?: React.ReactNode;
+  blurb: string;
+}) {
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2" style={{ marginBottom: 12 }}>
+        <p style={{ fontSize: 14, fontWeight: 500, color: labelColor ?? "var(--text-secondary)" }}>{label}</p>
+        {chip}
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span style={{ fontSize: 42, fontWeight: 600, letterSpacing: "-0.03em", color: "var(--text-primary)" }}>
+          ${price}
+        </span>
+        <span style={{ fontSize: 15, color: "var(--text-muted)" }}>/month</span>
+      </div>
+      <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 8 }}>{blurb}</p>
+    </>
+  );
+}
+
+const DIVIDER = <div style={{ height: 1, background: "rgba(255, 255, 255, 0.07)", margin: "20px 0" }} />;
 
 // ─── Page body (inside Elements provider) ────────────────────────────────────
 function PricingBody({ canceled }: { canceled: boolean }) {
@@ -348,7 +372,6 @@ function PricingBody({ canceled }: { canceled: boolean }) {
   const [showCardForm, setShowCardForm] = useState(false);
   const [waitlistJoined, setWaitlistJoined] = useState(false);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
-  const [showDowngrade, setShowDowngrade] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
@@ -405,7 +428,6 @@ function PricingBody({ canceled }: { canceled: boolean }) {
       if (data.url) window.location.href = data.url;
     } finally {
       setPortalLoading(false);
-      setShowDowngrade(false);
     }
   }
 
@@ -435,7 +457,8 @@ function PricingBody({ canceled }: { canceled: boolean }) {
   // Member CTA depends on where the founder actually stands. "Start free trial"
   // used to be the fallback for every signed-in state, which made no sense to
   // anyone already mid-trial (or already lapsed out of one) — the button offered
-  // to start something they couldn't start twice.
+  // to start something they couldn't start twice. There is no free plan to
+  // "upgrade" from, so the paid CTA says what it is.
   const memberCta = useMemo<{
     label: string;
     disabled: boolean;
@@ -455,334 +478,197 @@ function PricingBody({ canceled }: { canceled: boolean }) {
     }
     if (trialing) {
       return {
-        label: "Become a Member →",
+        label: "Become a member →",
         disabled: false,
         action: "checkout" as const,
         sub:
           daysLeft !== null
-            ? `// your trial is running — ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left, nothing is charged until it ends`
-            : "// your trial is running — nothing is charged until it ends",
+            ? `Your trial is running — ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left. Nothing is charged until it ends.`
+            : "Your trial is running. Nothing is charged until it ends.",
       };
     }
     if (hadTrial) {
       return {
-        label: "Upgrade to Member →",
+        label: "Become a member →",
         disabled: false,
         action: "checkout" as const,
-        sub: "// your trial has ended — pick this up where you left off",
+        sub: "Your trial has ended. Pick up where you left off.",
       };
     }
-    return { label: "Upgrade to Member →", disabled: false, action: "checkout" as const };
+    return { label: "Become a member →", disabled: false, action: "checkout" as const };
   }, [tier, referred, coldVisitor, trialing, daysLeft, hadTrial]);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg-base)",
-        backgroundImage:
-          "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
-        padding: "60px 40px",
-      }}
-    >
-      <div style={{ maxWidth: 860, margin: "0 auto" }}>
-        {/* Back button */}
-        <button
-          onClick={goBack}
-          style={{
-            background: "transparent",
-            border: "none",
-            fontFamily: "JetBrains Mono, monospace",
-            fontSize: 11,
-            color: "#484f58",
-            letterSpacing: "0.06em",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 40,
-          }}
-        >
-          ← back
+    <main className={`min-h-screen ${ui.pageGlow}`} style={{ padding: "40px 20px 64px" }}>
+      <NoGrid />
+      <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+        <button type="button" onClick={goBack} className={ui.tileLink} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          ← Back
         </button>
 
         {/* Header */}
-        <p
-          className="font-mono uppercase"
-          style={{ fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em", textAlign: "center", marginBottom: 14 }}
-        >
-          // pricing
-        </p>
-        <h1
-          className="font-sans"
-          style={{ fontSize: 36, color: "var(--text-primary)", textAlign: "center", marginBottom: 12 }}
-        >
-          Simple, honest pricing.
-        </h1>
-        <p
-          className="font-sans"
-          style={{ fontSize: 16, color: "var(--text-secondary)", textAlign: "center", marginBottom: 60 }}
-        >
-          {trialing && daysLeft !== null
-            ? `Your trial is running — ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left. Then a room worth paying for.`
-            : `${TRIAL_DAYS.standard} days free. Then a room worth paying for.`}
-        </p>
+        <div className="text-center" style={{ marginTop: 32, marginBottom: 40 }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#f8c56a", marginBottom: 12 }}>Pricing</p>
+          <h1
+            className={`${ui.titleGradient} ${ui.balance}`}
+            style={{ fontSize: "clamp(32px, 5vw, 44px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1 }}
+          >
+            Simple, honest pricing.
+          </h1>
+          <p className={ui.balance} style={{ fontSize: 16, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 12 }}>
+            {trialing && daysLeft !== null
+              ? `Your trial is running — ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left. Then a room worth paying for.`
+              : `${TRIAL_DAYS.standard} days free. Then a room worth paying for.`}
+          </p>
+        </div>
 
         {/* What is Quorum */}
-        <div
-          style={{
-            background: "#161b22",
-            border: "1px solid #21262d",
-            borderRadius: 12,
-            padding: 32,
-            marginBottom: 48,
-          }}
-        >
-          <h2 className="font-sans" style={{ fontSize: 20, fontWeight: 500, color: "#e6edf3", marginBottom: 16 }}>
+        <section className={ui.tile} style={{ padding: 28, marginBottom: 32 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)", marginBottom: 18 }}>
             What is Quorum?
           </h2>
-          <div className="stack-md" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {PRODUCT_BLOCKS.map((b) => (
-              <div key={b.title} style={{ borderLeft: `2px solid ${b.color}`, padding: "0 0 0 16px" }}>
-                <p className="font-sans" style={{ fontSize: 14, fontWeight: 500, color: "#e6edf3", marginBottom: 6 }}>
-                  {b.title}
-                </p>
-                <p className="font-sans" style={{ fontSize: 13, color: "#6e7681", lineHeight: 1.6 }}>
-                  {b.desc}
-                </p>
+              <div key={b.title} style={{ borderLeft: "2px solid rgba(245, 158, 11, 0.35)", paddingLeft: 16 }}>
+                <p style={{ fontSize: 15, fontWeight: 500, color: "var(--text-primary)", marginBottom: 4 }}>{b.title}</p>
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>{b.desc}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* Referred banner */}
         {referred && (
           <div
             style={{
-              background: "rgba(34,197,94,0.06)",
-              border: "1px solid rgba(34,197,94,0.2)",
+              background: "rgba(34, 197, 94, 0.07)",
+              border: "1px solid rgba(34, 197, 94, 0.25)",
               borderRadius: 12,
               padding: "14px 20px",
-              marginBottom: 32,
+              marginBottom: 24,
             }}
           >
-            <p className="font-mono" style={{ fontSize: 11, color: "#22c55e" }}>
+            <p style={{ fontSize: 14, color: "#4ade80" }}>
               Your first month is on us — add a card below to claim it. Offer expires in {countdown}.
             </p>
           </div>
         )}
 
         {/* Tier cards */}
-        <div className="stack-tiers" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           {/* ── Founding member ── */}
-          <div
-            style={{
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border-default)",
-              borderRadius: 12,
-              padding: 28,
-              position: "relative",
-            }}
-          >
-            <p className="font-mono uppercase" style={{ fontSize: 9, color: "var(--text-disabled)", marginBottom: 12 }}>
-              // founding member
-            </p>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>${PRICING.founding.monthly}</span>
-              <span className="font-sans" style={{ fontSize: 16, color: "var(--text-disabled)" }}>/month</span>
-            </div>
-            <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 20px" }}>
-              Full Member access, locked at this rate for life. First {FOUNDING_SEATS} founders only.
-            </p>
-            <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {FOUNDING_FEATURES.map((f) => (
-                <Feature key={f.name} feat={f} nameColor="var(--text-secondary)" descColor="var(--text-disabled)" bullet="var(--border-muted)" />
-              ))}
-            </ul>
+          <div className={ui.tile} style={{ padding: 26 }}>
+            <PlanHeader
+              label="Founding member"
+              price={PRICING.founding.monthly}
+              blurb={`Full Member access, locked at this rate for life. First ${FOUNDING_SEATS} founders only.`}
+            />
+            {DIVIDER}
+            <FeatureList items={FOUNDING_FEATURES} dim />
             <button
+              type="button"
               onClick={() => startCheckout("founding")}
               disabled={loadingCheckout}
-              className="font-mono"
-              style={{
-                width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 12,
-                background: "transparent", color: "var(--text-primary)",
-                border: "1px solid var(--border-default)", fontSize: 12,
-                cursor: loadingCheckout ? "default" : "pointer",
-                opacity: loadingCheckout ? 0.6 : 1,
-              }}
+              className={`${ui.ghostBtn} w-full`}
+              style={{ marginTop: 24, padding: "12px 16px", fontSize: 14 }}
             >
               Claim founding rate →
             </button>
           </div>
 
-          {/* ── Member (highlighted) ── */}
-          <div
-            style={{
-              background: "var(--bg-surface)",
-              border: "1px solid var(--accent)",
-              borderRadius: 12,
-              padding: 28,
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 0, left: 0, right: 0, height: 3,
-                background: "var(--accent)", borderRadius: "12px 12px 0 0",
-              }}
+          {/* ── Member: the one amber hero ── */}
+          <div className={ui.tileHero} style={{ padding: 26 }}>
+            <PlanHeader
+              label="Member"
+              labelColor="#f8c56a"
+              price={PRICING.member.monthly}
+              chip={<span className={`${ui.chip} ${ui.chipAmber}`}>Most popular</span>}
+              blurb="Full access. No limits. No noise."
             />
-            <div
-              className="font-mono"
-              style={{
-                position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                background: "var(--accent)", color: "#0d1117", fontSize: 9, letterSpacing: "0.1em",
-                padding: "4px 12px", borderRadius: 3, whiteSpace: "nowrap",
-              }}
-            >
-              MOST POPULAR
-            </div>
-            <p className="font-mono uppercase" style={{ fontSize: 9, color: "var(--accent)", marginBottom: 12 }}>
-              // member
-            </p>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>${PRICING.member.monthly}</span>
-              <span className="font-sans" style={{ fontSize: 16, color: "var(--text-secondary)" }}>/month</span>
-            </div>
-            <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 8px" }}>
-              Full access. No limits. No noise.
-            </p>
             {/* Annual prepay is the main lever against monthly churn, so it gets
                 a real line rather than being buried in checkout. */}
             <button
+              type="button"
               onClick={() => startCheckout("member_annual")}
               disabled={loadingCheckout}
-              className="font-mono"
               style={{
-                background: "transparent", border: "none", padding: 0, marginBottom: 20,
-                fontSize: 11, color: "var(--accent)",
-                cursor: loadingCheckout ? "default" : "pointer", textAlign: "left",
+                background: "none",
+                border: "none",
+                padding: 0,
+                marginTop: 8,
+                fontFamily: SANS,
+                fontSize: 13,
+                color: "#f8c56a",
+                cursor: loadingCheckout ? "default" : "pointer",
+                textAlign: "left",
               }}
             >
-              or ${PRICING.member.annual}/year — 2 months free →
+              Or ${PRICING.member.annual}/year — 2 months free →
             </button>
-            <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {MEMBER_FEATURES.map((f) => (
-                <Feature key={f.name} feat={f} nameColor="var(--text-secondary)" descColor="var(--text-disabled)" bullet="var(--accent)" />
-              ))}
-            </ul>
+            {DIVIDER}
+            <FeatureList items={MEMBER_FEATURES} />
             <button
+              type="button"
               disabled={memberCta.disabled || loadingCheckout || portalLoading}
               onClick={() => {
                 if (memberCta.action === "checkout") startCheckout();
                 else if (memberCta.action === "claim") setShowCardForm(true);
                 else if (memberCta.action === "portal") openPortal();
               }}
-              className="font-mono"
+              className={`${ui.primaryBtn} w-full`}
               style={{
-                width: "100%", marginTop: 24, padding: "12px 16px", borderRadius: 10, fontSize: 12,
-                fontWeight: 500,
-                border: "none",
-                background: memberCta.disabled
-                  ? "var(--bg-overlay)"
-                  : "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
-                color: memberCta.disabled ? "var(--text-disabled)" : "#1a1204",
-                cursor: memberCta.disabled ? "default" : "pointer",
-                opacity: loadingCheckout || portalLoading ? 0.7 : 1,
+                marginTop: 24,
+                padding: "12px 16px",
+                fontSize: 14,
+                ...(memberCta.disabled
+                  ? { background: "rgba(255, 255, 255, 0.06)", color: "var(--text-muted)", boxShadow: "none" }
+                  : {}),
               }}
             >
-              {loadingCheckout ? "Loading..." : memberCta.label}
+              {loadingCheckout ? "Loading…" : memberCta.label}
             </button>
             {memberCta.sub && (
-              <p
-                className="font-mono"
-                style={{
-                  fontSize: 10,
-                  color: "var(--text-disabled)",
-                  marginTop: 8,
-                  textAlign: "center",
-                  lineHeight: 1.5,
-                }}
-              >
+              <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 10, textAlign: "center" }}>
                 {memberCta.sub}
               </p>
             )}
           </div>
 
           {/* ── Partner (coming soon) ── */}
-          <div
-            style={{
-              background: "var(--bg-surface)",
-              border: "1px solid rgba(167,139,250,0.2)",
-              borderRadius: 12,
-              padding: 28,
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 0, left: 0, right: 0, height: 3,
-                background: "#a78bfa", borderRadius: "12px 12px 0 0",
-              }}
+          <div className={ui.tile} style={{ padding: 26 }}>
+            <PlanHeader
+              label="Partner"
+              labelColor="#a78bfa"
+              price={PRICING.partner.monthly}
+              chip={
+                <span className={ui.chip} style={{ color: "#a78bfa", borderColor: "rgba(167, 139, 250, 0.35)" }}>
+                  Coming soon
+                </span>
+              }
+              blurb="The room where real business happens."
             />
-            <div
-              className="font-mono"
-              style={{
-                position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                background: "#a78bfa", color: "#0d1117", fontSize: 9, letterSpacing: "0.1em",
-                padding: "4px 12px", borderRadius: 3, whiteSpace: "nowrap",
-              }}
-            >
-              COMING SOON
-            </div>
-            <p className="font-mono uppercase" style={{ fontSize: 9, color: "#a78bfa", marginBottom: 12 }}>
-              // partner
-            </p>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-              <span className="font-sans" style={{ fontSize: 40, color: "var(--text-primary)" }}>${PRICING.partner.monthly}</span>
-              <span className="font-sans" style={{ fontSize: 16, color: "var(--text-disabled)" }}>/month</span>
-            </div>
-            <p className="font-sans" style={{ fontSize: 14, color: "var(--text-secondary)", margin: "8px 0 20px" }}>
-              The room where real business happens.
-            </p>
-            <div style={{ height: 1, background: "var(--border-default)", margin: "20px 0" }} />
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {PARTNER_FEATURES.map((f) => (
-                <Feature key={f.name} feat={f} nameColor="var(--text-disabled)" descColor="var(--text-disabled)" bullet="var(--border-muted)" />
-              ))}
-            </ul>
-            <p className="font-mono" style={{ fontSize: 10, color: "var(--text-disabled)", margin: "20px 0 12px" }}>
+            {DIVIDER}
+            <FeatureList items={PARTNER_FEATURES} dim />
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", margin: "20px 0 12px" }}>
               We&apos;re curating the founding Partner cohort. Join the waitlist to be considered.
             </p>
             {tier === "partner" ? (
-              <button
-                disabled
-                className="font-mono"
-                style={{
-                  width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 12,
-                  background: "transparent", color: "var(--text-disabled)",
-                  border: "1px solid var(--border-muted)", cursor: "default",
-                }}
-              >
+              <button type="button" disabled className={`${ui.ghostBtn} w-full`} style={{ padding: "12px 16px", fontSize: 14 }}>
                 Current plan
               </button>
             ) : (
               <button
+                type="button"
                 onClick={joinWaitlist}
                 disabled={waitlistJoined || waitlistLoading}
-                className="font-mono"
+                className={`${ui.ghostBtn} w-full`}
                 style={{
-                  width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 12,
-                  background: "transparent",
-                  color: waitlistJoined ? "var(--text-disabled)" : "#a78bfa",
-                  border: `1px solid ${waitlistJoined ? "var(--border-muted)" : "#a78bfa"}`,
-                  cursor: waitlistJoined ? "default" : "pointer",
-                  opacity: waitlistLoading ? 0.7 : 1,
+                  padding: "12px 16px",
+                  fontSize: 14,
+                  ...(waitlistJoined ? {} : { color: "#c4b5fd", borderColor: "rgba(167, 139, 250, 0.4)" }),
                 }}
               >
-                {waitlistJoined ? "On the waitlist ✓" : waitlistLoading ? "Joining..." : "Join the waitlist →"}
+                {waitlistJoined ? "On the waitlist ✓" : waitlistLoading ? "Joining…" : "Join the waitlist →"}
               </button>
             )}
           </div>
@@ -800,87 +686,70 @@ function PricingBody({ canceled }: { canceled: boolean }) {
             running when it actually is — this line used to reassure a lapsed
             founder about a trial that had already ended. */}
         {canceled && (
-          <p
-            className="font-mono"
-            style={{ fontSize: 11, color: "var(--text-disabled)", textAlign: "center", marginTop: 32 }}
-          >
-            {trialing
-              ? "No worries — your trial is still running."
-              : "No charge made — upgrade whenever you're ready."}
+          <p style={{ fontSize: 14, color: "var(--text-muted)", textAlign: "center", marginTop: 28 }}>
+            {trialing ? "No worries — your trial is still running." : "No charge made — join whenever you're ready."}
           </p>
         )}
 
         {/* Feature comparison chart */}
-        <div
-          style={{
-            background: "#161b22",
-            border: "1px solid #21262d",
-            borderRadius: 12,
-            overflow: "hidden",
-            marginTop: 48,
-            marginBottom: 48,
-          }}
-        >
-          <div className="comparison-scroll">
-          <div>
-          <div
-            className="font-mono uppercase"
-            style={{
-              background: "#1c2128",
-              padding: "14px 20px",
-              display: "grid",
-              gridTemplateColumns: "2fr 1fr 1fr 1fr",
-              fontSize: 10,
-              letterSpacing: "0.08em",
-            }}
-          >
-            <span style={{ color: "#484f58" }}>Feature</span>
-            <span style={{ color: "#8b949e", textAlign: "center" }}>Founding</span>
-            <span style={{ color: "#f59e0b", textAlign: "center" }}>Member</span>
-            <span style={{ color: "#a78bfa", textAlign: "center" }}>Partner</span>
-          </div>
-          {COMPARISON_ROWS.map((row, i) => (
-            <div
-              key={row.feature}
-              style={{
-                padding: "12px 20px",
-                display: "grid",
-                gridTemplateColumns: "2fr 1fr 1fr 1fr",
-                borderTop: "1px solid #21262d",
-                alignItems: "center",
-                background: i % 2 === 0 ? "#161b22" : "rgba(255,255,255,0.01)",
-              }}
-            >
-              <span className="font-sans" style={{ fontSize: 13, color: "#8b949e" }}>
-                {row.feature}
-              </span>
-              <span style={{ textAlign: "center" }}>
-                <ComparisonValue value={row.free} />
-              </span>
-              <span style={{ textAlign: "center" }}>
-                <ComparisonValue value={row.member} />
-              </span>
-              <span style={{ textAlign: "center" }}>
-                <ComparisonValue value={row.partner} />
-              </span>
+        <section className={ui.tile} style={{ marginTop: 40, marginBottom: 40, overflow: "hidden" }}>
+          <div className="comparison-scroll" style={{ overflowX: "auto" }}>
+            <div style={{ minWidth: 520 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "2fr 1fr 1fr 1fr",
+                  padding: "14px 20px",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  borderBottom: HAIRLINE,
+                  background: "rgba(255, 255, 255, 0.02)",
+                }}
+              >
+                <span style={{ color: "var(--text-muted)" }}>Feature</span>
+                <span style={{ color: "var(--text-secondary)", textAlign: "center" }}>Founding</span>
+                <span style={{ color: "#f8c56a", textAlign: "center" }}>Member</span>
+                <span style={{ color: "#a78bfa", textAlign: "center" }}>Partner</span>
+              </div>
+              {COMPARISON_ROWS.map((row, i) => (
+                <div
+                  key={row.feature}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "2fr 1fr 1fr 1fr",
+                    alignItems: "center",
+                    padding: "11px 20px",
+                    borderTop: i === 0 ? "none" : "1px solid rgba(255, 255, 255, 0.04)",
+                  }}
+                >
+                  <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>{row.feature}</span>
+                  <span style={{ textAlign: "center" }}>
+                    <ComparisonValue value={row.free} />
+                  </span>
+                  <span style={{ textAlign: "center" }}>
+                    <ComparisonValue value={row.member} />
+                  </span>
+                  <span style={{ textAlign: "center" }}>
+                    <ComparisonValue value={row.partner} />
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
           </div>
-          </div>
-        </div>
+        </section>
 
         {/* FAQ */}
-        <p className="font-mono" style={{ fontSize: 10, color: "#484f58", letterSpacing: "0.1em", marginBottom: 12 }}>
-          // common questions
-        </p>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)", marginBottom: 14 }}>
+          Common questions
+        </h2>
         {FAQ_ITEMS.map((item) => (
           <FaqItem key={item.q} q={item.q} a={item.a} />
         ))}
 
         {/* Automatic-renewal terms, stated plainly on the page that sells the plan. */}
         <p
-          className="font-mono"
-          style={{ fontSize: 11, color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.7, marginTop: 40 }}
+          className={ui.balance}
+          style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-secondary)", textAlign: "center", marginTop: 36 }}
         >
           Memberships renew automatically — ${PRICING.member.monthly}/month, or ${PRICING.member.annual}/year —
           until you cancel. Cancel anytime from settings; access runs to the end of the period
@@ -888,56 +757,7 @@ function PricingBody({ canceled }: { canceled: boolean }) {
         </p>
         <LegalLinks className="mt-6" />
       </div>
-
-      {/* Downgrade confirmation modal */}
-      {showDowngrade && (
-        <div
-          onClick={() => setShowDowngrade(false)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000,
-            display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "var(--bg-surface)", border: "1px solid var(--border-default)",
-              borderRadius: 12, padding: 28, maxWidth: 420, width: "100%",
-            }}
-          >
-            <p className="font-sans" style={{ fontSize: 18, color: "var(--text-primary)", marginBottom: 8 }}>
-              Cancel your membership?
-            </p>
-            <p className="font-mono" style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.6 }}>
-              You&apos;ll manage this in the billing portal. Access stays active until the end of the current period, after which your cohort seat is held for {LAPSE_GRACE_DAYS} days before returning to the pool.
-            </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button
-                onClick={() => setShowDowngrade(false)}
-                className="font-mono"
-                style={{
-                  padding: "10px 16px", borderRadius: 12, fontSize: 12, background: "transparent",
-                  color: "var(--text-secondary)", border: "1px solid var(--border-default)", cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={openPortal}
-                disabled={portalLoading}
-                className="font-mono"
-                style={{
-                  padding: "10px 16px", borderRadius: 12, fontSize: 12, background: "var(--accent)",
-                  color: "#0d1117", border: "none", cursor: "pointer", opacity: portalLoading ? 0.7 : 1,
-                }}
-              >
-                {portalLoading ? "Opening..." : "Continue →"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </main>
   );
 }
 
