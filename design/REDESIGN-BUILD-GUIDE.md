@@ -4,8 +4,9 @@
 > described in §2, carried over from the landing page (`components/landing/`). The page
 > *structure* in §4 is the approved redesign from the mockup session (`design/mockups.html`);
 > the mockups show the older terminal finish, so match their layout, not their styling.
-> Build new screens from §2 and §3. Pricing and the auth pages (login, signup, pending)
-> have not been converted.
+> Build new screens from §2 and §3. The signed-out screens use the same finish: Pricing,
+> and the auth pages (login, signup, pending, password reset), which share
+> `components/AuthShell.tsx`.
 
 ---
 

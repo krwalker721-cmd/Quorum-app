@@ -806,7 +806,12 @@ activation and DNS.
       - [x] Sign-in pages: login, signup, pending, forgot and reset password
             share `components/AuthShell.tsx` (2026-09-14). Errors show as
             written, not forced lowercase.
-      - [ ] Pricing — the last screen in the old finish.
+      - [x] Pricing (2026-09-14). Member is the one amber card; the paid
+            button says "Become a member" rather than "Upgrade" (there's no
+            free plan to upgrade from); checkout, the referral card form, and
+            the Partner waitlist are unchanged. Removed a "cancel your
+            membership?" confirmation that nothing ever opened. Every screen
+            in the app is now in the sleek finish.
 
       **How it's built.** Everything is opt-in so unconverted pages don't
       change: `<NoGrid />`, `<TopBar sleek>`, and a `sleek` prop on shared
