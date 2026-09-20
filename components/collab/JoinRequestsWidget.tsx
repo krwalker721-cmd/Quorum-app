@@ -112,7 +112,7 @@ export default function JoinRequestsWidget({
                 />
                 <p
                   className="min-w-0 flex-1 truncate"
-                  style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
+                  style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}
                 >
                   {r.requester?.full_name ?? "—"}
                 </p>
@@ -120,7 +120,7 @@ export default function JoinRequestsWidget({
               </div>
               <p
                 className="whitespace-pre-wrap"
-                style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)" }}
+                style={{ fontSize: 12, lineHeight: 1.55, color: "var(--text-secondary)" }}
               >
                 {r.reason}
               </p>

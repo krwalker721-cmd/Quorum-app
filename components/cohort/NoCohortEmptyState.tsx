@@ -11,13 +11,13 @@ export default function NoCohortEmptyState() {
         >
           You&apos;re not in a cohort yet.
         </h1>
-        <p className="text-text-secondary mt-4 leading-relaxed" style={{ fontSize: 16 }}>
+        <p className="text-text-secondary mt-4 leading-relaxed" style={{ fontSize: 14.5 }}>
           Every founder on Quorum has a private advisory board. Yours is being set up.
         </p>
         <Link
           href="/cohort/browse"
           className={ui.primaryBtn}
-          style={{ display: "inline-block", marginTop: 32, fontSize: 14, padding: "11px 20px" }}
+          style={{ display: "inline-block", marginTop: 32, fontSize: 13, padding: "11px 20px" }}
         >
           Join a cohort →
         </Link>

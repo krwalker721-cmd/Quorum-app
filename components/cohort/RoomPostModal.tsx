@@ -111,8 +111,8 @@ export default function RoomPostModal({
                       background: active ? `${t.color}14` : undefined,
                     }}
                   >
-                    <p style={{ fontSize: 14, color: active ? t.color : "var(--text-primary)" }}>{t.label}</p>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{t.desc}</p>
+                    <p style={{ fontSize: 13, color: active ? t.color : "var(--text-primary)" }}>{t.label}</p>
+                    <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>{t.desc}</p>
                   </button>
                 );
               })}
@@ -163,14 +163,14 @@ export default function RoomPostModal({
               />
             </button>
             <div style={{ lineHeight: 1.4 }}>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Post anonymously</p>
-              <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>Post anonymously</p>
+              <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                 The room sees the post but not your name.
               </p>
             </div>
           </div>
 
-          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+          {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
         </div>
 
         <div className="modal-shell-foot">

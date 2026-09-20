@@ -170,8 +170,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div
             className="app-content"
             style={{
-              marginLeft: "var(--sidebar-w, 240px)",
-              paddingBottom: 20,
+              marginLeft: "var(--sidebar-w, 208px)",
               transition: "margin-left 0.25s ease",
             }}
           >

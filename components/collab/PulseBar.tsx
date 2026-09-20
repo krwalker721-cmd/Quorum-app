@@ -224,7 +224,7 @@ export default function PulseBar({ initialEvents }: { initialEvents: PulseEvent[
   return (
     <p
       className="flex items-center gap-2 min-w-0"
-      style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 10 }}
+      style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}
       aria-live="polite"
     >
       <span aria-hidden className={live ? ui.liveDot : ui.quietDot} />

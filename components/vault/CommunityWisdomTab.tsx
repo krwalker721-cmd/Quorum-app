@@ -84,9 +84,9 @@ export default function CommunityWisdomTab({
   }, []);
 
   return (
-    <div style={{ maxWidth: 820 }}>
+    <div>
       {tick && (
-        <p className="flex items-center gap-2" style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 14 }}>
+        <p className="flex items-center gap-2" style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>
           <span aria-hidden className={ui.liveDot} />
           A founder just posted on Pulse.
         </p>
@@ -136,16 +136,16 @@ function WisdomCard({ item }: { item: WisdomItem }) {
         ) : (
           <div
             className="shrink-0 flex items-center justify-center"
-            style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--card)", color: "var(--text-muted)", fontSize: 11 }}
+            style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--card)", color: "var(--text-muted)", fontSize: 10.5 }}
           >
             ?
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+          <p className="truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
             {author?.full_name ?? "Anonymous"}
           </p>
-          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
             Posted {shortTimeAgo(item.post.created_at)} ago
           </p>
         </div>
@@ -157,20 +157,20 @@ function WisdomCard({ item }: { item: WisdomItem }) {
 
       <p
         className="whitespace-pre-wrap"
-        style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 12 }}
+        style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 12 }}
       >
         {item.post.content}
       </p>
 
       {(item.nominator || item.nomination_reason) && (
-        <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 10 }}>
+        <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 10 }}>
           Nominated by {item.nominator?.full_name ?? "a member"}
           {item.nomination_reason ? ` — “${item.nomination_reason}”` : ""}
         </p>
       )}
 
       <footer className={`${ui.cardFoot} flex items-center justify-between gap-3 flex-wrap`}>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+        <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
           {replies(item.post.reply_count)} · kept {shortTimeAgo(item.approved_at)} ago
         </span>
         <Link href={`/pulse#post-${item.post_id}`} className={ui.tileLink}>
@@ -238,14 +238,14 @@ function NominationPreview({ post }: { post: GhostPost }) {
             size={28}
           />
         )}
-        <p className="flex-1 truncate" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+        <p className="flex-1 truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
           {post.author?.full_name ?? "Anonymous"}
         </p>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{replies(post.reply_count)}</span>
+        <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{replies(post.reply_count)}</span>
       </header>
       <p
         className="line-clamp-3 whitespace-pre-wrap"
-        style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 10 }}
+        style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 10 }}
       >
         {post.content}
       </p>

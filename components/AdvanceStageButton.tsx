@@ -26,7 +26,7 @@ function StageSwatch({ stage, dim = false }: { stage: Stage; dim?: boolean }) {
   return (
     <span
       style={{
-        fontSize: 14,
+        fontSize: 13,
         padding: "6px 14px",
         borderRadius: 999,
         border: `1px solid ${color}`,
@@ -72,7 +72,7 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
         type="button"
         onClick={() => setOpen(true)}
         className={ui.softBtn}
-        style={{ padding: "4px 10px", fontSize: 12 }}
+        style={{ padding: "4px 10px", fontSize: 11.5 }}
       >
         Advance stage
       </button>
@@ -96,12 +96,12 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>Advance your stage</p>
+              <p style={{ fontSize: 14.5, fontWeight: 600, color: "var(--text-primary)" }}>Advance your stage</p>
               <button
                 type="button"
                 onClick={() => !busy && setOpen(false)}
                 className={ui.textBtn}
-                style={{ fontSize: 13 }}
+                style={{ fontSize: 12 }}
               >
                 Close
               </button>
@@ -113,11 +113,11 @@ export default function AdvanceStageButton({ currentStage }: { currentStage: str
               <StageSwatch stage={next} />
             </div>
 
-            <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--text-secondary)", textAlign: "center" }}>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)", textAlign: "center" }}>
               This is permanent, so make sure you&apos;re ready.
             </p>
 
-            {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+            {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
 
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => setOpen(false)} disabled={busy} className={ui.ghostBtn}>

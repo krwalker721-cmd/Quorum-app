@@ -167,7 +167,7 @@ export default function PulseFeed({
           className={`flex items-center justify-between ${ui.tile}`}
           style={{ padding: "10px 12px 10px 18px" }}
         >
-          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             Filtered by <span style={{ color: "#f59e0b" }}>#{tagFilter}</span>
           </p>
           <button onClick={clearFilter} className={ui.ghostBtn} style={{ padding: "6px 12px" }}>

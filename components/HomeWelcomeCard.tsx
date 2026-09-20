@@ -61,7 +61,7 @@ export default function HomeWelcomeCard() {
         </p>
         <p
           className="font-sans"
-          style={{ fontSize: 13, color: "#8b949e" }}
+          style={{ fontSize: 12, color: "#8b949e" }}
         >
           Your {daysLeftInTrial ?? 30}-day trial is active. Explore everything — no limits.
         </p>
@@ -76,7 +76,7 @@ export default function HomeWelcomeCard() {
           paddingRight: 12,
         }}
       >
-        <span className="font-mono" style={{ fontSize: 11, color: "#f59e0b" }}>
+        <span className="font-mono" style={{ fontSize: 10.5, color: "#f59e0b" }}>
           {daysLeftInTrial ?? 0} days left
         </span>
         <button
@@ -108,7 +108,7 @@ export default function HomeWelcomeCard() {
           border: "none",
           color: "var(--text-disabled, #484f58)",
           cursor: "pointer",
-          fontSize: 14,
+          fontSize: 13,
           lineHeight: 1,
         }}
       >

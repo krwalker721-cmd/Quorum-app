@@ -60,7 +60,7 @@ export default function SidebarTierBadge({ collapsed }: { collapsed: boolean }) 
             textAlign: "left",
             padding: 0,
             margin: "0 0 8px 14px",
-            fontSize: 12,
+            fontSize: 11.5,
             color: "#f59e0b",
             textDecoration: "none",
           }}

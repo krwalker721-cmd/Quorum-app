@@ -20,7 +20,7 @@ export default function Tile({
   className = "",
   style,
   gradient = false,
-  padding = "20px 22px",
+  padding = "14px 16px",
 }: {
   kicker?: ReactNode;
   kickerColor?: string;
@@ -42,7 +42,7 @@ export default function Tile({
       className={`${gradient ? ui.tileHero : ui.tile} ${className}`}
     >
       {hasHeader && (
-        <div className="flex items-baseline justify-between" style={{ marginBottom: 14 }}>
+        <div className="flex items-baseline justify-between" style={{ marginBottom: 10 }}>
           {kicker != null ? (
             <span className={ui.label} style={kickerColor ? { color: kickerColor } : undefined}>
               {kicker}

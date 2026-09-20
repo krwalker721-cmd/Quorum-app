@@ -203,7 +203,7 @@ export const TOUR_STEPS: TourStep[] = [
     anchor: "collab-list",
     section: "the board",
     title: "Skills",
-    body: "Every skill in the room and who has it. This is how founders find you — someone searches \"fundraising\" and your name is on the list.",
+    body: "Every skill in the room and who has it — browse by skill, or by founder to see the whole person. Add your own at the top: someone searches \"fundraising\" and your name is on the list.",
   },
   {
     route: "/collab?tab=projects",

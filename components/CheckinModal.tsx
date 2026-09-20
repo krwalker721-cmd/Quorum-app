@@ -11,7 +11,7 @@ const RATINGS: { value: Rating; label: string }[] = [
   { value: "lost", label: "Lost" },
 ];
 
-const QUESTION: React.CSSProperties = { fontSize: 15, lineHeight: 1.45, color: "var(--text-primary)" };
+const QUESTION: React.CSSProperties = { fontSize: 14, lineHeight: 1.45, color: "var(--text-primary)" };
 
 export default function CheckinModal({
   open,
@@ -103,7 +103,7 @@ export default function CheckinModal({
                     }}
                   />
                 ))}
-                <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 4 }}>
+                <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 4 }}>
                   Step {step + 1} of {TOTAL}
                 </span>
               </div>
@@ -120,7 +120,7 @@ export default function CheckinModal({
                 week": two invented founders with made-up wins. Now it says what
                 actually happens to the check-in. */}
             <div className="modal-shell-body">
-              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)" }}>
                 Your cohort sees it with this week&apos;s check-ins in your room
                 {anon ? ", without your name" : ""}. See you next week.
               </p>
@@ -175,7 +175,7 @@ export default function CheckinModal({
                         }}
                       />
                     </button>
-                    <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Share anonymously</p>
+                    <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>Share anonymously</p>
                   </div>
                 </div>
               )}
@@ -195,7 +195,7 @@ export default function CheckinModal({
                           className="option-card py-3"
                           style={{
                             textAlign: "center",
-                            fontSize: 14,
+                            fontSize: 13,
                             borderColor: active ? "rgba(245, 158, 11, 0.5)" : undefined,
                             color: active ? "#f8c56a" : "var(--text-secondary)",
                             background: active ? "rgba(245, 158, 11, 0.08)" : undefined,
@@ -237,7 +237,7 @@ export default function CheckinModal({
                 </div>
               )}
 
-              {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+              {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
             </div>
 
             <div className="modal-shell-foot" style={{ justifyContent: "space-between" }}>

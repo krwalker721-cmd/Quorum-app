@@ -180,7 +180,7 @@ export default function NotesTab({
               type="button"
               onClick={createNote}
               className={ui.softBtn}
-              style={{ padding: "5px 10px", fontSize: 12 }}
+              style={{ padding: "5px 10px", fontSize: 11.5 }}
             >
               New note
             </button>
@@ -191,7 +191,7 @@ export default function NotesTab({
             placeholder="Search notes"
             aria-label="Search notes"
             className={`${ui.search} w-full`}
-            style={{ fontSize: 13, padding: "7px 12px" }}
+            style={{ fontSize: 12, padding: "7px 12px" }}
           />
         </div>
 
@@ -206,7 +206,7 @@ export default function NotesTab({
                   onClick={() => setCollapsed((p) => ({ ...p, [c.id]: !p[c.id] }))}
                   aria-expanded={!isCollapsed}
                   className="w-full text-left px-4 py-1.5 flex items-center justify-between hover:text-text-primary"
-                  style={{ fontSize: 12, color: "var(--text-muted)" }}
+                  style={{ fontSize: 11.5, color: "var(--text-muted)" }}
                 >
                   <span className="truncate">
                     <span aria-hidden style={{ display: "inline-block", width: 12 }}>
@@ -236,7 +236,7 @@ export default function NotesTab({
           onClick={createCollection}
           className={`${ui.textBtn} text-left`}
           // Inline padding: .textBtn zeroes it, and would beat Tailwind's px/py.
-          style={{ fontSize: 13, padding: "10px 16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}
+          style={{ fontSize: 12, padding: "10px 16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}
         >
           + New collection
         </button>
@@ -326,7 +326,7 @@ function NoteRowItem({
       <div className="flex items-center justify-between gap-2">
         <p
           className="truncate flex-1 min-w-0"
-          style={{ fontSize: 14, fontWeight: 500, color: note.title ? "var(--text-primary)" : "var(--text-muted)" }}
+          style={{ fontSize: 13, fontWeight: 500, color: note.title ? "var(--text-primary)" : "var(--text-muted)" }}
         >
           {note.title || "Untitled note"}
         </p>
@@ -347,7 +347,7 @@ function NoteRowItem({
           </svg>
         </button>
       </div>
-      <p className="truncate" style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+      <p className="truncate" style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
         {updated}
         {firstLine ? ` · ${firstLine}` : ""}
       </p>
@@ -357,7 +357,7 @@ function NoteRowItem({
           onClick={(e) => e.stopPropagation()}
           className={`absolute right-2 top-9 z-30 min-w-[190px] ${ui.menu}`}
         >
-          <p style={{ fontSize: 11, color: "var(--text-muted)", padding: "4px 10px 2px" }}>Move to</p>
+          <p style={{ fontSize: 10.5, color: "var(--text-muted)", padding: "4px 10px 2px" }}>Move to</p>
           <button
             type="button"
             onClick={() => {
@@ -407,7 +407,7 @@ function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
           <p className={ui.emptyTitle}>Pick a note, or start a new one.</p>
         ) : (
           <>
-            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
+            <p style={{ fontSize: 14.5, fontWeight: 600, color: "var(--text-primary)" }}>
               Your thinking space.
             </p>
             <p className={ui.emptySub} style={{ marginTop: 6 }}>
@@ -422,9 +422,9 @@ function NotesEmpty({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
         </button>
         {!hasAny && (
           <div style={{ marginTop: 22 }}>
-            <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Not sure where to start?</p>
+            <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Not sure where to start?</p>
             {PROMPTS.map((p) => (
-              <p key={p} style={{ fontSize: 13, fontStyle: "italic", color: "var(--text-secondary)", marginTop: 6 }}>
+              <p key={p} style={{ fontSize: 12, fontStyle: "italic", color: "var(--text-secondary)", marginTop: 6 }}>
                 {p}
               </p>
             ))}

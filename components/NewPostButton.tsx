@@ -144,16 +144,16 @@ export default function NewPostButton({
         // Only Pulse renders the composer, so it takes the sleek finish directly.
         <button onClick={() => setOpen(true)} className={ui.composer}>
           <Avatar name={currentUserName ?? null} size={30} />
-          <span style={{ flex: 1, fontSize: 14, color: "var(--text-muted)" }}>
+          <span style={{ flex: 1, fontSize: 13, color: "var(--text-muted)" }}>
             Share what you&apos;re working through…
           </span>
           <span
             className={ui.glow}
             style={{
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 500,
-              background: "linear-gradient(135deg, rgba(245,158,11,.95), rgba(245,158,11,.75))",
-              color: "#1a1204",
+              background: "var(--btn-primary-bg)",
+              color: "var(--btn-primary-fg)",
               padding: "8px 16px",
               borderRadius: 8,
             }}
@@ -226,10 +226,10 @@ export default function NewPostButton({
                             background: active ? `${color}11` : undefined,
                           }}
                         >
-                          <p style={{ fontSize: 14, color: active ? color : "var(--text-primary)" }}>
+                          <p style={{ fontSize: 13, color: active ? color : "var(--text-primary)" }}>
                             {sentence(t)}
                           </p>
-                          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                          <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
                             {sentence(ROOM_TYPE_LABEL[t] ?? "")}
                           </p>
                         </button>
@@ -289,7 +289,7 @@ export default function NewPostButton({
                     })}
                   </div>
                   {inNoCohort && (
-                    <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+                    <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>
                       Join a cohort to post there.
                     </p>
                   )}
@@ -329,8 +329,8 @@ export default function NewPostButton({
                   />
                 </button>
                 <div style={{ flex: "1 1 auto", minWidth: 0, lineHeight: 1.4 }}>
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Post anonymously</p>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>Post anonymously</p>
+                  <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                     {isPulse || postType === "pulse"
                       ? "The community sees your words, not your name."
                       : "Your cohort sees the post but not your name."}
@@ -338,7 +338,7 @@ export default function NewPostButton({
                 </div>
               </div>
 
-              {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+              {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
             </div>
 
             <div className="modal-shell-foot">

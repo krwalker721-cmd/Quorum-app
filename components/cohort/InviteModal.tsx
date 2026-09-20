@@ -81,7 +81,7 @@ export default function InviteModal({
 
         <div className="modal-shell-body">
           {cohorts.length === 0 ? (
-            <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
               You&apos;re not in a cohort yet.{" "}
               <Link href="/cohort/create" style={{ color: "#f8c56a" }} className="hover:underline">
                 Create one →
@@ -111,7 +111,7 @@ export default function InviteModal({
                 />
               </div>
 
-              {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+              {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
 
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
@@ -134,7 +134,7 @@ export default function InviteModal({
 
               {link && (
                 <div className="space-y-2" style={{ paddingTop: 14, borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>Share this link</p>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>Share this link</p>
                   <div className="flex gap-2">
                     <input value={link} readOnly aria-label="Invite link" className="flex-1" />
                     <button onClick={copy} type="button" className="btn-primary whitespace-nowrap">
@@ -142,7 +142,7 @@ export default function InviteModal({
                     </button>
                   </div>
                   {/* Nothing here sends an email; say so, as /cohort/invite does. */}
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                     Quorum doesn&apos;t send the email for you yet. Copy the link and send it yourself.
                   </p>
                 </div>

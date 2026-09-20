@@ -301,7 +301,7 @@ export default function NoteEditor({
           className="flex-1 min-w-0 bg-transparent placeholder:text-text-muted focus:outline-none"
           // The global input style adds a box; the title reads as a heading.
           style={{
-            fontSize: 22,
+            fontSize: 19,
             fontWeight: 600,
             letterSpacing: "-0.02em",
             color: "var(--text-primary)",
@@ -311,7 +311,7 @@ export default function NoteEditor({
             boxShadow: "none",
           }}
         />
-        <span className="shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+        <span className="shrink-0" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
           {savedLabel}
         </span>
       </div>
@@ -382,7 +382,7 @@ export default function NoteEditor({
             )}
           </div>
         </div>
-        <span className="shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+        <span className="shrink-0" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
           {wordCount} {wordCount === 1 ? "word" : "words"}
         </span>
       </div>

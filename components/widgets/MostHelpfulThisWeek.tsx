@@ -60,10 +60,10 @@ export default async function MostHelpfulThisWeek() {
                   <Avatar name={p.full_name} stage={p.stage} username={p.username} size={26} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="truncate" style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                  <p className="truncate" style={{ fontSize: 13, color: "var(--text-primary)" }}>
                     {p.full_name ?? "—"}
                   </p>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                  <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
                     {p.stage && <span style={{ color: stageColor }}>{p.stage} · </span>}
                     {count} {count === 1 ? "reply" : "replies"}
                   </p>

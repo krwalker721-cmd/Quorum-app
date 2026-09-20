@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import { usePaywall } from "@/hooks/usePaywall";
@@ -8,6 +9,7 @@ import PaywallModal from "@/components/PaywallModal";
 import { timeAgo } from "@/lib/stage";
 import NewProjectModal from "./NewProjectModal";
 import SkillModal from "./SkillModal";
+import SkillsEditor from "./SkillsEditor";
 import NeedDetailModal from "./NeedDetailModal";
 import NeedApplicationsPanel from "./NeedApplicationsPanel";
 import ProjectDetailModal from "./ProjectDetailModal";
@@ -54,6 +56,9 @@ type SkillEntry = {
   skill: string;
   members: SkillMember[];
 };
+
+/** A founder and everything they can help with, for the "by founder" view. */
+export type PersonEntry = SkillMember & { skills: string[] };
 
 const SKILL_CATEGORY_MAP: Record<string, string> = {
   // growth
@@ -109,10 +114,10 @@ const TAB_SUB: Record<Tab, string> = {
   skills: "Who can help with what",
 };
 
-const NAME: React.CSSProperties = { fontSize: 14, fontWeight: 500, color: "var(--text-primary)" };
-const META: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)" };
+const NAME: React.CSSProperties = { fontSize: 13, fontWeight: 500, color: "var(--text-primary)" };
+const META: React.CSSProperties = { fontSize: 11.5, color: "var(--text-muted)" };
 const CARD_TITLE: React.CSSProperties = {
-  fontSize: 17,
+  fontSize: 15,
   fontWeight: 600,
   letterSpacing: "-0.01em",
   lineHeight: 1.35,
@@ -120,7 +125,7 @@ const CARD_TITLE: React.CSSProperties = {
   marginTop: 12,
 };
 const CARD_BODY: React.CSSProperties = {
-  fontSize: 14,
+  fontSize: 13,
   lineHeight: 1.6,
   color: "var(--text-secondary)",
   marginTop: 6,
@@ -132,6 +137,8 @@ export default function CollabBoardClient({
   projects,
   needs,
   skillIndex,
+  people,
+  currentUserSkills,
   workspaceProjects,
   initialPulseEvents,
   errorBanner,
@@ -141,6 +148,8 @@ export default function CollabBoardClient({
   projects: ProjectRow[];
   needs: ProjectRow[];
   skillIndex: SkillEntry[];
+  people: PersonEntry[];
+  currentUserSkills: string[];
   workspaceProjects: WorkspaceProject[];
   initialPulseEvents: PulseEvent[];
   errorBanner?: string | null;
@@ -218,8 +227,8 @@ export default function CollabBoardClient({
   return (
     <>
       <div
-        className={`page-pad ${ui.pageGlow}`}
-        style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+        className={"page-pad"}
+        style={{ padding: "18px 26px 22px", maxWidth: 1280, margin: "0 auto" }}
       >
         {errorBanner && bannerVisible && (
           <div
@@ -232,7 +241,7 @@ export default function CollabBoardClient({
               background: "rgba(239,68,68,0.06)",
             }}
           >
-            <p style={{ fontSize: 13, color: "#f87171" }}>{errorBanner}</p>
+            <p style={{ fontSize: 12, color: "#f87171" }}>{errorBanner}</p>
             <button
               type="button"
               onClick={() => setBannerVisible(false)}
@@ -249,11 +258,11 @@ export default function CollabBoardClient({
           <div className="min-w-0">
             <h1
               className={ui.titleGradient}
-              style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+              style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
             >
               Collab board
             </h1>
-            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>{TAB_SUB[tab]}</p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>{TAB_SUB[tab]}</p>
             <PulseBar initialEvents={initialPulseEvents} />
           </div>
           {tab !== "skills" && (
@@ -277,9 +286,8 @@ export default function CollabBoardClient({
         </div>
 
         {collabLocked && (
-          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
-            The board is read-only without a membership. Reactivate to post projects, needs, and
-            skills.
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+            The board is read-only without a membership. Reactivate to post projects and needs.
           </p>
         )}
 
@@ -295,7 +303,13 @@ export default function CollabBoardClient({
 
         <div data-tour-id="collab-list">
           {tab === "skills" ? (
-            <SkillsIndex entries={skillIndex} onOpen={setSkillFor} />
+            <SkillsIndex
+              entries={skillIndex}
+              people={people}
+              currentUserId={currentUserId}
+              currentUserSkills={currentUserSkills}
+              onOpen={setSkillFor}
+            />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
               <div className="min-w-0">
@@ -489,7 +503,7 @@ function ProjectCard({
   return (
     <article
       className={`${ui.tile} group cursor-pointer`}
-      style={{ padding: "18px 20px" }}
+      style={{ padding: "14px 16px" }}
       onClick={primaryAction}
     >
       {isOwner && <OwnerMenu id={project.id} label="project" onDeleted={onDeleted} />}
@@ -608,7 +622,7 @@ function NeedsList({
           <article
             key={n.id}
             className={`${ui.tile} group cursor-pointer`}
-            style={{ padding: "18px 20px" }}
+            style={{ padding: "14px 16px" }}
             onClick={() => onOpenDetail(n)}
           >
             {isOwner && <OwnerMenu id={n.id} label="need" onDeleted={onDeleted} />}
@@ -620,7 +634,7 @@ function NeedsList({
                   name={n.author?.full_name}
                   stage={n.author?.stage}
                   username={n.author?.username}
-                  size={34}
+                  size={30}
                 />
               </div>
               <div className="min-w-0 flex items-center gap-x-1.5 gap-y-1 flex-wrap">
@@ -688,24 +702,109 @@ function NeedsList({
 
 function SkillsIndex({
   entries,
+  people,
+  currentUserId,
+  currentUserSkills,
   onOpen,
 }: {
   entries: SkillEntry[];
+  people: PersonEntry[];
+  currentUserId: string;
+  currentUserSkills: string[];
   onOpen: (e: SkillEntry) => void;
 }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"count" | "alpha">("count");
+  // Two ways through the same data: by the skill, or by the founder who has
+  // it. Looking for "who can help with pricing" and "who is this person"
+  // are different questions and the skill cards only answered the first.
+  const [view, setView] = useState<"skills" | "people">("skills");
 
+  const q = query.trim().toLowerCase();
+
+  return (
+    <div className="space-y-7">
+      <YourSkillsTile userId={currentUserId} skills={currentUserSkills} />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={view === "skills" ? "Search skills" : "Search founders, skills, or what they're building"}
+          aria-label={view === "skills" ? "Search skills" : "Search founders"}
+          className={`${ui.search} flex-1 min-w-0 w-full sm:w-auto`}
+          style={{ maxWidth: 420 }}
+        />
+        <TabPillRow>
+          <TabPill sleek active={view === "skills"} onClick={() => setView("skills")}>
+            By skill
+          </TabPill>
+          <TabPill sleek active={view === "people"} onClick={() => setView("people")}>
+            By founder
+          </TabPill>
+        </TabPillRow>
+        {view === "skills" && (
+          <TabPillRow>
+            <TabPill sleek active={sort === "count"} onClick={() => setSort("count")}>
+              Most founders
+            </TabPill>
+            <TabPill sleek active={sort === "alpha"} onClick={() => setSort("alpha")}>
+              A–Z
+            </TabPill>
+          </TabPillRow>
+        )}
+      </div>
+
+      {view === "skills" ? (
+        <SkillsByskill entries={entries} q={q} sort={sort} onOpen={onOpen} />
+      ) : (
+        <SkillsByPerson people={people} q={q} currentUserId={currentUserId} onPickSkill={setQuery} />
+      )}
+    </div>
+  );
+}
+
+/** Your own skills, editable from the board. They live on your profile, so
+ *  this is the same editor the profile page uses — one place the value is
+ *  written, two places you can reach it. */
+function YourSkillsTile({ userId, skills }: { userId: string; skills: string[] }) {
+  return (
+    <div className={ui.panel} style={{ padding: "13px 15px" }}>
+      <div className="flex items-baseline justify-between gap-3 flex-wrap" style={{ marginBottom: 10 }}>
+        <p className={ui.label} style={{ margin: 0 }}>
+          Your skills
+        </p>
+        <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
+          {skills.length === 0
+            ? "Nobody can find you by skill until you add one."
+            : "Founders searching these will find you."}
+        </p>
+      </div>
+      <SkillsEditor userId={userId} skills={skills} />
+    </div>
+  );
+}
+
+function SkillsByskill({
+  entries,
+  q,
+  sort,
+  onOpen,
+}: {
+  entries: SkillEntry[];
+  q: string;
+  sort: "count" | "alpha";
+  onOpen: (e: SkillEntry) => void;
+}) {
   if (entries.length === 0) {
     return (
       <EmptyTile
         title="No skills listed yet."
-        sub="Add yours from your profile and you'll show up here."
+        sub="Add yours above and you'll be the first in the index."
       />
     );
   }
 
-  const q = query.trim().toLowerCase();
   const filtered = q ? entries.filter((e) => e.skill.toLowerCase().includes(q)) : entries;
   // Scale the per-card meter against the most-listed skill.
   const maxCount = Math.max(1, ...entries.map((e) => e.members.length));
@@ -729,49 +828,128 @@ function SkillsIndex({
 
   const orderedCats = CATEGORY_ORDER.filter((c) => (groups.get(c) ?? []).length > 0);
 
+  if (filtered.length === 0) {
+    return <p className={ui.emptyTitle}>No skills match &ldquo;{q}&rdquo;.</p>;
+  }
+
   return (
     <div className="space-y-7">
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search skills"
-          aria-label="Search skills"
-          className={`${ui.search} flex-1 min-w-0 w-full sm:w-auto`}
-          style={{ maxWidth: 420 }}
-        />
-        <TabPillRow>
-          <TabPill sleek active={sort === "count"} onClick={() => setSort("count")}>
-            Most founders
-          </TabPill>
-          <TabPill sleek active={sort === "alpha"} onClick={() => setSort("alpha")}>
-            A–Z
-          </TabPill>
-        </TabPillRow>
-      </div>
-
-      {filtered.length === 0 ? (
-        <p className={ui.emptyTitle}>No skills match &ldquo;{query.trim()}&rdquo;.</p>
-      ) : (
-        orderedCats.map((cat) => (
-          <section key={cat}>
-            <p className={ui.label} style={{ marginBottom: 10 }}>
-              {sentence(cat)}
-            </p>
-            <div
-              className="grid gap-3"
-              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}
-            >
-              {(groups.get(cat) ?? []).map((e) => (
-                <SkillCard key={e.skill} entry={e} maxCount={maxCount} onOpen={onOpen} />
-              ))}
-            </div>
-          </section>
-        ))
-      )}
+      {orderedCats.map((cat) => (
+        <section key={cat}>
+          <p className={ui.label} style={{ marginBottom: 10 }}>
+            {sentence(cat)}
+          </p>
+          <div
+            className="grid gap-3"
+            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
+          >
+            {(groups.get(cat) ?? []).map((e) => (
+              <SkillCard key={e.skill} entry={e} maxCount={maxCount} onOpen={onOpen} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
+
+/** The founders themselves: who they are, what they're building, and
+ *  everything they can help with — rather than one skill at a time. */
+function SkillsByPerson({
+  people,
+  q,
+  currentUserId,
+  onPickSkill,
+}: {
+  people: PersonEntry[];
+  q: string;
+  currentUserId: string;
+  onPickSkill: (skill: string) => void;
+}) {
+  if (people.length === 0) {
+    return (
+      <EmptyTile
+        title="Nobody has listed a skill yet."
+        sub="Add yours above and you'll be the first founder in here."
+      />
+    );
+  }
+
+  const filtered = q
+    ? people.filter(
+        (p) =>
+          (p.full_name ?? "").toLowerCase().includes(q) ||
+          (p.what_they_are_building ?? "").toLowerCase().includes(q) ||
+          p.skills.some((s) => s.includes(q)),
+      )
+    : people;
+
+  if (filtered.length === 0) {
+    return <p className={ui.emptyTitle}>No founders match &ldquo;{q}&rdquo;.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+        {filtered.length} {filtered.length === 1 ? "founder" : "founders"}
+        {q ? ` matching “${q}”` : " with skills listed"}
+      </p>
+      {filtered.map((p) => {
+        const isYou = p.id === currentUserId;
+        return (
+          <article key={p.id} className={ui.tile} style={{ padding: "13px 15px" }}>
+            <div className="flex items-start gap-3">
+              <div className="shrink-0">
+                <Avatar name={p.full_name} stage={p.stage} username={p.username} size={34} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {p.username ? (
+                    <Link
+                      href={`/profile/${p.username}`}
+                      className="hover:underline"
+                      style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}
+                    >
+                      {p.full_name ?? "—"}
+                    </Link>
+                  ) : (
+                    <span style={NAME}>{p.full_name ?? "—"}</span>
+                  )}
+                  <StagePill sleek stage={p.stage} />
+                  {isYou && <span className={`${ui.chip} ${ui.chipAmber}`}>You</span>}
+                </div>
+                {p.what_they_are_building && (
+                  <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-secondary)", marginTop: 4 }}>
+                    {p.what_they_are_building}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-1.5" style={{ marginTop: 10 }}>
+                  {p.skills.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={ui.chip}
+                      onClick={() => onPickSkill(s)}
+                      title={`Show everyone with ${s}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {!isYou && (
+                <Link href={`/messages?to=${p.id}`} className={`${ui.softBtn} shrink-0`}>
+                  Message
+                </Link>
+              )}
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 
 const stageColor = (stage: string | null): string =>
   (stage
@@ -817,23 +995,23 @@ function SkillCard({
     <button
       type="button"
       className={`${ui.tile} text-left w-full`}
-      style={{ padding: "16px 18px" }}
+      style={{ padding: "12px 14px" }}
       onClick={() => onOpen(entry)}
     >
       <div className="flex items-start justify-between gap-2">
-        <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.3, color: "var(--text-primary)" }}>
+        <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3, color: "var(--text-primary)" }}>
           {entry.skill}
         </span>
-        <span style={{ ...META, fontSize: 13, whiteSpace: "nowrap" }}>
+        <span style={{ ...META, fontSize: 12, whiteSpace: "nowrap" }}>
           {founderCount} {founderCount === 1 ? "founder" : "founders"}
         </span>
       </div>
 
-      <div className="flex items-center gap-2" style={{ marginTop: 12, minHeight: 26 }}>
+      <div className="flex items-center gap-2" style={{ marginTop: 9, minHeight: 22 }}>
         <div className="flex -space-x-2">
           {entry.members.slice(0, 5).map((f) => (
             <span key={f.id} className="rounded-full" style={{ border: "1.5px solid var(--bg-surface)" }}>
-              <Avatar name={f.full_name} stage={f.stage} size={24} />
+              <Avatar name={f.full_name} stage={f.stage} size={21} />
             </span>
           ))}
         </div>
@@ -843,14 +1021,14 @@ function SkillCard({
         </span>
       </div>
 
-      <div className={ui.barTrack} style={{ marginTop: 14 }}>
+      <div className={ui.barTrack} style={{ marginTop: 10 }}>
         <div
           className={ui.barFill}
           style={{ width: `${(founderCount / maxCount) * 100}%`, background: stageColor(topStage), opacity: 0.8 }}
         />
       </div>
 
-      <p className={ui.tileLink} style={{ marginTop: 12 }}>
+      <p className={ui.tileLink} style={{ marginTop: 9 }}>
         See {founderCount === 1 ? "founder" : "all founders"} →
       </p>
     </button>

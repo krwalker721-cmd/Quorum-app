@@ -53,7 +53,7 @@ export default function LibraryTab({ items }: { items: LibraryItem[] }) {
       {filtered.length === 0 ? (
         <LibraryEmpty filtered={items.length > 0} />
       ) : (
-        <div className="space-y-3" style={{ maxWidth: 820 }}>
+        <div className="space-y-3">
           {filtered.map((item) => (
             <SavedItemCard key={item.id} item={item} />
           ))}
@@ -108,16 +108,16 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
         ) : (
           <div
             className="shrink-0 flex items-center justify-center"
-            style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--card)", color: "var(--text-muted)", fontSize: 11 }}
+            style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--card)", color: "var(--text-muted)", fontSize: 10.5 }}
           >
             ?
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+          <p className="truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
             {origin?.is_anonymous ? "Anonymous" : origin?.author?.full_name ?? "—"}
           </p>
-          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
             {origin ? `Posted ${shortTimeAgo(origin.created_at)} ago` : "No longer available"}
           </p>
         </div>
@@ -125,13 +125,13 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
       </header>
 
       {origin?.title && (
-        <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginTop: 12 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginTop: 12 }}>
           {origin.title}
         </h3>
       )}
       <p
         className="whitespace-pre-wrap"
-        style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: origin?.title ? 4 : 12 }}
+        style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: origin?.title ? 4 : 12 }}
       >
         {origin ? (
           <>
@@ -154,7 +154,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
             placeholder="Why did you save this?"
             rows={2}
             className={`${ui.search} w-full`}
-            style={{ fontSize: 13, resize: "vertical" }}
+            style={{ fontSize: 12, resize: "vertical" }}
           />
         ) : (
           <button
@@ -162,7 +162,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
             onClick={() => setEditing(true)}
             className="text-left w-full"
             style={{
-              fontSize: 13,
+              fontSize: 12,
               lineHeight: 1.5,
               color: note ? "var(--text-secondary)" : "var(--text-muted)",
               fontStyle: note ? "normal" : "italic",
@@ -174,7 +174,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
       </div>
 
       <footer className={`${ui.cardFoot} flex items-center justify-between gap-3`}>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+        <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
           Saved {shortTimeAgo(item.created_at)} ago
         </span>
         {origin && (
@@ -189,7 +189,7 @@ function SavedItemCard({ item }: { item: LibraryItem }) {
 
 function LibraryEmpty({ filtered }: { filtered: boolean }) {
   return (
-    <div className={ui.tile} style={{ padding: "32px 24px", maxWidth: 820 }}>
+    <div className={ui.tile} style={{ padding: "26px 24px" }}>
       <div className="flex flex-col items-center text-center">
         <svg
           width="36"

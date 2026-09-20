@@ -66,12 +66,12 @@ export default function NeedApplicationsPanel({
             <p className={ui.label}>Applications</p>
             <h2
               className="truncate"
-              style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.015em", color: "var(--text-primary)", marginTop: 2 }}
+              style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.015em", color: "var(--text-primary)", marginTop: 2 }}
             >
               {needTitle}
             </h2>
             {!loading && (
-              <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                 {rows.length} {rows.length === 1 ? "applicant" : "applicants"}
               </p>
             )}
@@ -81,7 +81,7 @@ export default function NeedApplicationsPanel({
             onClick={onClose}
             aria-label="Close"
             className={ui.ghostBtn}
-            style={{ padding: "5px 10px", fontSize: 12 }}
+            style={{ padding: "5px 10px", fontSize: 11.5 }}
           >
             Esc
           </button>
@@ -106,10 +106,10 @@ export default function NeedApplicationsPanel({
                     size={34}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+                    <p className="truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
                       {r.applicant?.full_name ?? "—"}
                     </p>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{timeAgo(r.created_at)} ago</p>
+                    <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{timeAgo(r.created_at)} ago</p>
                   </div>
                   {r.applicant?.id && (
                     <Link href={`/messages?to=${r.applicant.id}`} className={`${ui.softBtn} shrink-0`}>
@@ -119,7 +119,7 @@ export default function NeedApplicationsPanel({
                 </div>
                 <p
                   className="whitespace-pre-wrap"
-                  style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 10 }}
+                  style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 10 }}
                 >
                   {r.response}
                 </p>

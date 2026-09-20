@@ -75,7 +75,7 @@ export default function InviteForm({
         />
       </div>
 
-      {err && <p className="text-red-400" style={{ fontSize: 13 }}>{err}</p>}
+      {err && <p className="text-red-400" style={{ fontSize: 12 }}>{err}</p>}
 
       {/* Neither button sends an email: Quorum has no invite email yet. The
           email one records who the invite is for; both hand back a link. */}
@@ -100,7 +100,7 @@ export default function InviteForm({
 
       {link && (
         <div className="pt-4 space-y-2 border-t" style={{ borderColor: "var(--border-default)" }}>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             Invite link. Share it with the person you&apos;re inviting.
           </p>
           <div className="flex gap-2">
@@ -109,7 +109,7 @@ export default function InviteForm({
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
             Quorum doesn&apos;t send the email for you yet. Copy the link and send it from your own
             inbox.
           </p>

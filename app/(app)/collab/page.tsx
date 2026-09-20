@@ -199,6 +199,38 @@ export default async function CollabPage(
     .map(([skill, members]) => ({ skill, members }))
     .sort((a, b) => b.members.length - a.members.length);
 
+  // The same profiles, the other way round: a founder and everything they can
+  // help with, for the skills tab's "by founder" view. Only founders who have
+  // listed something — an empty row is a dead end to click on.
+  const normalizeSkills = (v: unknown): string[] =>
+    Array.isArray(v)
+      ? Array.from(
+          new Set(
+            v.map((x) => (x ?? "").toString().trim().toLowerCase()).filter(Boolean),
+          ),
+        )
+      : [];
+
+  const people = (allProfilesWithSkills ?? [])
+    .map((p: any) => ({
+      id: p.id as string,
+      full_name: p.full_name as string | null,
+      stage: p.stage as string | null,
+      username: p.username as string | null,
+      what_they_are_building: p.what_they_are_building as string | null,
+      skills: normalizeSkills(p.skills),
+    }))
+    .filter((p) => p.skills.length > 0)
+    .sort(
+      (a, b) =>
+        b.skills.length - a.skills.length ||
+        (a.full_name ?? "").localeCompare(b.full_name ?? ""),
+    );
+
+  const currentUserSkills = normalizeSkills(
+    (allProfilesWithSkills ?? []).find((p: any) => p.id === user.id)?.skills,
+  );
+
   // ─── your_workspace ────────────────────────────────────────────────────────
   const { data: myMemberships } = await supabase
     .from("project_members")
@@ -460,6 +492,8 @@ export default async function CollabPage(
         projects={projects}
         needs={needs}
         skillIndex={skillIndex}
+        people={people}
+        currentUserSkills={currentUserSkills}
         workspaceProjects={workspaceProjects}
         initialPulseEvents={initialPulseEvents.slice(0, 30)}
         errorBanner={searchParams.error === "access_denied" ? "you don't have access to this project" : null}

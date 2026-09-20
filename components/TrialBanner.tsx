@@ -129,7 +129,7 @@ export default function TrialBanner({
         className="trial-banner-text"
         style={{
           fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-          fontSize: 11,
+          fontSize: 10.5,
           color: accent,
         }}
       >
@@ -145,7 +145,7 @@ export default function TrialBanner({
             border: "none",
             cursor: "pointer",
             fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 11,
+            fontSize: 10.5,
             color: accent,
             textDecoration: ctaHover ? "underline" : "none",
           }}
@@ -161,7 +161,7 @@ export default function TrialBanner({
             background: "transparent",
             border: "none",
             cursor: "pointer",
-            fontSize: 14,
+            fontSize: 13,
             lineHeight: 1,
             color: closeHover ? "#8b949e" : "#484f58",
           }}
@@ -207,7 +207,7 @@ function LapseBanner({
         className="trial-banner-text"
         style={{
           fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-          fontSize: 11,
+          fontSize: 10.5,
           color: accent,
         }}
       >
@@ -221,7 +221,7 @@ function LapseBanner({
             border: "none",
             cursor: "pointer",
             fontFamily: "var(--font-jetbrains-mono, ui-monospace, monospace)",
-            fontSize: 11,
+            fontSize: 10.5,
             fontWeight: 600,
             color: accent,
           }}

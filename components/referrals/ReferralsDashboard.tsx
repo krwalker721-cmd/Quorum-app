@@ -83,7 +83,7 @@ const STATUS_LABEL: Record<string, string> = {
   churned: "Left",
 };
 
-const MUTED: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)" };
+const MUTED: React.CSSProperties = { fontSize: 11.5, color: "var(--text-muted)" };
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -113,8 +113,8 @@ function SkeletonBlock({ height, style }: { height: number; style?: React.CSSPro
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`page-pad ${ui.pageGlow}`}
-      style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+      className={"page-pad"}
+      style={{ padding: "18px 26px 22px", maxWidth: 1280, margin: "0 auto" }}
     >
       <NoGrid />
       {children}
@@ -138,7 +138,7 @@ function LoadingState() {
 function ErrorState() {
   return (
     <Shell>
-      <p style={{ fontSize: 14, color: "#f87171", padding: "48px 0", textAlign: "center" }}>
+      <p style={{ fontSize: 13, color: "#f87171", padding: "48px 0", textAlign: "center" }}>
         Couldn&apos;t load your referrals. Try refreshing.
       </p>
     </Shell>
@@ -216,11 +216,11 @@ export default function ReferralsDashboard() {
       <div style={{ marginBottom: 22 }}>
         <h1
           className={ui.titleGradient}
-          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+          style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
         >
           Referrals
         </h1>
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>
           Bring someone who belongs here. Your membership gets cheaper while they stay.
         </p>
       </div>
@@ -239,8 +239,8 @@ export default function ReferralsDashboard() {
           }}
         >
           <div className="min-w-0" style={{ flex: "1 1 320px" }}>
-            <p style={{ fontSize: 13, fontWeight: 500, color: "#f8c56a" }}>Membership lapsed</p>
-            <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)", marginTop: 2 }}>
+            <p style={{ fontSize: 12, fontWeight: 500, color: "#f8c56a" }}>Membership lapsed</p>
+            <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-secondary)", marginTop: 2 }}>
               Your referral link is paused while your membership is inactive. Reactivate to keep
               bringing founders in, and to keep your monthly bonus.
             </p>
@@ -252,21 +252,21 @@ export default function ReferralsDashboard() {
       )}
 
       {/* Invite link: the one hero tile on the page */}
-      <div data-tour-id="referrals-link" style={{ marginBottom: 16 }}>
-        <Tile gradient kicker="Your invite link" kickerColor="#f8c56a" padding="22px 24px">
-          <p style={{ fontSize: 15, color: "var(--text-primary)" }}>
+      <div data-tour-id="referrals-link" style={{ marginBottom: 12 }}>
+        <Tile gradient kicker="Your invite link" kickerColor="#f8c56a" padding="16px 18px">
+          <p style={{ fontSize: 14, color: "var(--text-primary)" }}>
             Bring someone who belongs here. Get rewarded when they stay.
           </p>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>
+          <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 8 }}>
             {totalCount} invited · <span style={{ color: "#4ade80" }}>{activeCount} joined</span> ·{" "}
             <span style={{ color: "#f8c56a" }}>{bonusText}</span>
           </p>
 
-          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap" style={{ marginTop: 16 }}>
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap" style={{ marginTop: 12 }}>
             <div
               className="flex-1 min-w-0 truncate"
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 padding: "10px 14px",
                 borderRadius: 10,
                 border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -283,7 +283,7 @@ export default function ReferralsDashboard() {
               onClick={handleCopy}
               disabled={!linkActive}
               className={ui.primaryBtn}
-              style={{ padding: "10px 18px" }}
+              style={{ padding: "8px 15px" }}
             >
               {copied ? "Copied ✓" : "Copy link"}
             </button>
@@ -293,7 +293,7 @@ export default function ReferralsDashboard() {
               Replaces a single "make your first post" line that named one of the
               three conditions and got the unlock rule wrong. */}
           {!linkActive && (
-            <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(245, 158, 11, 0.18)" }}>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(245, 158, 11, 0.18)" }}>
               <p className={ui.label} style={{ marginBottom: 8 }}>
                 Unlock your link
               </p>
@@ -304,7 +304,7 @@ export default function ReferralsDashboard() {
                     <div key={gate.key} className="flex gap-2.5 items-start">
                       <span
                         aria-hidden
-                        style={{ fontSize: 13, width: 14, flexShrink: 0, color: done ? "#4ade80" : "var(--text-muted)" }}
+                        style={{ fontSize: 12, width: 14, flexShrink: 0, color: done ? "#4ade80" : "var(--text-muted)" }}
                       >
                         {done ? "✓" : "○"}
                       </span>
@@ -312,7 +312,7 @@ export default function ReferralsDashboard() {
                         <span
                           style={{
                             display: "block",
-                            fontSize: 14,
+                            fontSize: 13,
                             color: done ? "var(--text-muted)" : "var(--text-primary)",
                             textDecoration: done ? "line-through" : "none",
                           }}
@@ -321,7 +321,7 @@ export default function ReferralsDashboard() {
                           <span className="sr-only">{done ? " (done)" : " (not yet)"}</span>
                         </span>
                         {!done && (
-                          <span style={{ display: "block", fontSize: 13, color: "var(--text-muted)" }}>
+                          <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)" }}>
                             {gate.sub}
                           </span>
                         )}
@@ -352,14 +352,14 @@ export default function ReferralsDashboard() {
                       background: "rgba(245, 158, 11, 0.1)",
                       border: "1px solid rgba(245, 158, 11, 0.3)",
                       color: "#f8c56a",
-                      fontSize: 12,
+                      fontSize: 11.5,
                     }}
                   >
                     {step.n}
                   </div>
                   <div>
-                    <p style={{ fontSize: 14, color: "var(--text-primary)" }}>{step.title}</p>
-                    <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 1 }}>
+                    <p style={{ fontSize: 13, color: "var(--text-primary)" }}>{step.title}</p>
+                    <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 1 }}>
                       {step.sub}
                     </p>
                   </div>
@@ -398,12 +398,12 @@ export default function ReferralsDashboard() {
                         <div
                           aria-hidden
                           className="flex items-center justify-center shrink-0"
-                          style={{ width: 34, height: 34, borderRadius: "50%", fontSize: 13, ...tint }}
+                          style={{ width: 34, height: 34, borderRadius: "50%", fontSize: 12, ...tint }}
                         >
                           {initial}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate" style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                          <p className="truncate" style={{ fontSize: 13, color: "var(--text-primary)" }}>
                             {name}
                           </p>
                           <p style={MUTED}>
@@ -445,12 +445,12 @@ export default function ReferralsDashboard() {
                       }}
                     />
                     <div className="min-w-0">
-                      <p style={{ fontSize: 14, color: done ? "#4ade80" : isTarget ? "#f8c56a" : "var(--text-secondary)" }}>
+                      <p style={{ fontSize: 13, color: done ? "#4ade80" : isTarget ? "#f8c56a" : "var(--text-secondary)" }}>
                         {m.count} {m.count === 1 ? "referral" : "referrals"}
                       </p>
                       <p style={{ ...MUTED, marginTop: 1 }}>{m.reward}</p>
                     </div>
-                    <span className="shrink-0" style={{ fontSize: 13 }}>
+                    <span className="shrink-0" style={{ fontSize: 12 }}>
                       {done ? (
                         <span style={{ color: "#4ade80" }}>✓ Earned</span>
                       ) : isTarget ? (
@@ -470,11 +470,11 @@ export default function ReferralsDashboard() {
           <Tile kicker="Your monthly bonus">
             <div className="flex items-baseline gap-2">
               {bonusIsFree ? (
-                <span style={{ fontSize: 30, fontWeight: 600, color: "#4ade80" }}>Free</span>
+                <span style={{ fontSize: 23, fontWeight: 600, color: "#4ade80" }}>Free</span>
               ) : (
                 <>
-                  <span style={{ fontSize: 30, fontWeight: 600, color: "#f8c56a" }}>${monthlyBonus}</span>
-                  <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>off every month</span>
+                  <span style={{ fontSize: 23, fontWeight: 600, color: "#f8c56a" }}>${monthlyBonus}</span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>off every month</span>
                 </>
               )}
             </div>
@@ -487,7 +487,7 @@ export default function ReferralsDashboard() {
               {[...bonusLadder].reverse().map((t) => {
                 const held = activeCount >= t.min;
                 return (
-                  <div key={t.min} className="flex justify-between items-center" style={{ padding: "5px 0", fontSize: 13 }}>
+                  <div key={t.min} className="flex justify-between items-center" style={{ padding: "5px 0", fontSize: 12 }}>
                     <span style={{ color: held ? "#f8c56a" : "var(--text-secondary)" }}>{t.min}+ active</span>
                     <span style={{ color: held ? "#f8c56a" : "var(--text-muted)" }}>
                       {t.amountOff === null ? "Free" : `$${t.amountOff} off a month`}
@@ -497,7 +497,7 @@ export default function ReferralsDashboard() {
               })}
             </div>
 
-            <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 12 }}>
+            <p style={{ fontSize: 12, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 12 }}>
               Your bonus tracks how many of your referrals are{" "}
               <strong style={{ color: "var(--text-primary)", fontWeight: 500 }}>still active</strong>, and
               recalculates as people come and go. Fill a room of 12 and Quorum is free.

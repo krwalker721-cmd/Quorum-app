@@ -30,7 +30,7 @@ export default function RequestJoinButton({
   const shown = isMember ? STATUS.member : status ? STATUS[status] : null;
   if (shown) {
     return (
-      <span className="shrink-0" style={{ fontSize: 13, color: shown.color }}>
+      <span className="shrink-0" style={{ fontSize: 12, color: shown.color }}>
         {shown.label}
       </span>
     );
@@ -56,7 +56,7 @@ export default function RequestJoinButton({
       <button onClick={request} disabled={busy} className={ui.primaryBtn}>
         {busy ? "Requesting…" : "Request to join"}
       </button>
-      {err && <p className="text-red-400" style={{ fontSize: 12 }}>{err}</p>}
+      {err && <p className="text-red-400" style={{ fontSize: 11.5 }}>{err}</p>}
     </div>
   );
 }

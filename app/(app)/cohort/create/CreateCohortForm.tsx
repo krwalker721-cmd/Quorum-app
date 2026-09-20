@@ -79,12 +79,12 @@ export default function CreateCohortForm({ userId }: { userId: string }) {
             }}
           />
         </button>
-        <p className="text-text-secondary" style={{ fontSize: 13, lineHeight: 1.5 }}>
+        <p className="text-text-secondary" style={{ fontSize: 12, lineHeight: 1.5 }}>
           {isOpen ? "Open: anyone can request to join" : "Invite-only: people join by invite link"}
         </p>
       </div>
 
-      {err && <p className="text-red-400" style={{ fontSize: 13 }}>{err}</p>}
+      {err && <p className="text-red-400" style={{ fontSize: 12 }}>{err}</p>}
 
       <div className="flex justify-end pt-1">
         <button type="submit" disabled={busy || !name.trim()} className={ui.primaryBtn}>

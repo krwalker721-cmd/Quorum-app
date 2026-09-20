@@ -127,21 +127,21 @@ export default function VaultPage({
 
   return (
     <div
-      className={`page-pad ${ui.pageGlow}`}
-      style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+      className={"page-pad"}
+      style={{ padding: "18px 26px 22px", maxWidth: 1120, margin: "0 auto" }}
     >
       <NoGrid />
       <header style={{ marginBottom: 20 }}>
         <h1
           className={ui.titleGradient}
-          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+          style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
         >
           Vault
         </h1>
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>
           Save what matters, write what you think, and keep what the community learns.
         </p>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
+        <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
           {liveStats.savedByCommunity} saved · {liveStats.notesWritten}{" "}
           {liveStats.notesWritten === 1 ? "note" : "notes"} · {liveStats.wisdomPreserved} in
           community wisdom

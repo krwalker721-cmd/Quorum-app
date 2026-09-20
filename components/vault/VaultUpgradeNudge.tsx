@@ -14,8 +14,8 @@ export default function VaultUpgradeNudge() {
   if (hasFullAccess) return null;
 
   return (
-    <Tile kicker="Part of a membership" kickerColor="#f8c56a" style={{ marginTop: 20, maxWidth: 820 }}>
-      <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)" }}>
+    <Tile kicker="Part of a membership" kickerColor="#f8c56a" style={{ marginTop: 20 }}>
+      <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)" }}>
         You can read everything here. Writing notes and building collections open up with a
         membership.
       </p>

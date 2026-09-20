@@ -271,28 +271,36 @@ export default async function HomePage() {
       <TopBar sleek title="home" tier={(profile?.tier ?? "free").toUpperCase()} userId={user.id} />
       <UpgradeToast />
 
+      {/* Home is a launchpad, so it has to be readable at a glance: the column
+          fills the space the chrome leaves and the rows flex into it, rather
+          than running past the fold. Every list on it is already bounded (three
+          rows, two posts, three projects), so nothing is hidden by this — the
+          inner scrollbars are a fallback for a very short window. */}
       <div
-        className={`page-pad ${ui.pageGlow}`}
-        style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+        className={"page-pad page-fit"}
+        style={{ padding: "16px 26px 18px", maxWidth: 1280, margin: "0 auto", width: "100%" }}
         data-tour-id="home-tiles"
       >
         {/* Header */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 12, flexShrink: 0 }}>
           <h1
             className={`${ui.titleGradient} ${ui.balance}`}
-            style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+            style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
           >
             Good to see you, {firstName}
           </h1>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>{contextLine}</p>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 6 }}>{contextLine}</p>
         </div>
 
         {/* Row 1 — NEEDS YOU (wide) + check-in / cohort rail */}
         <div
-          className="grid gap-4 mb-4 stack-md"
-          style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}
+          className="grid gap-4 mb-3 stack-md"
+          // Basis auto + a min-content floor: the row is never shorter than what is
+          // in it, so the check-in and cohort rail cannot overflow onto the strip
+          // below, and it still grows to share out spare height.
+          style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", flex: "1.15 1 auto", minHeight: "min-content" }}
         >
-          <Tile kicker="Needs you" padding="20px 22px 10px" className="flex flex-col">
+          <Tile kicker="Needs you" padding="20px 22px 10px" className="flex flex-col min-h-0">
             {needsRows.length === 0 ? (
               <div
                 className="flex-1 flex flex-col items-center justify-center text-center"
@@ -305,18 +313,19 @@ export default async function HomePage() {
                     width: 44,
                     height: 44,
                     borderRadius: "50%",
-                    fontSize: 20,
+                    fontSize: 18,
                     color: "var(--green)",
                     background: "linear-gradient(135deg, rgba(34,197,94,.20), rgba(34,197,94,.05))",
                   }}
                 >
                   ✓
                 </span>
-                <p style={{ fontSize: 15, color: "var(--text-primary)" }}>You&apos;re all caught up.</p>
-                <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Nothing needs you right now.</p>
+                <p style={{ fontSize: 14, color: "var(--text-primary)" }}>You&apos;re all caught up.</p>
+                <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Nothing needs you right now.</p>
               </div>
             ) : (
-              needsRows.map((r, i) => (
+              <div className="flex-1 min-h-0 overflow-y-auto scroll-thin">
+              {needsRows.map((r, i) => (
                 <Link
                   key={r.key}
                   href={r.href}
@@ -334,7 +343,7 @@ export default async function HomePage() {
                       width: 32,
                       height: 32,
                       borderRadius: 9,
-                      fontSize: 14,
+                      fontSize: 13,
                       background: `linear-gradient(135deg, rgba(${r.tint},.28), rgba(${r.tint},.06))`,
                       color: `rgb(${r.tint})`,
                     }}
@@ -342,33 +351,40 @@ export default async function HomePage() {
                   >
                     {r.icon}
                   </span>
-                  <span style={{ flex: 1, fontSize: 14, color: "var(--text-primary)" }}>{r.label}</span>
-                  <span style={{ fontSize: 14, color: "var(--text-muted)" }}>→</span>
+                  <span style={{ flex: 1, fontSize: 13, color: "var(--text-primary)" }}>{r.label}</span>
+                  <span style={{ fontSize: 13, color: "var(--text-muted)" }}>→</span>
                 </Link>
-              ))
+              ))}
+              </div>
             )}
           </Tile>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-h-0">
             <HomeCheckinHero userId={user.id} />
             <Tile
               kicker={`Your cohort · ${cohortFill}/${COHORT_MAX}`}
-              padding="20px 22px"
-              style={{ flex: 1 }}
-              className="flex flex-col justify-center"
+              padding="18px 22px"
+              // Floor chosen so the constellation still draws all five
+              // members: below about this the graph scales down to its centre
+              // node and the tile reads as an empty box.
+              style={{ flex: "1 1 0", minHeight: 126 }}
+              className="flex flex-col overflow-hidden"
             >
-              <div style={{ maxWidth: 300, width: "100%", margin: "0 auto" }}>
-                <NetworkGraph
-                  you={{ full_name: profile?.full_name ?? null }}
-                  members={otherMembers.slice(0, 5)}
-                />
+              <div className="flex-1 min-h-0 flex items-center justify-center">
+                <div style={{ maxWidth: 300, width: "100%", height: "100%" }}>
+                  <NetworkGraph
+                    you={{ full_name: profile?.full_name ?? null }}
+                    members={otherMembers.slice(0, 5)}
+                    fill
+                  />
+                </div>
               </div>
             </Tile>
           </div>
         </div>
 
         {/* Row 2 — MATCHES YOUR NEEDS strip */}
-        <Tile padding="16px 22px" className="mb-4">
+        <Tile padding="14px 22px" className="mb-3" style={{ flexShrink: 0 }}>
           <div className="flex items-center gap-5">
             <span className={ui.label} style={{ whiteSpace: "nowrap" }}>
               <span style={{ color: "var(--teal)", marginRight: 6 }}>✦</span>
@@ -385,10 +401,10 @@ export default async function HomePage() {
                     style={{ textDecoration: "none" }}
                   >
                     <PersonAvatar name={m.full_name} stage={m.stage} size={30} color={c} />
-                    <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                    <span style={{ fontSize: 13, color: "var(--text-primary)" }}>
                       {(m.full_name ?? "founder").split(/\s+/)[0]}
                       {m.stage && (
-                        <span style={{ color: "var(--text-muted)", fontSize: 12, marginLeft: 6 }}>
+                        <span style={{ color: "var(--text-muted)", fontSize: 11.5, marginLeft: 6 }}>
                           {m.stage}
                         </span>
                       )}
@@ -404,12 +420,21 @@ export default async function HomePage() {
         </Tile>
 
         {/* Row 3 — RECENT IN PULSE + YOUR WORK */}
-        <div className="grid gap-4 stack-md" style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)" }}>
-          <Tile kicker="Recent in pulse" right="All posts →" rightHref="/pulse">
+        <div
+          className="grid gap-4 stack-md"
+          style={{ gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", flex: "1 1 auto", minHeight: "min-content" }}
+        >
+          <Tile
+            kicker="Recent in pulse"
+            right="All posts →"
+            rightHref="/pulse"
+            className="flex flex-col min-h-0"
+          >
             {recentPosts.length === 0 ? (
-              <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>No posts yet.</p>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>No posts yet.</p>
             ) : (
-              recentPosts.map((p, i) => {
+              <div className="flex-1 min-h-0 overflow-y-auto scroll-thin">
+              {recentPosts.map((p, i) => {
                 const replies = p.reply_count ?? 0;
                 return (
                   <Link
@@ -425,11 +450,11 @@ export default async function HomePage() {
                   >
                     <PersonAvatar name={p.author?.full_name} stage={p.author?.stage} size={32} />
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--text-primary)" }}>
+                      <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-primary)" }}>
                         {(p.content ?? "").slice(0, 120)}
                         {(p.content ?? "").length > 120 ? "…" : ""}
                       </p>
-                      <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 5 }}>
+                      <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 5 }}>
                         {p.tag === "decision" && <span style={{ color: "var(--accent)" }}>Decision · </span>}
                         {(p.author?.full_name ?? "A founder").split(/\s+/)[0]} · {timeAgo(p.created_at)} ·{" "}
                         {replies} {replies === 1 ? "reply" : "replies"}
@@ -437,20 +462,27 @@ export default async function HomePage() {
                     </div>
                   </Link>
                 );
-              })
+              })}
+              </div>
             )}
           </Tile>
 
-          <Tile kicker="Your work" right="Board →" rightHref="/collab">
+          <Tile
+            kicker="Your work"
+            right="Board →"
+            rightHref="/collab"
+            className="flex flex-col min-h-0"
+          >
             {myProjects.length === 0 && myNeeds.length === 0 ? (
-              <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 No projects yet.{" "}
                 <Link href="/collab" className={ui.tileLink} style={{ color: "var(--text-primary)" }}>
                   Start one →
                 </Link>
               </p>
             ) : (
-              [...myProjects, ...myNeeds].slice(0, 3).map((p, i, arr) => {
+              <div className="flex-1 min-h-0 overflow-y-auto scroll-thin">
+              {[...myProjects, ...myNeeds].slice(0, 3).map((p, i, arr) => {
                 const applicants = applicantsByProject.get(p.id) ?? 0;
                 return (
                   <Link
@@ -464,10 +496,10 @@ export default async function HomePage() {
                       textDecoration: "none",
                     }}
                   >
-                    <p style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                    <p style={{ fontSize: 13, color: "var(--text-primary)" }}>
                       {p.title ?? p.name ?? "Untitled"}
                     </p>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+                    <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
                       {applicants > 0 ? (
                         <span style={{ color: "var(--green)" }}>
                           {applicants} new applicant{applicants === 1 ? "" : "s"} ·{" "}
@@ -479,7 +511,8 @@ export default async function HomePage() {
                     </p>
                   </Link>
                 );
-              })
+              })}
+              </div>
             )}
           </Tile>
         </div>

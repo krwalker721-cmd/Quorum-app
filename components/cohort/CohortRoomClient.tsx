@@ -398,7 +398,7 @@ export default function CohortRoomClient({
         >
           <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "var(--border-default)" }}>
             <p className={ui.sideMeta}>Room</p>
-            <p className="font-sans text-text-primary truncate" style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>
+            <p className="font-sans text-text-primary truncate" style={{ fontSize: 14.5, fontWeight: 600, marginTop: 2 }}>
               {roomName}
             </p>
           </div>
@@ -433,7 +433,7 @@ export default function CohortRoomClient({
                         className={`truncate ${
                           f?.consistencyGhost ? "consistency-ghost" : "text-text-primary"
                         }`}
-                        style={{ fontSize: 13 }}
+                        style={{ fontSize: 12 }}
                       >
                         {m.full_name ?? "—"}
                       </p>
@@ -451,11 +451,11 @@ export default function CohortRoomClient({
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <StagePill stage={m.stage} sleek />
-                      <span className="text-amber" style={{ fontSize: 11 }} title="Trust score">
+                      <span className="text-amber" style={{ fontSize: 10.5 }} title="Trust score">
                         +{m.trust_score ?? 0}
                       </span>
                       {typeof f?.tenureDays === "number" && (
-                        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                        <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>
                           {f.tenureDays} days in
                         </span>
                       )}
@@ -564,7 +564,7 @@ export default function CohortRoomClient({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-text-primary truncate" style={{ fontSize: 14, fontWeight: 500 }}>
+                        <p className="text-text-primary truncate" style={{ fontSize: 13, fontWeight: 500 }}>
                           {m.full_name ?? "—"}
                         </p>
                         <div className="mt-1">
@@ -573,21 +573,21 @@ export default function CohortRoomClient({
                       </div>
                     </div>
                     <div className="mt-3">
-                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>This week&apos;s win</p>
+                      <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>This week&apos;s win</p>
                       {hasCheckin && c.weekly_win ? (
-                        <p className="text-text-secondary mt-1" style={{ fontSize: 13, lineHeight: 1.5 }}>
+                        <p className="text-text-secondary mt-1" style={{ fontSize: 12, lineHeight: 1.5 }}>
                           {c.weekly_win}
                         </p>
                       ) : (
-                        <p className="mt-1" style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)" }}>
+                        <p className="mt-1" style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)" }}>
                           Hasn&apos;t checked in yet
                         </p>
                       )}
                     </div>
                     {hasCheckin && c.decision && (
                       <div className="mt-2.5">
-                        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Working on</p>
-                        <p className="text-text-secondary mt-1" style={{ fontSize: 13, lineHeight: 1.5 }}>
+                        <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Working on</p>
+                        <p className="text-text-secondary mt-1" style={{ fontSize: 12, lineHeight: 1.5 }}>
                           {c.decision}
                         </p>
                       </div>
@@ -751,7 +751,7 @@ export default function CohortRoomClient({
             {showPostingLocked && (
               <div
                 className="max-w-3xl xl:max-w-none"
-                style={{ fontSize: 12, color: "#f8c56a", padding: "6px 0", textAlign: "right" }}
+                style={{ fontSize: 11.5, color: "#f8c56a", padding: "6px 0", textAlign: "right" }}
               >
                 {hadTrial
                   ? "Your trial has ended. Upgrade to post to your room."
@@ -811,7 +811,7 @@ export default function CohortRoomClient({
             >
               <span className="text-[0.8rem]" aria-hidden>‹</span>
               <span
-                style={{ writingMode: "vertical-rl", fontSize: 12 }}
+                style={{ writingMode: "vertical-rl", fontSize: 11.5 }}
               >
                 Your stats
               </span>
@@ -826,7 +826,7 @@ export default function CohortRoomClient({
                   aria-expanded
                   title="Collapse your stats"
                   className="ml-auto leading-none hover:text-text-primary transition-colors"
-                  style={{ color: "var(--text-muted)", fontSize: 14 }}
+                  style={{ color: "var(--text-muted)", fontSize: 13 }}
                 >
                   ›
                 </button>
@@ -841,7 +841,7 @@ export default function CohortRoomClient({
                   size={36}
                 />
                 <div className="min-w-0">
-                  <p className="text-text-primary truncate" style={{ fontSize: 14, fontWeight: 500 }}>
+                  <p className="text-text-primary truncate" style={{ fontSize: 13, fontWeight: 500 }}>
                     {me?.full_name ?? "You"}
                   </p>
                   <div className="mt-1">
@@ -853,8 +853,8 @@ export default function CohortRoomClient({
               {/* trust */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Trust score</span>
-                  <span className="text-text-secondary" style={{ fontSize: 13 }}>
+                  <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Trust score</span>
+                  <span className="text-text-secondary" style={{ fontSize: 12 }}>
                     {myStats.trustScore}
                     <span className="text-text-faint"> / 120</span>
                   </span>
@@ -871,10 +871,10 @@ export default function CohortRoomClient({
                     borderRadius: "var(--radius-ctl)",
                   }}
                 >
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Streak</p>
+                  <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Streak</p>
                   <p className="text-text-primary text-lg leading-tight mt-0.5">
                     {myStats.streakWeeks}
-                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                       {myStats.streakWeeks === 1 ? " week" : " weeks"}
                     </span>
                   </p>
@@ -886,7 +886,7 @@ export default function CohortRoomClient({
                     borderRadius: "var(--radius-ctl)",
                   }}
                 >
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Posts this week</p>
+                  <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Posts this week</p>
                   <p className="text-text-primary text-lg leading-tight mt-0.5">
                     {myStats.postsThisWeek}
                   </p>
@@ -906,10 +906,10 @@ export default function CohortRoomClient({
                           : "none",
                     }}
                   >
-                    <span className="text-text-secondary" style={{ fontSize: 13 }}>
+                    <span className="text-text-secondary" style={{ fontSize: 12 }}>
                       {label}
                     </span>
-                    <span className="text-text-primary" style={{ fontSize: 13 }}>
+                    <span className="text-text-primary" style={{ fontSize: 12 }}>
                       {value}
                     </span>
                   </div>
@@ -922,10 +922,10 @@ export default function CohortRoomClient({
                   className="mt-4 pt-3"
                   style={{ borderTop: "1px solid var(--border-default)" }}
                 >
-                  <p className="mb-1" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  <p className="mb-1" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                     This week&apos;s win
                   </p>
-                  <p className="text-text-secondary" style={{ fontSize: 13, lineHeight: 1.5 }}>
+                  <p className="text-text-secondary" style={{ fontSize: 12, lineHeight: 1.5 }}>
                     {myWin}
                   </p>
                 </div>

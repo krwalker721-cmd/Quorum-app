@@ -118,23 +118,23 @@ export default function NeedDetailModal({
               username={need.author?.username}
               size={30}
             />
-            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
               {need.author?.full_name ?? "—"}
             </span>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>· {timeAgo(need.created_at)} ago</span>
+            <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>· {timeAgo(need.created_at)} ago</span>
             {need.category && <span className={`${ui.chip} sm:ml-auto`}>{sentence(need.category)}</span>}
             {need.looking_for && <span className={ui.chip}>{sentence(need.looking_for)}</span>}
           </div>
 
           {need.description && (
-            <p className="whitespace-pre-wrap" style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+            <p className="whitespace-pre-wrap" style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)" }}>
               {need.description}
             </p>
           )}
 
           <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: 16 }}>
             {isOwner ? (
-              <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
                 This is your ask. Use &ldquo;View applications&rdquo; on its card to see who&apos;s
                 responded.
               </p>
@@ -149,10 +149,10 @@ export default function NeedDetailModal({
                   placeholder="A quick note on how you can help…"
                   autoFocus
                 />
-                <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+                <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>
                   This opens a direct message with {need.author?.full_name?.split(" ")[0] || "them"}.
                 </p>
-                {err && <p style={{ fontSize: 13, color: "#f87171", marginTop: 8 }}>{err}</p>}
+                {err && <p style={{ fontSize: 12, color: "#f87171", marginTop: 8 }}>{err}</p>}
               </>
             )}
           </div>

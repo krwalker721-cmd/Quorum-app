@@ -265,7 +265,7 @@ export default function MessagesClient({
             borderBottom: "1px solid rgba(245, 158, 11, 0.15)",
           }}
         >
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             {hadTrial
               ? "Your trial has ended. Choose a plan to keep sending messages."
               : "Direct messages are part of a membership."}
@@ -298,7 +298,7 @@ export default function MessagesClient({
               placeholder="Search founders to message"
               aria-label="Search founders to message"
               className={`${ui.search} w-full`}
-              style={{ fontSize: 13, padding: "8px 12px" }}
+              style={{ fontSize: 12, padding: "8px 12px" }}
             />
             {searchQuery.trim() !== "" && (
               <div className={`absolute left-3 right-3 mt-1 z-30 max-h-72 overflow-y-auto scroll-thin ${ui.menu}`}>
@@ -367,12 +367,12 @@ export default function MessagesClient({
                     <div className="flex items-center gap-2 justify-between">
                       <p
                         className="truncate"
-                        style={{ fontSize: 14, fontWeight: c.unread ? 600 : 500, color: "var(--text-primary)" }}
+                        style={{ fontSize: 13, fontWeight: c.unread ? 600 : 500, color: "var(--text-primary)" }}
                       >
                         {displayName(c.partner)}
                       </p>
                       {c.lastAt && (
-                        <span className="shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                        <span className="shrink-0" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                           {timeAgo(c.lastAt)}
                         </span>
                       )}
@@ -391,7 +391,7 @@ export default function MessagesClient({
                       <p
                         className="truncate"
                         style={{
-                          fontSize: 13,
+                          fontSize: 12,
                           marginTop: 4,
                           color: c.unread ? "var(--text-secondary)" : "var(--text-muted)",
                         }}
@@ -420,7 +420,7 @@ export default function MessagesClient({
                     onClick={() => setSelectedId(null)}
                     className="msg-back"
                     aria-label="Back to conversations"
-                    style={{ fontSize: 20, color: "var(--text-muted)" }}
+                    style={{ fontSize: 18, color: "var(--text-muted)" }}
                   >
                     ‹
                   </button>
@@ -431,7 +431,7 @@ export default function MessagesClient({
                     size={34}
                   />
                   <div className="min-w-0">
-                    <p className="truncate" style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+                    <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
                       {displayName(selected)}
                     </p>
                     <div style={{ marginTop: 2 }}>
@@ -486,14 +486,14 @@ export default function MessagesClient({
                         >
                           <p
                             className="whitespace-pre-wrap"
-                            style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-primary)" }}
+                            style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-primary)" }}
                           >
                             {m.content}
                           </p>
                         </div>
                         <p
                           className={mine ? "text-right" : "text-left"}
-                          style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}
+                          style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 4 }}
                         >
                           {timeAgo(m.created_at)} ago
                         </p>

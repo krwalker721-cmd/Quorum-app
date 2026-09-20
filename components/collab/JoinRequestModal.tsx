@@ -108,7 +108,7 @@ export default function JoinRequestModal({
               placeholder="Share why you're a good fit…"
               autoFocus
             />
-            <p style={{ fontSize: 12, marginTop: 6, color: reasonOk ? "#4ade80" : "var(--text-muted)" }}>
+            <p style={{ fontSize: 11.5, marginTop: 6, color: reasonOk ? "#4ade80" : "var(--text-muted)" }}>
               {reasonOk ? "✓ Enough to send" : `At least ${MIN_REASON} characters · ${length} so far`}
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function JoinRequestModal({
             </div>
           </div>
 
-          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+          {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
         </div>
 
         <div className="modal-shell-foot">

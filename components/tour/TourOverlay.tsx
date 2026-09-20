@@ -216,7 +216,7 @@ export function TourOverlay() {
             border: `0.5px solid ${C.border}`,
             borderRadius: 999,
             color: C.textMuted,
-            fontSize: 11,
+            fontSize: 10.5,
             padding: "5px 12px",
             cursor: "pointer",
           }}
@@ -334,7 +334,7 @@ export function TourOverlay() {
               alignItems: "center",
               justifyContent: "center",
               margin: "0 auto 12px",
-              fontSize: 20,
+              fontSize: 18,
             }}
             aria-hidden
           >
@@ -343,7 +343,7 @@ export function TourOverlay() {
         )}
         <div
           style={{
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 500,
             color: C.textPrimary,
             marginBottom: 6,
@@ -400,7 +400,7 @@ export function TourOverlay() {
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 11, color: C.textMuted, whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: 10.5, color: C.textMuted, whiteSpace: "nowrap" }}>
             {isLast ? "" : `${step.section} · ${stepIndex} / ${total}`}
           </span>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -412,7 +412,7 @@ export function TourOverlay() {
                   background: "transparent",
                   border: "none",
                   color: C.textMuted,
-                  fontSize: 12,
+                  fontSize: 11.5,
                   padding: "6px 10px",
                   cursor: "pointer",
                   whiteSpace: "nowrap",
@@ -428,7 +428,7 @@ export function TourOverlay() {
                 background: isAction ? "transparent" : C.accent,
                 border: isAction ? `0.5px solid ${C.border}` : "none",
                 color: isAction ? C.textSecondary : "#0d1117",
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: 500,
                 padding: "7px 16px",
                 borderRadius: 6,

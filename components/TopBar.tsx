@@ -77,7 +77,7 @@ export default function TopBar({
           {context && (
             <span
               className="font-sans lowercase truncate hidden lg:inline"
-              style={{ fontSize: 12, color: "var(--text-muted)" }}
+              style={{ fontSize: 11.5, color: "var(--text-muted)" }}
             >
               {context}
             </span>

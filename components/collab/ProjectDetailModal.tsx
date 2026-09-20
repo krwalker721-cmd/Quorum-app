@@ -64,7 +64,7 @@ export default function ProjectDetailModal({
   }, [project.id, currentUserId]);
 
   const isMember = project.is_member || project.owner_id === currentUserId;
-  const muted = { fontSize: 13, color: "var(--text-muted)" } as const;
+  const muted = { fontSize: 12, color: "var(--text-muted)" } as const;
 
   return (
     <div
@@ -89,7 +89,7 @@ export default function ProjectDetailModal({
 
         <div className="modal-shell-body">
           {project.description && (
-            <p className="whitespace-pre-wrap" style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}>
+            <p className="whitespace-pre-wrap" style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)" }}>
               {project.description}
             </p>
           )}

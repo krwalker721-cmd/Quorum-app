@@ -55,7 +55,7 @@ export default function ConfirmDeleteModal({
             disabled={busy}
             className="disabled:opacity-50"
             style={{
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 500,
               padding: "8px 16px",
               borderRadius: 8,

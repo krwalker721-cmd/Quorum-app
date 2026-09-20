@@ -109,7 +109,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
     >
       <p
         className="font-sans"
-        style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.5 }}
+        style={{ fontSize: 14.5, fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.5 }}
       >
         {greeting}
       </p>
@@ -122,7 +122,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
       {allZero ? (
         <p
           className="font-sans"
-          style={{ fontSize: 12, color: "var(--text-faint)", lineHeight: 1.6 }}
+          style={{ fontSize: 11.5, color: "var(--text-faint)", lineHeight: 1.6 }}
         >
           your cohort checked in. conversations happened on pulse. projects moved forward in the
           collab board. this week is a new one.
@@ -160,7 +160,7 @@ export default function WeeklySummaryCard({ data }: { data: WeeklySummaryData })
                 >
                   <span
                     className="font-mono"
-                    style={{ fontSize: 20, color: "var(--text-primary)", fontVariantNumeric: "tabular-nums" }}
+                    style={{ fontSize: 18, color: "var(--text-primary)", fontVariantNumeric: "tabular-nums" }}
                   >
                     {stat.value}
                   </span>

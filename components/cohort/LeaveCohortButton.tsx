@@ -71,15 +71,15 @@ export default function LeaveCohortButton({
             style={{ padding: 24 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-text-primary" style={{ fontSize: 15, fontWeight: 600 }}>
+            <p className="text-text-primary" style={{ fontSize: 14, fontWeight: 600 }}>
               Leave this cohort?
             </p>
-            <p className="text-text-secondary mt-3" style={{ fontSize: 14, lineHeight: 1.6 }}>
+            <p className="text-text-secondary mt-3" style={{ fontSize: 13, lineHeight: 1.6 }}>
               You&apos;ll immediately lose access to its posts, messages, and room. You can join
               or be invited to another cohort later.
             </p>
             {err && (
-              <p className="text-red-400 mt-3" style={{ fontSize: 13 }}>
+              <p className="text-red-400 mt-3" style={{ fontSize: 12 }}>
                 {err}
               </p>
             )}
@@ -91,7 +91,7 @@ export default function LeaveCohortButton({
                 onClick={confirm}
                 disabled={busy}
                 style={{
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 500,
                   padding: "8px 16px",
                   borderRadius: 8,

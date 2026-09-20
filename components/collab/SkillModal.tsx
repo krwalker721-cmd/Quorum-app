@@ -54,11 +54,11 @@ export default function SkillPanel({
             <p className={ui.label}>Skill</p>
             <h2
               className="truncate"
-              style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--text-primary)", marginTop: 2 }}
+              style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--text-primary)", marginTop: 2 }}
             >
               {entry.skill}
             </h2>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
               {n} {n === 1 ? "founder" : "founders"}
             </p>
           </div>
@@ -67,7 +67,7 @@ export default function SkillPanel({
             onClick={onClose}
             aria-label="Close"
             className={ui.ghostBtn}
-            style={{ padding: "5px 10px", fontSize: 12 }}
+            style={{ padding: "5px 10px", fontSize: 11.5 }}
           >
             Esc
           </button>
@@ -83,9 +83,9 @@ export default function SkillPanel({
             entry.members.map((m) => {
               const online = onlineIds?.has(m.id) ?? false;
               return (
-                <div key={m.id} className={`${ui.tile} flex items-start gap-3`} style={{ padding: 14 }}>
+                <div key={m.id} className={`${ui.tile} flex items-start gap-3`} style={{ padding: 12 }}>
                   <div className="relative shrink-0">
-                    <Avatar name={m.full_name} stage={m.stage} username={m.username} size={40} />
+                    <Avatar name={m.full_name} stage={m.stage} username={m.username} size={34} />
                     {online && (
                       <span
                         aria-label="online"
@@ -104,14 +104,14 @@ export default function SkillPanel({
                       <Link
                         href={m.username ? `/profile/${m.username}` : "#"}
                         className="truncate hover:underline"
-                        style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
+                        style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}
                       >
                         {m.full_name ?? "—"}
                       </Link>
                       <StagePill sleek stage={m.stage} />
                     </div>
                     {m.what_they_are_building && (
-                      <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)", marginTop: 4 }}>
+                      <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-secondary)", marginTop: 4 }}>
                         {m.what_they_are_building}
                       </p>
                     )}

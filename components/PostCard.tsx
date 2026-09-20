@@ -210,7 +210,7 @@ export default function PostCard({
             {isActive &&
               !anon &&
               (sleek ? (
-                <span style={{ fontSize: 12, color: "var(--green)" }}>● Active</span>
+                <span style={{ fontSize: 11.5, color: "var(--green)" }}>● Active</span>
               ) : (
                 <span className="font-mono" style={{ fontSize: 9, color: "var(--green)" }}>
                   ● active
@@ -235,7 +235,7 @@ export default function PostCard({
             className="flex items-center"
             style={
               sleek
-                ? { gap: 20, marginTop: 12, fontSize: 12, color: "var(--text-muted)" }
+                ? { gap: 20, marginTop: 12, fontSize: 11.5, color: "var(--text-muted)" }
                 : { gap: 22, marginTop: 9, fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-muted)" }
             }
           >

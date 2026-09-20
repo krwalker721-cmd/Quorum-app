@@ -52,7 +52,7 @@ const NAV: NavItem[] = [
   { href: "/referrals", label: "Referrals", glyph: "⇄", dotKey: "referrals" },
 ];
 
-const EXPANDED_W = 240;
+const EXPANDED_W = 208;
 const COLLAPSED_W = 48;
 
 // Below this the rail stops being a rail: it becomes an off-canvas drawer and
@@ -204,7 +204,7 @@ export default function Sidebar({
             className="font-sans tracking-tight lowercase flex-1"
             style={{
               color: "var(--text-primary)",
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: 700,
               letterSpacing: "-0.5px",
               whiteSpace: "nowrap",
@@ -254,7 +254,7 @@ export default function Sidebar({
                 title={collapsed ? item.label : undefined}
                 className={`${ui.navItem}${active ? ` ${ui.navItemActive}` : ""}`}
                 style={{
-                  fontSize: 14,
+                  fontSize: 13,
                   justifyContent: collapsed ? "center" : "flex-start",
                   padding: collapsed ? "8px 0" : undefined,
                   margin: collapsed ? "0 6px 3px" : undefined,
@@ -358,7 +358,7 @@ export default function Sidebar({
           <div style={{ minWidth: 0 }}>
             <p
               className="truncate"
-              style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.25 }}
+              style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.25 }}
             >
               {currentUser?.full_name ?? "Your profile"}
             </p>
