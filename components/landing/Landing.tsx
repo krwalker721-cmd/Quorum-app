@@ -3,6 +3,9 @@ import LogoMark from "@/components/LogoMark";
 import LegalLinks from "@/components/LegalLinks";
 import GrowthStat from "@/components/landing/GrowthStat";
 import CohortRing from "@/components/landing/CohortRing";
+import CollabWeave from "@/components/landing/CollabWeave";
+import BoardPreview from "@/components/landing/BoardPreview";
+import ProductGlyph, { type GlyphName } from "@/components/landing/ProductGlyph";
 import Reveal from "@/components/landing/Reveal";
 import { FAQ_ITEMS, PRODUCT_BLOCKS } from "@/lib/marketing-copy";
 import { FOUNDING_SEATS, PRICING, TRIAL_DAYS } from "@/lib/pricing";
@@ -55,6 +58,33 @@ const STEPS = [
     desc: "Check in on what you shipped, what's stuck, and what's next. Your cohort holds you to it.",
   },
 ];
+
+// What the collab board actually does, in its own words: post a project and
+// pick who joins, ask for help, and a room per project. Nothing here that the
+// board doesn't do.
+const BUILD = [
+  {
+    title: "Post what you're building",
+    desc: "Say what it is and who you're looking for — a co-thinker, technical, design, sales, or an advisor. Founders ask to join, and you choose who's in.",
+  },
+  {
+    title: "Ask for what you need",
+    desc: "A quick ask or a real one. Someone here has already solved it, and the skills index shows you who to ask.",
+  },
+  {
+    title: "Every project gets a room",
+    desc: "A private thread, the docs and links the work runs on, and decisions the team votes on — so what you build together has somewhere to live.",
+  },
+];
+
+// The mark for each block in "inside quorum". Keyed off the shared copy's
+// titles so lib/marketing-copy.ts (which /pricing also reads) stays untouched.
+const BLOCK_GLYPH: Record<string, GlyphName> = {
+  "Your Cohort": "cohort",
+  "The Pulse Feed": "pulse",
+  "The Collab Board": "collab",
+  "The Vault": "vault",
+};
 
 const LANDING_FAQ = new Set([
   "Why isn't there a free plan?",
@@ -151,8 +181,8 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
               <span className={s.gradientText}> version of LinkedIn.</span>
             </h1>
             <p className="mt-7 text-lg sm:text-xl text-text-secondary max-w-xl leading-relaxed">
-              A private network of founders sharing real decisions, wins, and blockers, anchored by a
-              cohort of twelve you meet every week.
+              A private network of founders sharing real decisions, wins, and blockers. A cohort of
+              twelve you meet every week, and a board where you find the people to build with.
             </p>
             <p className="mt-3 text-sm text-text-muted max-w-xl leading-relaxed">
               For founders at any stage, built especially for the early years, when the right room
@@ -258,6 +288,53 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
           </div>
         </section>
 
+        {/* Build together: the collab board, the other half of the product. */}
+        <section>
+          <Reveal>
+            <SectionHeading
+              kicker="// build together"
+              title="Find the people who’ll build it with you."
+            />
+          </Reveal>
+          <div className="mt-12 grid gap-8 lg:gap-16 lg:grid-cols-[1fr_1.15fr] lg:items-center">
+            <Reveal className="flex justify-center">
+              <CollabWeave />
+            </Reveal>
+            <div>
+              <p className="text-lg text-text-secondary leading-relaxed max-w-xl">
+                Your cohort is who you think out loud with. The collab board is where the thinking
+                turns into something real — projects looking for builders, founders asking for help,
+                and an index of who can actually do what.
+              </p>
+              <ul className="mt-9 space-y-6">
+                {BUILD.map((b, i) => (
+                  <Reveal key={b.title} delay={i * 120}>
+                    <li className="flex gap-4">
+                      <span
+                        aria-hidden
+                        className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ background: "#f59e0b", boxShadow: "0 0 0 4px rgba(245,158,11,.12)" }}
+                      />
+                      <div>
+                        <h3 className="text-text-primary font-medium">{b.title}</h3>
+                        <p className="mt-1.5 text-sm text-text-secondary leading-relaxed max-w-xl">
+                          {b.desc}
+                        </p>
+                      </div>
+                    </li>
+                  </Reveal>
+                ))}
+              </ul>
+              <p className="mt-9 text-sm text-text-muted">
+                Open to every member from day one — it’s the same membership, not another product.
+              </p>
+            </div>
+          </div>
+          <Reveal className="mt-14 sm:mt-16 max-w-4xl mx-auto">
+            <BoardPreview />
+          </Reveal>
+        </section>
+
         {/* Inside Quorum */}
         <section>
           <Reveal>
@@ -267,6 +344,11 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
             {PRODUCT_BLOCKS.map((b, i) => (
               <Reveal key={b.title} delay={(i % 2) * 120} className="h-full">
                 <div className={`${s.card} p-7 h-full`}>
+                  {BLOCK_GLYPH[b.title] && (
+                    <div className="mb-5">
+                      <ProductGlyph name={BLOCK_GLYPH[b.title]} />
+                    </div>
+                  )}
                   <h3 className="text-text-primary font-medium text-lg mb-2">{b.title}</h3>
                   <p className="text-sm text-text-secondary leading-relaxed">{b.desc}</p>
                 </div>
@@ -359,7 +441,8 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
                 Every cohort is twelve seats. Take one.
               </h2>
               <p className="mt-4 text-text-secondary">
-                A room of founders who&rsquo;ve already been where you&rsquo;re going.
+                A room of founders who&rsquo;ve already been where you&rsquo;re going &mdash; and the people
+                to build the next thing with.
               </p>
               <div className="mt-9">
                 <PrimaryCta label={ctaLabel} />
