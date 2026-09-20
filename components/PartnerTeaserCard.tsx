@@ -58,7 +58,7 @@ export default function PartnerTeaserCard() {
       <p
         className="font-sans"
         style={{
-          fontSize: 12,
+          fontSize: 11.5,
           color: "#6e7681",
           marginTop: 8,
           marginBottom: 12,

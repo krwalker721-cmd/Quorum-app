@@ -127,18 +127,18 @@ export default async function PulsePage() {
         defaultPostType="pulse"
       />
       <div
-        className={`page-pad ${ui.pageGlow}`}
-        style={{ padding: "28px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+        className={"page-pad"}
+        style={{ padding: "18px 26px 22px", maxWidth: 1280, margin: "0 auto" }}
       >
         {/* Header */}
         <div style={{ marginBottom: 22 }}>
           <h1
             className={ui.titleGradient}
-            style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+            style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
           >
             Pulse
           </h1>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8 }}>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>
             Real decisions, wins, and blockers from every founder on Quorum ·{" "}
             {activeNow > 0 ? (
               <span style={{ color: "var(--green)" }}>

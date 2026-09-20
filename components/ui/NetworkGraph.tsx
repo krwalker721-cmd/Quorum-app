@@ -11,11 +11,16 @@ export default function NetworkGraph({
   you,
   members,
   activeIndex = 0,
+  fill = false,
 }: {
   you: { full_name: string | null };
   members: Node[];
   /** Which surrounding node gets the green active dot (−1 = none). */
   activeIndex?: number;
+  /** Scale to the box it is given instead of to its own natural height, so a
+   *  short tile shrinks the constellation rather than clipping it. The viewBox
+   *  and the default preserveAspectRatio keep it centred and undistorted. */
+  fill?: boolean;
 }) {
   const shown = members.slice(0, 5);
   const cx = 120;
@@ -33,7 +38,10 @@ export default function NetworkGraph({
   ];
 
   return (
-    <svg viewBox="0 0 240 84" style={{ width: "100%", height: "auto", display: "block" }}>
+    <svg
+      viewBox="0 0 240 84"
+      style={{ width: "100%", height: fill ? "100%" : "auto", display: "block" }}
+    >
       {shown.map((m, i) => {
         const s = slots[i];
         return (

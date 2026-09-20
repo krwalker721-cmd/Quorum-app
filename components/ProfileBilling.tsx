@@ -94,7 +94,7 @@ export default function ProfileBilling() {
 
   return (
     <Tile kicker="Billing" right={<TierPill sleek tier={tier} />}>
-      <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>{statusText(sub)}</p>
+      <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{statusText(sub)}</p>
       <button
         type="button"
         onClick={handleManageBilling}

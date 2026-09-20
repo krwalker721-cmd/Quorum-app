@@ -16,13 +16,13 @@ export default function PulseEmptyState() {
           </circle>
         </svg>
         <div style={{ maxWidth: 420 }}>
-          <p style={{ fontSize: 16, color: "var(--text-primary)" }}>
+          <p style={{ fontSize: 14.5, color: "var(--text-primary)" }}>
             This is where founders speak honestly.
           </p>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8, lineHeight: 1.6 }}>
             No performance, no highlight reels. Just real problems, real decisions, and real wins.
           </p>
-          <p style={{ fontSize: 14, color: "var(--text-muted)", marginTop: 12 }}>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 12 }}>
             Be the first to say something true.
           </p>
         </div>

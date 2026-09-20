@@ -67,14 +67,14 @@ export default function YourWorkspace({
 }
 
 function WorkspaceRow({ project, online }: { project: WorkspaceProject; online: Set<string> }) {
-  const meta = { fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 } as const;
+  const meta = { fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.5 } as const;
   return (
     <div className={ui.row} style={{ padding: 10 }}>
       <Link href={`/collab/${project.id}`} className="block">
         <div className="flex items-start justify-between gap-2">
           <span
             className="truncate"
-            style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.35 }}
+            style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.35 }}
           >
             {project.title}
           </span>

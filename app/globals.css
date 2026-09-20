@@ -72,6 +72,13 @@
 
 /* ─── High contrast — same dark base, brighter text + borders ──────── */
 [data-theme="high-contrast"] {
+  /* The primary button stays fuller here — subtlety is the one thing this
+   * theme is not for. */
+  --btn-primary-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(217, 119, 6, 0.88));
+  --btn-primary-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
   /* Backgrounds unchanged — keep eye-friendly dark base */
   --bg-base: #0d1117;
   --bg-surface: #1a212b;       /* slightly lifted vs #161b22 for card pop */
@@ -157,24 +164,103 @@
   --shadow-modal: 0 24px 64px rgba(1, 4, 9, 0.65), 0 4px 16px rgba(1, 4, 9, 0.45);
   --focus-ring: 0 0 0 2px rgba(88, 166, 255, 0.35);
 
+  /* The one filled amber button. Deliberately calmer than the landing page's:
+   * that one is seen once, this one is on screen all day, and at full
+   * saturation it shouted over everything around it. The pull comes from being
+   * the only filled thing on the page, not from brightness — so the fill is
+   * dropped to ~80%, the white gloss is halved, and the hard amber ring is
+   * gone, leaving a soft lift. Tune here, never per component. */
+  --btn-primary-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(217, 119, 6, 0.72));
+  --btn-primary-fg: #1a1204;
+  --btn-primary-shadow:
+    0 6px 20px -12px rgba(245, 158, 11, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --btn-primary-hover: brightness(1.12);
+
   /* App chrome heights — every full-bleed pane sizes against these so nothing
    * ever overflows the viewport. Keep in sync with TopBar/CohortNav/AppOverlay. */
-  --topbar-h: 64px;
-  --subnav-h: 40px;     /* cohort nav, breadcrumb bars */
+  --topbar-h: 52px;
+  --subnav-h: 34px;     /* cohort nav, breadcrumb bars */
   --statusbar-h: 20px;  /* fixed QUORUM_OS bar at the bottom */
 }
 
-/* Full-viewport panes (messages, cohort room): exactly fill the space between
- * the topbar and the status bar — the page itself never scrolls, inner columns
- * do. The -min variant is for centered empty/locked states. */
+/* ─── The app is exactly one viewport tall, and never scrolls as a page ──
+ * The shell is a column: the trial banner, the topbar, then the page's own
+ * content taking whatever is left and scrolling inside itself if it must.
+ *
+ * This replaces per-pane `calc(100dvh - chrome)` arithmetic, which could only
+ * ever guess: the trial banner sits above the content and is dismissable, so
+ * every full-height pane was exactly one banner too tall whenever a trialing
+ * member — which is every new member — was looking at it, and the window
+ * scrolled. Measuring nothing and letting flex do it is right by construction.
+ */
+.app-content {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  /* The amber wash at the top of every page. It lives here, on the shell,
+   * rather than on each page's column: the column is centred and capped
+   * (1280/1080), so on a wide window — and especially with the sidebar
+   * collapsed — the gradient stopped dead at the column's edge with bare
+   * background either side. On the shell it always spans the full content
+   * area, and being outside the scroll container it stays put while a page
+   * scrolls under it. */
+  background: radial-gradient(ellipse 900px 320px at 18% 0%, rgba(245, 158, 11, 0.07), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+/* Every page's content column. Takes the space the chrome leaves and owns its
+ * own scrollbar, so the topbar and sidebar never slide away. */
+.page-pad {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Pages set `margin: 0 auto` to centre their column, and an auto margin on a
+   * flex item turns off the cross-axis stretch it used to get for free as a
+   * block — without this the column shrink-wraps its content. */
+  width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* A page that must fit the viewport outright, with no scrollbar of its own:
+ * home. Its rows flex into the space available and its lists clip (and scroll
+ * inside themselves) rather than pushing the page taller. Below the stacking
+ * breakpoint it goes back to ordinary flow — a phone screen cannot hold a
+ * launchpad at once, and squashing it to try would be worse than a scroll. */
+.page-fit {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Rows carry their own floors, so on a window too short to hold them at a
+   * legible size this scrolls rather than silently clipping. It fits outright
+   * from roughly 700px of viewport height up. */
+  overflow-y: auto;
+}
+@media (max-width: 900px) {
+  .page-fit {
+    display: block;
+    overflow-y: auto;
+  }
+}
+
+/* Full-viewport panes (messages, cohort room): fill what's left, and let the
+ * inner columns do the scrolling. The subnav variants are kept as no-ops —
+ * a subnav is a sibling in the same column now, so its height is already out
+ * of the reckoning. The -min variant is for centered empty/locked states. */
 .app-pane,
 .app-pane-min {
-  --pane-h: calc(100dvh - var(--topbar-h) - var(--statusbar-h));
+  --pane-h: calc(100dvh - var(--topbar-h));
 }
-.app-pane { height: var(--pane-h); overflow: hidden; }
-.app-pane-min { min-height: var(--pane-h); }
-.app-pane.with-subnav { height: calc(var(--pane-h) - var(--subnav-h)); }
-.app-pane.with-subnav-2 { height: calc(var(--pane-h) - var(--subnav-h) * 2); }
+.app-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.app-pane-min {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
 /* Every keyboard-focusable thing responds the same way. Mouse clicks don't
  * trigger it (focus-visible), so the ring only shows up when it helps. */
@@ -339,11 +425,11 @@ label {
 .sidebar {
   background: var(--bg-surface);
   border-right: 1px solid var(--border-default);
-  width: 240px;
+  width: 208px;
 }
 .sidebar-logo-area {
   border-bottom: 1px solid var(--border-default);
-  padding: 16px;
+  padding: 12px 14px;
 }
 .logo-text {
   font-family: var(--font-space-grotesk), sans-serif;
@@ -828,17 +914,13 @@ label {
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
-  color: #1a1204;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(245, 158, 11, 0.75));
-  box-shadow:
-    0 0 0 1px rgba(245, 158, 11, 0.45),
-    0 8px 24px -10px rgba(245, 158, 11, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: var(--btn-primary-fg);
+  background: var(--btn-primary-bg);
+  box-shadow: var(--btn-primary-shadow);
   text-decoration: none;
 }
 .modal-shell .btn-primary:hover {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(245, 158, 11, 0.75));
-  filter: brightness(1.08);
+  filter: var(--btn-primary-hover);
 }
 .modal-shell .btn-primary:disabled { filter: none; }
 .modal-shell .btn-ghost {

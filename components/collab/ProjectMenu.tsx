@@ -73,7 +73,7 @@ export default function ProjectMenu({
               setConfirm(true);
             }}
             className="block w-full text-left px-3 py-2 rounded-md hover:bg-white/5"
-            style={{ fontSize: 13, color: "#f87171" }}
+            style={{ fontSize: 12, color: "#f87171" }}
           >
             Delete {itemLabel}
           </button>

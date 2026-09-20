@@ -55,13 +55,13 @@ export default function InTheRoomGrid({
           </div>
         ))}
         {overflow > 0 && (
-          <span className="flex items-center px-1" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          <span className="flex items-center px-1" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
             +{overflow} more
           </span>
         )}
       </div>
       {showCount && (
-        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+        <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
           {onlineMembers.length} {onlineMembers.length === 1 ? "founder" : "founders"} here right now
         </p>
       )}

@@ -17,7 +17,7 @@ export default function PulseUpgradeNudge() {
       className={`${ui.tile} flex items-center justify-between flex-wrap`}
       style={{ padding: "14px 16px 14px 18px", gap: 12 }}
     >
-      <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+      <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
         {hadTrial
           ? "Your trial has ended. Posting is paused until you pick a plan."
           : "Posting to Pulse is part of Member."}

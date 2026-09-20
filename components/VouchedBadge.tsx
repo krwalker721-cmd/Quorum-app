@@ -37,7 +37,7 @@ export default function VouchedBadge({ vouchers }: { vouchers: Voucher[] }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className={`absolute z-50 mt-2 left-0 min-w-[200px] ${ui.menu}`}>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", padding: "4px 10px 2px" }}>Vouched by</p>
+            <p style={{ fontSize: 10.5, color: "var(--text-muted)", padding: "4px 10px 2px" }}>Vouched by</p>
             {vouchers.map((v) => (
               <Link
                 key={v.id}

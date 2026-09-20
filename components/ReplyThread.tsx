@@ -158,7 +158,7 @@ export default function ReplyThread({
     <div className={`reply-thread ${variant}${sleek ? ` ${ui.thread}` : ""}`}>
       <div className="reply-thread-head">
         {sleek ? (
-          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
             {loading
               ? "Loading replies…"
               : replies.length === 0
@@ -208,7 +208,7 @@ export default function ReplyThread({
                     ? "text-text-primary truncate"
                     : "font-mono lowercase text-[0.7rem] text-text-primary truncate"
                 }
-                style={sleek ? { fontSize: 13, fontWeight: 500 } : undefined}
+                style={sleek ? { fontSize: 12, fontWeight: 500 } : undefined}
               >
                 {r.is_anonymous
                   ? sleek
@@ -222,7 +222,7 @@ export default function ReplyThread({
                     ? "text-text-faint ml-auto shrink-0"
                     : "font-mono lowercase text-[0.55rem] text-text-faint ml-auto shrink-0"
                 }
-                style={sleek ? { fontSize: 12 } : undefined}
+                style={sleek ? { fontSize: 11.5 } : undefined}
               >
                 {timeAgo(r.created_at)} ago
               </span>
@@ -231,7 +231,7 @@ export default function ReplyThread({
               className={`text-text-secondary mt-1 whitespace-pre-wrap ${
                 sleek ? "leading-relaxed" : "text-[0.82rem] leading-snug"
               }`}
-              style={sleek ? { fontSize: 14 } : undefined}
+              style={sleek ? { fontSize: 13 } : undefined}
             >
               {r.content}
             </p>

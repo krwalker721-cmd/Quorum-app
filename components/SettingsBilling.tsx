@@ -107,7 +107,7 @@ function statusLine(sub: Sub): { text: string; color: string } {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4" style={{ fontSize: 14 }}>
+    <div className="flex items-baseline justify-between gap-4" style={{ fontSize: 13 }}>
       <span style={{ color: "var(--text-muted)" }}>{label}</span>
       <span className="text-right" style={{ color: "var(--text-primary)" }}>{value}</span>
     </div>
@@ -167,18 +167,18 @@ export default function SettingsBilling() {
       }}
     >
       <div className="flex items-center justify-between gap-3" style={{ marginBottom: 14 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>Billing</h2>
+        <h2 style={{ fontSize: 14.5, fontWeight: 600, color: "var(--text-primary)" }}>Billing</h2>
         <TierPill sleek tier={tier} />
       </div>
 
-      <p style={{ fontSize: 14, color: status?.color ?? "var(--text-muted)" }}>
+      <p style={{ fontSize: 13, color: status?.color ?? "var(--text-muted)" }}>
         {status ? status.text : "Loading…"}
       </p>
 
       {/* There are no metered free limits to show: an account either has full
           access or can't write at all. */}
       {sub && (
-        <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 8 }}>
+        <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 8 }}>
           {sub.has_full_access
             ? "Unlimited posts, replies, messages, and notes this month."
             : "You can read everything. Posting, replies, and messages open up with a membership."}
@@ -206,10 +206,10 @@ export default function SettingsBilling() {
 
       {invoices.length > 0 && (
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: HAIRLINE }}>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>Invoices</p>
+          <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>Invoices</p>
           <div className="space-y-1" style={{ margin: "0 -8px" }}>
             {invoices.map((inv) => (
-              <div key={inv.id} className={`flex items-center gap-3 ${ui.row}`} style={{ padding: "7px 8px", fontSize: 14 }}>
+              <div key={inv.id} className={`flex items-center gap-3 ${ui.row}`} style={{ padding: "7px 8px", fontSize: 13 }}>
                 <span className="flex-1 min-w-0 truncate" style={{ color: "var(--text-primary)" }}>
                   {fmtDate(inv.created)}
                 </span>
@@ -240,7 +240,7 @@ export default function SettingsBilling() {
       )}
 
       {billingError && sub?.has_stripe_subscription && (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 14 }}>
+        <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 14 }}>
           Couldn&apos;t load your plan details right now. The billing portal has everything.
         </p>
       )}

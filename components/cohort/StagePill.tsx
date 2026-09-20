@@ -29,7 +29,7 @@ export default function StagePill({
         color,
         background: hexToRgba(color, 0.1),
         ...(sleek
-          ? { fontSize: 11, lineHeight: 1.6, padding: "0 7px", borderRadius: 999, whiteSpace: "nowrap" }
+          ? { fontSize: 10.5, lineHeight: 1.6, padding: "0 7px", borderRadius: 999, whiteSpace: "nowrap" }
           : {}),
       }}
     >

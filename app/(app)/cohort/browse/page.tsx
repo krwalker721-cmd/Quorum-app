@@ -51,11 +51,11 @@ export default async function BrowseCohortsPage() {
       <section className="max-w-3xl mx-auto px-6 py-10">
         <h1
           className={ui.titleGradient}
-          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+          style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
         >
           Open cohorts
         </h1>
-        <p className="text-text-secondary mt-2" style={{ fontSize: 14 }}>
+        <p className="text-text-secondary mt-2" style={{ fontSize: 13 }}>
           Request to join any open cohort.
         </p>
 
@@ -76,13 +76,13 @@ export default async function BrowseCohortsPage() {
                 style={{ padding: "18px 20px" }}
               >
                 <div className="min-w-0">
-                  <p className="text-text-primary" style={{ fontSize: 16, fontWeight: 500 }}>
+                  <p className="text-text-primary" style={{ fontSize: 14.5, fontWeight: 500 }}>
                     {c.name}
                   </p>
-                  <p className="text-text-secondary mt-1" style={{ fontSize: 14, lineHeight: 1.5 }}>
+                  <p className="text-text-secondary mt-1" style={{ fontSize: 13, lineHeight: 1.5 }}>
                     {c.description ?? "No description yet."}
                   </p>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>
+                  <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8 }}>
                     Open · started{" "}
                     {new Date(c.created_at).toLocaleDateString(undefined, {
                       month: "short",

@@ -11,7 +11,7 @@ export default function EmptyStateUpgradeLine({ children }: { children: React.Re
   return (
     <p
       className="font-sans"
-      style={{ fontSize: 12, color: "#484f58", marginTop: 12, lineHeight: 1.5 }}
+      style={{ fontSize: 11.5, color: "#484f58", marginTop: 12, lineHeight: 1.5 }}
     >
       {children}
     </p>

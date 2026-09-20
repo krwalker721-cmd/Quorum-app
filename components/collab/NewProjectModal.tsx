@@ -159,7 +159,7 @@ export default function NewProjectModal({
             </div>
           )}
 
-          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+          {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
         </div>
 
         <div className="modal-shell-foot">

@@ -42,9 +42,8 @@ export default function StatusPage({
 export const STATUS_PRIMARY =
   "inline-block rounded-lg px-5 py-3 text-sm font-medium text-[#1a1204] cursor-pointer";
 export const STATUS_PRIMARY_STYLE = {
-  background: "linear-gradient(135deg, rgba(245,158,11,.95), rgba(245,158,11,.75))",
-  boxShadow:
-    "0 0 0 1px rgba(245,158,11,.45), 0 10px 30px -10px rgba(245,158,11,.6), inset 0 1px 0 rgba(255,255,255,.25)",
+  background: "var(--btn-primary-bg)",
+  boxShadow: "var(--btn-primary-shadow)",
   border: "none",
 };
 export const STATUS_SECONDARY =

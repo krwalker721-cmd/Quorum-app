@@ -26,7 +26,7 @@ export default function HomeCheckinHero({
         </p>
         <p
           style={{
-            fontSize: 17,
+            fontSize: 15,
             lineHeight: 1.4,
             fontWeight: 500,
             letterSpacing: "-0.01em",

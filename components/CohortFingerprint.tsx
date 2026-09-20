@@ -26,7 +26,7 @@ export default function CohortFingerprint({
 }) {
   if (fp.total === 0) {
     return (
-      <p style={{ fontSize: 13, color: "var(--text-muted)", maxWidth: size }}>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", maxWidth: size }}>
         Post in the room and a shape will emerge.
       </p>
     );

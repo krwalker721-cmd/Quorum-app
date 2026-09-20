@@ -89,7 +89,7 @@ export default function SkillsEditor({
           placeholder="Add a skill (e.g. react, fundraising)"
           aria-label="Add a skill"
           className={`${ui.search} flex-1 min-w-0`}
-          style={{ fontSize: 13, padding: "7px 12px" }}
+          style={{ fontSize: 12, padding: "7px 12px" }}
         />
         <button type="button" onClick={add} disabled={busy || !text.trim()} className={ui.softBtn}>
           Add

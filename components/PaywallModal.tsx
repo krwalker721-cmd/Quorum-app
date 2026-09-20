@@ -98,7 +98,7 @@ export default function PaywallModal({
     background: "transparent",
     border: "none",
     fontFamily: SANS,
-    fontSize: 13,
+    fontSize: 12,
     color: "var(--text-muted)",
     cursor: "pointer",
   };
@@ -164,18 +164,18 @@ export default function PaywallModal({
             border: "none",
             color: "var(--text-muted)",
             cursor: "pointer",
-            fontSize: 20,
+            fontSize: 18,
             lineHeight: 1,
           }}
         >
           ×
         </button>
 
-        <p style={{ fontSize: 13, fontWeight: 500, color: "#f8c56a", marginBottom: 8 }}>Membership</p>
+        <p style={{ fontSize: 12, fontWeight: 500, color: "#f8c56a", marginBottom: 8 }}>Membership</p>
 
         <h2
           style={{
-            fontSize: 22,
+            fontSize: 19,
             fontWeight: 600,
             letterSpacing: "-0.02em",
             color: "var(--text-primary)",
@@ -186,12 +186,12 @@ export default function PaywallModal({
           Become a member to keep going
         </h2>
 
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 4 }}>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 4 }}>
           {FEATURE_LINE[feature]}
         </p>
 
         {hadTrial && (
-          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 4 }}>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
             Your trial has ended. Pick a plan to pick up where you left off.
           </p>
         )}
@@ -206,7 +206,7 @@ export default function PaywallModal({
             margin: "18px 0",
           }}
         >
-          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 10 }}>
+          <p style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 10 }}>
             What you get
           </p>
           {INCLUDED.map((item) => (
@@ -222,7 +222,7 @@ export default function PaywallModal({
                   marginTop: 7,
                 }}
               />
-              <span style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.45 }}>{item}</span>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}>{item}</span>
             </div>
           ))}
         </div>
@@ -239,12 +239,11 @@ export default function PaywallModal({
               padding: "13px 16px",
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg, rgba(245,158,11,.95), rgba(245,158,11,.75))",
-              boxShadow:
-                "0 0 0 1px rgba(245, 158, 11, 0.45), 0 8px 24px -10px rgba(245, 158, 11, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
-              color: "#1a1204",
+              background: "var(--btn-primary-bg)",
+              boxShadow: "var(--btn-primary-shadow)",
+              color: "var(--btn-primary-fg)",
               fontFamily: SANS,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 600,
               cursor: busy ? "default" : "pointer",
               opacity: busy ? 0.7 : 1,
@@ -264,7 +263,7 @@ export default function PaywallModal({
               color: "var(--text-primary)",
               border: "1px solid rgba(255, 255, 255, 0.12)",
               fontFamily: SANS,
-              fontSize: 14,
+              fontSize: 13,
               cursor: busy ? "default" : "pointer",
               opacity: busy ? 0.7 : 1,
             }}
@@ -286,7 +285,7 @@ export default function PaywallModal({
             border: "none",
             padding: 0,
             fontFamily: SANS,
-            fontSize: 13,
+            fontSize: 12,
             color: "#f8c56a",
             cursor: busy ? "default" : "pointer",
             textAlign: "center",
@@ -298,7 +297,7 @@ export default function PaywallModal({
         </button>
 
         {error && (
-          <p style={{ fontSize: 13, color: "#f87171", marginTop: 12, textAlign: "center" }}>{error}</p>
+          <p style={{ fontSize: 12, color: "#f87171", marginTop: 12, textAlign: "center" }}>{error}</p>
         )}
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, marginTop: 18 }}>

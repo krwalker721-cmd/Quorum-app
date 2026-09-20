@@ -67,7 +67,7 @@ const TAB_LABEL: Record<Tab, string> = {
   decisions: "Decisions",
 };
 
-const META: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)" };
+const META: React.CSSProperties = { fontSize: 11.5, color: "var(--text-muted)" };
 
 // A hairline panel that doesn't light up on hover (the thread, the forms):
 // large surfaces you work inside, not cards you pick.
@@ -224,8 +224,8 @@ export default function ProjectRoomClient({
 
   return (
     <div
-      className={`page-pad ${ui.pageGlow}`}
-      style={{ padding: "24px 32px 40px", maxWidth: 1280, margin: "0 auto" }}
+      className={"page-pad"}
+      style={{ padding: "16px 26px 22px", maxWidth: 1280, margin: "0 auto" }}
     >
       <Link href="/collab" className={ui.tileLink}>
         ← Collab board
@@ -235,14 +235,14 @@ export default function ProjectRoomClient({
       <div style={{ marginTop: 12, marginBottom: 20 }}>
         <h1
           className={`${ui.titleGradient} ${ui.balance}`}
-          style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+          style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
         >
           {project.title}
         </h1>
         <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap" style={{ marginTop: 10 }}>
           <span
             className="inline-flex items-center gap-1.5"
-            style={{ fontSize: 13, color: closed ? "var(--text-muted)" : "var(--green)" }}
+            style={{ fontSize: 12, color: closed ? "var(--text-muted)" : "var(--green)" }}
           >
             <span
               aria-hidden
@@ -252,9 +252,9 @@ export default function ProjectRoomClient({
             {closed ? "Closed" : "Active"}
           </span>
           {project.category && <span className={ui.chip}>{sentence(project.category)}</span>}
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Started {started}</span>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Started {started}</span>
           {project.looking_for && (
-            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
               Looking for {project.looking_for}
             </span>
           )}
@@ -262,7 +262,7 @@ export default function ProjectRoomClient({
         {project.description && (
           <p
             className="whitespace-pre-wrap"
-            style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 12, maxWidth: "72ch" }}
+            style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 12, maxWidth: "72ch" }}
           >
             {project.description}
           </p>
@@ -325,7 +325,7 @@ export default function ProjectRoomClient({
         <aside className="min-w-0 space-y-4">
           {openForMe.length > 0 && (
             <Tile gradient kicker="A decision needs your vote" kickerColor="#f8c56a">
-              <p style={{ fontSize: 14, lineHeight: 1.5, color: "var(--text-primary)" }}>
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-primary)" }}>
                 {openForMe[0].title}
               </p>
               <button
@@ -345,10 +345,10 @@ export default function ProjectRoomClient({
                 <div key={m.id} className="group/member flex items-center gap-3">
                   <Avatar name={m.full_name} stage={m.stage} username={m.username} size={30} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate" style={{ fontSize: 14, color: "var(--text-primary)" }}>
+                    <p className="truncate" style={{ fontSize: 13, color: "var(--text-primary)" }}>
                       {m.full_name ?? "—"}
                       {m.id === project.owner_id && (
-                        <span style={{ fontSize: 12, color: "#f8c56a", marginLeft: 6 }}>Owner</span>
+                        <span style={{ fontSize: 11.5, color: "#f8c56a", marginLeft: 6 }}>Owner</span>
                       )}
                       {m.id === currentUserId && (
                         <span style={{ ...META, marginLeft: 6 }}>You</span>
@@ -373,7 +373,7 @@ export default function ProjectRoomClient({
           </Tile>
 
           <Tile kicker="Handshake">
-            <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+            <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-secondary)" }}>
               Log a commitment you made with someone on this project.
             </p>
             <HandshakeProjectButton
@@ -414,7 +414,7 @@ function ProgressRow({ label, value, total }: { label: string; value: number; to
   const pct = total && total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   return (
     <div className="mb-3 last:mb-0">
-      <div className="flex items-center justify-between" style={{ fontSize: 13 }}>
+      <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
         <span style={{ color: "var(--text-secondary)" }}>{label}</span>
         <span style={{ color: "var(--text-primary)" }}>
           {value}
@@ -566,14 +566,14 @@ function ThreadTab({
                 }}
               >
                 {!mine && (
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 2 }}>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
                     {sender?.full_name ?? "—"}
                   </p>
                 )}
-                <p style={{ color: "var(--text-primary)", fontSize: 14, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                <p style={{ color: "var(--text-primary)", fontSize: 13, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
                   {m.content}
                 </p>
-                <p style={{ fontSize: 11, color: mine ? "rgba(248, 197, 106, 0.75)" : "var(--text-muted)", marginTop: 4 }}>
+                <p style={{ fontSize: 10.5, color: mine ? "rgba(248, 197, 106, 0.75)" : "var(--text-muted)", marginTop: 4 }}>
                   {timeAgo(m.created_at)} ago
                 </p>
               </div>
@@ -792,12 +792,12 @@ function DocsTab({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:underline"
-                  style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
+                  style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}
                 >
                   {d.title}
                 </a>
               ) : (
-                <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>{d.title}</p>
+                <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{d.title}</p>
               )}
               <p style={{ ...META, marginTop: 2 }}>
                 {domain ? `${domain} · ` : ""}
@@ -806,7 +806,7 @@ function DocsTab({
               {d.description && (
                 <p
                   className="whitespace-pre-wrap"
-                  style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 8 }}
+                  style={{ fontSize: 12, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 8 }}
                 >
                   {d.description}
                 </p>
@@ -857,9 +857,9 @@ function DocsTab({
             className={`${ui.search} w-full`}
             style={{ resize: "vertical" }}
           />
-          {err && <p style={{ fontSize: 13, color: "#f87171" }}>{err}</p>}
+          {err && <p style={{ fontSize: 12, color: "#f87171" }}>{err}</p>}
           <div className="flex justify-end items-center gap-3">
-            <button type="button" onClick={reset} className={ui.textBtn} style={{ fontSize: 13 }}>
+            <button type="button" onClick={reset} className={ui.textBtn} style={{ fontSize: 12 }}>
               Cancel
             </button>
             <button
@@ -1009,7 +1009,7 @@ function DecisionsTab({
         return (
           <div key={d.id} className={ui.tile} style={{ padding: "16px 18px" }}>
             <div className="flex items-start justify-between gap-3">
-              <h4 style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4, color: "var(--text-primary)" }}>
+              <h4 style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: "var(--text-primary)" }}>
                 {d.title}
               </h4>
               <span
@@ -1026,13 +1026,13 @@ function DecisionsTab({
             {d.description && (
               <p
                 className="whitespace-pre-wrap"
-                style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 6 }}
+                style={{ fontSize: 12, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 6 }}
               >
                 {d.description}
               </p>
             )}
             {decided && d.winning_option ? (
-              <p style={{ fontSize: 14, marginTop: 12 }}>
+              <p style={{ fontSize: 13, marginTop: 12 }}>
                 <span style={{ color: "#4ade80" }}>✓ {d.winning_option}</span>
                 <span style={META}>
                   {" "}
@@ -1094,7 +1094,7 @@ function DecisionsTab({
             style={{ resize: "vertical" }}
           />
           <div className="flex justify-end items-center gap-3">
-            <button type="button" onClick={() => setOpen(false)} className={ui.textBtn} style={{ fontSize: 13 }}>
+            <button type="button" onClick={() => setOpen(false)} className={ui.textBtn} style={{ fontSize: 12 }}>
               Cancel
             </button>
             <button
@@ -1153,7 +1153,7 @@ function ActivityWidget({
       ) : (
         <ul className="space-y-2.5">
           {recent.map((e, i) => (
-            <li key={i} style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+            <li key={i} style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-secondary)" }}>
               {sentence(e.text)} <span style={META}>· {timeAgo(e.ts)} ago</span>
             </li>
           ))}

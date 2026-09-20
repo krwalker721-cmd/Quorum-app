@@ -3,10 +3,9 @@ import type { CSSProperties, ReactNode } from "react";
 import ui from "./sleek.module.css";
 
 const SOLID: CSSProperties = {
-  background:
-    "linear-gradient(135deg, rgba(245,158,11,.92), rgba(245,158,11,.72))",
+  background: "var(--btn-primary-bg)",
   border: "none",
-  color: "#1a1204",
+  color: "var(--btn-primary-fg)",
   fontWeight: 500,
 };
 

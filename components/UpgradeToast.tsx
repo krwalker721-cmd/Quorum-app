@@ -90,7 +90,7 @@ export default function UpgradeToast() {
           border: "1px solid rgba(34,197,94,0.3)",
           borderRadius: 4,
           padding: "12px 20px",
-          fontSize: 12,
+          fontSize: 11.5,
           color: "#22c55e",
           letterSpacing: "0.05em",
           display: "flex",
@@ -110,7 +110,7 @@ export default function UpgradeToast() {
             border: "none",
             color: "var(--text-disabled)",
             cursor: "pointer",
-            fontSize: 14,
+            fontSize: 13,
             lineHeight: 1,
           }}
         >

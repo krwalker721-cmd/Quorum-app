@@ -23,9 +23,9 @@ export default function FounderAgreements() {
             key={i.key}
             onClick={() => setOpen(i.key)}
             className={`${ui.navItem} w-full text-left`}
-            style={{ padding: "7px 8px", fontSize: 13 }}
+            style={{ padding: "7px 8px", fontSize: 12 }}
           >
-            <span className="text-amber" style={{ fontSize: 13 }}>{i.glyph}</span>
+            <span className="text-amber" style={{ fontSize: 12 }}>{i.glyph}</span>
             <span>{i.label}</span>
           </button>
         ))}
@@ -43,10 +43,10 @@ export default function FounderAgreements() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-amber" style={{ fontSize: 16 }}>{active.glyph}</span>
-              <p className="text-text-primary" style={{ fontSize: 15, fontWeight: 600 }}>{active.label}</p>
+              <span className="text-amber" style={{ fontSize: 14.5 }}>{active.glyph}</span>
+              <p className="text-text-primary" style={{ fontSize: 14, fontWeight: 600 }}>{active.label}</p>
             </div>
-            <p className="text-text-secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>{active.body}</p>
+            <p className="text-text-secondary" style={{ fontSize: 13, lineHeight: 1.6 }}>{active.body}</p>
             <div className="flex justify-end mt-5">
               <button onClick={() => setOpen(null)} className={ui.ghostBtn}>
                 Close

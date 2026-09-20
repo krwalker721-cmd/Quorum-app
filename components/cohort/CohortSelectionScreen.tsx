@@ -81,11 +81,11 @@ export default function CohortSelectionScreen({
     <div className={`px-8 py-8 max-w-5xl mx-auto ${ui.pageGlow}`}>
       <h1
         className={ui.titleGradient}
-        style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+        style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
       >
         Your cohorts
       </h1>
-      <p className="text-text-secondary mt-2" style={{ fontSize: 14 }}>
+      <p className="text-text-secondary mt-2" style={{ fontSize: 13 }}>
         You&apos;re in {cohorts.length} cohorts. Pick a room to enter.
       </p>
 
@@ -98,7 +98,7 @@ export default function CohortSelectionScreen({
             background: "rgba(239,68,68,0.06)",
           }}
         >
-          <p style={{ fontSize: 13, color: "#f87171" }}>You&apos;re not a member of that cohort.</p>
+          <p style={{ fontSize: 12, color: "#f87171" }}>You&apos;re not a member of that cohort.</p>
         </div>
       )}
 
@@ -114,14 +114,14 @@ export default function CohortSelectionScreen({
               style={{ padding: "20px 22px" }}
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="text-text-primary truncate" style={{ fontSize: 18, fontWeight: 600 }}>
+                <p className="text-text-primary truncate" style={{ fontSize: 16, fontWeight: 600 }}>
                   {c.name}
                 </p>
                 {n > 0 && (
                   <span
                     className="shrink-0"
                     style={{
-                      fontSize: 11,
+                      fontSize: 10.5,
                       lineHeight: 1.6,
                       padding: "0 8px",
                       borderRadius: 999,
@@ -152,16 +152,16 @@ export default function CohortSelectionScreen({
                     </div>
                   ))}
                 </div>
-                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
                   {c.memberCount} {c.memberCount === 1 ? "member" : "members"}
                 </span>
               </div>
 
               <div className="flex items-center justify-between mt-4">
-                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
                   {c.lastActivity ? `Active ${timeAgo(c.lastActivity)} ago` : "No activity yet"}
                 </span>
-                <span style={{ fontSize: 13, color: "#f8c56a" }}>Enter room →</span>
+                <span style={{ fontSize: 12, color: "#f8c56a" }}>Enter room →</span>
               </div>
             </button>
           );

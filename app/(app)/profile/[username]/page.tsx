@@ -51,7 +51,7 @@ function sentence(s: string) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-const BODY: React.CSSProperties = { fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)" };
+const BODY: React.CSSProperties = { fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)" };
 
 export default async function ProfilePage(
   props: {
@@ -278,8 +278,8 @@ export default async function ProfilePage(
       <NoGrid />
       <TopBar sleek title="profile" tier={myTier.toUpperCase()} userId={user.id} />
       <section
-        className={`page-pad ${ui.pageGlow}`}
-        style={{ padding: "28px 32px 40px", maxWidth: 1080, margin: "0 auto" }}
+        className={"page-pad"}
+        style={{ padding: "18px 26px 22px", maxWidth: 1080, margin: "0 auto" }}
       >
         {/* Header */}
         <div className={ui.tile} style={{ padding: 24 }}>
@@ -296,11 +296,11 @@ export default async function ProfilePage(
                 <div className="min-w-0">
                   <h1
                     className={`${ui.titleGradient} ${ui.balance}`}
-                    style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+                    style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
                   >
                     {profile.full_name ?? "—"}
                   </h1>
-                  <p className="truncate" style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
+                  <p className="truncate" style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                     @{profile.username}
                   </p>
                 </div>
@@ -368,12 +368,12 @@ export default async function ProfilePage(
                 <p style={BODY}>{profile.what_they_are_building ?? "—"}</p>
               </Tile>
               <Tile kicker="Trust score">
-                <p style={{ fontSize: 24, fontWeight: 600, color: "#f8c56a", lineHeight: 1.1 }}>
+                <p style={{ fontSize: 20, fontWeight: 600, color: "#f8c56a", lineHeight: 1.1 }}>
                   {profile.trust_score ?? 0}
                 </p>
               </Tile>
               <Tile kicker="Joined">
-                <p style={{ fontSize: 15, color: "var(--text-primary)" }}>{formatDay(profile.created_at)}</p>
+                <p style={{ fontSize: 14, color: "var(--text-primary)" }}>{formatDay(profile.created_at)}</p>
               </Tile>
             </div>
 
@@ -386,12 +386,12 @@ export default async function ProfilePage(
                       <CohortFingerprint fp={fingerprint} size={128} />
                     </div>
                     <div className="min-w-0" style={{ flex: "1 1 160px" }}>
-                      <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+                      <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-secondary)" }}>
                         A shape from how {isOwner ? "you show" : "they show"} up in the room.
                       </p>
                       <div className="flex flex-wrap gap-x-3 gap-y-1.5" style={{ marginTop: 10 }}>
                         {FINGERPRINT_TYPES.map((t) => (
-                          <span key={t.key} className="inline-flex items-center gap-1.5" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                          <span key={t.key} className="inline-flex items-center gap-1.5" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                             <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, background: t.color }} />
                             {sentence(t.key)}
                           </span>
@@ -432,11 +432,11 @@ export default async function ProfilePage(
                         const inner = (
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+                              <p className="truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
                                 {title}
                               </p>
                               {p.description && (
-                                <p className="line-clamp-2" style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 2 }}>
+                                <p className="line-clamp-2" style={{ fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 2 }}>
                                   {p.description}
                                 </p>
                               )}
@@ -558,17 +558,17 @@ export default async function ProfilePage(
                         <Link
                           href={`/profile/${other.username}`}
                           className="truncate hover:underline"
-                          style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
+                          style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}
                         >
                           {name}
                         </Link>
                       ) : (
-                        <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+                        <p className="truncate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
                           {name}
                         </p>
                       )}
                       {projectName && <span className={ui.chip}>In {String(projectName)}</span>}
-                      <span className="ml-auto shrink-0" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      <span className="ml-auto shrink-0" style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
                         {formatDay(h.date)}
                       </span>
                     </div>

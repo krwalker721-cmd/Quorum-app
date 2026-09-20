@@ -48,13 +48,13 @@ const LABEL: React.CSSProperties = {
   fontFamily: "var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif",
   textTransform: "none",
   letterSpacing: 0,
-  fontSize: 13,
+  fontSize: 12,
   color: "var(--text-secondary)",
   display: "block",
   marginBottom: 6,
 };
 
-const NOTE: React.CSSProperties = { fontSize: 12, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 6 };
+const NOTE: React.CSSProperties = { fontSize: 11.5, lineHeight: 1.5, color: "var(--text-muted)", marginTop: 6 };
 
 function Section({
   title,
@@ -73,7 +73,7 @@ function Section({
           : PANEL
       }
     >
-      <h2 style={{ fontSize: 16, fontWeight: 600, color: danger ? RED : "var(--text-primary)", marginBottom: 18 }}>
+      <h2 style={{ fontSize: 14.5, fontWeight: 600, color: danger ? RED : "var(--text-primary)", marginBottom: 18 }}>
         {title}
       </h2>
       {children}
@@ -144,7 +144,7 @@ function ToggleRow({
   return (
     <div className="flex items-center justify-between gap-4" style={{ padding: "10px 0" }}>
       <div className="min-w-0">
-        <p style={{ fontSize: 14, color: "var(--text-primary)" }}>{label}</p>
+        <p style={{ fontSize: 13, color: "var(--text-primary)" }}>{label}</p>
         {note && <p style={{ ...NOTE, marginTop: 2 }}>{note}</p>}
       </div>
       <Toggle enabled={enabled} onChange={onChange} label={label} />
@@ -155,7 +155,7 @@ function ToggleRow({
 function Message({ msg }: { msg: { text: string; ok: boolean } | null }) {
   if (!msg) return null;
   return (
-    <p role="status" style={{ fontSize: 13, color: msg.ok ? GREEN : RED, marginTop: 16 }}>
+    <p role="status" style={{ fontSize: 12, color: msg.ok ? GREEN : RED, marginTop: 16 }}>
       {msg.text}
     </p>
   );
@@ -200,8 +200,8 @@ function ConfirmModal({
           boxShadow: "0 24px 60px -20px rgba(0, 0, 0, 0.7)",
         }}
       >
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{heading}</h3>
-        <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 10 }}>{description}</p>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{heading}</h3>
+        <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 10 }}>{description}</p>
         {requireText && (
           <input
             value={typed}
@@ -256,13 +256,13 @@ export default function SettingsClient({
 
   return (
     <div
-      className={`page-pad ${ui.pageGlow}`}
-      style={{ padding: "28px 32px 40px", maxWidth: 1080, margin: "0 auto" }}
+      className={"page-pad"}
+      style={{ padding: "18px 26px 22px", maxWidth: 1080, margin: "0 auto" }}
     >
       <NoGrid />
       <h1
         className={ui.titleGradient}
-        style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+        style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
       >
         Settings
       </h1>
@@ -537,7 +537,7 @@ function AppearanceSection() {
           background: selected ? "rgba(245, 158, 11, 0.08)" : "rgba(255, 255, 255, 0.02)",
         }}
       >
-        <p style={{ fontSize: 14, color: selected ? "#f8c56a" : "var(--text-primary)" }}>{label}</p>
+        <p style={{ fontSize: 13, color: selected ? "#f8c56a" : "var(--text-primary)" }}>{label}</p>
         <p style={{ ...NOTE, marginTop: 2 }}>{sub}</p>
       </button>
     );
@@ -645,10 +645,10 @@ function PrivacySection({ initialVisible }: { initialVisible: boolean }) {
       </button>
 
       <details style={{ marginTop: 18 }}>
-        <summary className="cursor-pointer" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+        <summary className="cursor-pointer" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
           What data we store
         </summary>
-        <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-muted)", marginTop: 8 }}>
+        <p style={{ fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)", marginTop: 8 }}>
           We store your profile info, posts and replies, messages, usage data, and login events.
         </p>
       </details>
@@ -701,7 +701,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
   return (
     <Section title="Danger zone" danger>
       <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)", marginBottom: 12 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginBottom: 12 }}>
           Remove yourself from your current cohort. You can join a new one.
         </p>
         <button type="button" onClick={() => setModal("leave")} className={ui.ghostBtn} style={dangerBtn}>
@@ -710,7 +710,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
       </div>
 
       <div>
-        <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)", marginBottom: 12 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginBottom: 12 }}>
           Permanently delete your account and all your data. Any subscription ends immediately, without
           a refund for the rest of the period. This cannot be undone.
         </p>
@@ -719,7 +719,7 @@ function DangerSection({ router }: { router: ReturnType<typeof useRouter> }) {
         </button>
       </div>
 
-      {msg && <p role="status" style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 16 }}>{msg}</p>}
+      {msg && <p role="status" style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 16 }}>{msg}</p>}
 
       {modal === "leave" && (
         <ConfirmModal
