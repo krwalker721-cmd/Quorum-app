@@ -58,6 +58,20 @@ The in-app look is described in
    npm run dev
    ```
 
+## Database tests
+
+`scripts/db.sh local` builds a fresh local Postgres 16 database (`brew install
+postgresql@16`) with a small stand-in for Supabase's roles, `auth` and
+`storage`, applies `schema.sql` and every migration in order, then runs the RLS
+tests in `supabase/tests/`. The tests roll everything back, so their last line
+is an error that reads `ALL <n> TESTS PASSED` on success.
+
+Staging is a separate Supabase project, configured in `.env.staging.local` (see
+`.env.staging.local.example`). `scripts/db.sh staging:migrate FILE...` applies
+migrations there and `scripts/db.sh staging:test` runs the same tests. The
+script refuses any setting that points at production. Never run the tests
+against production.
+
 ## Deploying
 
 Pushing `main` deploys to production on Vercel. A migration has to be applied
