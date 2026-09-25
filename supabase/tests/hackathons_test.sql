@@ -9,6 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
+--   Needs migrations 018-021.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -28,7 +29,7 @@ begin;
 -- Harness
 -- ============================================================================
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create table tests.results (
   n      serial primary key,
@@ -36,8 +37,8 @@ create table tests.results (
   ok     boolean not null,
   detail text
 );
-grant select, insert on tests.results to anon, authenticated;
-grant usage on sequence tests.results_n_seq to anon, authenticated;
+grant select, insert on tests.results to anon, authenticated, service_role;
+grant usage on sequence tests.results_n_seq to anon, authenticated, service_role;
 
 -- The cast of characters.
 create function tests.u(p text) returns uuid language sql immutable as $$
@@ -79,6 +80,8 @@ end $$;
 create function tests.login(p_user text) returns void language sql as $$ select tests.become('authenticated', p_user) $$;
 create function tests.anon() returns void language sql as $$ select tests.become('anon', null) $$;
 create function tests.as_db() returns void language sql as $$ select tests.become('db', null) $$;
+-- The admin console's server routes use the service role.
+create function tests.service() returns void language sql as $$ select tests.become('service_role', null) $$;
 
 create function tests.ok(p_name text, p_cond boolean, p_detail text default null) returns void
 language plpgsql as $$
@@ -206,6 +209,16 @@ language sql stable security definer set search_path = public as $$
   select id from public.hackathon_team_votes where title = p_title
 $$;
 
+create function tests.audit_count(p_table text) returns bigint
+language sql stable security definer set search_path = public as $$
+  select count(*) from public.hackathon_admin_audit where hackathon_id = tests.h1() and table_name = p_table
+$$;
+
+create function tests.last_audit() returns public.hackathon_admin_audit
+language sql stable security definer set search_path = public as $$
+  select * from public.hackathon_admin_audit order by id desc limit 1
+$$;
+
 create function tests.lobby_has(p_pattern text) returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (
@@ -231,7 +244,7 @@ begin
   raise exception E'% OF % TESTS FAILED (every change was rolled back):\n%', failed, total, list;
 end $$;
 
-grant execute on all functions in schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- ============================================================================
 -- Fixtures
@@ -587,6 +600,9 @@ select tests.lives('storage: a team member uploads', $$ insert into storage.obje
 select tests.throws('storage: not outside the folder layout', $$ insert into storage.objects (bucket_id, name) values ('hackathon-submissions', 'loose-file.png') $$, 'row-level security');
 select tests.login('bob');
 select tests.lives('submit: a teammate edits it', $$ update hackathon_submissions set tagline = 'For night owls' where team_id = tests.team('Rockets') $$);
+select tests.service();
+select tests.lives('audit: the admin console edits a submission before the deadline', $$ update hackathon_submissions set problem = 'Night owls lack tools' where team_id = tests.team('Rockets') $$);
+select tests.eq('audit: ...which isn''t logged', tests.audit_count('hackathon_submissions')::text, '0');
 select tests.login('carol');
 select tests.lives('submit: Comets submits', $$ insert into hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team('Comets'), tests.h1(), 'Comet Chat') $$);
 select tests.throws('submit: not for another team', $$ insert into hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team('Rockets'), tests.h1(), 'Hijack') $$, 'row-level security');
@@ -625,6 +641,9 @@ select tests.login('alice');
 select tests.throws('pause: team rooms freeze', $$ insert into hackathon_team_messages (team_id, user_id, body) values (tests.team('Rockets'), tests.u('alice'), 'frozen?') $$, 'row-level security');
 select tests.throws('pause: submissions freeze', $$ update hackathon_submissions set tagline = 'x' where team_id = tests.team('Rockets') $$, 'paused');
 select tests.lives('pause: the lobby stays open', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('alice'), 'what happened?') $$);
+select tests.login('dave');
+select tests.lives('lapsed mid-Sprint: posts in the lobby during a pause', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('dave'), 'still here, paused') $$);
+select tests.login('alice');
 select tests.eq('pause: state paused, clock stopped mid-Sprint', (select state || '/' || phase from hackathon_overview where id = tests.h1()), 'paused/live');
 select tests.ok('pause: paused after kickoff keeps the theme', (select theme is not null from hackathon_overview where id = tests.h1()));
 select tests.throws('resume: members can''t resume', $$ select hackathon_resume(tests.h1(), true) $$, 'permission denied');
@@ -651,6 +670,9 @@ select tests.login('alice');
 select tests.throws('DEADLINE: a late update is refused', $$ update hackathon_submissions set tagline = 'one more thing' where team_id = tests.team('Rockets') $$, 'deadline has passed');
 select tests.throws('storage: no uploads after the deadline', $$ insert into storage.objects (bucket_id, name) values ('hackathon-submissions', tests.path('Rockets', 'late.png')) $$, 'row-level security');
 select tests.lives('rooms: still writable until the reveal', $$ insert into hackathon_team_messages (team_id, user_id, body) values (tests.team('Rockets'), tests.u('alice'), 'we did it') $$);
+select tests.login('dave');
+select tests.lives('lapsed mid-Sprint: still posts in the team room after the deadline', $$ insert into hackathon_team_messages (team_id, user_id, body) values (tests.team('Rockets'), tests.u('dave'), 'judging now') $$);
+select tests.lives('lapsed mid-Sprint: still posts in the lobby after the deadline', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('dave'), 'fingers crossed') $$);
 select tests.login('carol');
 select tests.throws('DEADLINE: another team''s late edit is refused too', $$
   update hackathon_submissions set project_name = 'Comet Chat 2' where team_id = tests.team('Comets') $$, 'deadline has passed');
@@ -659,6 +681,40 @@ select tests.login('jude');
 select tests.eq('judges: read every submission after the deadline', tests.count($$ select 1 from hackathon_submissions where hackathon_id = tests.h1() $$)::text, '2');
 select tests.eq('judges: ...and the screenshots', tests.count($$ select 1 from storage.objects where name = tests.path('Rockets', 'shot1.png') $$)::text, '1');
 select tests.eq('judges: ...but still not the rooms', tests.count($$ select 1 from hackathon_team_messages where team_id = tests.team('Rockets') $$)::text, '0');
+
+-- Admin fixes after the deadline are allowed, and logged.
+select tests.eq('audit: a member''s refused late edit leaves no entry', tests.audit_count('hackathon_submissions')::text, '0');
+select tests.service();
+select tests.lives('audit: the admin console fixes a submission after the deadline', $$ update hackathon_submissions set tagline = 'For night owls, fixed' where team_id = tests.team('Rockets') $$);
+select tests.ok('audit: ...logged as old → new, with who and when',
+  (select a.action = 'update' and a.actor = 'admin console' and a.db_role = 'service_role'
+          and a.subject = 'NightOwl (team Rockets)'
+          and a.changes = '{"tagline": {"old": "For night owls", "new": "For night owls, fixed"}}'::jsonb
+          and a.created_at = now() and a.deadline <= now()
+   from tests.last_audit() a),
+  (select 'last entry: ' || to_jsonb(a)::text from tests.last_audit() a));
+select set_config('request.headers', '{"x-quorum-actor": "admin console · 203.0.113.9"}', true);
+select tests.lives('audit: a server route names itself in a header', $$ update hackathon_submissions set video_url = 'https://video.example/nightowl' where team_id = tests.team('Rockets') $$);
+select set_config('request.headers', '', true);
+select tests.eq('audit: ...and the header is the actor', (select actor from tests.last_audit()), 'admin console · 203.0.113.9');
+select tests.as_db();
+select set_config('hackathon.actor', 'Keaton (SQL editor)', true);
+select tests.lives('audit: a fix from the SQL editor', $$ update public.hackathon_submissions set demo_url = 'https://nightowl.example' where team_id = tests.team('Rockets') $$);
+select set_config('hackathon.actor', '', true);
+select tests.eq('audit: ...records the name it was given', (select actor || ' / ' || (changes -> 'demo_url' ->> 'new') from tests.last_audit()), 'Keaton (SQL editor) / https://nightowl.example');
+select tests.eq('audit: three entries so far', tests.audit_count('hackathon_submissions')::text, '3');
+select tests.login('alice');
+select tests.eq('audit: members can''t read the log', tests.count($$ select 1 from hackathon_admin_audit $$)::text, '0');
+select tests.anon();
+select tests.eq('audit: ...nor can anyone signed out', tests.count($$ select 1 from hackathon_admin_audit $$)::text, '0');
+select tests.login('admin');
+select tests.eq('audit: admins can', tests.count($$ select 1 from hackathon_admin_audit where hackathon_id = tests.h1() $$)::text, '3');
+select tests.service();
+select tests.throws('audit: the admin console can''t rewrite an entry', $$ update hackathon_admin_audit set actor = 'nobody' $$, 'permission denied');
+select tests.throws('audit: ...or delete one', $$ delete from hackathon_admin_audit $$, 'permission denied');
+select tests.as_db();
+select tests.throws('audit: even the database owner can''t rewrite it', $$ update public.hackathon_admin_audit set actor = 'nobody' $$, 'append-only');
+select tests.throws('audit: ...or delete from it', $$ delete from public.hackathon_admin_audit $$, 'append-only');
 
 select tests.as_db();
 select tests.lives('judges: invite oscar', $$ insert into public.hackathon_judges (hackathon_id, user_id) values (tests.h1(), tests.u('oscar')) $$);
@@ -680,6 +736,10 @@ select tests.login('admin');
 select tests.lives('scores: a second judge scores', $$
   insert into hackathon_scores (submission_id, hackathon_id, judge_id, score_problem, score_shipped, score_collaboration, score_potential)
   values (tests.submission('Rockets'), tests.h1(), tests.u('admin'), 3, 3, 3, 3) $$);
+select tests.service();
+select tests.lives('audit: the admin console edits a score while judging is open', $$ update hackathon_scores set notes = 'solid (admin)' where judge_id = tests.u('admin') $$);
+select tests.eq('audit: ...which isn''t logged', tests.audit_count('hackathon_scores')::text, '0');
+select tests.login('admin');
 select tests.eq('scores: admins read them all', tests.count($$ select 1 from hackathon_scores where hackathon_id = tests.h1() $$)::text, '2');
 select tests.login('jude');
 select tests.eq('scores: a judge reads only their own', tests.count($$ select 1 from hackathon_scores where hackathon_id = tests.h1() $$)::text, '1');
@@ -699,6 +759,13 @@ select tests.eq('awards: hidden before the reveal', tests.count($$ select 1 from
 select tests.set_phase(tests.h1(), 'judging_closed');
 select tests.login('jude');
 select tests.throws('scores: closed after judging_ends_at', $$ update hackathon_scores set notes = 'changed my mind' where judge_id = tests.u('jude') $$, 'Scoring is closed');
+select tests.service();
+select tests.lives('audit: the admin console fixes a score after judging closes', $$ update hackathon_scores set score_potential = 4, notes = 'very solid, fixed' where judge_id = tests.u('jude') $$);
+select tests.ok('audit: ...logged with every changed field',
+  (select a.table_name = 'hackathon_scores' and a.subject = 'Jude Judge''s score for NightOwl'
+          and a.changes = '{"notes": {"old": "very solid", "new": "very solid, fixed"}, "score_potential": {"old": 3, "new": 4}}'::jsonb
+   from tests.last_audit() a),
+  (select 'last entry: ' || to_jsonb(a)::text from tests.last_audit() a));
 
 -- ============================================================================
 -- The reveal
@@ -751,5 +818,17 @@ select tests.eq('cancel: paused after kickoff, the theme stays visible', (select
 select tests.throws('cancel: the lobby is read-only', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('alice'), 'why?') $$, 'row-level security');
 select tests.ok('cancel: ...but still readable', tests.count($$ select 1 from hackathon_lobby_messages where hackathon_id = tests.h1() $$) > 0);
 select tests.throws('cancel: team rooms are frozen', $$ insert into hackathon_team_messages (team_id, user_id, body) values (tests.team('Rockets'), tests.u('alice'), 'hm') $$, 'row-level security');
+
+select tests.clear_override(tests.h1());
+select tests.set_phase(tests.h1(), 'judging');
+select tests.service();
+select tests.lives('audit: the admin console deletes a submission after the deadline', $$ delete from hackathon_submissions where team_id = tests.team('Comets') $$);
+select tests.ok('audit: ...logged, with what was deleted',
+  (select a.action = 'delete' and a.subject = 'Comet Chat (team Comets)' and a.changes -> 'project_name' = '{"old": "Comet Chat", "new": null}'::jsonb
+   from tests.last_audit() a),
+  (select 'last entry: ' || to_jsonb(a)::text from tests.last_audit() a));
+select tests.as_db();
+select tests.lives('audit: deleting a Sprint still works, and takes its log', $$ delete from public.hackathons where id = tests.h1() $$);
+select tests.eq('audit: ...none left for it', tests.audit_count('hackathon_submissions')::text, '0');
 
 select tests.finish();

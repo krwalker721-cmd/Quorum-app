@@ -12,6 +12,7 @@ import Settings from "./sections/Settings";
 import Subscriptions from "./sections/Subscriptions";
 import PartnerWaitlist from "./sections/PartnerWaitlist";
 import Referrals from "./sections/Referrals";
+import SprintAudit from "./sections/SprintAudit";
 
 type Section =
   | "overview"
@@ -22,6 +23,7 @@ type Section =
   | "content"
   | "vault_nominations"
   | "feedback"
+  | "sprint_audit"
   | "platform_health"
   | "settings";
 
@@ -34,6 +36,7 @@ const NAV: { id: Section; label: string }[] = [
   { id: "content", label: "content" },
   { id: "vault_nominations", label: "vault_nominations" },
   { id: "feedback", label: "feedback" },
+  { id: "sprint_audit", label: "sprint_audit" },
   { id: "platform_health", label: "platform_health" },
   { id: "settings", label: "settings" },
 ];
@@ -145,6 +148,7 @@ export default function AdminApp() {
         {section === "content" && <Content onReportCountChange={setReportCount} />}
         {section === "vault_nominations" && <VaultNominations />}
         {section === "feedback" && <Feedback />}
+        {section === "sprint_audit" && <SprintAudit />}
         {section === "platform_health" && <PlatformHealth />}
         {section === "settings" && <Settings />}
       </main>
