@@ -1007,32 +1007,32 @@ select tests.throws('judges: an account or an email', $$ insert into hackathon_j
 
 select tests.lives('countdowns: the admin console creates the launch countdown, off', $$
   insert into site_countdowns (key, label, subtext, target_at, is_launch, zero_behavior, zero_message, cta_label, cta_url, updated_by)
-  values ('launch', 'Founding seats open', 'Twelve seats per cohort.', now() + interval '7 days', true,
+  values ('test-launch', 'Founding seats open', 'Twelve seats per cohort.', now() + interval '7 days', true,
           'show_message', 'Doors are open', 'Request an invite', '/signup', tests.u('admin')) $$);
 select tests.anon();
-select tests.eq('countdowns: a disabled one is invisible signed out', tests.count($$ select 1 from site_countdowns $$)::text, '0');
+select tests.eq('countdowns: a disabled one is invisible signed out', tests.count($$ select 1 from site_countdowns where key = 'test-launch' $$)::text, '0');
 select tests.service();
 select tests.admin_headers('Turned on the launch countdown');
-select tests.lives('countdowns: switched on', $$ update site_countdowns set is_enabled = true where key = 'launch' $$);
+select tests.lives('countdowns: switched on', $$ update site_countdowns set is_enabled = true where key = 'test-launch' $$);
 select set_config('request.headers', '', true);
 select tests.anon();
-select tests.eq('countdowns: an enabled one is public', tests.count($$ select key, label, target_at, zero_message, cta_url from site_countdowns $$)::text, '1');
+select tests.eq('countdowns: an enabled one is public', tests.count($$ select key, label, target_at, zero_message, cta_url from site_countdowns where key = 'test-launch' $$)::text, '1');
 select tests.throws('countdowns: who edited it stays private', $$ select updated_by from site_countdowns $$, 'permission denied');
 select tests.throws('countdowns: signed out can''t write', $$ update site_countdowns set label = 'x' $$, 'permission denied');
 select tests.login('alice');
-select tests.eq('countdowns: members can''t change one', tests.affected($$ update site_countdowns set label = 'hacked' where key = 'launch' $$)::text, '0');
+select tests.eq('countdowns: members can''t change one', tests.affected($$ update site_countdowns set label = 'hacked' where key = 'test-launch' $$)::text, '0');
 select tests.throws('countdowns: ...or make one', $$ insert into site_countdowns (key, label, target_at) values ('mine', 'Mine', now()) $$, 'row-level security');
 select tests.login('admin');
-select tests.lives('countdowns: a signed-in admin moves the target', $$ update site_countdowns set target_at = target_at + interval '1 day' where key = 'launch' $$);
+select tests.lives('countdowns: a signed-in admin moves the target', $$ update site_countdowns set target_at = target_at + interval '1 day' where key = 'test-launch' $$);
 select tests.as_db();
 select tests.eq('log: a signed-in admin''s own edit is logged under their name', (select actor from tests.last_change()), 'Ada Admin');
-select tests.eq('countdowns: ...and is recorded as its editor', (select (updated_by = tests.u('admin'))::text from public.site_countdowns where key = 'launch'), 'true');
+select tests.eq('countdowns: ...and is recorded as its editor', (select (updated_by = tests.u('admin'))::text from public.site_countdowns where key = 'test-launch'), 'true');
 select tests.ok('log: every countdown change, with old → new',
-  tests.changes_where('countdown', null) = 3
+  (select count(*) from public.admin_change_log where subject = 'Countdown "test-launch"') = 3
   and (select (c.changes -> 'is_enabled') = '{"old": false, "new": true}'::jsonb and c.summary = 'Turned on the launch countdown'
-       from public.admin_change_log c where c.area = 'countdown' and c.action = 'update' order by c.id limit 1));
+       from public.admin_change_log c where c.subject = 'Countdown "test-launch"' and c.action = 'update' order by c.id limit 1));
 select tests.throws('countdowns: a message is needed to show one at zero', $$
-  insert into public.site_countdowns (key, label, target_at, zero_behavior) values ('teaser', 'Soon', now(), 'show_message') $$, 'site_countdowns_zero_message');
+  insert into public.site_countdowns (key, label, target_at, zero_behavior) values ('test-teaser', 'Soon', now(), 'show_message') $$, 'site_countdowns_zero_message');
 
 select tests.login('alice');
 select tests.eq('log: members can''t read it', tests.count($$ select 1 from admin_change_log $$)::text, '0');
