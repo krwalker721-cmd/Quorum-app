@@ -15,6 +15,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
+import net from "node:net";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -61,6 +62,16 @@ const env = {
   NEXT_PUBLIC_APP_URL: "http://localhost:3100",
   NEXT_DIST_DIR: ".next-staging",
 };
+
+// Already running (another terminal, or the preview pane)? Say so plainly.
+const busy = await new Promise((done) => {
+  const probe = net.createServer().once("error", () => done(true)).once("listening", () => probe.close(() => done(false)));
+  probe.listen(3100);
+});
+if (busy) {
+  console.error("Port 3100 is already in use: a staging server is probably running already. Open http://localhost:3100, or stop the other one first.");
+  process.exit(1);
+}
 
 console.log(`Running against STAGING project ${ref} on http://localhost:3100`);
 const child = spawn(resolve(root, "node_modules/.bin/next"), ["dev", "-p", "3100"], { cwd: root, env, stdio: "inherit" });
