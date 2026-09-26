@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { adminFetch } from "../lib/api";
 import { SectionShell } from "./Overview";
 import { Btn, ErrorLine, StateChip } from "../ui";
@@ -123,9 +123,14 @@ function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }
   // Bumped after a settings save so the form reloads from what was stored.
   const [formKey, setFormKey] = useState(0);
 
+  // Several actions can reload at once (withdraw, then add as judge); only the
+  // newest reload may update the page, or an older answer lands last.
+  const latest = useRef(0);
   const load = useCallback(async () => {
+    const mine = ++latest.current;
     const res = await adminFetch(`/api/admin/hackathons/${id}`);
     const json = await res.json().catch(() => ({}));
+    if (mine !== latest.current) return;
     if (!res.ok) {
       setError(json.error ?? "Couldn't load this Sprint.");
       return;
