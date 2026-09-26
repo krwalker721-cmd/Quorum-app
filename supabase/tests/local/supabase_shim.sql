@@ -48,12 +48,20 @@ create or replace function auth.jwt() returns jsonb language sql stable as $$
   select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
 $$;
 
+-- Supabase's own definitions, verbatim in behaviour: an empty "sub" claim is
+-- an error, not "nobody" (a signed-out request has no "sub" at all).
 create or replace function auth.uid() returns uuid language sql stable as $$
-  select nullif(auth.jwt() ->> 'sub', '')::uuid
+  select coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+  )::uuid
 $$;
 
 create or replace function auth.role() returns text language sql stable as $$
-  select nullif(auth.jwt() ->> 'role', '')
+  select coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+  )::text
 $$;
 
 grant execute on all functions in schema auth to anon, authenticated, service_role;

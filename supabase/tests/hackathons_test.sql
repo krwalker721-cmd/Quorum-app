@@ -74,8 +74,11 @@ begin
     return;
   end if;
   perform set_config('role', p_role, true);
+  -- Like a real request: signed out and service-role calls carry no "sub"
+  -- claim at all (an empty one is an error in Supabase's auth.uid()).
   perform set_config('request.jwt.claims',
-    json_build_object('sub', coalesce(tests.u(p_user)::text, ''), 'role', p_role)::text, true);
+    case when p_user is null then json_build_object('role', p_role)
+         else json_build_object('sub', tests.u(p_user), 'role', p_role) end::text, true);
 end $$;
 create function tests.login(p_user text) returns void language sql as $$ select tests.become('authenticated', p_user) $$;
 create function tests.anon() returns void language sql as $$ select tests.become('anon', null) $$;
