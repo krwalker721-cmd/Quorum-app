@@ -10,6 +10,8 @@ import Reveal from "@/components/landing/Reveal";
 import { FAQ_ITEMS, PRODUCT_BLOCKS } from "@/lib/marketing-copy";
 import { FOUNDING_SEATS, PRICING, TRIAL_DAYS } from "@/lib/pricing";
 import { foundingSeatsRemaining } from "@/lib/plans";
+import { getPublicCountdowns } from "@/lib/countdowns";
+import CountdownStrip from "@/components/countdown/CountdownStrip";
 import s from "./landing.module.css";
 
 // The public front door: what signed-out visitors see at "/". Signed-in
@@ -138,7 +140,11 @@ function SeatBadge({ remaining }: { remaining: number }) {
 }
 
 export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
-  const remaining = await foundingSeatsRemaining();
+  const [remaining, countdowns] = await Promise.all([
+    foundingSeatsRemaining(),
+    // Rendered fresh on every visit; the strip then re-checks every minute.
+    getPublicCountdowns("landing").catch(() => []),
+  ]);
   const ctaLabel = waitlistOn ? "Request an invite" : "Start your free trial";
   const faq = FAQ_ITEMS.filter((f) => LANDING_FAQ.has(f.q));
 
@@ -174,6 +180,7 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
         <div aria-hidden className={s.gridFade} />
         <div className="relative max-w-6xl mx-auto px-6 pt-16 pb-20 sm:pt-24 sm:pb-28 grid gap-14 lg:grid-cols-[1.3fr_1fr] lg:items-center">
           <div>
+            <CountdownStrip initial={countdowns} where="landing" />
             <SeatBadge remaining={remaining} />
             <h1 className="mt-7 font-sans text-5xl sm:text-7xl font-semibold leading-[1.02] tracking-[-0.035em]">
               <span className={s.gradientText}>The </span>

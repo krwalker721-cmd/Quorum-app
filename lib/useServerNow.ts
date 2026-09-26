@@ -1,0 +1,65 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+// Countdowns run on the server's clock, not the device's: a phone set ten
+// minutes fast must not show a deadline ten minutes early. /api/time returns
+// the database's clock; half the round trip accounts for the network. One
+// measurement is shared by every countdown on the page and refreshed every
+// five minutes and whenever the tab comes back into view.
+
+let offsetMs: number | null = null;
+let pending: Promise<void> | null = null;
+let measuredAt = 0;
+const listeners = new Set<() => void>();
+
+async function measure() {
+  const t0 = Date.now();
+  const res = await fetch("/api/time", { cache: "no-store" });
+  const t1 = Date.now();
+  const { now } = (await res.json()) as { now: string };
+  offsetMs = Date.parse(now) + (t1 - t0) / 2 - t1;
+  measuredAt = t1;
+  listeners.forEach((l) => l());
+}
+
+function sync(force = false) {
+  if (pending) return pending;
+  if (!force && offsetMs !== null && Date.now() - measuredAt < 5 * 60_000) return Promise.resolve();
+  pending = measure()
+    .catch(() => {
+      // Can't reach the server: keep the last offset, or none yet.
+    })
+    .finally(() => {
+      pending = null;
+    });
+  return pending;
+}
+
+/**
+ * The server's "now" in milliseconds, ticking every second. Null until the
+ * first measurement arrives, so nothing is ever shown on the device's clock.
+ */
+export function useServerNow(): number | null {
+  const [now, setNow] = useState<number | null>(offsetMs === null ? null : Date.now() + offsetMs);
+
+  useEffect(() => {
+    const update = () => setNow(offsetMs === null ? null : Date.now() + offsetMs);
+    listeners.add(update);
+    sync();
+    update();
+    const tick = setInterval(() => {
+      update();
+      sync();
+    }, 1000);
+    const onVisible = () => document.visibilityState === "visible" && sync(true);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      listeners.delete(update);
+      clearInterval(tick);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  return now;
+}

@@ -14,10 +14,12 @@ import PartnerWaitlist from "./sections/PartnerWaitlist";
 import Referrals from "./sections/Referrals";
 import SprintAudit from "./sections/SprintAudit";
 import Sprints from "./sections/Sprints";
+import Countdowns from "./sections/Countdowns";
 
 type Section =
   | "overview"
   | "sprints"
+  | "countdowns"
   | "users"
   | "subscriptions"
   | "partner_waitlist"
@@ -32,6 +34,7 @@ type Section =
 const NAV: { id: Section; label: string }[] = [
   { id: "overview", label: "overview" },
   { id: "sprints", label: "sprints" },
+  { id: "countdowns", label: "countdowns" },
   { id: "users", label: "users" },
   { id: "subscriptions", label: "subscriptions" },
   { id: "partner_waitlist", label: "partner_waitlist" },
@@ -169,6 +172,7 @@ export default function AdminApp() {
       <main className="flex-1 min-w-0 overflow-x-hidden">
         {section === "overview" && <Overview />}
         {section === "sprints" && <Sprints />}
+        {section === "countdowns" && <Countdowns />}
         {section === "users" && <Users />}
         {section === "subscriptions" && <Subscriptions />}
         {section === "partner_waitlist" && <PartnerWaitlist />}

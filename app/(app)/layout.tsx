@@ -9,6 +9,8 @@ import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
 import TrialBanner from "@/components/TrialBanner";
+import CountdownStrip from "@/components/countdown/CountdownStrip";
+import { getPublicCountdowns, type PublicCountdown } from "@/lib/countdowns";
 import { TierProvider } from "@/contexts/TierContext";
 import { TourProvider } from "@/contexts/TourContext";
 import { trackLoginEvent } from "@/lib/referral-helpers";
@@ -154,6 +156,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
   }
 
+  // Countdowns switched on for the app (admin → countdowns). Best-effort.
+  let countdowns: PublicCountdown[] = [];
+  try {
+    countdowns = await getPublicCountdowns("app");
+  } catch (e) {
+    console.error("countdowns failed:", e);
+  }
+
   return (
     <PresenceProvider currentUserId={user.id}>
       <NotificationsProvider currentUserId={user.id} cohortId={cohortIdForDots}>
@@ -180,6 +190,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               status={entitlement?.status ?? "trialing"}
               lapse={lapse}
             />
+            <CountdownStrip initial={countdowns} where="app" />
             {children}
           </div>
         </div>
