@@ -9,6 +9,11 @@
 #   scripts/db.sh staging:migrate FILE...
 #                                  Apply SQL files to STAGING, in the order given.
 #   scripts/db.sh staging:test     Run the tests against STAGING (they roll back).
+#   scripts/db.sh staging:seed-admin
+#                                  Create a STAGING-only test admin (account + admin
+#                                  code) for checking the admin console locally. The
+#                                  credentials go to .env.staging-admin.local
+#                                  (gitignored), never to the terminal.
 #
 # Staging credentials live in .env.staging.local (gitignored), never .env.local:
 #   NEXT_PUBLIC_SUPABASE_URL=https://<staging-ref>.supabase.co
@@ -67,6 +72,12 @@ staging_url() {
   fi
   STAGING_REF="$staging_ref"
   STAGING_DB_URL="$url"
+  STAGING_API_URL="https://$staging_ref.supabase.co"  # from the ref: immune to a trailing slash or path
+}
+
+# Whether a key is filled in, without printing it.
+key_status() { # key
+  if [ -n "$(env_value "$ROOT/.env.staging.local" "$1")" ]; then echo "set"; else echo "MISSING"; fi
 }
 
 case "${1:-}" in
@@ -93,6 +104,31 @@ case "${1:-}" in
   staging:target)
     staging_url
     echo "Staging target: project $STAGING_REF"
+    echo "  anon key: $(key_status NEXT_PUBLIC_SUPABASE_ANON_KEY) · service role key: $(key_status SUPABASE_SERVICE_ROLE_KEY)"
+    ;;
+  staging:seed-admin)
+    staging_url
+    OUT="$ROOT/.env.staging-admin.local"
+    if [ -f "$OUT" ]; then
+      echo "A staging test admin already exists (credentials in .env.staging-admin.local)."
+      exit 0
+    fi
+    SERVICE="$(env_value "$ROOT/.env.staging.local" SUPABASE_SERVICE_ROLE_KEY)"
+    [ -n "$SERVICE" ] || { echo "SUPABASE_SERVICE_ROLE_KEY is missing in .env.staging.local" >&2; exit 1; }
+    EMAIL="admin-test@quorum.test"
+    PASS="$(openssl rand -hex 16)"
+    CODE="$(openssl rand -hex 12)"
+    status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$STAGING_API_URL/auth/v1/admin/users" \
+      -H "apikey: $SERVICE" -H "Authorization: Bearer $SERVICE" -H "Content-Type: application/json" \
+      -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"email_confirm\":true,\"user_metadata\":{\"full_name\":\"Test Admin\"}}")
+    [ "$status" = "200" ] || { echo "Creating the staging test account failed (HTTP $status)." >&2; exit 1; }
+    "$PSQL" "$STAGING_DB_URL" -X -q -v ON_ERROR_STOP=1 \
+      -c "update public.profiles set status = 'approved', is_admin = true, trial_ends_at = now() + interval '365 days' where email = '$EMAIL'" \
+      -c "insert into public.platform_settings (key, value) values ('admin_code', '$CODE') on conflict (key) do update set value = excluded.value"
+    umask 077
+    printf '# STAGING-only test admin (project %s). Gitignored; never use in production.\nSTAGING_ADMIN_EMAIL=%s\nSTAGING_ADMIN_PASSWORD=%s\nSTAGING_ADMIN_CODE=%s\n' \
+      "$STAGING_REF" "$EMAIL" "$PASS" "$CODE" > "$OUT"
+    echo "Created a staging test admin ($EMAIL) on project $STAGING_REF; credentials are in .env.staging-admin.local."
     ;;
   staging:migrate)
     shift

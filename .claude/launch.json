@@ -4,9 +4,20 @@
     {
       "name": "quorum-dev",
       "runtimeExecutable": "/bin/zsh",
-      "runtimeArgs": ["-lc", "npm run dev"],
+      "runtimeArgs": [
+        "-lc",
+        "npm run dev"
+      ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "quorum-dev-staging",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/dev-staging.mjs"
+      ],
+      "port": 3100
     }
   ]
 }

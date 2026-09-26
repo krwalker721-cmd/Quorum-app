@@ -9,7 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
---   Needs migrations 018-022.
+--   Needs migrations 018-023.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -691,6 +691,11 @@ select tests.ok('resume: the deadline and everything after moved 30 minutes',
 select tests.ok('resume: kickoff, already past when it paused, didn''t move',
   (select h.starts_at = b.starts_at from public.hackathons h, before_resume b where h.id = tests.h1()));
 select tests.ok('resume: the lobby says by how much', tests.lobby_has('moved 30 min later'));
+create temporary table before_short as select ends_at from public.hackathons where id = tests.h1();
+select tests.pause(tests.h1(), now() - interval '40 seconds');
+select tests.lives('resume (023): after a 40-second pause', $$ select hackathon_resume(tests.h1(), true) $$);
+select tests.ok('resume (023): gives back a whole minute, so times stay on the minute',
+  (select h.ends_at = b.ends_at + interval '1 minute' from public.hackathons h, before_short b where h.id = tests.h1()));
 
 -- ============================================================================
 -- After the deadline: judging
@@ -745,6 +750,11 @@ select tests.throws('audit: ...or delete one', $$ delete from hackathon_admin_au
 select tests.as_db();
 select tests.throws('audit: even the database owner can''t rewrite it', $$ update public.hackathon_admin_audit set actor = 'nobody' $$, 'append-only');
 select tests.throws('audit: ...or delete from it', $$ delete from public.hackathon_admin_audit $$, 'append-only');
+select tests.service();
+select set_config('request.headers', json_build_object('x-quorum-actor-id', tests.u('admin'), 'x-quorum-via', 'admin console, 203.0.113.9')::text, true);
+select tests.lives('audit (023): a server route sends the admin''s account id', $$ update hackathon_submissions set repo_url = 'https://github.com/example/nightowl' where team_id = tests.team('Rockets') $$);
+select set_config('request.headers', '', true);
+select tests.eq('audit (023): ...and the entry names them', (select actor from tests.last_audit()), 'Ada Admin (admin console, 203.0.113.9)');
 
 select tests.as_db();
 select tests.lives('judges: invite oscar', $$ insert into public.hackathon_judges (hackathon_id, user_id) values (tests.h1(), tests.u('oscar')) $$);
@@ -867,6 +877,10 @@ select tests.eq('audit: ...none left for it', tests.audit_count('hackathon_submi
 select tests.as_db();
 select tests.lives('drafts: a Sprint can start with no dates', $$
   insert into public.hackathons (id, title, max_team_size) values (tests.h2(), 'Night Owls', 2) $$);
+select tests.ok('log (023): a new row''s empty fields aren''t listed',
+  not exists (select 1 from public.admin_change_log c, jsonb_each(c.changes) e
+              where c.area = 'sprint' and c.action = 'insert' and c.hackathon_id = tests.h2()
+                and e.value = '{"old": null, "new": null}'::jsonb));
 select tests.eq('drafts: the slug defaults to sprint-<number>',
   (select slug from public.hackathons where id = tests.h2()),
   (select 'sprint-' || number from public.hackathons where id = tests.h2()));
@@ -886,6 +900,16 @@ select tests.ok('log: ...recorded with who, why, and old → new',
           and c.actor_id = tests.u('admin') and c.summary = 'Renamed the Sprint' and c.db_role = 'service_role'
           and c.changes = '{"title": {"old": "Night Owls", "new": "Night Owls II"}}'::jsonb
    from tests.last_change() c),
+  (select 'last entry: ' || to_jsonb(c)::text from tests.last_change() c));
+
+select set_config('request.headers', json_build_object(
+  'x-quorum-actor-id', tests.u('admin'), 'x-quorum-via', 'admin console, 203.0.113.9',
+  'x-quorum-action-b64', encode(convert_to('Tagline for the Café crowd', 'UTF8'), 'base64'))::text, true);
+select tests.lives('log (023): a server route sends the admin''s account id and a note', $$ update hackathons set tagline = 'For the café crowd' where id = tests.h2() $$);
+select set_config('request.headers', '', true);
+select tests.ok('log (023): ...named from the account, with the note decoded',
+  (select c.actor = 'Ada Admin (admin console, 203.0.113.9)' and c.actor_id = tests.u('admin')
+          and c.summary = 'Tagline for the Café crowd' from tests.last_change() c),
   (select 'last entry: ' || to_jsonb(c)::text from tests.last_change() c));
 
 select tests.login('alice');
