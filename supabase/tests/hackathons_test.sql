@@ -9,7 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
---   Needs migrations 018-021.
+--   Needs migrations 018-022.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -62,6 +62,9 @@ create function tests.h0() returns uuid language sql immutable as $$
 $$;
 create function tests.h1() returns uuid language sql immutable as $$
   select 'c1000000-0000-0000-0000-000000000001'::uuid  -- the Sprint everyone plays in
+$$;
+create function tests.h2() returns uuid language sql immutable as $$
+  select 'c2000000-0000-0000-0000-000000000002'::uuid  -- the admin controls (022)
 $$;
 
 -- Act as someone. 'none' resets to the database owner first, so any role can
@@ -220,6 +223,30 @@ $$;
 create function tests.last_audit() returns public.hackathon_admin_audit
 language sql stable security definer set search_path = public as $$
   select * from public.hackathon_admin_audit order by id desc limit 1
+$$;
+
+create function tests.team2(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h2()
+$$;
+
+create function tests.last_change() returns public.admin_change_log
+language sql stable security definer set search_path = public as $$
+  select * from public.admin_change_log order by id desc limit 1
+$$;
+
+create function tests.changes_where(p_area text, p_hackathon uuid) returns bigint
+language sql stable security definer set search_path = public as $$
+  select count(*) from public.admin_change_log
+  where area = p_area and hackathon_id is not distinct from p_hackathon
+$$;
+
+-- What the admin console's server routes send with each request.
+create function tests.admin_headers(p_action text) returns void language sql as $$
+  select set_config('request.headers', json_build_object(
+    'x-quorum-actor', 'Ada Admin (admin console)',
+    'x-quorum-actor-id', tests.u('admin'),
+    'x-quorum-action', p_action)::text, true)
 $$;
 
 create function tests.lobby_has(p_pattern text) returns boolean
@@ -833,5 +860,163 @@ select tests.ok('audit: ...logged, with what was deleted',
 select tests.as_db();
 select tests.lives('audit: deleting a Sprint still works, and takes its log', $$ delete from public.hackathons where id = tests.h1() $$);
 select tests.eq('audit: ...none left for it', tests.audit_count('hackathon_submissions')::text, '0');
+
+-- ============================================================================
+-- Admin controls (022)
+-- ============================================================================
+select tests.as_db();
+select tests.lives('drafts: a Sprint can start with no dates', $$
+  insert into public.hackathons (id, title, max_team_size) values (tests.h2(), 'Night Owls', 2) $$);
+select tests.eq('drafts: the slug defaults to sprint-<number>',
+  (select slug from public.hackathons where id = tests.h2()),
+  (select 'sprint-' || number from public.hackathons where id = tests.h2()));
+select tests.eq('drafts: a dateless draft reads as draft', hackathon_state(tests.h2()), 'draft');
+select tests.throws('publish: not without every date', $$ update public.hackathons set is_published = true where id = tests.h2() $$, 'hackathons_published_has_dates');
+select tests.throws('drafts: dates that are set must still be in order', $$
+  update public.hackathons set starts_at = now() + interval '2 days', ends_at = now() + interval '1 day' where id = tests.h2() $$, 'hackathons_timeline_order');
+select tests.set_phase(tests.h2(), 'registration');
+select tests.lives('publish: once every date is set', $$ update public.hackathons set is_published = true where id = tests.h2() $$);
+
+select tests.service();
+select tests.admin_headers('Renamed the Sprint');
+select tests.lives('log: the admin console renames a Sprint', $$ update hackathons set title = 'Night Owls II' where id = tests.h2() $$);
+select set_config('request.headers', '', true);
+select tests.ok('log: ...recorded with who, why, and old → new',
+  (select c.area = 'sprint' and c.action = 'update' and c.actor = 'Ada Admin (admin console)'
+          and c.actor_id = tests.u('admin') and c.summary = 'Renamed the Sprint' and c.db_role = 'service_role'
+          and c.changes = '{"title": {"old": "Night Owls", "new": "Night Owls II"}}'::jsonb
+   from tests.last_change() c),
+  (select 'last entry: ' || to_jsonb(c)::text from tests.last_change() c));
+
+select tests.login('alice');
+select tests.lives('log: members register for Sprint 2', $$ insert into hackathon_registrations (hackathon_id, user_id) values (tests.h2(), tests.u('alice')) $$);
+select tests.lives('log: ...and create a team', $$ select hackathon_create_team(tests.h2(), 'Owls') $$);
+select tests.login('bob');
+select tests.lives('log: bob registers', $$ insert into hackathon_registrations (hackathon_id, user_id) values (tests.h2(), tests.u('bob')) $$);
+select tests.login('carol');
+select tests.lives('log: carol registers', $$ insert into hackathon_registrations (hackathon_id, user_id) values (tests.h2(), tests.u('carol')) $$);
+select tests.as_db();
+select tests.set_member('dave', true);   -- as the database: a member can't extend their own trial
+select tests.login('dave');
+select tests.lives('log: dave registers', $$ insert into hackathon_registrations (hackathon_id, user_id) values (tests.h2(), tests.u('dave')) $$);
+select tests.login('fay');
+select tests.lives('log: fay registers', $$ insert into hackathon_registrations (hackathon_id, user_id) values (tests.h2(), tests.u('fay')) $$);
+select tests.login('gus');
+select tests.lives('log: gus registers', $$ insert into hackathon_registrations (hackathon_id, user_id) values (tests.h2(), tests.u('gus')) $$);
+select tests.ok('log: members'' own actions aren''t logged as admin changes',
+  tests.changes_where('registration', tests.h2()) = 0 and tests.changes_where('team', tests.h2()) = 0
+  and tests.changes_where('member', tests.h2()) = 0);
+
+select tests.service();
+select tests.admin_headers('Created team Larks');
+select tests.lives('teams (admin): create a team by hand', $$ select hackathon_admin_create_team(tests.h2(), 'Larks', array[tests.u('bob')]) $$);
+select tests.ok('teams (admin): ...the first member owns it',
+  (select role = 'owner' from hackathon_team_members where team_id = tests.team2('Larks') and user_id = tests.u('bob')));
+select tests.ok('log: ...and the team and its member are logged',
+  tests.changes_where('team', tests.h2()) = 1 and tests.changes_where('member', tests.h2()) = 1);
+select tests.throws('teams (admin): someone already on a team must be moved instead', $$ select hackathon_admin_create_team(tests.h2(), 'Dupes', array[tests.u('alice')]) $$, 'Move them instead');
+
+select tests.lives('teams (admin): move carol onto Owls', $$ select hackathon_admin_move_member(tests.u('carol'), tests.team2('Owls')) $$);
+select tests.throws('teams (admin): a full team refuses without an override', $$ select hackathon_admin_move_member(tests.u('dave'), tests.team2('Owls')) $$, 'full');
+select tests.lives('teams (admin): ...and takes them with one', $$ select hackathon_admin_move_member(tests.u('dave'), tests.team2('Owls'), true) $$);
+select tests.eq('teams (admin): the override is recorded on the team', (select max_size_override::text from hackathon_teams where id = tests.team2('Owls')), '3');
+select tests.lives('teams (admin): move fay onto Larks', $$ select hackathon_admin_move_member(tests.u('fay'), tests.team2('Larks')) $$);
+select tests.eq('teams (admin): ...and her registration follows',
+  (select (team_id = tests.team2('Larks'))::text from hackathon_registrations where hackathon_id = tests.h2() and user_id = tests.u('fay')), 'true');
+select tests.login('alice');
+select tests.throws('teams (admin): members can''t call the admin functions', $$ select hackathon_admin_move_member(tests.u('gus'), tests.team2('Owls'), true) $$, 'permission denied');
+
+select tests.login('bob');
+select tests.lives('merge: Larks has a thread', $$ insert into hackathon_team_messages (team_id, user_id, body) values (tests.team2('Larks'), tests.u('bob'), 'larks unite') $$);
+select tests.lives('merge: ...and a doc', $$ insert into hackathon_team_docs (team_id, title, created_by) values (tests.team2('Larks'), 'Larks plan', tests.u('bob')) $$);
+select tests.service();
+select tests.throws('merge: refused when it would go over the limit', $$ select hackathon_admin_merge_teams(tests.team2('Larks'), tests.team2('Owls')) $$, 'Override the limit');
+select tests.lives('merge: allowed with an override', $$ select hackathon_admin_merge_teams(tests.team2('Larks'), tests.team2('Owls'), true) $$);
+select tests.as_db();
+select tests.ok('merge: the source team is gone', tests.team2('Larks') is null);
+select tests.eq('merge: everyone is on the target', (select count(*)::text from public.hackathon_team_members where team_id = tests.team2('Owls')), '5');
+select tests.ok('merge: the room came along',
+  exists (select 1 from public.hackathon_team_messages where team_id = tests.team2('Owls') and body = 'larks unite')
+  and exists (select 1 from public.hackathon_team_docs where team_id = tests.team2('Owls') and title = 'Larks plan'));
+select tests.login('alice');
+select tests.ok('merge: the target''s members can read what moved', tests.count($$ select 1 from hackathon_team_docs where title = 'Larks plan' $$) = 1);
+
+select tests.service();
+select tests.lives('teams (admin): gus gets his own team', $$ select hackathon_admin_create_team(tests.h2(), 'Wrens', array[tests.u('gus')]) $$);
+select tests.set_phase(tests.h2(), 'live');
+select tests.login('gus');
+select tests.lives('merge: Wrens submits', $$ insert into hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team2('Wrens'), tests.h2(), 'Birdsong') $$);
+select tests.service();
+select tests.throws('merge: never away from a team that has submitted', $$ select hackathon_admin_merge_teams(tests.team2('Wrens'), tests.team2('Owls'), true) $$, 'has a submission');
+
+create temporary table before_shift as select team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at from public.hackathons where id = tests.h2();
+select tests.lives('extend: the deadline by 30 minutes', $$ select hackathon_admin_shift(tests.h2(), 'ends_at', 30) $$);
+select tests.ok('extend: the deadline, judging end and reveal moved; kickoff didn''t',
+  (select h.ends_at = b.ends_at + interval '30 minutes' and h.judging_ends_at = b.judging_ends_at + interval '30 minutes'
+          and h.reveal_at = b.reveal_at + interval '30 minutes' and h.starts_at = b.starts_at
+   from public.hackathons h, before_shift b where h.id = tests.h2()));
+select tests.lives('push back: kickoff by an hour, and everything after it', $$ select hackathon_admin_shift(tests.h2(), 'starts_at', 60) $$);
+select tests.ok('push back: team lock stayed put',
+  (select h.team_lock_at = b.team_lock_at and h.starts_at = b.starts_at + interval '60 minutes'
+          and h.ends_at = b.ends_at + interval '90 minutes'
+   from public.hackathons h, before_shift b where h.id = tests.h2()));
+select tests.throws('extend: whole minutes, forwards only', $$ select hackathon_admin_shift(tests.h2(), 'ends_at', -5) $$, 'between 1 minute');
+select tests.login('alice');
+select tests.throws('extend: members can''t', $$ select hackathon_admin_shift(tests.h2(), 'ends_at', 30) $$, 'permission denied');
+select tests.set_phase(tests.h2(), 'revealed');
+select tests.service();
+select tests.throws('extend: not after the reveal', $$ select hackathon_admin_shift(tests.h2(), 'ends_at', 30) $$, 'already been revealed');
+
+select tests.lives('duplicate: the next Sprint from this one', $$ select hackathon_admin_duplicate(tests.h2()) $$);
+select tests.as_db();
+select tests.ok('duplicate: next number, same settings, no dates, no theme, unpublished',
+  (select d.number = o.number + 1 and d.slug = 'sprint-' || d.number and d.title = o.title and d.max_team_size = o.max_team_size
+          and d.starts_at is null and d.reveal_at is null and d.theme_hidden is null and not d.is_published
+   from public.hackathons d, public.hackathons o
+   where o.id = tests.h2() and d.number = (select max(number) from public.hackathons)));
+
+select tests.service();
+select tests.lives('judges: invite someone by email', $$ insert into hackathon_judges (hackathon_id, invite_email) values (tests.h2(), '  Guest@Example.com ') $$);
+select tests.eq('judges: ...stored tidy', (select invite_email from hackathon_judges where hackathon_id = tests.h2() and user_id is null), 'guest@example.com');
+select tests.throws('judges: one invite per email', $$ insert into hackathon_judges (hackathon_id, invite_email) values (tests.h2(), 'guest@EXAMPLE.com') $$, 'duplicate key');
+select tests.throws('judges: an account or an email', $$ insert into hackathon_judges (hackathon_id) values (tests.h2()) $$, 'hackathon_judges_who');
+
+select tests.lives('countdowns: the admin console creates the launch countdown, off', $$
+  insert into site_countdowns (key, label, subtext, target_at, is_launch, zero_behavior, zero_message, cta_label, cta_url, updated_by)
+  values ('launch', 'Founding seats open', 'Twelve seats per cohort.', now() + interval '7 days', true,
+          'show_message', 'Doors are open', 'Request an invite', '/signup', tests.u('admin')) $$);
+select tests.anon();
+select tests.eq('countdowns: a disabled one is invisible signed out', tests.count($$ select 1 from site_countdowns $$)::text, '0');
+select tests.service();
+select tests.admin_headers('Turned on the launch countdown');
+select tests.lives('countdowns: switched on', $$ update site_countdowns set is_enabled = true where key = 'launch' $$);
+select set_config('request.headers', '', true);
+select tests.anon();
+select tests.eq('countdowns: an enabled one is public', tests.count($$ select key, label, target_at, zero_message, cta_url from site_countdowns $$)::text, '1');
+select tests.throws('countdowns: who edited it stays private', $$ select updated_by from site_countdowns $$, 'permission denied');
+select tests.throws('countdowns: signed out can''t write', $$ update site_countdowns set label = 'x' $$, 'permission denied');
+select tests.login('alice');
+select tests.eq('countdowns: members can''t change one', tests.affected($$ update site_countdowns set label = 'hacked' where key = 'launch' $$)::text, '0');
+select tests.throws('countdowns: ...or make one', $$ insert into site_countdowns (key, label, target_at) values ('mine', 'Mine', now()) $$, 'row-level security');
+select tests.login('admin');
+select tests.lives('countdowns: a signed-in admin moves the target', $$ update site_countdowns set target_at = target_at + interval '1 day' where key = 'launch' $$);
+select tests.as_db();
+select tests.eq('log: a signed-in admin''s own edit is logged under their name', (select actor from tests.last_change()), 'Ada Admin');
+select tests.eq('countdowns: ...and is recorded as its editor', (select (updated_by = tests.u('admin'))::text from public.site_countdowns where key = 'launch'), 'true');
+select tests.ok('log: every countdown change, with old → new',
+  tests.changes_where('countdown', null) = 3
+  and (select (c.changes -> 'is_enabled') = '{"old": false, "new": true}'::jsonb and c.summary = 'Turned on the launch countdown'
+       from public.admin_change_log c where c.area = 'countdown' and c.action = 'update' order by c.id limit 1));
+select tests.throws('countdowns: a message is needed to show one at zero', $$
+  insert into public.site_countdowns (key, label, target_at, zero_behavior) values ('teaser', 'Soon', now(), 'show_message') $$, 'site_countdowns_zero_message');
+
+select tests.login('alice');
+select tests.eq('log: members can''t read it', tests.count($$ select 1 from admin_change_log $$)::text, '0');
+select tests.login('admin');
+select tests.ok('log: admins can', tests.count($$ select 1 from admin_change_log $$) > 0);
+select tests.service();
+select tests.throws('log: the admin console can''t rewrite it', $$ update admin_change_log set actor = 'nobody' $$, 'permission denied');
+select tests.as_db();
+select tests.throws('log: even the database owner can''t', $$ delete from public.admin_change_log $$, 'append-only');
 
 select tests.finish();

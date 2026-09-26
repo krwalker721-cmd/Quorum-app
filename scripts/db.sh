@@ -32,7 +32,8 @@ migrations() { ls "$ROOT"/supabase/migrations/[0-9][0-9][0-9]_*.sql | sort; }
 run_tests() {
   local out
   out="$("$PSQL" "$@" -X -q -v ON_ERROR_STOP=1 -f "$TESTS" 2>&1 || true)"
-  echo "$out" | grep -E '^(ERROR|psql):' | sed 's/^ERROR:  //'
+  # The whole message: a failure lists every failing test on its own line.
+  echo "$out" | sed -n '/ERROR:/,/^CONTEXT:/p' | grep -v '^CONTEXT:' | sed 's/^.*ERROR:  //'
   echo "$out" | grep -qE "$PASS_PATTERN"
 }
 
