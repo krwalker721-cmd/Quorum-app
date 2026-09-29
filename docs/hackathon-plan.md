@@ -5,9 +5,8 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
-- **Status (2026-09-28):** Phases 1 and 2 are built, checked on staging, and approved by the
-  owner. Phase 3 (the Hackathon tab and its structure) is built and checked on staging, waiting
-  for the owner's look. Next is Prompt 4 (the join queue and the team matcher).
+- **Status (2026-09-28):** Phases 1–3 are built, checked on staging, and approved by the owner
+  (Phase 3: "looks good for now"). Next is Prompt 4 (the join queue and the team matcher).
 
 ---
 
@@ -554,4 +553,4 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `9ba69de` | Countdown control panel, and countdowns on the site |
 | `e856fa1` | dev-staging says plainly when port 3100 is already in use |
 | `c0d271e` | Plan and progress log; tests that don't assume an empty database |
-| (Phase 3) | The Hackathon tab: Sprint page by state, shared countdown, LIVE in the nav (024) |
+| `2feb8bd` | The Hackathon tab: Sprint page by state, shared countdown, LIVE in the nav (024) |
