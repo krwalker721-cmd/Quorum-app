@@ -696,3 +696,4 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `c0d271e` | Plan and progress log; tests that don't assume an empty database |
 | `2feb8bd` | The Hackathon tab: Sprint page by state, shared countdown, LIVE in the nav (024) |
 | `6ce6407` | Phase 3 approved; record its commit |
+| `47cdf9d` | Registration and teams, the team matcher, kickoff check-in (025–026) |
