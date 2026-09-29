@@ -14,8 +14,13 @@
 //   every state, two minutes apart, starting two minutes after this runs.
 //
 // The test admin (admin-test@quorum.test) is registered in the registration
-// Sprint (random pool), on team Rockets in the live and flip Sprints, and a
-// judge of the judging Sprint; everywhere else they're a spectator.
+// Sprint (random pool), on team Rockets in the live Sprint, and a judge of the
+// judging Sprint; everywhere else they're a spectator.
+//
+// The flip Sprint is also the team matcher's demo: every run clears its teams
+// and puts the test admin and five members in the random pool, with member 6
+// on "Open Door", a team open to requests. Teams lock four minutes after the
+// run, and the matcher runs when the Sprint page next loads.
 // Landing-page countdowns are off for all of them. Refuses production.
 
 import { readFileSync, existsSync } from "node:fs";
@@ -169,12 +174,12 @@ const [m1, m2, m3, m4, m5, m6] = members;
   await team(s, "Rockets", [m1, m2, m3]);
   await team(s, "Comets", [m4, m5, m6]);
 }
-// Live, paused and the flip Sprint: the test admin is on Rockets.
-for (const slug of ["state-live", "state-paused", "state-flip"]) {
+// Live and paused: the test admin is on Rockets.
+for (const slug of ["state-live", "state-paused"]) {
   const s = sprintIds[slug];
   const rockets = await team(s, "Rockets", [me, m1, m2]);
   const comets = await team(s, "Comets", [m3, m4, m5]);
-  if (slug !== "state-flip") {
+  {
     const { count } = await db.from("hackathon_team_messages").select("id", { count: "exact", head: true }).eq("team_id", rockets).eq("is_system", false);
     if (!count) {
       must(
@@ -186,6 +191,15 @@ for (const slug of ["state-live", "state-paused", "state-flip"]) {
       );
     }
   }
+}
+// The flip Sprint: a fresh random pool for the matcher each run.
+{
+  const s = sprintIds["state-flip"];
+  must(await db.from("hackathon_teams").delete().eq("hackathon_id", s), "clearing the flip Sprint's teams");
+  must(await db.from("hackathons").update({ matched_at: null, match_report: null }).eq("id", s), "resetting the matcher");
+  for (const u of [me, m1, m2, m3, m4, m5]) await register(s, u, "random");
+  await team(s, "Open Door", [m6]);
+  must(await db.from("hackathon_teams").update({ is_open_to_requests: true }).eq("hackathon_id", s).eq("name", "Open Door"), "opening Open Door");
 }
 // Judging: one team submitted, one didn't; the test admin judges.
 {

@@ -6,6 +6,47 @@ import { formatNy } from "@/lib/time/newYork";
 import { missingMilestones, type Timeline } from "@/lib/hackathons/timeline";
 import type { Sprint } from "./types";
 
+/** What the matcher did, once it has run: teams made, who went where, anyone flagged. */
+function MatchSummary({ sprint }: { sprint: Sprint }) {
+  const r = sprint.match_report;
+  if (!sprint.matched_at || !r) {
+    return (
+      <p className="font-mono text-[0.6rem] text-text-faint mt-3">
+        team matcher: runs at team lock ({formatNy(sprint.team_lock_at)}), when the Sprint page next loads, or from the
+        button above
+      </p>
+    );
+  }
+  if (r.skipped) {
+    return <p className="font-mono text-[0.65rem] text-text-muted mt-3">team matcher: {r.skipped}</p>;
+  }
+  return (
+    <div className="font-mono text-[0.65rem] text-text-muted mt-3 space-y-1">
+      <p>
+        team matcher ran {formatNy(sprint.matched_at)}: {r.pool} without a team, {r.new_teams.length} new team
+        {r.new_teams.length === 1 ? "" : "s"} of {r.team_size}, {r.same_cohort_pairs} same-cohort pair
+        {r.same_cohort_pairs === 1 ? "" : "s"}
+      </p>
+      {r.new_teams.map((t) => (
+        <p key={t.team_id} className="text-text-faint">
+          new · {t.name}: {t.members.join(", ")}
+        </p>
+      ))}
+      {r.joined_open_teams.map((t) => (
+        <p key={t.team_id} className="text-text-faint">
+          joined · {t.name}: {t.members.join(", ")}
+        </p>
+      ))}
+      {r.flagged.length > 0 && (
+        <p style={{ color: "#f59e0b" }}>
+          needs you: {r.flagged.map((f) => f.name ?? "someone").join(", ")} (no team had room; move them in the teams
+          tab)
+        </p>
+      )}
+    </div>
+  );
+}
+
 function duration(ms: number) {
   const m = Math.max(1, Math.round(ms / 60_000));
   if (m < 60) return `${m} min`;
@@ -46,6 +87,8 @@ export default function SprintControls({
   const missing = missingMilestones(sprint as unknown as Timeline);
   const deadlinePassed = !!sprint.ends_at && Date.now() >= new Date(sprint.ends_at).getTime();
   const revealed = !!sprint.reveal_at && Date.now() >= new Date(sprint.reveal_at).getTime();
+  const canMatch =
+    !sprint.matched_at && sprint.is_published && !sprint.status_override && ["teams_locked", "live"].includes(sprint.phase);
 
   function extend() {
     const n = Number(minutes);
@@ -146,10 +189,27 @@ export default function SprintControls({
         >
           duplicate
         </Btn>
-        <Btn disabled title="The team matcher arrives with Prompt 4.">
+        <Btn
+          disabled={busy || !canMatch}
+          title={
+            sprint.matched_at
+              ? "Already ran. It runs once per Sprint."
+              : canMatch
+                ? "Puts everyone without a team into teams, now."
+                : "Runs once teams lock (and not while paused or cancelled)."
+          }
+          onClick={() =>
+            act(
+              { action: "run_matcher" },
+              `Run the team matcher for Sprint #${sprint.number}? Everyone registered without a team is put into a team. It runs once: you can move people afterwards by hand.`,
+            )
+          }
+        >
           run team matcher
         </Btn>
       </div>
+
+      <MatchSummary sprint={sprint} />
 
       <div className="flex flex-wrap items-end gap-2 mt-4">
         <label className="block w-32">

@@ -9,7 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
---   Needs migrations 018-024.
+--   Needs migrations 018-026.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -1057,5 +1057,327 @@ select tests.service();
 select tests.throws('log: the admin console can''t rewrite it', $$ update admin_change_log set actor = 'nobody' $$, 'permission denied');
 select tests.as_db();
 select tests.throws('log: even the database owner can''t', $$ delete from public.admin_change_log $$, 'append-only');
+
+
+-- ============================================================================
+-- Phase 4 (025): invite links, personal invites, counts, check-in, renaming
+-- ============================================================================
+select tests.as_db();
+create function tests.h4() returns uuid language sql immutable as $$ select 'c4000000-0000-0000-0000-000000000004'::uuid $$;
+create function tests.team4(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h4()
+$$;
+create function tests.code4(p_name text) returns text
+language sql stable security definer set search_path = public as $$
+  select code from public.hackathon_team_invite_codes where team_id = tests.team4(p_name)
+$$;
+create function tests.invite4(p_team text, p_user text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_team_invitations where team_id = tests.team4(p_team) and user_id = tests.u(p_user)
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+insert into public.hackathons (id, slug, title, theme_hidden, max_team_size, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h4(), 'test-join-queue', 'Join Queue Sprint', 'Queues', 3, true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h4(), 'registration');
+select tests.set_member('dave', true);
+select tests.set_member('gus', true);
+
+-- Invite links.
+select tests.login('alice');
+select tests.lives('code: alice registers and starts Links', $$
+  insert into hackathon_registrations (hackathon_id, user_id, mode) values (tests.h4(), tests.u('alice'), 'random');
+  select hackathon_create_team(tests.h4(), 'Links') $$);
+select tests.ok('code: the owner gets an eight-character code', hackathon_team_invite_code(tests.team4('Links')) ~ '^[A-HJKMNP-Z2-9]{8}$');
+select tests.eq('code: ...the same one each time', hackathon_team_invite_code(tests.team4('Links')), tests.code4('Links'));
+select tests.login('bob');
+select tests.eq('code: others can''t read a team''s code', tests.count($$ select 1 from hackathon_team_invite_codes $$)::text, '0');
+select tests.throws('code: ...or ask for it', $$ select hackathon_team_invite_code(tests.team4('Links')) $$, 'Only the team owner');
+select tests.throws('code: nobody writes codes directly', $$
+  insert into hackathon_team_invite_codes (team_id, code) values (tests.team4('Links'), 'ABCDEFGH') $$, 'permission denied');
+select tests.ok('code: the link previews the team',
+  (select team_name = 'Links' and member_count = 1 and max_size = 3 from hackathon_team_by_code(tests.code4('Links'))));
+select tests.lives('code: bob, not registered yet, joins with the link', $$ select hackathon_join_with_code(tests.code4('Links')) $$);
+select tests.ok('code: ...which registered him, on the team',
+  (select r.mode = 'team' and r.team_id = tests.team4('Links') from hackathon_registrations r where r.hackathon_id = tests.h4() and r.user_id = tests.u('bob')));
+select tests.throws('code: one team per Sprint', $$ select hackathon_join_with_code(tests.code4('Links')) $$, 'already on a team');
+select tests.login('erin');
+select tests.throws('code: a lapsed member can''t join', $$ select hackathon_join_with_code(tests.code4('Links')) $$, 'active members');
+select tests.service();
+select tests.lives('code: jude judges this Sprint', $$ insert into hackathon_judges (hackathon_id, user_id, accepted_at) values (tests.h4(), tests.u('jude'), now()) $$);
+select tests.set_member('jude', true);
+select tests.login('jude');
+select tests.throws('code: ...so can''t join a team in it', $$ select hackathon_join_with_code(tests.code4('Links')) $$, 'judge');
+select tests.set_member('jude', false);
+select tests.login('carol');
+select tests.throws('code: a made-up code', $$ select hackathon_join_with_code('ZZZZZZZZ') $$, 'isn''t valid');
+select tests.lives('code: lower case and spaces are fine', $$ select hackathon_join_with_code('  ' || lower(tests.code4('Links')) || ' ') $$);
+select tests.login('dave');
+select tests.throws('code: a full team refuses the next', $$ select hackathon_join_with_code(tests.code4('Links')) $$, 'full');
+select tests.login('alice');
+select tests.lives('code: the owner resets it', $$ select hackathon_reset_invite_code(tests.team4('Links')) $$);
+select tests.as_db();
+select tests.ok('code: ...and it changed', tests.code4('Links') is not null);
+
+-- Personal invites.
+select tests.login('dave');
+select tests.lives('invite: dave starts Invites', $$
+  insert into hackathon_registrations (hackathon_id, user_id) values (tests.h4(), tests.u('dave'));
+  select hackathon_create_team(tests.h4(), 'Invites') $$);
+select tests.lives('invite: dave invites fay, who hasn''t registered', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('fay')) $$);
+select tests.throws('invite: not someone already on a team', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('alice')) $$, 'already on a team');
+select tests.throws('invite: one invite at a time', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('fay')) $$, 'already invited');
+select tests.throws('invite: nobody writes invitations directly', $$
+  insert into hackathon_team_invitations (team_id, hackathon_id, user_id) values (tests.team4('Invites'), tests.h4(), tests.u('oscar')) $$, 'permission denied');
+select tests.login('bob');
+select tests.throws('invite: only the owner invites', $$ select hackathon_invite_member(tests.team4('Links'), tests.u('oscar')) $$, 'Only the team owner');
+select tests.eq('invite: other people can''t see it', tests.count($$ select 1 from hackathon_team_invitations $$)::text, '0');
+select tests.login('fay');
+select tests.eq('invite: the invitee sees it', tests.count($$ select 1 from hackathon_team_invitations $$)::text, '1');
+select tests.lives('invite: fay accepts', $$ select hackathon_respond_to_invitation(tests.invite4('Invites', 'fay'), true) $$);
+select tests.ok('invite: ...registered and on the team',
+  (select r.mode = 'team' and r.team_id = tests.team4('Invites') and r.withdrawn_at is null
+   from hackathon_registrations r where r.hackathon_id = tests.h4() and r.user_id = tests.u('fay')));
+select tests.throws('invite: an answered invite stays answered', $$ select hackathon_respond_to_invitation(tests.invite4('Invites', 'fay'), true) $$, 'already been answered');
+select tests.login('oscar');
+select tests.throws('invite: nobody answers someone else''s', $$ select hackathon_respond_to_invitation(tests.invite4('Invites', 'fay'), false) $$, 'doesn''t exist');
+
+select tests.login('dave');
+select tests.lives('invite: dave invites gus', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('gus')) $$);
+select tests.login('gus');
+select tests.lives('invite: gus declines', $$ select hackathon_respond_to_invitation(tests.invite4('Invites', 'gus'), false) $$);
+select tests.login('dave');
+select tests.lives('invite: asking again after a no', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('gus')) $$);
+select tests.lives('invite: the owner can take it back', $$ select hackathon_cancel_invitation(tests.invite4('Invites', 'gus')) $$);
+select tests.lives('invite: inviting a lapsed member reveals nothing', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('erin')) $$);
+select tests.login('erin');
+select tests.throws('invite: ...they find out when they accept', $$ select hackathon_respond_to_invitation(tests.invite4('Invites', 'erin'), true) $$, 'active members');
+select tests.login('dave');
+select tests.lives('invite: dave invites oscar', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('oscar')) $$);
+select tests.login('oscar');
+select tests.lives('invite: oscar makes his own team instead', $$
+  insert into hackathon_registrations (hackathon_id, user_id) values (tests.h4(), tests.u('oscar'));
+  select hackathon_create_team(tests.h4(), 'Solo') $$);
+select tests.as_db();
+select tests.eq('invite: ...which closed the invite he had', (select status from public.hackathon_team_invitations where id = tests.invite4('Invites', 'oscar')), 'cancelled');
+select tests.login('oscar');
+select tests.throws('invite: ...so he can''t accept it', $$ select hackathon_respond_to_invitation(tests.invite4('Invites', 'oscar'), true) $$, 'already been answered');
+select tests.login('gus');
+select tests.lives('invite: gus takes the last seat on Invites by request', $$
+  insert into hackathon_registrations (hackathon_id, user_id) values (tests.h4(), tests.u('gus'));
+  select hackathon_request_to_join(tests.team4('Invites')) $$);
+select tests.throws('invite: nobody adds themselves to a team directly', $$
+  insert into hackathon_team_members (team_id, user_id) values (tests.team4('Invites'), tests.u('gus')) $$, 'row-level security');
+select tests.login('dave');
+select tests.lives('invite: ...dave accepts', $$
+  select hackathon_respond_to_join_request((select id from hackathon_team_join_requests where team_id = tests.team4('Invites') and user_id = tests.u('gus')), true) $$);
+select tests.eq('invite: accepting a request records the team mode',
+  (select mode from hackathon_registrations where hackathon_id = tests.h4() and user_id = tests.u('gus')), 'team');
+select tests.login('oscar');
+select tests.lives('invite: oscar leaves Solo (it dissolves)', $$ select hackathon_leave_team(tests.team4('Solo')) $$);
+select tests.login('dave');
+select tests.throws('invite: a full team can''t invite', $$ select hackathon_invite_member(tests.team4('Invites'), tests.u('oscar')) $$, 'full');
+
+-- Counts.
+select tests.login('oscar');
+select tests.ok('counts: numbers for the arena''s audience',
+  (select registered = 7 and random_pool = 0 and looking = 1 and on_teams = 6 and teams = 2 from hackathon_registration_counts(tests.h4())));
+select tests.login('erin');
+select tests.ok('counts: nothing for a lapsed non-participant',
+  (select registered = 0 and teams = 0 from hackathon_registration_counts(tests.h4())));
+select tests.anon();
+select tests.throws('counts: signed out can''t call it', $$ select * from hackathon_registration_counts(tests.h4()) $$, 'permission denied');
+
+-- Team lock.
+select tests.login('dave');
+select tests.lives('lock: dave opens Invites to requests before lock', $$
+  select hackathon_update_team(tests.team4('Invites'), p_open_to_requests => true) $$);
+select tests.set_phase(tests.h4(), 'teams_locked');
+select tests.login('admin');
+select tests.throws('lock: no joining by link after team lock', $$ select hackathon_join_with_code(tests.code4('Links')) $$, 'registration is open');
+select tests.login('alice');
+select tests.throws('lock: no inviting after team lock', $$ select hackathon_invite_member(tests.team4('Links'), tests.u('oscar')) $$, 'registration is open');
+select tests.lives('lock: the owner can still rename', $$ select hackathon_update_team(tests.team4('Links'), 'Chain Links') $$);
+select tests.throws('lock: ...but not open to requests', $$ select hackathon_update_team(tests.team4('Chain Links'), p_open_to_requests => true) $$, 'locked');
+select tests.login('bob');
+select tests.throws('lock: a member of a team they formed can''t rename it', $$ select hackathon_update_team(tests.team4('Chain Links'), 'Mine') $$, 'Only the team owner');
+select tests.service();
+select tests.lives('lock: admins still can (admin console)', $$ select hackathon_admin_move_member(tests.u('oscar'), tests.team4('Invites'), true) $$);
+
+-- Check-in.
+select tests.login('alice');
+select tests.throws('check-in: not before kickoff', $$ select hackathon_check_in(tests.h4()) $$, 'while the Sprint is live');
+select tests.set_phase(tests.h4(), 'live');
+select tests.lives('check-in: alice checks in', $$ select hackathon_check_in(tests.h4()) $$);
+select tests.ok('check-in: ...once; pressing again keeps the first time',
+  hackathon_check_in(tests.h4()) = (select checked_in_at from hackathon_registrations where hackathon_id = tests.h4() and user_id = tests.u('alice')));
+select tests.login('erin');
+select tests.throws('check-in: only participants', $$ select hackathon_check_in(tests.h4()) $$, 'Only people taking part');
+select tests.pause(tests.h4(), now() - interval '5 minutes');
+select tests.login('bob');
+select tests.throws('check-in: not while paused', $$ select hackathon_check_in(tests.h4()) $$, 'while the Sprint is live');
+select tests.clear_override(tests.h4());
+select tests.login('alice');
+select tests.lives('rename: during the Sprint', $$ select hackathon_update_team(tests.team4('Chain Links'), 'Links', '◆', '#38bdf8') $$);
+select tests.set_phase(tests.h4(), 'judging');
+select tests.throws('rename: not after the deadline', $$ select hackathon_update_team(tests.team4('Links'), 'Late') $$, 'until the submission deadline');
+
+-- ============================================================================
+-- Phase 4 (026): the team matcher
+-- ============================================================================
+select tests.as_db();
+create function tests.m(i integer) returns uuid language sql immutable as $$
+  select ('b0000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid
+$$;
+create function tests.h5() returns uuid language sql immutable as $$ select 'c5000000-0000-0000-0000-000000000005'::uuid $$;
+create function tests.h6() returns uuid language sql immutable as $$ select 'c6000000-0000-0000-0000-000000000006'::uuid $$;
+create function tests.h7() returns uuid language sql immutable as $$ select 'c7000000-0000-0000-0000-000000000007'::uuid $$;
+create function tests.cohort(i integer) returns uuid language sql immutable as $$
+  select ('d0000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid
+$$;
+-- Every team in a Sprint with its members, as one string: equal strings mean
+-- identical teams.
+create function tests.teams_snapshot(p_hackathon uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select coalesce(string_agg(t.name || ':' || m.user_id::text || ':' || m.role, ',' order by t.name, m.user_id), '')
+  from public.hackathon_teams t join public.hackathon_team_members m on m.team_id = t.id
+  where t.hackathon_id = p_hackathon
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+insert into auth.users (id, email, raw_user_meta_data)
+select tests.m(i), 'm' || i || '@hackathon.test', json_build_object('full_name', 'Member ' || i)::jsonb
+from generate_series(1, 14) i;
+update public.profiles set status = 'approved', trial_ends_at = now() + interval '20 days'
+where id in (select tests.m(i) from generate_series(1, 14) i);
+update public.profiles set skills = array['backend engineer'] where id in (tests.m(1), tests.m(5), tests.m(8));
+update public.profiles set skills = array['product design', 'figma'] where id in (tests.m(2), tests.m(6));
+update public.profiles set skills = array['sales'] where id in (tests.m(3), tests.m(7));
+insert into public.cohorts (id, name) values (tests.cohort(1), 'Cohort 1'), (tests.cohort(2), 'Cohort 2'), (tests.cohort(3), 'Cohort 3');
+insert into public.cohort_members (user_id, cohort_id)
+select tests.m(i), tests.cohort(case when i <= 4 then 1 when i <= 7 then 2 else 3 end) from generate_series(1, 10) i;
+
+select tests.ok('skills: sorted into kinds',
+  private.skill_bucket(array['Backend engineer']) = 'technical' and private.skill_bucket(array['Figma']) = 'design'
+  and private.skill_bucket(array['sales']) = 'business' and private.skill_bucket('{}') is null);
+
+-- Sprint 5: max 4, so teams of 3. Eight in the pool across three cohorts
+-- (four, three and one), one team open to requests (m9, cohort 3) and one
+-- closed (m10).
+insert into public.hackathons (id, slug, title, max_team_size, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h5(), 'test-matcher', 'Matcher Sprint', 4, true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h5(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h5(), tests.m(i), 'random' from generate_series(1, 10) i;
+select hackathon_admin_create_team(tests.h5(), 'Open Door', array[tests.m(9)]);
+select hackathon_admin_create_team(tests.h5(), 'Closed Shop', array[tests.m(10)]);
+update public.hackathon_teams set is_open_to_requests = true where hackathon_id = tests.h5() and name = 'Open Door';
+update public.hackathon_teams set is_open_to_requests = false where hackathon_id = tests.h5() and name = 'Closed Shop';
+
+select tests.service();
+select tests.throws('matcher: not before team lock', $$ select hackathon_run_matcher(tests.h5()) $$, 'haven''t locked');
+select tests.set_phase(tests.h5(), 'teams_locked');
+select tests.login('alice');
+select tests.throws('matcher: members can''t run it', $$ select hackathon_run_matcher(tests.h5()) $$, 'permission denied');
+select tests.pause(tests.h5(), now() - interval '1 minute');
+select tests.service();
+select tests.throws('matcher: not while paused', $$ select hackathon_run_matcher(tests.h5()) $$, 'paused');
+select tests.clear_override(tests.h5());
+
+select tests.lives('matcher: runs at team lock', $$ select hackathon_run_matcher(tests.h5()) $$);
+select tests.as_db();
+create temp table matcher_first as select tests.teams_snapshot(tests.h5()) as snap,
+  (select matched_at from public.hackathons where id = tests.h5()) as at,
+  (select match_report from public.hackathons where id = tests.h5()) as report;
+select tests.eq('matcher: everyone in the pool is on a team',
+  tests.count($$ select 1 from hackathon_registrations r where r.hackathon_id = tests.h5() and r.withdrawn_at is null and r.team_id is null $$)::text, '0');
+select tests.eq('matcher: two new teams of three', tests.count($$
+  select 1 from hackathon_teams t where t.hackathon_id = tests.h5() and t.is_random_matched
+  and (select count(*) from hackathon_team_members m where m.team_id = t.id) = 3 $$)::text, '2');
+select tests.eq('matcher: the two left over filled the open team', tests.count($$
+  select 1 from hackathon_team_members m where m.team_id = (select id from hackathon_teams where hackathon_id = tests.h5() and name = 'Open Door') $$)::text, '3');
+select tests.eq('matcher: a closed team is left alone', tests.count($$
+  select 1 from hackathon_team_members m where m.team_id = (select id from hackathon_teams where hackathon_id = tests.h5() and name = 'Closed Shop') $$)::text, '1');
+select tests.eq('matcher: no team over the limit', tests.count($$
+  select 1 from hackathon_teams t where t.hackathon_id = tests.h5()
+  and (select count(*) from hackathon_team_members m where m.team_id = t.id) > 4 $$)::text, '0');
+select tests.eq('matcher: every new team has exactly one owner', tests.count($$
+  select 1 from hackathon_teams t where t.hackathon_id = tests.h5() and t.is_random_matched
+  and (select count(*) from hackathon_team_members m where m.team_id = t.id and m.role = 'owner') = 1 $$)::text, '2');
+select tests.ok('matcher: new teams get distinct names, closed to requests',
+  (select count(distinct name) = 2 and bool_and(not is_open_to_requests and emblem is not null and color is not null)
+   from hackathon_teams where hackathon_id = tests.h5() and is_random_matched));
+-- Four people from cohort 1 across three teams must share once; the best mix
+-- has exactly one same-cohort pair.
+select tests.eq('matcher: cohorts are mixed as far as possible', (select report ->> 'same_cohort_pairs' from matcher_first), '1');
+select tests.eq('matcher: ...counting the real teams too', (
+  select count(*) from public.hackathon_team_members a
+  join public.hackathon_team_members b on a.team_id = b.team_id and a.user_id < b.user_id
+  join public.cohort_members ca on ca.user_id = a.user_id
+  join public.cohort_members cb on cb.user_id = b.user_id and cb.cohort_id = ca.cohort_id
+  where a.hackathon_id = tests.h5())::text, '1');
+select tests.eq('matcher: nobody flagged', (select jsonb_array_length(report -> 'flagged') from matcher_first)::text, '0');
+
+select tests.service();
+select tests.ok('matcher: a second run says it already ran', (hackathon_run_matcher(tests.h5()) ->> 'already_matched')::boolean);
+select tests.as_db();
+select tests.ok('matcher: ...and changed nothing',
+  tests.teams_snapshot(tests.h5()) = (select snap from matcher_first)
+  and (select matched_at from public.hackathons where id = tests.h5()) = (select at from matcher_first));
+select tests.ok('matcher: the admin log shows its teams',
+  exists (select 1 from public.admin_change_log where hackathon_id = tests.h5() and area = 'team'));
+
+create temp table matched_member as
+select m.user_id, m.team_id from public.hackathon_team_members m
+join public.hackathon_teams t on t.id = m.team_id
+where t.hackathon_id = tests.h5() and t.is_random_matched and m.role = 'member'
+order by m.user_id limit 1;
+grant select on matched_member to authenticated;
+select tests.become('authenticated', null);
+select set_config('request.jwt.claims', json_build_object('sub', (select user_id from matched_member), 'role', 'authenticated')::text, true);
+select tests.lives('matcher: any member of a matched team can rename it', $$
+  select hackathon_update_team((select team_id from matched_member), 'Our Pick') $$);
+select tests.as_db();
+select tests.eq('matcher: ...renamed', (select name from public.hackathon_teams where id = (select team_id from matched_member)), 'Our Pick');
+
+-- Sprint 6: max 2, three in the pool, nowhere with room: one is flagged.
+select tests.as_db();
+insert into public.hackathons (id, slug, title, max_team_size, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h6(), 'test-matcher-odd', 'Odd Sprint', 2, true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h6(), 'teams_locked');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h6(), tests.m(i), 'random' from generate_series(11, 13) i;
+select tests.service();
+select tests.lives('matcher: an odd one out', $$ select hackathon_run_matcher(tests.h6()) $$);
+select tests.as_db();
+select tests.eq('matcher: ...is flagged, never a team of one',
+  (select jsonb_array_length(match_report -> 'flagged') from public.hackathons where id = tests.h6())::text, '1');
+select tests.eq('matcher: ...and stays unassigned for an admin',
+  tests.count($$ select 1 from hackathon_registrations where hackathon_id = tests.h6() and team_id is null $$)::text, '1');
+select tests.eq('matcher: ...while the other two are a team',
+  tests.count($$ select 1 from hackathon_teams where hackathon_id = tests.h6() $$)::text, '1');
+
+-- Sprint 7: nobody ran it before the deadline. It records that and stops.
+insert into public.hackathons (id, slug, title, max_team_size, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h7(), 'test-matcher-late', 'Late Sprint', 3, true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h7(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode) values (tests.h7(), tests.m(14), 'random');
+select tests.set_phase(tests.h7(), 'judging');
+select tests.service();
+select tests.ok('matcher: too late, it says so', hackathon_run_matcher(tests.h7()) ? 'skipped');
+select tests.as_db();
+select tests.ok('matcher: ...and matched nobody',
+  tests.count($$ select 1 from hackathon_teams where hackathon_id = tests.h7() $$) = 0
+  and (select matched_at is not null from public.hackathons where id = tests.h7()));
+
 
 select tests.finish();

@@ -1,36 +1,34 @@
 import Tile from "@/components/ui/Tile";
-import ui from "@/components/ui/sleek.module.css";
-import type { Viewer } from "@/lib/hackathons/page";
+import type { ArenaTeam, QueueData, Viewer } from "@/lib/hackathons/page";
+import type { SprintRow } from "@/lib/hackathons/sprint";
+import JoinQueueClient from "./JoinQueueClient";
 
 /**
- * The join queue: register, then the random pool or your own team.
- * PLACEHOLDER until Prompt 4, which replaces this file. The anchor (#join) is
- * where a spectator's "Register" button lands, so keep it.
+ * The join queue, while registration is open (Prompt 4). The anchor (#join)
+ * is where a spectator's "Register" button lands.
  */
-export default function JoinQueue({ viewer }: { viewer: Viewer }) {
-  const registered = viewer.role === "participant";
+export default function JoinQueue({
+  sprint,
+  viewer,
+  teams,
+  queue,
+}: {
+  sprint: SprintRow;
+  viewer: Viewer;
+  teams: ArenaTeam[];
+  queue: QueueData | null;
+}) {
   return (
     <div id="join" style={{ scrollMarginTop: 80 }}>
       <Tile kicker="Join queue" style={{ marginBottom: 16 }}>
-        <div className={ui.empty}>
-          {registered ? (
-            <>
-              <p className={ui.emptyTitle}>
-                You're registered{viewer.mode === "team" ? " to build with your own team" : " in the random pool"}.
-              </p>
-              <p className={ui.emptySub}>Changing how you join, and finding a team, open here soon.</p>
-            </>
-          ) : viewer.role === "outsider" ? (
-            <p className={ui.emptyTitle}>Registering needs an active membership.</p>
-          ) : viewer.role === "judge" || viewer.role === "invited_judge" ? (
-            <p className={ui.emptyTitle}>Judges can't compete in the Sprint they judge.</p>
-          ) : (
-            <>
-              <p className={ui.emptyTitle}>Registration opens here soon.</p>
-              <p className={ui.emptySub}>You'll choose the random pool, or start or join a team.</p>
-            </>
-          )}
-        </div>
+        {queue ? (
+          <JoinQueueClient
+            sprint={{ id: sprint.id, number: sprint.number, team_lock_at: sprint.team_lock_at, open: sprint.state === "registration" }}
+            viewer={viewer}
+            teams={teams}
+            queue={queue}
+          />
+        ) : null}
       </Tile>
     </div>
   );

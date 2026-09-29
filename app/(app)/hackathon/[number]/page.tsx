@@ -7,6 +7,9 @@ import Tile from "@/components/ui/Tile";
 import SprintAutoRefresh from "@/components/hackathon/SprintAutoRefresh";
 import SprintCountdown from "@/components/hackathon/SprintCountdown";
 import JoinQueue from "@/components/hackathon/JoinQueue";
+import TeamPanel from "@/components/hackathon/TeamPanel";
+import CheckIn from "@/components/hackathon/CheckIn";
+import QueueLive from "@/components/hackathon/QueueLive";
 import Arena from "@/components/hackathon/Arena";
 import { Awards, GallerySlot } from "@/components/hackathon/RevealGallery";
 import {
@@ -20,6 +23,7 @@ import {
 } from "@/components/hackathon/SprintSections";
 import { loadSprint, loadSprintPage, type SprintPageData } from "@/lib/hackathons/page";
 import { getMemberStanding } from "@/lib/hackathons/viewer";
+import { runMatcherIfDue } from "@/lib/hackathons/matcher";
 import { stageCountdown, toTiming } from "@/lib/hackathons/sprint";
 
 export const dynamic = "force-dynamic";
@@ -38,9 +42,17 @@ export default async function SprintPage(props: { params: Promise<{ number: stri
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [standing, sprint] = await Promise.all([getMemberStanding(supabase, user.id), loadSprint(supabase, n)]);
+  const [standing, found] = await Promise.all([getMemberStanding(supabase, user.id), loadSprint(supabase, n)]);
   // RLS: unpublished Sprints exist only for admins.
-  if (!sprint) notFound();
+  if (!found) notFound();
+  let sprint = found;
+
+  // Teams have locked: make sure the matcher has run (once only, so this is
+  // cheap after the first time), then read the Sprint again with its teams.
+  if (sprint.state === "teams_locked" || sprint.state === "live") {
+    await runMatcherIfDue(sprint.id);
+    sprint = (await loadSprint(supabase, n)) ?? sprint;
+  }
 
   const data = await loadSprintPage(supabase, sprint, user.id, standing);
   const timing = toTiming(sprint);
@@ -51,6 +63,7 @@ export default async function SprintPage(props: { params: Promise<{ number: stri
       <NoGrid />
       <TopBar sleek title="hackathon" tier={standing.tier} userId={user.id} />
       <SprintAutoRefresh timing={timing} state={sprint.state} />
+      {sprint.state === "registration" && <QueueLive sprintId={sprint.id} />}
 
       <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 1120, margin: "0 auto", width: "100%" }}>
         <div className="flex items-center justify-between gap-3" style={{ marginBottom: 12 }}>
@@ -74,6 +87,12 @@ export default async function SprintPage(props: { params: Promise<{ number: stri
 
         {sprint.state !== "draft" && <ViewerCallout data={data} />}
 
+        {sprint.state === "live" && data.viewer.role === "participant" && (
+          <Tile style={{ marginBottom: 16 }} padding="14px 16px">
+            <CheckIn sprintId={sprint.id} checkedInAt={data.viewer.checkedInAt} />
+          </Tile>
+        )}
+
         <div className="grid stack-md" style={{ gap: 16, gridTemplateColumns: "minmax(0, 1fr) 320px", alignItems: "start" }}>
           <div style={{ minWidth: 0 }}>
             <MainColumn data={data} />
@@ -90,8 +109,18 @@ export default async function SprintPage(props: { params: Promise<{ number: stri
 
 /** The part that changes most from state to state. Each block is its own file for later prompts. */
 function MainColumn({ data }: { data: SprintPageData }) {
-  const { sprint, viewer, teams, registrants, awards } = data;
+  const { sprint, viewer, teams, registrants, awards, queue } = data;
   const myTeam = viewer.teamId;
+  const mine = myTeam ? teams.find((t) => t.id === myTeam) : undefined;
+  const teamPanel =
+    mine && queue?.team ? (
+      <TeamPanel
+        sprint={{ id: sprint.id, number: sprint.number, phase: sprint.phase, frozen: sprint.state === "paused" }}
+        team={mine}
+        panel={queue.team}
+        viewerId={viewer.userId}
+      />
+    ) : null;
 
   if (sprint.state === "cancelled") {
     return teams.length > 0 ? <Arena teams={teams} phase={sprint.phase} myTeamId={myTeam} title="Teams" /> : null;
@@ -109,7 +138,8 @@ function MainColumn({ data }: { data: SprintPageData }) {
     case "registration":
       return (
         <>
-          <JoinQueue viewer={viewer} />
+          <JoinQueue sprint={sprint} viewer={viewer} teams={teams} queue={queue} />
+          {teamPanel}
           {registrants && <RegistrantsTile registrants={registrants} />}
           <Arena teams={teams} phase="registration" myTeamId={myTeam} title="Teams so far" />
         </>
@@ -117,6 +147,7 @@ function MainColumn({ data }: { data: SprintPageData }) {
     case "teams_locked":
       return (
         <>
+          {teamPanel}
           <Arena teams={teams} phase="teams_locked" myTeamId={myTeam} title="Final teams" />
           <ThemeTile sprint={sprint} />
         </>
@@ -125,6 +156,7 @@ function MainColumn({ data }: { data: SprintPageData }) {
       return (
         <>
           <ThemeTile sprint={sprint} />
+          {teamPanel}
           <Arena teams={teams} phase="live" myTeamId={myTeam} />
         </>
       );

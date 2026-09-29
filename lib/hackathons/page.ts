@@ -15,12 +15,16 @@ export type ViewerRole =
   | "outsider"; // lapsed member, not in it
 
 export type Viewer = {
+  userId: string;
   role: ViewerRole;
   isAdmin: boolean;
   isActive: boolean;
   /** Set for participants: random pool or own team, and the team if any. */
   mode: "random" | "team" | null;
   teamId: string | null;
+  /** Registered once and withdrew (can come back while registration is open). */
+  withdrawn: boolean;
+  checkedInAt: string | null;
 };
 
 export type ArenaPerson = { id: string; full_name: string | null; username: string | null; stage: string | null };
@@ -32,6 +36,9 @@ export type ArenaTeam = {
   emblem: string | null;
   color: string | null;
   is_random_matched: boolean;
+  is_open_to_requests: boolean;
+  /** The team's size limit: its own override, or the Sprint's. */
+  max_size: number;
   members: (ArenaPerson & { role: "owner" | "member" })[];
   activity: { message_count: number; doc_count: number; link_count: number; last_active_at: string | null; has_submitted: boolean } | null;
 };
@@ -49,6 +56,30 @@ export type Award = {
 
 export type SprintLink = Pick<SprintRow, "number" | "title" | "state" | "registration_opens_at" | "starts_at">;
 
+export type RegistrationCounts = { registered: number; random_pool: number; looking: number; on_teams: number; teams: number };
+
+/** The join queue and the team panel (migration 025), for the viewer. */
+export type QueueData = {
+  counts: RegistrationCounts | null;
+  /** Your pending requests to join teams. */
+  myRequests: { id: string; team_id: string; team_name: string }[];
+  /** Invitations waiting for your answer. */
+  myInvitations: { id: string; team_id: string; team_name: string; invited_by: string | null }[];
+  /** Your team, when you're on one. */
+  team: {
+    id: string;
+    isOwner: boolean;
+    /** Owner, or any member of a matched team: may rename. */
+    canEdit: boolean;
+    /** Pending requests (the owner sees them). */
+    requests: { id: string; person: ArenaPerson; message: string | null }[];
+    /** Pending invitations the team has sent. */
+    invitations: { id: string; person: ArenaPerson }[];
+    /** The invite code, if the owner has made one. */
+    code: string | null;
+  } | null;
+};
+
 export type SprintPageData = {
   sprint: SprintRow;
   viewer: Viewer;
@@ -57,6 +88,8 @@ export type SprintPageData = {
   awards: Award[];
   /** For a spectator's "join the next one": the next announced Sprint, if any. */
   nextSprint: SprintLink | null;
+  /** From registration through the live Sprint; null otherwise. */
+  queue: QueueData | null;
 };
 
 export async function loadSprint(db: SupabaseClient, number: number): Promise<SprintRow | null> {
@@ -74,7 +107,7 @@ async function loadViewer(
   const [reg, judge, member] = await Promise.all([
     db
       .from("hackathon_registrations")
-      .select("mode, team_id, withdrawn_at")
+      .select("mode, team_id, withdrawn_at, checked_in_at")
       .eq("hackathon_id", sprintId)
       .eq("user_id", userId)
       .maybeSingle(),
@@ -94,32 +127,42 @@ async function loadViewer(
           : "outsider";
 
   return {
+    userId,
     role,
     isAdmin,
     isActive,
     mode: registered ? (reg.data!.mode as "random" | "team") : null,
     teamId: registered ? ((member.data?.team_id as string | undefined) ?? (reg.data!.team_id as string | null)) : null,
+    withdrawn: Boolean(reg.data?.withdrawn_at),
+    checkedInAt: registered ? ((reg.data!.checked_in_at as string | null) ?? null) : null,
   };
 }
 
-async function loadTeams(db: SupabaseClient, sprintId: string, withActivity: boolean): Promise<ArenaTeam[]> {
+async function loadPeople(db: SupabaseClient, ids: string[]): Promise<Map<string, ArenaPerson>> {
+  const people = new Map<string, ArenaPerson>();
+  const unique = Array.from(new Set(ids));
+  if (unique.length > 0) {
+    const { data } = await db.from("profiles").select("id, full_name, username, stage").in("id", unique);
+    for (const p of data ?? []) people.set(p.id as string, p as ArenaPerson);
+  }
+  return people;
+}
+const personOr = (people: Map<string, ArenaPerson>, id: string): ArenaPerson =>
+  people.get(id) ?? { id, full_name: null, username: null, stage: null };
+
+async function loadTeams(db: SupabaseClient, sprint: SprintRow, withActivity: boolean): Promise<ArenaTeam[]> {
   const [teams, members, activity] = await Promise.all([
     db
       .from("hackathon_teams")
-      .select("id, name, slug, emblem, color, is_random_matched, created_at")
-      .eq("hackathon_id", sprintId)
+      .select("id, name, slug, emblem, color, is_random_matched, is_open_to_requests, max_size_override, created_at")
+      .eq("hackathon_id", sprint.id)
       .order("created_at"),
-    db.from("hackathon_team_members").select("team_id, user_id, role, joined_at").eq("hackathon_id", sprintId),
-    withActivity ? db.rpc("get_team_activity", { p_hackathon_id: sprintId }) : Promise.resolve({ data: null }),
+    db.from("hackathon_team_members").select("team_id, user_id, role, joined_at").eq("hackathon_id", sprint.id),
+    withActivity ? db.rpc("get_team_activity", { p_hackathon_id: sprint.id }) : Promise.resolve({ data: null }),
   ]);
   if (!teams.data || teams.data.length === 0) return [];
 
-  const ids = Array.from(new Set((members.data ?? []).map((m) => m.user_id as string)));
-  const people = new Map<string, ArenaPerson>();
-  if (ids.length > 0) {
-    const { data } = await db.from("profiles").select("id, full_name, username, stage").in("id", ids);
-    for (const p of data ?? []) people.set(p.id as string, p as ArenaPerson);
-  }
+  const people = await loadPeople(db, (members.data ?? []).map((m) => m.user_id as string));
   const pulse = new Map<string, ArenaTeam["activity"]>();
   for (const a of (activity.data as (NonNullable<ArenaTeam["activity"]> & { team_id: string })[] | null) ?? []) {
     pulse.set(a.team_id, a);
@@ -132,13 +175,12 @@ async function loadTeams(db: SupabaseClient, sprintId: string, withActivity: boo
     emblem: (t.emblem as string | null) ?? null,
     color: (t.color as string | null) ?? null,
     is_random_matched: Boolean(t.is_random_matched),
+    is_open_to_requests: Boolean(t.is_open_to_requests),
+    max_size: (t.max_size_override as number | null) ?? sprint.max_team_size,
     members: (members.data ?? [])
       .filter((m) => m.team_id === t.id)
       .sort((a, b) => (a.role === "owner" ? -1 : b.role === "owner" ? 1 : String(a.joined_at).localeCompare(String(b.joined_at))))
-      .map((m) => ({
-        ...(people.get(m.user_id as string) ?? { id: m.user_id as string, full_name: null, username: null, stage: null }),
-        role: m.role as "owner" | "member",
-      })),
+      .map((m) => ({ ...personOr(people, m.user_id as string), role: m.role as "owner" | "member" })),
     activity: pulse.get(t.id as string) ?? null,
   }));
 }
@@ -154,6 +196,84 @@ async function loadRegistrants(db: SupabaseClient, sprintId: string): Promise<Re
     stage: r.stage,
     registered_at: r.registered_at,
   }));
+}
+
+/**
+ * The join queue and team panel. RLS scopes every read: your own requests and
+ * invitations, and your team's requests, invitations and code.
+ */
+async function loadQueue(
+  db: SupabaseClient,
+  sprint: SprintRow,
+  viewer: Viewer,
+  teams: ArenaTeam[],
+): Promise<QueueData> {
+  const teamName = new Map(teams.map((t) => [t.id, t.name]));
+  const myTeam = viewer.teamId ? teams.find((t) => t.id === viewer.teamId) : undefined;
+  const isOwner = !!myTeam?.members.some((m) => m.id === viewer.userId && m.role === "owner");
+
+  const [counts, myRequests, myInvitations, teamRequests, teamInvitations, code] = await Promise.all([
+    db.rpc("hackathon_registration_counts", { p_hackathon_id: sprint.id }).maybeSingle(),
+    db
+      .from("hackathon_team_join_requests")
+      .select("id, team_id")
+      .eq("hackathon_id", sprint.id)
+      .eq("user_id", viewer.userId)
+      .eq("status", "pending"),
+    db
+      .from("hackathon_team_invitations")
+      .select("id, team_id, invited_by")
+      .eq("hackathon_id", sprint.id)
+      .eq("user_id", viewer.userId)
+      .eq("status", "pending"),
+    myTeam && isOwner
+      ? db.from("hackathon_team_join_requests").select("id, user_id, message").eq("team_id", myTeam.id).eq("status", "pending").order("created_at")
+      : Promise.resolve({ data: [] as { id: string; user_id: string; message: string | null }[] }),
+    myTeam
+      ? db.from("hackathon_team_invitations").select("id, user_id").eq("team_id", myTeam.id).eq("status", "pending").order("created_at")
+      : Promise.resolve({ data: [] as { id: string; user_id: string }[] }),
+    myTeam && isOwner
+      ? db.from("hackathon_team_invite_codes").select("code").eq("team_id", myTeam.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const people = await loadPeople(db, [
+    ...(teamRequests.data ?? []).map((r) => r.user_id as string),
+    ...(teamInvitations.data ?? []).map((r) => r.user_id as string),
+    ...(myInvitations.data ?? []).map((r) => r.invited_by as string).filter(Boolean),
+  ]);
+
+  return {
+    counts: (counts.data as RegistrationCounts | null) ?? null,
+    myRequests: (myRequests.data ?? []).map((r) => ({
+      id: r.id as string,
+      team_id: r.team_id as string,
+      team_name: teamName.get(r.team_id as string) ?? "a team",
+    })),
+    myInvitations: (myInvitations.data ?? []).map((r) => ({
+      id: r.id as string,
+      team_id: r.team_id as string,
+      team_name: teamName.get(r.team_id as string) ?? "a team",
+      invited_by: r.invited_by ? (people.get(r.invited_by as string)?.full_name ?? null) : null,
+    })),
+    team: myTeam
+      ? {
+          id: myTeam.id,
+          isOwner,
+          canEdit: isOwner || myTeam.is_random_matched,
+          requests: (teamRequests.data ?? []).map((r) => ({
+            id: r.id as string,
+            person: personOr(people, r.user_id as string),
+            message: (r.message as string | null) ?? null,
+          })),
+          invitations: (teamInvitations.data ?? []).map((r) => ({
+            id: r.id as string,
+            person: personOr(people, r.user_id as string),
+          })),
+          code: ((code.data as { code: string } | null)?.code as string | undefined) ?? null,
+        }
+      : null,
+  };
 }
 
 async function loadAwards(db: SupabaseClient, sprintId: string): Promise<Award[]> {
@@ -214,16 +334,19 @@ export async function loadSprintPage(
   const phase = sprint.phase;
   const showsTeams = ["registration", "teams_locked", "live", "judging", "revealed"].includes(phase);
   const showsActivity = ["live", "judging", "revealed"].includes(phase);
+  const showsQueue = sprint.state !== "cancelled" && ["registration", "teams_locked", "live"].includes(phase);
 
   const [viewer, teams, registrants, awards] = await Promise.all([
     loadViewer(db, sprint.id, userId, opts.isAdmin, opts.isActive),
-    showsTeams ? loadTeams(db, sprint.id, showsActivity) : Promise.resolve([]),
+    showsTeams ? loadTeams(db, sprint, showsActivity) : Promise.resolve([]),
     phase === "registration" ? loadRegistrants(db, sprint.id) : Promise.resolve(null),
     sprint.state === "revealed" ? loadAwards(db, sprint.id) : Promise.resolve([]),
   ]);
 
-  const nextSprint =
-    viewer.role === "spectator" || viewer.role === "outsider" ? await loadNextSprint(db, sprint.number) : null;
+  const [nextSprint, queue] = await Promise.all([
+    viewer.role === "spectator" || viewer.role === "outsider" ? loadNextSprint(db, sprint.number) : Promise.resolve(null),
+    showsQueue ? loadQueue(db, sprint, viewer, teams) : Promise.resolve(null),
+  ]);
 
-  return { sprint, viewer, teams, registrants, awards, nextSprint };
+  return { sprint, viewer, teams, registrants, awards, nextSprint, queue };
 }

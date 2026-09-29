@@ -5,8 +5,8 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
-- **Status (2026-09-28):** Phases 1–3 are built, checked on staging, and approved by the owner
-  (Phase 3: "looks good for now"). Next is Prompt 4 (the join queue and the team matcher).
+- **Status (2026-09-29):** Phases 1–4 are built, checked on staging, and approved by the owner
+  (Phases 3 and 4: "looks good for now"). Next is Prompt 5 (the arena).
 
 ---
 
@@ -122,7 +122,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–024** |
+| Migrations applied | up to **017** | **018–026** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -153,8 +153,11 @@ Tools, all in the repo:
   staging ("State: upcoming" … "State: cancelled", plus "State: flips every 2 min", which walks
   through every state two minutes apart). Times are set relative to now, so running it again puts
   each one back in its state.
-  - The test admin is in the random pool of the registration Sprint, on team Rockets in the live,
-    paused and flip Sprints, and a judge of the judging Sprint; a spectator everywhere else.
+  - The test admin is in the random pool of the registration Sprint, on team Rockets in the live
+    and paused Sprints, and a judge of the judging Sprint; a spectator everywhere else.
+  - **Matcher demo (Phase 4):** each run clears the flip Sprint's teams and matcher record, and
+    puts the test admin and members 1–5 in its random pool, with member 6 on "Open Door" (open to
+    requests). Teams lock four minutes after the run; open `/hackathon/11` then to watch it match.
   - Needs `seed-staging.mjs` and `staging:seed-admin` first. Refuses production.
 
 Signing in on staging:
@@ -254,7 +257,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-09-28, Phase 3):** all 330 tests pass locally and on staging.
+- **Last run (2026-09-29, Phase 4):** all 419 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -440,6 +443,133 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 
 ---
 
+## 5c. Phase 4: registration, teams, the matcher, check-in (migrations 025–026)
+
+### Database
+**`025_hackathon_join_queue.sql`**
+- **`private.join_team(team, user)`:** the one path every way of joining shares.
+  - Registration must be open and the Sprint not frozen, and the person can't be a judge or
+    already on a team.
+  - It registers them if needed (active members only; someone already registered keeps access,
+    per decision 12), sets mode `team`, then adds them. The size trigger and one-team key apply
+    as always.
+- **Invite links:** `hackathon_team_invite_codes`, one code per team (8 characters, no 0/O/1/I/L).
+  - Only the team's members can read it.
+  - `hackathon_team_invite_code(team)` makes or returns it; `hackathon_reset_invite_code(team)`
+    replaces it (both owner only).
+  - `hackathon_team_by_code(code)` previews the team; `hackathon_join_with_code(code)` joins.
+  - The code *is* the invitation, so the team needn't be open to requests.
+- **Personal invites:** `hackathon_team_invitations` (pending / accepted / declined / cancelled).
+  - `hackathon_invite_member` is owner only, while registration is open, and not for someone
+    already on a team or when the team is full. Re-inviting after a no is allowed.
+  - `hackathon_respond_to_invitation`: the invitee answers; accepting joins. `hackathon_cancel_invitation`: the owner takes it back.
+  - Readable by the invitee, the team and admins.
+  - Anyone approved can be invited. Whether they can take part is checked when they accept, so
+    inviting reveals nothing about who pays.
+- **`hackathon_registration_counts(id)`:** registered, random pool, looking (team mode with no
+  team), on teams, teams. Numbers only, for the arena's audience.
+- **`hackathon_check_in(id)`:** participants only, while live and not paused. Pressing it again
+  keeps the first time.
+- **`hackathon_update_team`, redone:** name, emblem and colour until the submission deadline, by
+  the owner or any member of a matched team. "Open to requests" only while registration is open.
+- **`hackathon_respond_to_join_request`, redone:** accepting also sets the joiner's mode to `team`.
+- **Joining a team** (any way in) now also cancels the joiner's other pending invitations.
+- **Realtime:** `hackathon_team_invitations` added.
+
+**`026_hackathon_matcher.sql`**
+- **`hackathons.matched_at`, `hackathons.match_report`:** not granted to members; the report names
+  people.
+- **`hackathon_run_matcher(id)`**, service role only.
+  - **Once only.** It locks the Sprint row; a later run returns the stored report plus
+    `already_matched: true` and changes nothing.
+  - **When it runs:** after team lock, and not while unpublished, paused or cancelled. Past the
+    deadline it records "skipped" and matches nobody.
+  - **Who:** everyone registered without a team, meaning the random pool plus anyone in team mode
+    who never found one.
+  - **Seats:** s = min(max size, 3).
+    - floor(n / s) new teams.
+    - Leftovers go, one at a time, into teams marked open to requests (smallest first), then
+      across the new teams up to the size limit.
+    - If 2 or more are still left, they form a new team. If exactly 1 is left, they're
+      **flagged** and stay unassigned for an admin (never a team of one, never added to a closed
+      team).
+  - **Placing people:** biggest cohort first, each where their cohort is thinnest, then the kind
+    of skill (`private.skill_bucket`: technical / design / business from `profiles.skills`),
+    then the headcount. The order is a hash of Sprint and person, so the same pool always gives
+    the same teams.
+  - **New teams:** `private.create_matched_team` names them from a word list ("Electric Falcons"),
+    with an emblem and colour. Matched teams are closed to requests, and the first person placed
+    owns the team.
+  - **The report:** pool size, new teams and members, who joined open teams, flagged people, and
+    `same_cohort_pairs` (0 is a perfect mix).
+
+### When the matcher runs
+- **The Sprint page:** when it loads in teams_locked or live, it calls `runMatcherIfDue`
+  (`lib/hackathons/matcher.ts`, service role, logged as "team matcher (page load)") and then
+  reads the Sprint again. The page already reloads itself at team lock, so participants see their
+  matched team within seconds.
+- **The admin console:** "run team matcher" is enabled after team lock (and not while frozen). It
+  shows the report under the controls, including anyone flagged.
+- **Cron:** `/api/cron/hackathon-matcher` is built but **not scheduled**. The owner is on Vercel
+  Hobby, where a cron running more than once a day fails the deploy. On Pro, add
+  `{ "path": "/api/cron/hackathon-matcher", "schedule": "* * * * *" }` to `vercel.json`.
+
+### App
+- **Join queue** (`components/hackathon/JoinQueueClient.tsx`, inside the `#join` tile):
+  - Counts, and invitations waiting for you (Join / Decline).
+  - Then, by where you stand:
+    - **Not registered or withdrawn:** "Join Sprint #N" (or "Rejoin"), then three choices:
+      - **Random pool.**
+      - **Create a team:** name, emblem, colour, open to requests.
+      - **Join a team:** an invite code field, plus teams open to requests with room, where "Ask
+        to join" takes an optional message.
+    - **In the pool:** "Switch to a team" or "Withdraw".
+    - **Looking for a team:** your pending requests (cancel), the create/join choices, "Put me in
+      the random pool", "Withdraw".
+    - **On a team:** a pointer to the team panel, and "Withdraw".
+  - Writes go straight to Supabase as the member (`lib/hackathons/actions.ts`); the database's
+    messages are shown as they come.
+- **Your team** (`TeamPanel.tsx`), from registration through live:
+  - Members; the owner can remove people while registration is open.
+  - Requests with Accept / Decline, and pending invitations with "Take back".
+  - The invite link (make, copy, make a new one).
+  - "Find people to invite" (`MemberSearch.tsx`).
+  - "Edit team" and "Leave team".
+- **Member search:** all approved members, found by name or skill text, with Technical / Design /
+  Business filters (`lib/hackathons/skills.ts` mirrors the SQL buckets). It marks who's on a team.
+  It reads `profiles.skills` itself, so the Collab Board is untouched.
+- **Invite link page:** `/hackathon/[n]/join/[code]`. It previews the team, then either a "Join
+  {team}" button or a plain reason it can't: invalid, already on this team, on another team,
+  teams locked, needs membership, or full.
+- **Live updates** (`QueueLive.tsx`, while registration is open): a realtime subscription to this
+  Sprint's teams, members, registrations, requests and invitations refreshes the page a second
+  after the last change. A 45 s refresh catches spectators up on counts.
+- **Check-in** (`CheckIn.tsx`): the "I'm in — let's build" button for participants while live;
+  afterwards, "✓ Checked in <time>".
+- **Admin console, participants tab:** two hours after kickoff it counts and highlights who hasn't
+  checked in, with an "only not checked in" filter.
+
+### Checked on staging (2026-09-29)
+- **Tests:** 025 and 026 applied; **419 tests** pass locally and on staging. Four deliberate
+  breaks were each caught: the matcher ignoring cohorts, forgetting it ran, anyone reading a code,
+  and joining ignoring team lock.
+- **In the browser, as the test admin on #4:**
+  - Random pool → "Switch to a team" → created Test Crew → made an invite link → invited Priya
+    via search.
+  - A request sent from Sam appeared on the open page **within about a second** (realtime).
+    Accepted Sam, declined Jonah.
+  - Left the team; the link page gave the right message in every case.
+  - Joined Rockets by its invite link.
+- **Matcher on #11:** teams locked at 3:24:32; by 3:24:40 the page had moved on by itself and
+  showed the matched teams (Electric Falcons, Clever Builders; 6 people into 2 teams of 3).
+  Running it twice more changed nothing.
+- **Check-in on #6:** the button worked and shows the time.
+- **Not checked in the browser:** the admin console's matcher summary and check-in highlight
+  (they need the admin code). Mixing cohorts is proven by the SQL tests; the staging test members
+  aren't in cohorts.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -477,21 +607,30 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 | 31 | Countdowns tick on `performance.now()` from one server measurement, never the device's clock. | "Countdown ticks correctly even if I change my device clock", including mid-page. |
 | 32 | The page follows admin changes by polling a 30 s edge-cached timing route (every 30 s, and on focus), not realtime. | `hackathons` isn't in realtime (column grants); the brief asks for ~1 minute. |
 | 33 | Admins see the theme before kickoff, labelled "sealed · only admins see this". | The database already gives admins the theme (018); the label stops it looking like a leak. |
+| 34 | No per-minute cron while on Vercel Hobby. The matcher runs when the Sprint page loads after team lock, and from the admin button; the cron route is ready for Pro. | Owner is on Hobby, where a cron running more than once a day fails the deploy. |
+| 35 | Switching between random pool and a team ends at team lock; withdrawing stays open until kickoff. | Owner OK'd; a no-show can still drop out, and their team just gets smaller. |
+| 36 | Name, emblem and colour can change until the submission deadline, by the owner or any member of a matched team; who's on a team locks at team lock. | The brief wanted owner renames until lock and matched teams renaming while live. Owner OK'd. |
+| 37 | Inviting uses its own member search over `profiles.skills`; the Collab skills index is untouched. | It's private inside the Collab Board; reusing it needs a refactor. Owner OK'd. |
+| 38 | The matcher also places people who chose "team" but never found one. | Otherwise they'd be stranded at team lock. |
+| 39 | Anyone approved can be invited; whether they can take part is checked when they accept. | Inviting must not reveal who pays (decision 1). |
+| 40 | An invite code is itself the invitation: it works even if the team is closed to requests. | The owner chose to share it. |
+| 41 | A single leftover with nowhere to go is flagged for an admin, not added to a closed team. | Respects teams that chose to be invite-only. |
+| 42 | Past the deadline, the matcher records "skipped" and matches nobody. | Matching then is pointless, and it stops the matcher running again and again for that Sprint. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 024** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 026** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't (the "who's registered" list is just empty without 024).
+- [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
+      to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- **Prompt 4:** the join queue (replace `components/hackathon/JoinQueue.tsx`; keep the `#join`
-  anchor) and the team matcher. Wire it to "Run team matcher now".
 - **Prompt 5:** the arena (replace `components/hackathon/Arena.tsx`).
 - Team room and lobby: replace the placeholders at `/hackathon/[n]/team` and `/lobby` (keep their
   access checks). Submission form, judging, public project pages.
@@ -511,9 +650,11 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
   (the open Sprint page itself updates within 30 s).
 - Emails: nothing sends Sprint emails yet ("scheduled emails follow the Sprint's times" is a
   design promise to keep).
-- Notifications for join requests and answers aren't built.
-- Check-in (`checked_in_at`) has a column but no function to set it.
-- `min_team_size` is stored but not enforced.
+- Notifications aren't sent yet (Prompt 12): join requests and answers, invitations, and "you've
+  been matched". The matcher's report holds what the matched-team message needs.
+- `min_team_size` is stored but not enforced; the matcher can make a team of 2 from leftovers.
+- The admin console's matcher summary and check-in highlight haven't been checked in the browser
+  (they need the admin code).
 - Public project pages must show screenshots through **signed URLs** (the bucket is private).
 - The `hackathons` table is deliberately **not** in realtime (column grants). Pause and resume
   reach people through lobby system messages.
@@ -554,3 +695,4 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `e856fa1` | dev-staging says plainly when port 3100 is already in use |
 | `c0d271e` | Plan and progress log; tests that don't assume an empty database |
 | `2feb8bd` | The Hackathon tab: Sprint page by state, shared countdown, LIVE in the nav (024) |
+| `6ce6407` | Phase 3 approved; record its commit |

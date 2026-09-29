@@ -42,8 +42,24 @@ export type Sprint = {
   show_countdown_on_landing: boolean;
   countdown_headline_override: string | null;
   updated_at: string;
+  /** Set once the team matcher has run (migration 026). */
+  matched_at: string | null;
+  match_report: MatchReport | null;
   state: string;
   phase: string;
+};
+
+/** What hackathon_run_matcher recorded (migration 026). */
+export type MatchReport = {
+  matched_at: string;
+  skipped?: string;
+  already_matched?: boolean;
+  pool: number;
+  team_size: number | null;
+  new_teams: { team_id: string; name: string; members: string[] }[];
+  joined_open_teams: { team_id: string; name: string; members: string[] }[];
+  flagged: { user_id: string; name: string | null }[];
+  same_cohort_pairs: number;
 };
 
 export type Participant = {

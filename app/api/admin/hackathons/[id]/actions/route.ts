@@ -76,8 +76,11 @@ export async function POST(req: Request, ctx: Ctx) {
     case "duplicate":
       return run(`Duplicated Sprint #${sprint.number}`, (db) => db.rpc("hackathon_admin_duplicate", { p_hackathon_id: id }));
 
+    // Once only (migration 026): a second run returns the first run's report.
     case "run_matcher":
-      return NextResponse.json({ error: "The team matcher arrives with Prompt 4." }, { status: 501 });
+      return run(`Ran the team matcher for Sprint #${sprint.number}`, (db) =>
+        db.rpc("hackathon_run_matcher", { p_hackathon_id: id }),
+      );
 
     default:
       return NextResponse.json({ error: "Unknown action." }, { status: 400 });
