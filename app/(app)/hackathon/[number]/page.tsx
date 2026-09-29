@@ -1,0 +1,148 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import TopBar from "@/components/TopBar";
+import NoGrid from "@/components/ui/NoGrid";
+import Tile from "@/components/ui/Tile";
+import SprintAutoRefresh from "@/components/hackathon/SprintAutoRefresh";
+import SprintCountdown from "@/components/hackathon/SprintCountdown";
+import JoinQueue from "@/components/hackathon/JoinQueue";
+import Arena from "@/components/hackathon/Arena";
+import { Awards, GallerySlot } from "@/components/hackathon/RevealGallery";
+import {
+  RegistrantsTile,
+  RulesTile,
+  ScheduleTile,
+  SprintHero,
+  StatusBanner,
+  ThemeTile,
+  ViewerCallout,
+} from "@/components/hackathon/SprintSections";
+import { loadSprint, loadSprintPage, type SprintPageData } from "@/lib/hackathons/page";
+import { getMemberStanding } from "@/lib/hackathons/viewer";
+import { stageCountdown, toTiming } from "@/lib/hackathons/sprint";
+
+export const dynamic = "force-dynamic";
+
+// One page for a Sprint in every state. The database derives the state
+// (hackathon_overview); this page only chooses the layout for it, and
+// SprintAutoRefresh reloads it when the state changes or an admin moves a time.
+export default async function SprintPage(props: { params: Promise<{ number: string }> }) {
+  const { number } = await props.params;
+  const n = Number(number);
+  if (!Number.isInteger(n) || n < 1) notFound();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const [standing, sprint] = await Promise.all([getMemberStanding(supabase, user.id), loadSprint(supabase, n)]);
+  // RLS: unpublished Sprints exist only for admins.
+  if (!sprint) notFound();
+
+  const data = await loadSprintPage(supabase, sprint, user.id, standing);
+  const timing = toTiming(sprint);
+  const stage = stageCountdown(sprint.state);
+
+  return (
+    <>
+      <NoGrid />
+      <TopBar sleek title="hackathon" tier={standing.tier} userId={user.id} />
+      <SprintAutoRefresh timing={timing} state={sprint.state} />
+
+      <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 1120, margin: "0 auto", width: "100%" }}>
+        <div className="flex items-center justify-between gap-3" style={{ marginBottom: 12 }}>
+          <Link href="/hackathon/archive" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+            All Sprints →
+          </Link>
+        </div>
+
+        <StatusBanner sprint={sprint} />
+        <SprintHero sprint={sprint} />
+
+        {stage && (
+          <Tile
+            gradient={stage.big}
+            style={{ marginBottom: 16 }}
+            padding={stage.big ? "28px 16px 24px" : "16px 18px"}
+          >
+            <SprintCountdown state={sprint.state} timing={timing} />
+          </Tile>
+        )}
+
+        {sprint.state !== "draft" && <ViewerCallout data={data} />}
+
+        <div className="grid stack-md" style={{ gap: 16, gridTemplateColumns: "minmax(0, 1fr) 320px", alignItems: "start" }}>
+          <div style={{ minWidth: 0 }}>
+            <MainColumn data={data} />
+          </div>
+          <aside style={{ minWidth: 0 }}>
+            <ScheduleTile sprint={sprint} nowMs={Date.now()} />
+            {sprint.phase !== "upcoming" && sprint.phase !== "draft" && <RulesTile sprint={sprint} />}
+          </aside>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** The part that changes most from state to state. Each block is its own file for later prompts. */
+function MainColumn({ data }: { data: SprintPageData }) {
+  const { sprint, viewer, teams, registrants, awards } = data;
+  const myTeam = viewer.teamId;
+
+  if (sprint.state === "cancelled") {
+    return teams.length > 0 ? <Arena teams={teams} phase={sprint.phase} myTeamId={myTeam} title="Teams" /> : null;
+  }
+
+  switch (sprint.phase) {
+    case "draft":
+    case "upcoming":
+      return (
+        <>
+          <ThemeTile sprint={sprint} />
+          <RulesTile sprint={sprint} />
+        </>
+      );
+    case "registration":
+      return (
+        <>
+          <JoinQueue viewer={viewer} />
+          {registrants && <RegistrantsTile registrants={registrants} />}
+          <Arena teams={teams} phase="registration" myTeamId={myTeam} title="Teams so far" />
+        </>
+      );
+    case "teams_locked":
+      return (
+        <>
+          <Arena teams={teams} phase="teams_locked" myTeamId={myTeam} title="Final teams" />
+          <ThemeTile sprint={sprint} />
+        </>
+      );
+    case "live":
+      return (
+        <>
+          <ThemeTile sprint={sprint} />
+          <Arena teams={teams} phase="live" myTeamId={myTeam} />
+        </>
+      );
+    case "judging":
+      return (
+        <>
+          <ThemeTile sprint={sprint} />
+          <Arena teams={teams} phase="judging" myTeamId={myTeam} />
+        </>
+      );
+    case "revealed":
+      return (
+        <>
+          <Awards awards={awards} />
+          <GallerySlot />
+          <ThemeTile sprint={sprint} />
+          <Arena teams={teams} phase="revealed" myTeamId={myTeam} title="Teams" />
+        </>
+      );
+  }
+}

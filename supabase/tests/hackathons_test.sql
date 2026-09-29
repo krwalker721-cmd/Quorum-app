@@ -9,7 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
---   Needs migrations 018-023.
+--   Needs migrations 018-024.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -428,6 +428,17 @@ select tests.eq('register: participants see who else is in', tests.count($$ sele
 select tests.login('oscar');
 select tests.eq('register: non-participants don''t', tests.count($$ select 1 from hackathon_registrations where hackathon_id = tests.h1() $$)::text, '0');
 
+-- 024: the Sprint page's "who's registered" list.
+select tests.eq('registrants: an active member sees who''s in', tests.count($$ select 1 from hackathon_registrants(tests.h1()) $$)::text, '6');
+select tests.ok('registrants: ...by name, oldest first',
+  (select full_name = 'Alice Arden' from hackathon_registrants(tests.h1()) limit 1));
+select tests.throws('registrants: ...and nothing about mode or team', $$ select mode from hackathon_registrants(tests.h1()) $$, 'does not exist');
+select tests.login('erin');
+select tests.eq('registrants: a lapsed non-participant sees no one', tests.count($$ select 1 from hackathon_registrants(tests.h1()) $$)::text, '0');
+select tests.anon();
+select tests.throws('registrants: signed out can''t call it', $$ select * from hackathon_registrants(tests.h1()) $$, 'permission denied');
+select tests.login('oscar');
+
 select tests.set_phase(tests.h1(), 'upcoming');
 select tests.throws('register: not before registration opens', $$ insert into hackathon_registrations (hackathon_id, user_id) values (tests.h1(), tests.u('oscar')) $$, 'isn''t open');
 select tests.set_phase(tests.h1(), 'registration');
@@ -523,6 +534,10 @@ select tests.lives('lock: withdrawing is still allowed before kickoff', $$
 select tests.ok('lock: ...withdrawing takes gus off Comets and carol is owner again',
   tests.count($$ select 1 from hackathon_team_members where team_id = tests.team('Comets') and user_id = tests.u('gus') $$) = 0
   and (select role = 'owner' from hackathon_team_members where team_id = tests.team('Comets') and user_id = tests.u('carol')));
+select tests.login('oscar');
+select tests.ok('registrants: someone who withdrew drops off the list',
+  tests.count($$ select 1 from hackathon_registrants(tests.h1()) $$) = 5
+  and tests.count($$ select 1 from hackathon_registrants(tests.h1()) where user_id = tests.u('gus') $$) = 0);
 
 -- ============================================================================
 -- Live: sealed rooms

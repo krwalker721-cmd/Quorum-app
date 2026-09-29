@@ -15,6 +15,7 @@ const PAGE_CONTEXT: Record<string, string> = {
   vault: "what the community has learned",
   collab_board: "projects, asks, and skills",
   referrals: "bring in founders you trust",
+  hackathon: "48-hour Sprints, network-wide",
 };
 
 export default function TopBar({

@@ -5,8 +5,9 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
-- **Status (2026-09-26):** Phases 1 and 2 are built, checked on staging, and approved by the
-  owner. Next is Prompt 3.
+- **Status (2026-09-28):** Phases 1 and 2 are built, checked on staging, and approved by the
+  owner. Phase 3 (the Hackathon tab and its structure) is built and checked on staging, waiting
+  for the owner's look. Next is Prompt 4 (the join queue and the team matcher).
 
 ---
 
@@ -122,7 +123,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–023** |
+| Migrations applied | up to **017** | **018–024** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -149,11 +150,23 @@ Tools, all in the repo:
   - This is a Node launcher because the preview's shell isn't allowed to `source` env files.
 - `node scripts/seed-staging.mjs`: six test members (`member-1…6@quorum.test`), a "UI test"
   Sprint, team Alpha and lobby messages. It refuses production and is safe to run again.
+- `node scripts/seed-staging-sprints.mjs` (Phase 3): one test Sprint per state, #3–#11 on
+  staging ("State: upcoming" … "State: cancelled", plus "State: flips every 2 min", which walks
+  through every state two minutes apart). Times are set relative to now, so running it again puts
+  each one back in its state.
+  - The test admin is in the random pool of the registration Sprint, on team Rockets in the live,
+    paused and flip Sprints, and a judge of the judging Sprint; a spectator everywhere else.
+  - Needs `seed-staging.mjs` and `staging:seed-admin` first. Refuses production.
 
 Signing in on staging:
 - **The owner's real account doesn't exist there.** Staging started empty.
 - **Test admin:** `admin-test@quorum.test`. The password and the staging-only admin code are in
   `.env.staging-admin.local`.
+  - The owner signs in to the Browser pane themselves. Claude doesn't type the password: sign-in
+    goes to Supabase, not a local server. To show it in your own terminal:
+    `grep STAGING_ADMIN_PASSWORD .env.staging-admin.local`.
+  - The desktop app stops the preview server after about an hour. Restart it with the
+    `quorum-dev-staging` launch config; the sign-in survives.
 
 ---
 
@@ -242,7 +255,10 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-09-26):** all 324 tests pass locally and on staging.
+- **Last run (2026-09-28, Phase 3):** all 330 tests pass locally and on staging.
+- The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
+  files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
+  and run `scripts/db.sh local` again: it makes a fresh one.
 
 ---
 
@@ -327,6 +343,104 @@ functions aren't.
 
 ---
 
+## 5b. Phase 3: the Hackathon tab and its structure (migration 024)
+
+No team logic yet. Every section a later prompt fills in is its own file, marked PLACEHOLDER.
+
+### Database
+**`024_hackathon_registrants.sql`:** `hackathon_registrants(id)` returns who's registered (id,
+name, username, stage, registered_at) to the arena's audience (`private.can_view_arena`).
+- Withdrawn people are left out, and it never returns mode, team or email.
+- The registrations table itself stays participants-only.
+- Signed-out callers can't run it; lapsed non-participants get nothing.
+- Six new tests; **330 tests** pass locally and on staging (2026-09-28).
+
+### Routes
+| Route | What |
+|---|---|
+| `/hackathon` | Redirects to the current Sprint (`pickCurrentSprint`): live > judging > teams_locked > registration > upcoming > most recently revealed. Paused ranks where its clock stopped; cancelled and drafts never count. None: "No Sprint is scheduled right now". |
+| `/hackathon/[number]` | The one Sprint page. The layout follows `state` (and `phase` while paused). Drafts: admins only, with a banner. |
+| `/hackathon/archive` | Revealed and cancelled Sprints, newest first. |
+| `/hackathon/[number]/team`, `/lobby` | PLACEHOLDERS. The server lets in only team members (team) or participants, accepted judges and admins (lobby); everyone else goes back to the Sprint page. |
+| `GET /api/hackathons/[number]/timing` | Stored times, pause/cancel and the countdown switches, for published Sprints only (read signed out). Edge-cached 30 s. |
+
+### The page, by state
+Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
+
+| State | Shows |
+|---|---|
+| upcoming | Hero, "Registration opens in…", theme (sealed note), rules |
+| registration | "Kicks off in…", join queue (`JoinQueue.tsx`, PLACEHOLDER for Prompt 4, anchor `#join`), who's registered, teams so far |
+| teams_locked | "Kicks off in…", final teams |
+| live | Large countdown to the deadline, the theme, the arena (`Arena.tsx`, a plain card grid; Prompt 5 replaces it), "My team room" and "Lobby" |
+| judging | "Results revealed in…", arena with Submitted / No submission badges (from `get_team_activity`) |
+| revealed | Awards on top (real, from `hackathon_awards`), gallery (`RevealGallery.tsx`, PLACEHOLDER for Prompt 10), teams |
+| paused / cancelled | `StatusBanner` explaining it; no countdown. Paused keeps the layout of where its clock stopped. |
+
+- **Every state** has a schedule rail (all milestones in the viewer's time zone, the next one in
+  amber) and a viewer callout:
+  - **Participant:** their status, plus the team room and lobby.
+  - **Judge:** the lobby. **Invited judge:** a note.
+  - **Spectator:** "Register" (jumps to `#join`) while registration is open; otherwise a link to
+    the next announced Sprint.
+  - **Lapsed non-participant:** "Renew" → /pricing.
+  - **Admins** also get "Manage in admin".
+- **Theme, admin view:** admins get the theme before kickoff (as in 018), so the page labels it
+  "sealed · only admins see this".
+- **Data:** read with the member's own client (`lib/hackathons/page.ts`), so RLS decides; no
+  service role. Standing (admin, active) comes from `lib/hackathons/viewer.ts`.
+
+### Countdown
+- **`components/countdown/Countdown.tsx`:** `<Countdown target size>`, plus `CountdownDigits` for
+  a parent that already holds the clock.
+  - Sizes: `inline`, `standard` (digit blocks), `hero` (the live Sprint: large glowing digits,
+    hotter in the final hour).
+  - Under 640 px it becomes one compact line, `1d 03:54:48`.
+  - Dashes until the server clock is measured.
+- **One component everywhere:** the Phase 2 bar and strip (`CountdownView`) now use it too, so
+  standalone countdowns look the same everywhere.
+  - The in-app bar leaves out the Sprint whose page you're on.
+  - The bar's Sprint rows link to their page ("Open →"); the landing page's don't, because
+    visitors are signed out.
+- **Admin switches:** `show_countdown_in_app` off hides the ticking numbers and shows the time as
+  plain text; the page still moves on at zero. `countdown_headline_override` replaces the headline.
+- **`lib/useServerNow.ts` (changed):** between measurements, time now moves on
+  `performance.now()`, not `Date.now()`, so changing the device clock mid-page doesn't move a
+  countdown at all.
+  - It re-measures every 5 minutes and when the tab becomes visible again.
+  - `approxServerNow()` gives a one-off, non-ticking reading (for the nav).
+- **`components/hackathon/SprintAutoRefresh.tsx`:**
+  - At each phase boundary (on the server clock, plus 0.5 s) it calls `router.refresh()`, and
+    retries after 2, 5, 10, 20 and 30 s until the database agrees the state changed.
+  - Every 30 s, and on focus or visibility, it compares `/api/hackathons/[n]/timing` with what the
+    page has, and refreshes on any difference.
+
+### Nav
+- **Hackathon tab** after Collab board (`components/Sidebar.tsx`, glyph ◈).
+  - Shown to active members, and to anyone registered or judging in any Sprint, even if lapsed
+    (`lib/hackathons/nav.ts`, computed in the app layout).
+  - Anyone else who opens a Sprint page gets the "Renew" callout.
+- **LIVE:** a green `LIVE` pill (a dot when the rail is collapsed) while any published, unfrozen
+  Sprint is between kickoff and deadline.
+  - Worked out in the browser from the windows, rechecked every 30 s.
+  - The phone menu button gets the same dot (`html[data-sprint-live]` in `globals.css`).
+- **TopBar context line:** "48-hour Sprints, network-wide".
+
+### Checked on staging (2026-09-28)
+- **Every state** rendered with the right sections for #3–#11, as participant, judge and
+  spectator.
+- **Automatic state changes:** the flip Sprint went Announced → Registration open 5 s after its
+  boundary, and Teams locked → Live 2 s after, both without a page reload. The theme unsealed and
+  the hero countdown appeared.
+- **Device clock:** moving it 3 hours ahead mid-page moved the countdown by 3 s (real time).
+- **Admin changes:** `hackathon_admin_shift` +10 min on the open page's deadline appeared within
+  seconds, without a reload.
+- **Access:** a team room you're not on redirects to the Sprint page; the lobby lets a judge in;
+  an unknown number is a 404; `/hackathon` opens the live Sprint.
+- **Phone width (375):** no sideways scroll, compact countdown, dot on the menu button.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -357,29 +471,45 @@ functions aren't.
 | 24 | Sprint countdowns have no separate target; pushing one back moves the Sprint itself. | The screen must never disagree with when submissions lock. |
 | 25 | Staging instead of production for migrations and tests. | Owner; they briefly considered production (no members yet), then kept staging. |
 | 26 | Commits stay local until the owner says otherwise; Vercel previews come later and will point at staging. | Owner. |
+| 27 | Spectators see **names** of who's registered, through `hackathon_registrants` (024); the registrations table stays participants-only. | Owner chose names over a count only. |
+| 28 | The Hackathon tab shows for active members, plus anyone registered or judging in a Sprint (even if lapsed). | Brief ("active members") reconciled with decision 12. |
+| 29 | `/hackathon` redirects to the current Sprint's own page (live > judging > teams_locked > registration > upcoming > latest revealed; paused by its frozen phase; never cancelled or draft). | One shareable address per Sprint; the brief's order didn't cover judging or paused. |
+| 30 | Until Prompt 4, the spectator's "Register" jumps to the join-queue slot, which says it opens soon. Nothing registers yet. | Keeps Prompt 4's scope intact. Owner: "whatever you think is best". |
+| 31 | Countdowns tick on `performance.now()` from one server measurement, never the device's clock. | "Countdown ticks correctly even if I change my device clock", including mid-page. |
+| 32 | The page follows admin changes by polling a 30 s edge-cached timing route (every 30 s, and on focus), not realtime. | `hackathons` isn't in realtime (column grants); the brief asks for ~1 minute. |
+| 33 | Admins see the theme before kickoff, labelled "sealed · only admins see this". | The database already gives admins the theme (018); the label stops it looking like a leak. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 023** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 024** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
-      don't.
+      and the Hackathon tab don't (the "who's registered" list is just empty without 024).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- Prompt 3 onward: the Hackathon tab itself — nav entry, arena, join queue, team rooms, lobby,
-  submission form, judging, reveal, gallery, public project pages.
-- **Prompt 4:** the team matcher. Wire it to "Run team matcher now".
+- **Prompt 4:** the join queue (replace `components/hackathon/JoinQueue.tsx`; keep the `#join`
+  anchor) and the team matcher. Wire it to "Run team matcher now".
+- **Prompt 5:** the arena (replace `components/hackathon/Arena.tsx`).
+- Team room and lobby: replace the placeholders at `/hackathon/[n]/team` and `/lobby` (keep their
+  access checks). Submission form, judging, public project pages.
+- **Prompt 10:** the reveal gallery (replace `GallerySlot` in `components/hackathon/RevealGallery.tsx`).
 - **Prompt 9:** external judge accounts. Link `invite_email` judges to accounts, and build decision
   14 (judge-only accounts never counted as founding seats and never placed in a cohort).
 
 **Known gaps and ideas, not yet built:**
 - The Collab room tabs need the "room adapter" refactor (with approval) before the Hackathon room
   can reuse them.
-- Sprint countdowns have no button yet; they'll link to the Hackathon tab.
+- The in-app countdown bar lists every enabled countdown. With many at once (staging has nine test
+  Sprints) it pushes the page down, especially on phones. Consider capping it (e.g. the soonest two
+  plus "+N more"); not needed while there are only one or two Sprints.
+- Invited judges see a note on the Sprint page but can't accept yet (`hackathon_accept_judge_invite`
+  exists; the button comes with the judging tools).
+- Resuming a paused Sprint doesn't bring the nav's LIVE label back until the next page load
+  (the open Sprint page itself updates within 30 s).
 - Emails: nothing sends Sprint emails yet ("scheduled emails follow the Sprint's times" is a
   design promise to keep).
 - Notifications for join requests and answers aren't built.
@@ -423,3 +553,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `b5bc168` | Readable change log, no stale Sprint page, staging seed script |
 | `9ba69de` | Countdown control panel, and countdowns on the site |
 | `e856fa1` | dev-staging says plainly when port 3100 is already in use |
+| `c0d271e` | Plan and progress log; tests that don't assume an empty database |
+| (Phase 3) | The Hackathon tab: Sprint page by state, shared countdown, LIVE in the nav (024) |

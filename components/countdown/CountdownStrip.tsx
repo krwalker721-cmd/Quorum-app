@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { Placement, PublicCountdown } from "@/lib/countdowns";
 import { useServerNow } from "@/lib/useServerNow";
 import CountdownView, { resolveCountdown } from "./CountdownView";
@@ -14,6 +15,7 @@ import CountdownView, { resolveCountdown } from "./CountdownView";
 export default function CountdownStrip({ initial, where }: { initial: PublicCountdown[]; where: Placement }) {
   const [items, setItems] = useState(initial);
   const now = useServerNow();
+  const pathname = usePathname() ?? "";
 
   useEffect(() => {
     let cancelled = false;
@@ -34,7 +36,10 @@ export default function CountdownStrip({ initial, where }: { initial: PublicCoun
     };
   }, [where]);
 
-  const visible = now === null ? items : items.filter((c) => resolveCountdown(c, now).show);
+  // A Sprint's own page has the big countdown; the bar doesn't repeat it there.
+  const onSprint = /^\/hackathon\/(\d+)(\/|$)/.exec(pathname)?.[1];
+  const here = items.filter((c) => !(c.kind === "sprint" && String(c.number) === onSprint));
+  const visible = now === null ? here : here.filter((c) => resolveCountdown(c, now).show);
   if (visible.length === 0) return null;
 
   if (where === "landing") {
