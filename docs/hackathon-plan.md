@@ -788,3 +788,4 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `6ce6407` | Phase 3 approved; record its commit |
 | `47cdf9d` | Registration and teams, the team matcher, kickoff check-in (025–026) |
 | `8287dcb` | Record the Phase 4 commit |
+| `785a37c` | The arena, live and sealed by design (027) |
