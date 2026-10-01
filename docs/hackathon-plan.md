@@ -8,6 +8,54 @@ then check `git log main..feat/hackathon-db` for anything newer.
 - **Status (2026-09-30):** Phases 1–5 are built, checked on staging, and approved by the owner
   (Phase 5: "looks good"). Next is the owner's next prompt.
 
+### Start here (handoff, 2026-09-30)
+**Where things stand**
+- **Migrations:** 018–027 are on staging. Production has none of them (it's at 017).
+- **Tests:** 436 database tests pass locally and on staging (`scripts/db.sh local`,
+  `scripts/db.sh staging:test`).
+- **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
+
+**The working loop:** for each prompt, plan (files, migrations, policies) → wait for the owner's
+OK → build → test on staging → give exact test steps. Ask before every staging migration, saying
+which project is the target.
+
+**How to resume**
+1. Start the app against staging with the Browser pane's `quorum-dev-staging` config
+   (http://localhost:3100). The desktop app stops it after about an hour, sometimes between turns.
+   Check `preview_list` before assuming a sign-in failed.
+2. The owner signs in themselves; never type a password.
+   - Test admin: `admin-test@quorum.test`.
+   - Spectator: `spectator-test@quorum.test`.
+   - Both passwords are in `.env.staging-admin.local`.
+3. Test data:
+   - `node scripts/seed-staging-sprints.mjs` puts Sprints #3–#11 back in one state each; #11 is
+     also the team matcher demo.
+   - `node scripts/simulate-sprint-activity.mjs` makes the arena's pulses move.
+
+**What Phases 3–5 added, at a glance** (details in sections 5b–5d)
+
+| Phase | Database | Main files |
+|---|---|---|
+| 3 · Hackathon tab | 024 `hackathon_registrants()` | `app/(app)/hackathon/` (index, `[number]`, `archive`, `[number]/team`, `[number]/lobby`); `components/hackathon/SprintSections.tsx`, `SprintCountdown.tsx`, `SprintAutoRefresh.tsx`, `LocalTime.tsx`, `RevealGallery.tsx`, `RoomPlaceholder.tsx`; `components/countdown/Countdown.tsx`; `lib/hackathons/sprint.ts`, `page.ts`, `nav.ts`, `viewer.ts`; `app/api/hackathons/[number]/timing`; `lib/useServerNow.ts` (monotonic clock) |
+| 4 · Registration and teams | 025 `hackathon_team_invite_codes`, `hackathon_team_invitations`, `private.join_team`, counts, check-in, renaming; 026 `hackathons.matched_at` / `match_report`, `hackathon_run_matcher()` | `components/hackathon/JoinQueue.tsx`, `JoinQueueClient.tsx`, `TeamPanel.tsx`, `MemberSearch.tsx`, `TeamStyle.tsx`, `CheckIn.tsx`, `QueueLive.tsx`, `JoinByLink.tsx`; `app/(app)/hackathon/[number]/join/[code]`; `lib/hackathons/actions.ts`, `matcher.ts`, `skills.ts`; `app/api/cron/hackathon-matcher` (not scheduled: Hobby); admin `SprintControls.tsx` (matcher), `Participants.tsx` (check-in) |
+| 5 · Arena | 027 `hackathon_team_pulse` (+ triggers, realtime), `hackathon_arena_cohorts()` | `components/hackathon/Arena.tsx`, `arena.module.css`; `realtimeDb()` in `lib/hackathons/actions.ts`; `CountdownStrip.tsx` (row cap); `scripts/simulate-sprint-activity.mjs`; `db.sh staging:seed-spectator` |
+
+**Waiting on the owner**
+- Paste 018–027 into production before any deploy that needs them.
+- The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
+- Whether to push, and when.
+- The next prompt (team room and lobby, submissions, judging, reveal gallery, notifications).
+
+**Staging test data, as left on 2026-09-30**
+- Sprint #4 (registration): the test admin is on Rockets, and Test Crew has Sam plus a pending
+  invite to Priya.
+- Sprint #6 (live): Comets has a "simulated activity" submission. Several Sprints have
+  "simulated activity" room messages.
+- Sprint #11 has been matched.
+- Re-running the seed resets the times, and the flip Sprint's teams; it doesn't remove extra
+  teams or messages.
+- The pane was last signed in as the spectator.
+
 ---
 
 ## 1. The brief (Prompt 0)
@@ -710,10 +758,10 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 026** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 027** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
-      and the Hackathon tab don't (the "who's registered" list is just empty without 024).
-- [ ] Paste **027** after 026 as well.
+      and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, and
+      without 027 the arena has no pulse or cohorts.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
       to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
