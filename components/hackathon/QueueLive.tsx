@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { sprintDb } from "@/lib/hackathons/actions";
+import { realtimeDb } from "@/lib/hackathons/actions";
 
 // Keeps the join queue live while registration is open: any change to this
 // Sprint's teams, memberships, registrations, requests or invitations that
@@ -22,27 +22,34 @@ export default function QueueLive({ sprintId }: { sprintId: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    const db = sprintDb();
+    let stopped = false;
+    let removeChannel = () => {};
     let timer: ReturnType<typeof setTimeout> | null = null;
     const refresh = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => router.refresh(), 1000);
     };
 
-    let channel = db.channel(`sprint-queue-${sprintId}`);
-    for (const table of TABLES) {
-      channel = channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `hackathon_id=eq.${sprintId}` }, refresh);
-    }
-    channel.subscribe();
+    (async () => {
+      const db = await realtimeDb();
+      if (stopped) return;
+      let channel = db.channel(`sprint-queue-${sprintId}`);
+      for (const table of TABLES) {
+        channel = channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `hackathon_id=eq.${sprintId}` }, refresh);
+      }
+      channel.subscribe();
+      removeChannel = () => db.removeChannel(channel);
+    })();
 
     const slow = setInterval(() => {
       if (document.visibilityState === "visible") router.refresh();
     }, 45_000);
 
     return () => {
+      stopped = true;
       if (timer) clearTimeout(timer);
       clearInterval(slow);
-      db.removeChannel(channel);
+      removeChannel();
     };
   }, [sprintId, router]);
 

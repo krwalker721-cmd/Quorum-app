@@ -14,6 +14,11 @@
 #                                  code) for checking the admin console locally. The
 #                                  credentials go to .env.staging-admin.local
 #                                  (gitignored), never to the terminal.
+#   scripts/db.sh staging:seed-spectator
+#                                  Create a STAGING-only ordinary member who isn't in
+#                                  any Sprint (not an admin), for checking what
+#                                  spectators can see. Credentials are appended to
+#                                  .env.staging-admin.local, never to the terminal.
 #
 # Staging credentials live in .env.staging.local (gitignored), never .env.local:
 #   NEXT_PUBLIC_SUPABASE_URL=https://<staging-ref>.supabase.co
@@ -130,6 +135,28 @@ case "${1:-}" in
       "$STAGING_REF" "$EMAIL" "$PASS" "$CODE" > "$OUT"
     echo "Created a staging test admin ($EMAIL) on project $STAGING_REF; credentials are in .env.staging-admin.local."
     ;;
+  staging:seed-spectator)
+    staging_url
+    OUT="$ROOT/.env.staging-admin.local"
+    if [ -n "$(env_value "$OUT" STAGING_SPECTATOR_EMAIL)" ]; then
+      echo "A staging spectator already exists (credentials in .env.staging-admin.local)."
+      exit 0
+    fi
+    SERVICE="$(env_value "$ROOT/.env.staging.local" SUPABASE_SERVICE_ROLE_KEY)"
+    [ -n "$SERVICE" ] || { echo "SUPABASE_SERVICE_ROLE_KEY is missing in .env.staging.local" >&2; exit 1; }
+    EMAIL="spectator-test@quorum.test"
+    PASS="$(openssl rand -hex 16)"
+    status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$STAGING_API_URL/auth/v1/admin/users" \
+      -H "apikey: $SERVICE" -H "Authorization: Bearer $SERVICE" -H "Content-Type: application/json" \
+      -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"email_confirm\":true,\"user_metadata\":{\"full_name\":\"Spectator Test\"}}")
+    [ "$status" = "200" ] || { echo "Creating the staging spectator account failed (HTTP $status)." >&2; exit 1; }
+    "$PSQL" "$STAGING_DB_URL" -X -q -v ON_ERROR_STOP=1 \
+      -c "update public.profiles set status = 'approved', is_admin = false, trial_ends_at = now() + interval '365 days' where email = '$EMAIL'"
+    umask 077
+    printf '# STAGING-only spectator (project %s): an ordinary member in no Sprint.\nSTAGING_SPECTATOR_EMAIL=%s\nSTAGING_SPECTATOR_PASSWORD=%s\n' \
+      "$STAGING_REF" "$EMAIL" "$PASS" >> "$OUT"
+    echo "Created a staging spectator ($EMAIL) on project $STAGING_REF; credentials are in .env.staging-admin.local."
+    ;;
   staging:migrate)
     shift
     staging_url
@@ -146,7 +173,7 @@ case "${1:-}" in
     run_tests "$STAGING_DB_URL"
     ;;
   *)
-    sed -n '2,16p' "$0"
+    sed -n '2,21p' "$0"
     exit 1
     ;;
 esac

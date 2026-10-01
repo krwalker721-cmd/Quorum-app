@@ -112,6 +112,8 @@ function MainColumn({ data }: { data: SprintPageData }) {
   const { sprint, viewer, teams, registrants, awards, queue } = data;
   const myTeam = viewer.teamId;
   const mine = myTeam ? teams.find((t) => t.id === myTeam) : undefined;
+  // The pulse is live while teams can still be busy.
+  const pulseLive = ["teams_locked", "live", "judging"].includes(sprint.state);
   const teamPanel =
     mine && queue?.team ? (
       <TeamPanel
@@ -123,7 +125,7 @@ function MainColumn({ data }: { data: SprintPageData }) {
     ) : null;
 
   if (sprint.state === "cancelled") {
-    return teams.length > 0 ? <Arena teams={teams} phase={sprint.phase} myTeamId={myTeam} title="Teams" /> : null;
+    return teams.length > 0 ? <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase={sprint.phase} myTeamId={myTeam} title="Teams" /> : null;
   }
 
   switch (sprint.phase) {
@@ -141,14 +143,14 @@ function MainColumn({ data }: { data: SprintPageData }) {
           <JoinQueue sprint={sprint} viewer={viewer} teams={teams} queue={queue} />
           {teamPanel}
           {registrants && <RegistrantsTile registrants={registrants} />}
-          <Arena teams={teams} phase="registration" myTeamId={myTeam} title="Teams so far" />
+          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="registration" myTeamId={myTeam} title="Teams so far" />
         </>
       );
     case "teams_locked":
       return (
         <>
           {teamPanel}
-          <Arena teams={teams} phase="teams_locked" myTeamId={myTeam} title="Final teams" />
+          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="teams_locked" myTeamId={myTeam} title="Final teams" />
           <ThemeTile sprint={sprint} />
         </>
       );
@@ -157,14 +159,14 @@ function MainColumn({ data }: { data: SprintPageData }) {
         <>
           <ThemeTile sprint={sprint} />
           {teamPanel}
-          <Arena teams={teams} phase="live" myTeamId={myTeam} />
+          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="live" myTeamId={myTeam} />
         </>
       );
     case "judging":
       return (
         <>
           <ThemeTile sprint={sprint} />
-          <Arena teams={teams} phase="judging" myTeamId={myTeam} />
+          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="judging" myTeamId={myTeam} />
         </>
       );
     case "revealed":
@@ -173,7 +175,7 @@ function MainColumn({ data }: { data: SprintPageData }) {
           <Awards awards={awards} />
           <GallerySlot />
           <ThemeTile sprint={sprint} />
-          <Arena teams={teams} phase="revealed" myTeamId={myTeam} title="Teams" />
+          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="revealed" myTeamId={myTeam} title="Teams" />
         </>
       );
   }

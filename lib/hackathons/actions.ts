@@ -12,6 +12,21 @@ type Result = { error: { message: string } | null };
 
 export const sprintDb = () => createClient();
 
+/**
+ * The browser client with its realtime connection signed in as the member.
+ * Without this the socket can join before the session is loaded from the
+ * cookies and stay anonymous, and then RLS quietly filters out every event
+ * (checked on staging, 2026-09-29). Call before subscribing.
+ */
+export async function realtimeDb() {
+  const db = createClient();
+  const {
+    data: { session },
+  } = await db.auth.getSession();
+  if (session) await db.realtime.setAuth(session.access_token);
+  return db;
+}
+
 /** Register, or come back after withdrawing (registration must be open). */
 export async function register(hackathonId: string, userId: string, mode: "random" | "team"): Promise<Result> {
   const db = sprintDb();

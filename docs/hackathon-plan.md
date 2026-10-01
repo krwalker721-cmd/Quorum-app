@@ -5,8 +5,8 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
-- **Status (2026-09-29):** Phases 1–4 are built, checked on staging, and approved by the owner
-  (Phases 3 and 4: "looks good for now"). Next is Prompt 5 (the arena).
+- **Status (2026-09-30):** Phases 1–5 are built, checked on staging, and approved by the owner
+  (Phase 5: "looks good"). Next is the owner's next prompt.
 
 ---
 
@@ -122,7 +122,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–026** |
+| Migrations applied | up to **017** | **018–027** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -140,9 +140,14 @@ Tools, all in the repo:
 - `scripts/db.sh local`: a fresh local Postgres 16 (`brew install postgresql@16`) with a Supabase
   stand-in (`supabase/tests/local/supabase_shim.sql`), `schema.sql`, every migration, then the
   tests.
-- `scripts/db.sh staging:target | staging:migrate FILE… | staging:test | staging:seed-admin`:
+- `scripts/db.sh staging:target | staging:migrate FILE… | staging:test | staging:seed-admin | staging:seed-spectator`:
   - All of them refuse any setting that points at production.
   - `seed-admin` writes the test admin's credentials to `.env.staging-admin.local` (gitignored).
+  - `seed-spectator` (Phase 5) adds `spectator-test@quorum.test`, an ordinary active member in no
+    Sprint, for checking what spectators see. Its credentials go to the same file.
+- `node scripts/simulate-sprint-activity.mjs [minutes] [seconds] [--submit]` (Phase 5): test members
+  post in the live test Sprint's team rooms (#6), so the arena's pulse moves. Every message starts
+  with "simulated activity" so a network check can search for it. Refuses production.
 - `node scripts/dev-staging.mjs`: the app on http://localhost:3100 against staging.
   - It refuses production and builds into `.next-staging`.
   - The Browser pane's config is `quorum-dev-staging`.
@@ -167,8 +172,12 @@ Signing in on staging:
   - The owner signs in to the Browser pane themselves. Claude doesn't type the password: sign-in
     goes to Supabase, not a local server. To show it in your own terminal:
     `grep STAGING_ADMIN_PASSWORD .env.staging-admin.local`.
-  - The desktop app stops the preview server after about an hour. Restart it with the
-    `quorum-dev-staging` launch config; the sign-in survives.
+  - The desktop app stops the preview server after about an hour (and sometimes between turns).
+    Restart it with the `quorum-dev-staging` launch config; the sign-in survives. A sign-in
+    attempted while the server is down doesn't take.
+  - **Spectator:** `spectator-test@quorum.test`, password via
+    `grep STAGING_SPECTATOR_PASSWORD .env.staging-admin.local`. A new account gets the guided tour,
+    which keeps navigating away. Press "Skip tour" first.
 
 ---
 
@@ -257,7 +266,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-09-29, Phase 4):** all 419 tests pass locally and on staging.
+- **Last run (2026-09-30, Phase 5):** all 436 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -570,6 +579,80 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 
 ---
 
+## 5d. Phase 5: the arena (migration 027)
+
+### Database: `027_hackathon_arena_pulse.sql`
+- **`hackathon_team_pulse`:** one row per team: `team_id, hackathon_id, activity_count,
+  last_active_at, has_submitted, submitted_at, updated_at`. **Nothing else, by design:** a test
+  pins the exact column list.
+  - Readable by the arena's audience (`can_view_arena`); nobody writes it directly.
+  - It's in realtime, so this is what spectators' live updates are made of.
+  - A new team gets a quiet row (trigger on `hackathon_teams`); existing teams were filled in from
+    their rooms.
+  - Triggers keep it current:
+    - Team messages (inserts, not system lines; edits and deletions don't count), docs (created
+      or edited), links, votes and ballots each add 1 and set last active.
+    - Submissions set "submitted" (and when).
+- **`hackathon_arena_cohorts(id)`:** each team member → cohort name, for the arena's audience
+  only. Cohort rosters stay private; cohort names were already readable by members.
+- **Tests:** 17 new, and 3 deliberate breaks caught (the pulse readable by anyone, cohorts for
+  anyone, system lines counting). The pulse table's place in realtime is a test too.
+
+### Realtime: why the pulse table, and a bug found on the way
+- **Why a table:** realtime sends whole rows, so subscribing to the room tables would put message
+  text on a spectator's connection the moment a rule slipped. The pulse table has no text to leak.
+- **Rejected:** polling `get_team_activity` every 30 s, because the pulse would lag up to 30 s.
+- **The bug:** the browser's realtime socket joined **before the session loaded and stayed
+  anonymous**, so RLS silently dropped every event. The channel still reported SUBSCRIBED.
+  - **Fix:** `realtimeDb()` in `lib/hackathons/actions.ts` calls `realtime.setAuth(access_token)`
+    before subscribing. The arena and the join queue's `QueueLive` use it.
+  - Phase 4's "a request appeared within a second" was probably the 45 s refresh landing by
+    coincidence.
+  - The same pattern is used by 10 non-Hackathon components (messages, cohort chat,
+    notifications, Collab room…). Flagged as a separate task; not changed here (Collab must stay
+    identical without approval).
+
+### App
+- **`components/hackathon/Arena.tsx`** (client) and `arena.module.css`:
+  - **Summary strip:** teams · builders · cohorts represented · "N of M teams submitted" (from
+    kickoff; before that, open spots).
+  - **Team cards:**
+    - A large emblem in the team colour, the name, builder count and "matched".
+    - Overlapping avatars (name and cohort on hover), first names underneath, cohort chips.
+    - A wax-seal "Sealed" badge until the reveal.
+    - Heat bars (hot < 5 min, warm < 30, quiet < 2 h, idle), "active X min ago", "Submitted ✓".
+  - **Never on a card:** project name or anything from a room.
+  - **Your team:** first, amber-edged, "Your team" + "Go to my team room →".
+  - **Order:** the rest sorted by most recently active.
+- **Motion:** a ripple when a team's pulse arrives, and a slow breathing ring while it's hot.
+  Quiet teams are still; `prefers-reduced-motion` turns it all off.
+- **Live data:** the arena subscribes to its Sprint's pulse rows while teams_locked, live or
+  judging. There's a 60 s re-read as a backup, "X min ago" re-labels every 30 s on the server
+  clock, and a team it hasn't drawn yet triggers a page refresh.
+- **Layout:** stacks to one column under 640 px, and the stats go 2×2.
+- **Mobile fixes along the way:**
+  - The in-app countdown bar now shows the soonest one on phones and three elsewhere, with "+N
+    more". The app's header rows are fixed and only the page scrolls, so every bar row was
+    taking room from the arena.
+  - The live countdown stays on one line on phones.
+
+### Checked on staging (2026-09-30), signed in as the spectator
+- **Pulses:** while the simulator posted every 5 s, the arena rippled 7 times in 35 s, without a
+  reload.
+- **Pages:** `/hackathon/5`, `/6`, `/7` (HTML and the app's data format) contain none of the
+  sealed strings (room text, the live Sprint's submission, the judging Sprint's projects). The team
+  room and lobby send the spectator back to the Sprint page.
+- **Direct reads with the spectator's own client:** 0 rows from team messages, docs, links, votes,
+  ballots, scores, invite codes, invitations and join requests. Submissions returned only the 2
+  from the **revealed** Sprint #8, which are public by design.
+- **Realtime:** while messages and a live submission were being written, the spectator's
+  connection received **5 pulse events** (only the 7 pulse fields) and **0 message or submission
+  events**.
+- Checked as the admin too: none of the sealed strings are in the pages, even though admins may
+  read the rooms. The arena simply never asks for them.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -616,6 +699,11 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 | 40 | An invite code is itself the invitation: it works even if the team is closed to requests. | The owner chose to share it. |
 | 41 | A single leftover with nowhere to go is flagged for an admin, not added to a closed team. | Respects teams that chose to be invite-only. |
 | 42 | Past the deadline, the matcher records "skipped" and matches nobody. | Matching then is pointless, and it stops the matcher running again and again for that Sprint. |
+| 43 | Arena live updates come over realtime from a pulse table of counts and times, not the room tables, and not polling. | Sealed by construction, and the pulse reacts at once. Owner OK'd. |
+| 44 | Arena cards show each member's cohort name, from a function limited to the arena's audience and to people on teams. | The brief asks for cohorts; rosters stay private. Owner chose names over anonymous labels. |
+| 45 | Motion only on activity (a ripple, a glow while hot), none when quiet or with reduced motion. | Reconciles "static finish" with the brief's animated pulse. Owner OK'd. |
+| 46 | Realtime subscriptions set the member's token explicitly first (`realtimeDb`). | Without it the socket stayed anonymous and RLS dropped every event. |
+| 47 | The in-app countdown bar shows 1 row on phones and 3 elsewhere, with "+N more". | The app's header rows are fixed, so every row shrank the page; it hurt the arena on phones. |
 
 ---
 
@@ -625,13 +713,13 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 - [ ] Paste migrations **018 → 026** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't (the "who's registered" list is just empty without 024).
+- [ ] Paste **027** after 026 as well.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
       to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- **Prompt 5:** the arena (replace `components/hackathon/Arena.tsx`).
 - Team room and lobby: replace the placeholders at `/hackathon/[n]/team` and `/lobby` (keep their
   access checks). Submission form, judging, public project pages.
 - **Prompt 10:** the reveal gallery (replace `GallerySlot` in `components/hackathon/RevealGallery.tsx`).
@@ -641,9 +729,11 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 **Known gaps and ideas, not yet built:**
 - The Collab room tabs need the "room adapter" refactor (with approval) before the Hackathon room
   can reuse them.
-- The in-app countdown bar lists every enabled countdown. With many at once (staging has nine test
-  Sprints) it pushes the page down, especially on phones. Consider capping it (e.g. the soonest two
-  plus "+N more"); not needed while there are only one or two Sprints.
+- **Realtime elsewhere in the app** (lead, flagged as a separate task): 10 non-Hackathon components
+  subscribe without setting the member's token, and may be missing live updates for RLS tables.
+  The Collab ones need the owner's approval to change.
+- Staging's cohorts are auto-named (e.g. "cohort_1790441332626"), so cohort chips look raw there;
+  real cohort names will read better.
 - Invited judges see a note on the Sprint page but can't accept yet (`hackathon_accept_judge_invite`
   exists; the button comes with the judging tools).
 - Resuming a paused Sprint doesn't bring the nav's LIVE label back until the next page load
@@ -697,3 +787,4 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `2feb8bd` | The Hackathon tab: Sprint page by state, shared countdown, LIVE in the nav (024) |
 | `6ce6407` | Phase 3 approved; record its commit |
 | `47cdf9d` | Registration and teams, the team matcher, kickoff check-in (025–026) |
+| `8287dcb` | Record the Phase 4 commit |

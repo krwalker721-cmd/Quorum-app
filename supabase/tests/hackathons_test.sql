@@ -9,7 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
---   Needs migrations 018-026.
+--   Needs migrations 018-027.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -1378,6 +1378,71 @@ select tests.as_db();
 select tests.ok('matcher: ...and matched nobody',
   tests.count($$ select 1 from hackathon_teams where hackathon_id = tests.h7() $$) = 0
   and (select matched_at is not null from public.hackathons where id = tests.h7()));
+
+
+
+-- ============================================================================
+-- Phase 5 (027): the arena's pulse and members' cohorts
+-- ============================================================================
+select tests.as_db();
+create function tests.pulse(p_team uuid) returns public.hackathon_team_pulse
+language sql stable security definer set search_path = public as $$
+  select * from public.hackathon_team_pulse where team_id = p_team
+$$;
+create function tests.team5(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h5()
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+select tests.eq('pulse: nothing in it but counts and times', (
+  select string_agg(column_name, ',' order by ordinal_position) from information_schema.columns
+  where table_schema = 'public' and table_name = 'hackathon_team_pulse'),
+  'team_id,hackathon_id,activity_count,last_active_at,has_submitted,submitted_at,updated_at');
+select tests.ok('pulse: in realtime, like the join queue''s tables', (
+  select count(*) = 2 from pg_publication_tables
+  where pubname = 'supabase_realtime' and schemaname = 'public'
+    and tablename in ('hackathon_team_pulse', 'hackathon_team_join_requests')));
+select tests.ok('pulse: every team has one', not exists (
+  select 1 from public.hackathon_teams t where not exists (select 1 from public.hackathon_team_pulse p where p.team_id = t.id)));
+select tests.ok('pulse: a new team starts quiet',
+  (select activity_count = 0 and last_active_at is null and not has_submitted from tests.pulse(tests.team5('Open Door'))));
+
+select tests.login('oscar');
+select tests.eq('pulse: the arena''s audience reads it', tests.count($$ select 1 from hackathon_team_pulse where hackathon_id = tests.h5() $$)::text, '4');
+select tests.throws('pulse: nobody writes it directly', $$ update hackathon_team_pulse set activity_count = 999 $$, 'permission denied');
+select tests.throws('pulse: ...or adds to it', $$ insert into hackathon_team_pulse (team_id, hackathon_id) values (gen_random_uuid(), tests.h5()) $$, 'permission denied');
+select tests.login('erin');
+select tests.eq('pulse: a lapsed non-participant gets nothing', tests.count($$ select 1 from hackathon_team_pulse $$)::text, '0');
+select tests.anon();
+select tests.throws('pulse: signed out gets nothing', $$ select * from hackathon_team_pulse $$, 'permission denied');
+
+select tests.as_db();
+create temp table pulse_before as select * from public.hackathon_team_pulse where team_id = tests.team5('Open Door');
+insert into public.hackathon_team_messages (team_id, user_id, body, created_at)
+values (tests.team5('Open Door'), tests.m(9), 'secret plan', now() + interval '1 minute');
+select tests.ok('pulse: a message moves it',
+  (select p.activity_count = b.activity_count + 1 and p.last_active_at = now() + interval '1 minute'
+   from tests.pulse(tests.team5('Open Door')) p, pulse_before b));
+insert into public.hackathon_team_messages (team_id, user_id, body, is_system)
+values (tests.team5('Open Door'), null, 'Carol added a doc', true);
+update public.hackathon_team_messages set deleted_at = now() where team_id = tests.team5('Open Door') and body = 'secret plan';
+select tests.eq('pulse: system lines and deletions don''t',
+  (select activity_count - (select activity_count from pulse_before) from tests.pulse(tests.team5('Open Door')))::text, '1');
+insert into public.hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team5('Open Door'), tests.h5(), 'Secret project');
+select tests.ok('pulse: a submission marks it submitted (and nothing more)',
+  (select has_submitted and submitted_at is not null from tests.pulse(tests.team5('Open Door'))));
+
+-- Members' cohorts: Sprint 5's teams are all in cohorts.
+select tests.login('oscar');
+select tests.eq('cohorts: the arena''s audience sees each team member''s cohort',
+  tests.count($$ select 1 from hackathon_arena_cohorts(tests.h5()) $$)::text, '10');
+select tests.ok('cohorts: ...by name', (select bool_and(cohort_name like 'Cohort %') from hackathon_arena_cohorts(tests.h5())));
+select tests.eq('cohorts: ...and still not the cohort rosters', tests.count($$ select 1 from cohort_members where user_id = tests.m(1) $$)::text, '0');
+select tests.login('erin');
+select tests.eq('cohorts: nothing for a lapsed non-participant', tests.count($$ select 1 from hackathon_arena_cohorts(tests.h5()) $$)::text, '0');
+select tests.anon();
+select tests.throws('cohorts: signed out can''t call it', $$ select * from hackathon_arena_cohorts(tests.h5()) $$, 'permission denied');
 
 
 select tests.finish();

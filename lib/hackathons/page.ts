@@ -29,6 +29,15 @@ export type Viewer = {
 
 export type ArenaPerson = { id: string; full_name: string | null; username: string | null; stage: string | null };
 
+/** A team's pulse (migration 027): counts and times only, never content. */
+export type TeamPulse = {
+  team_id: string;
+  activity_count: number;
+  last_active_at: string | null;
+  has_submitted: boolean;
+  submitted_at: string | null;
+};
+
 export type ArenaTeam = {
   id: string;
   name: string;
@@ -39,8 +48,8 @@ export type ArenaTeam = {
   is_open_to_requests: boolean;
   /** The team's size limit: its own override, or the Sprint's. */
   max_size: number;
-  members: (ArenaPerson & { role: "owner" | "member" })[];
-  activity: { message_count: number; doc_count: number; link_count: number; last_active_at: string | null; has_submitted: boolean } | null;
+  members: (ArenaPerson & { role: "owner" | "member"; cohort: string | null })[];
+  pulse: TeamPulse | null;
 };
 
 export type Registrant = ArenaPerson & { registered_at: string };
@@ -150,23 +159,29 @@ async function loadPeople(db: SupabaseClient, ids: string[]): Promise<Map<string
 const personOr = (people: Map<string, ArenaPerson>, id: string): ArenaPerson =>
   people.get(id) ?? { id, full_name: null, username: null, stage: null };
 
+// What the arena reads: names, rosters, cohort names, and the pulse. Nothing
+// from a team's room or submission (sealed, and not asked for here either).
 async function loadTeams(db: SupabaseClient, sprint: SprintRow, withActivity: boolean): Promise<ArenaTeam[]> {
-  const [teams, members, activity] = await Promise.all([
+  const [teams, members, pulses, cohorts] = await Promise.all([
     db
       .from("hackathon_teams")
       .select("id, name, slug, emblem, color, is_random_matched, is_open_to_requests, max_size_override, created_at")
       .eq("hackathon_id", sprint.id)
       .order("created_at"),
     db.from("hackathon_team_members").select("team_id, user_id, role, joined_at").eq("hackathon_id", sprint.id),
-    withActivity ? db.rpc("get_team_activity", { p_hackathon_id: sprint.id }) : Promise.resolve({ data: null }),
+    withActivity
+      ? db.from("hackathon_team_pulse").select("team_id, activity_count, last_active_at, has_submitted, submitted_at").eq("hackathon_id", sprint.id)
+      : Promise.resolve({ data: null }),
+    db.rpc("hackathon_arena_cohorts", { p_hackathon_id: sprint.id }),
   ]);
   if (!teams.data || teams.data.length === 0) return [];
 
   const people = await loadPeople(db, (members.data ?? []).map((m) => m.user_id as string));
-  const pulse = new Map<string, ArenaTeam["activity"]>();
-  for (const a of (activity.data as (NonNullable<ArenaTeam["activity"]> & { team_id: string })[] | null) ?? []) {
-    pulse.set(a.team_id, a);
-  }
+  const pulse = new Map(((pulses.data as TeamPulse[] | null) ?? []).map((p) => [p.team_id, p]));
+  // Migration 027. Until it's applied, cohorts are simply left off.
+  const cohortOf = new Map(
+    ((cohorts.error ? [] : cohorts.data) as { user_id: string; cohort_name: string }[] | null ?? []).map((c) => [c.user_id, c.cohort_name]),
+  );
 
   return teams.data.map((t) => ({
     id: t.id as string,
@@ -180,8 +195,12 @@ async function loadTeams(db: SupabaseClient, sprint: SprintRow, withActivity: bo
     members: (members.data ?? [])
       .filter((m) => m.team_id === t.id)
       .sort((a, b) => (a.role === "owner" ? -1 : b.role === "owner" ? 1 : String(a.joined_at).localeCompare(String(b.joined_at))))
-      .map((m) => ({ ...personOr(people, m.user_id as string), role: m.role as "owner" | "member" })),
-    activity: pulse.get(t.id as string) ?? null,
+      .map((m) => ({
+        ...personOr(people, m.user_id as string),
+        role: m.role as "owner" | "member",
+        cohort: cohortOf.get(m.user_id as string) ?? null,
+      })),
+    pulse: pulse.get(t.id as string) ?? null,
   }));
 }
 
@@ -333,7 +352,7 @@ export async function loadSprintPage(
 ): Promise<SprintPageData> {
   const phase = sprint.phase;
   const showsTeams = ["registration", "teams_locked", "live", "judging", "revealed"].includes(phase);
-  const showsActivity = ["live", "judging", "revealed"].includes(phase);
+  const showsActivity = ["teams_locked", "live", "judging", "revealed"].includes(phase);
   const showsQueue = sprint.state !== "cancelled" && ["registration", "teams_locked", "live"].includes(phase);
 
   const [viewer, teams, registrants, awards] = await Promise.all([

@@ -1,0 +1,275 @@
+/* The arena (Prompt 5). Built to be screenshotted during a live Sprint.
+   Motion only means something happened: a ripple when a team is active and
+   a soft glow while it's hot. A quiet arena is still. Reduced motion turns
+   the animation off entirely. */
+
+/* ── Summary strip */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.stat {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%),
+    var(--bg-surface);
+}
+.statValue {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.statValueAmber {
+  color: #f8c56a;
+}
+.statLabel {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+/* ── Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  --team: #f59e0b;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--team) 16%, transparent), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 50%),
+    var(--bg-surface);
+  overflow: hidden;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--team), transparent);
+  opacity: 0.55;
+}
+.mine {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 18px 50px -30px rgba(245, 158, 11, 0.7);
+}
+.hot {
+  border-color: color-mix(in srgb, var(--team) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--team) 25%, transparent), 0 18px 48px -26px var(--team);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.emblemWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.emblem {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  font-size: 24px;
+  color: var(--team);
+  background: color-mix(in srgb, var(--team) 14%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--team) 45%, transparent);
+}
+/* The ripple: one ring when a pulse arrives, a slow breathing ring while hot. */
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 2px solid var(--team);
+  opacity: 0;
+  pointer-events: none;
+}
+.hot .ring {
+  animation: breathe 2.8s ease-in-out infinite;
+}
+.rippling .ring {
+  animation: ripple 1.4s cubic-bezier(0.2, 0.7, 0.3, 1) 2;
+}
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.45;
+  }
+}
+
+.name {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.sub {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Members: overlapping avatars; names below (and on hover). */
+.avatars {
+  display: flex;
+  align-items: center;
+}
+.avatars > * + * {
+  margin-left: -8px;
+}
+.avatar {
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px var(--bg-surface);
+}
+.names {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.cohorts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.cohort {
+  font-size: 10.5px;
+  line-height: 1.7;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Footer: the seal, the heat, the time */
+.foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.sealMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  color: #1a1206;
+  background: radial-gradient(circle at 35% 30%, #fcd98a, #d97706 70%, #92400e);
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.heat {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+.bar {
+  width: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.barOn {
+  background: var(--team);
+}
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.submitted {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.7;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.08);
+  white-space: nowrap;
+}
+
+.mineBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -4px 0 0;
+}
+
+@media (max-width: 639px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hot .ring,
+  .rippling .ring {
+    animation: none;
+  }
+}
