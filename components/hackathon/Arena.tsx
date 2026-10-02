@@ -223,7 +223,7 @@ export default function Arena({
                 <div className={s.mineBar}>
                   <span className={`${ui.chip} ${ui.chipAmber}`}>Your team</span>
                   {phase !== "registration" && (
-                    <Link href={`/hackathon/${sprintNumber}/team`} className={ui.softBtn}>
+                    <Link href={`/hackathon/${sprintNumber}/team/${t.slug}`} className={ui.softBtn}>
                       Go to my team room →
                     </Link>
                   )}

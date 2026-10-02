@@ -199,7 +199,7 @@ function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }
         />
       )}
       {tab === "participants" && <Participants sprintId={id} participants={detail.participants} startsAt={detail.sprint.starts_at} onChanged={load} />}
-      {tab === "teams" && <Teams sprintId={id} teams={detail.teams} participants={detail.participants} onChanged={load} />}
+      {tab === "teams" && <Teams sprintId={id} sprintNumber={s.number} teams={detail.teams} participants={detail.participants} onChanged={load} />}
       {tab === "judges" && <Judges sprintId={id} judges={detail.judges} onChanged={load} />}
       {tab === "lobby" && <Lobby sprintId={id} messages={detail.lobby} onChanged={load} />}
       {tab === "log" && <ChangeLog entries={detail.log} />}

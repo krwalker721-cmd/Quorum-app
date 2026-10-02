@@ -1444,5 +1444,188 @@ select tests.eq('cohorts: nothing for a lapsed non-participant', tests.count($$ 
 select tests.anon();
 select tests.throws('cohorts: signed out can''t call it', $$ select * from hackathon_arena_cohorts(tests.h5()) $$, 'permission denied');
 
+-- ============================================================================
+-- Phase 6 (028): the team room's member activity, seen and asleep
+-- ============================================================================
+select tests.as_db();
+create function tests.h8() returns uuid language sql immutable as $$ select 'c8000000-0000-0000-0000-000000000008'::uuid $$;
+create function tests.team8(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h8()
+$$;
+create function tests.activity(p_team text, i integer) returns public.hackathon_team_member_activity
+language sql stable security definer set search_path = public as $$
+  select * from public.hackathon_team_member_activity where team_id = tests.team8(p_team) and user_id = tests.m(i)
+$$;
+-- Members 11–13 have no name in tests.u(), so they sign in by id.
+create function tests.login_m(i integer) returns void language plpgsql as $$
+begin
+  perform set_config('role', 'none', true);
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', tests.m(i), 'role', 'authenticated')::text, true);
+end $$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+-- Sprint 8, live: Night Shift (m11 owns, m12) and Day Shift (m13).
+insert into public.hackathons (id, slug, title, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h8(), 'test-room', 'Room Sprint', true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h8(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h8(), tests.m(i), 'team' from generate_series(11, 13) i;
+select hackathon_admin_create_team(tests.h8(), 'Night Shift', array[tests.m(11), tests.m(12)]);
+select hackathon_admin_create_team(tests.h8(), 'Day Shift', array[tests.m(13)]);
+select tests.set_phase(tests.h8(), 'live');
+
+select tests.eq('room activity: every team member gets a row',
+  (select count(*) from public.hackathon_team_member_activity where hackathon_id = tests.h8())::text, '3');
+select tests.ok('room activity: in realtime', exists (
+  select 1 from pg_publication_tables where pubname = 'supabase_realtime'
+    and schemaname = 'public' and tablename = 'hackathon_team_member_activity'));
+select tests.ok('room activity: a new row starts quiet',
+  (select last_active_at is null and last_seen_at is null and sleeping_until is null from tests.activity('Night Shift', 11)));
+
+-- Who reads it: the team and admins only.
+select tests.login_m(11);
+select tests.eq('room activity: a member reads their own team''s rows',
+  tests.count($$ select 1 from hackathon_team_member_activity where hackathon_id = tests.h8() $$)::text, '2');
+select tests.throws('room activity: nobody writes it directly',
+  $$ update hackathon_team_member_activity set last_active_at = now() $$, 'permission denied');
+select tests.throws('room activity: ...or adds to it',
+  $$ insert into hackathon_team_member_activity (team_id, user_id, hackathon_id) values (tests.team8('Night Shift'), tests.m(11), tests.h8()) $$, 'permission denied');
+select tests.login_m(13);
+select tests.eq('room activity: another team in the same Sprint sees none of it',
+  tests.count($$ select 1 from hackathon_team_member_activity where team_id = tests.team8('Night Shift') $$)::text, '0');
+select tests.login('oscar');
+select tests.eq('room activity: a spectator sees none of it',
+  tests.count($$ select 1 from hackathon_team_member_activity where hackathon_id = tests.h8() $$)::text, '0');
+select tests.login('admin');
+select tests.eq('room activity: an admin sees it all',
+  tests.count($$ select 1 from hackathon_team_member_activity where hackathon_id = tests.h8() $$)::text, '3');
+select tests.anon();
+select tests.throws('room activity: signed out gets nothing',
+  $$ select * from hackathon_team_member_activity $$, 'permission denied');
+
+-- What counts as activity, and for whom.
+select tests.login_m(11);
+select tests.lives('room activity: a member posts', $$
+  insert into hackathon_team_messages (team_id, user_id, body) values (tests.team8('Night Shift'), tests.m(11), 'kicking off') $$);
+select tests.ok('room activity: a message moves the author''s row',
+  (select last_active_at = now() from tests.activity('Night Shift', 11)));
+select tests.ok('room activity: ...and nobody else''s',
+  (select last_active_at is null from tests.activity('Night Shift', 12)));
+select tests.as_db();
+update public.hackathon_team_member_activity set last_active_at = now() - interval '5 hours'
+where team_id = tests.team8('Night Shift') and user_id = tests.m(11);
+insert into public.hackathon_team_messages (team_id, user_id, body, is_system)
+values (tests.team8('Night Shift'), tests.m(11), 'Member 11 added a doc', true);
+update public.hackathon_team_messages set body = 'kicking off!' where team_id = tests.team8('Night Shift') and body = 'kicking off';
+select tests.ok('room activity: system lines and edits don''t count',
+  (select last_active_at = now() - interval '5 hours' from tests.activity('Night Shift', 11)));
+
+select tests.login_m(12);
+select tests.lives('room activity: a member adds a doc', $$
+  insert into hackathon_team_docs (team_id, title) values (tests.team8('Night Shift'), 'Plan') $$);
+select tests.ok('room activity: a new doc counts for its author',
+  (select last_active_at = now() from tests.activity('Night Shift', 12)));
+select tests.login_m(11);
+select tests.lives('room activity: a teammate edits that doc', $$
+  update hackathon_team_docs set content = '{"type":"doc"}' where team_id = tests.team8('Night Shift') and title = 'Plan' $$);
+select tests.ok('room activity: an edit counts for the editor',
+  (select last_active_at = now() from tests.activity('Night Shift', 11)));
+select tests.as_db();
+update public.hackathon_team_member_activity set last_active_at = null where hackathon_id = tests.h8();
+select tests.login_m(12);
+select tests.lives('room activity: links, votes and ballots', $$
+  insert into hackathon_team_links (team_id, url) values (tests.team8('Night Shift'), 'https://example.com') $$);
+select tests.ok('room activity: a link counts', (select last_active_at = now() from tests.activity('Night Shift', 12)));
+select tests.login_m(11);
+insert into public.hackathon_team_votes (team_id, title, options) values (tests.team8('Night Shift'), 'Stack?', '["Next", "Rails"]');
+select tests.ok('room activity: opening a vote counts', (select last_active_at = now() from tests.activity('Night Shift', 11)));
+select tests.as_db();
+update public.hackathon_team_member_activity set last_active_at = null where hackathon_id = tests.h8();
+select tests.login_m(12);
+insert into public.hackathon_team_ballots (vote_id, team_id, user_id, option_chosen)
+select id, team_id, tests.m(12), 'Next' from public.hackathon_team_votes where team_id = tests.team8('Night Shift');
+select tests.ok('room activity: a ballot counts', (select last_active_at = now() from tests.activity('Night Shift', 12)));
+
+-- Seen: the room reports it, at most once a minute, with the browser's time zone.
+select tests.login_m(11);
+select tests.lives('seen: a member reports opening the room', $$
+  select hackathon_room_seen(tests.team8('Night Shift'), 'America/New_York') $$);
+select tests.ok('seen: stores when and the time zone',
+  (select last_seen_at = now() and time_zone = 'America/New_York' from tests.activity('Night Shift', 11)));
+select tests.lives('seen: an unknown time zone is ignored', $$
+  select hackathon_room_seen(tests.team8('Night Shift'), 'Mars/Olympus_Mons') $$);
+select tests.eq('seen: ...and the known one kept', (select time_zone from tests.activity('Night Shift', 11)), 'America/New_York');
+select tests.as_db();
+update public.hackathon_team_member_activity set last_seen_at = now() - interval '30 seconds'
+where team_id = tests.team8('Night Shift') and user_id = tests.m(11);
+select tests.login_m(11);
+select hackathon_room_seen(tests.team8('Night Shift'));
+select tests.ok('seen: not rewritten within a minute',
+  (select last_seen_at = now() - interval '30 seconds' from tests.activity('Night Shift', 11)));
+select tests.as_db();
+update public.hackathon_team_member_activity set last_seen_at = now() - interval '2 minutes'
+where team_id = tests.team8('Night Shift') and user_id = tests.m(11);
+select tests.login_m(11);
+select hackathon_room_seen(tests.team8('Night Shift'));
+select tests.ok('seen: rewritten after a minute', (select last_seen_at = now() from tests.activity('Night Shift', 11)));
+select tests.login_m(13);
+select tests.throws('seen: not for another team''s room', $$ select hackathon_room_seen(tests.team8('Night Shift')) $$, 'team''s members');
+select tests.login('admin');
+select tests.throws('seen: not for an admin reading the room', $$ select hackathon_room_seen(tests.team8('Night Shift')) $$, 'team''s members');
+select tests.anon();
+select tests.throws('seen: signed out can''t call it', $$ select hackathon_room_seen(tests.team8('Night Shift')) $$, 'permission denied');
+
+-- Asleep: "Sleeping until…", up to 12 hours; doing something wakes them.
+select tests.login_m(12);
+select tests.lives('sleep: a member says they''re sleeping', $$
+  select hackathon_room_sleep(tests.team8('Night Shift'), now() + interval '8 hours') $$);
+select tests.ok('sleep: stored', (select sleeping_until = now() + interval '8 hours' from tests.activity('Night Shift', 12)));
+select tests.throws('sleep: not more than 12 hours', $$
+  select hackathon_room_sleep(tests.team8('Night Shift'), now() + interval '13 hours') $$, '12 hours');
+select tests.throws('sleep: not in the past', $$
+  select hackathon_room_sleep(tests.team8('Night Shift'), now() - interval '1 hour') $$, '12 hours');
+insert into public.hackathon_team_messages (team_id, user_id, body) values (tests.team8('Night Shift'), tests.m(12), 'up early');
+select tests.ok('sleep: posting wakes them', (select sleeping_until is null from tests.activity('Night Shift', 12)));
+select hackathon_room_sleep(tests.team8('Night Shift'), now() + interval '2 hours');
+select hackathon_room_sleep(tests.team8('Night Shift'), null);
+select tests.ok('sleep: waking early keeps when they woke',
+  (select sleeping_until = now() from tests.activity('Night Shift', 12)));
+select tests.login_m(13);
+select tests.throws('sleep: not on another team', $$
+  select hackathon_room_sleep(tests.team8('Night Shift'), now() + interval '1 hour') $$, 'team''s members');
+
+-- Rows follow membership.
+select tests.service();
+select hackathon_admin_move_member(tests.m(12), tests.team8('Day Shift'));
+select tests.as_db();
+select tests.ok('room activity: moving teams moves the row',
+  (select count(*) = 0 from public.hackathon_team_member_activity where team_id = tests.team8('Night Shift') and user_id = tests.m(12))
+  and (select count(*) = 1 from public.hackathon_team_member_activity where team_id = tests.team8('Day Shift') and user_id = tests.m(12)));
+select tests.login_m(13);
+select tests.eq('room activity: the new team sees the newcomer',
+  tests.count($$ select 1 from hackathon_team_member_activity where team_id = tests.team8('Day Shift') $$)::text, '2');
+select tests.login_m(12);
+select tests.eq('room activity: ...who no longer sees the old team''s',
+  tests.count($$ select 1 from hackathon_team_member_activity where team_id = tests.team8('Night Shift') $$)::text, '0');
+
+-- After the reveal: the room is read-only, so no more sleeping; reading stays.
+select tests.set_phase(tests.h8(), 'judging');
+select tests.login_m(11);
+select tests.lives('room: still writable while judging (decision 12, kept in Phase 6)', $$
+  insert into hackathon_team_messages (team_id, user_id, body) values (tests.team8('Night Shift'), tests.m(11), 'waiting on results') $$);
+select tests.set_phase(tests.h8(), 'revealed');
+select tests.login_m(11);
+select tests.throws('room: read-only after the reveal', $$
+  insert into hackathon_team_messages (team_id, user_id, body) values (tests.team8('Night Shift'), tests.m(11), 'too late') $$, 'row-level security');
+select tests.throws('sleep: not once the room is read-only', $$
+  select hackathon_room_sleep(tests.team8('Night Shift'), now() + interval '1 hour') $$, 'read-only');
+select tests.ok('room: members still read it after the reveal',
+  tests.count($$ select 1 from hackathon_team_messages where team_id = tests.team8('Night Shift') $$) >= 2
+  and tests.count($$ select 1 from hackathon_team_member_activity where team_id = tests.team8('Night Shift') $$) = 1);
+
 
 select tests.finish();

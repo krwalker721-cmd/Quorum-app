@@ -81,6 +81,7 @@ export type TeamMember = { user_id: string; name: string; role: "owner" | "membe
 export type Team = {
   id: string;
   name: string;
+  slug: string;
   emblem: string | null;
   color: string | null;
   is_random_matched: boolean;

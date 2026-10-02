@@ -6,12 +6,13 @@ then check `git log main..feat/hackathon-db` for anything newer.
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
 - **Status (2026-09-30):** Phases 1–5 are built, checked on staging, and approved by the owner
-  (Phase 5: "looks good"). Next is the owner's next prompt.
+  (Phase 5: "looks good"). **Phase 6 (the team room) is built and checked on staging, waiting for
+  the owner's look; not committed yet.**
 
 ### Start here (handoff, 2026-09-30)
 **Where things stand**
-- **Migrations:** 018–027 are on staging. Production has none of them (it's at 017).
-- **Tests:** 436 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Migrations:** 018–028 are on staging. Production has none of them (it's at 017).
+- **Tests:** 481 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -39,12 +40,15 @@ which project is the target.
 | 3 · Hackathon tab | 024 `hackathon_registrants()` | `app/(app)/hackathon/` (index, `[number]`, `archive`, `[number]/team`, `[number]/lobby`); `components/hackathon/SprintSections.tsx`, `SprintCountdown.tsx`, `SprintAutoRefresh.tsx`, `LocalTime.tsx`, `RevealGallery.tsx`, `RoomPlaceholder.tsx`; `components/countdown/Countdown.tsx`; `lib/hackathons/sprint.ts`, `page.ts`, `nav.ts`, `viewer.ts`; `app/api/hackathons/[number]/timing`; `lib/useServerNow.ts` (monotonic clock) |
 | 4 · Registration and teams | 025 `hackathon_team_invite_codes`, `hackathon_team_invitations`, `private.join_team`, counts, check-in, renaming; 026 `hackathons.matched_at` / `match_report`, `hackathon_run_matcher()` | `components/hackathon/JoinQueue.tsx`, `JoinQueueClient.tsx`, `TeamPanel.tsx`, `MemberSearch.tsx`, `TeamStyle.tsx`, `CheckIn.tsx`, `QueueLive.tsx`, `JoinByLink.tsx`; `app/(app)/hackathon/[number]/join/[code]`; `lib/hackathons/actions.ts`, `matcher.ts`, `skills.ts`; `app/api/cron/hackathon-matcher` (not scheduled: Hobby); admin `SprintControls.tsx` (matcher), `Participants.tsx` (check-in) |
 | 5 · Arena | 027 `hackathon_team_pulse` (+ triggers, realtime), `hackathon_arena_cohorts()` | `components/hackathon/Arena.tsx`, `arena.module.css`; `realtimeDb()` in `lib/hackathons/actions.ts`; `CountdownStrip.tsx` (row cap); `scripts/simulate-sprint-activity.mjs`; `db.sh staging:seed-spectator` |
+| 6 · Team room | 028 `hackathon_team_member_activity`, `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/` (room, `submission` placeholder); `components/hackathon/room/*`; shared `components/rooms/*` (from the Collab room) and `components/editor/RichTextEditor.tsx` (from the Vault); `lib/hackathons/room.ts`, `quiet.ts` |
 
 **Waiting on the owner**
-- Paste 018–027 into production before any deploy that needs them.
+- Look at Phase 6 (then it gets committed locally).
+- Whether to fix the Collab decision card's "Unanimous" wording (flagged task; see 5e).
+- Paste 018–028 into production before any deploy that needs them.
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
-- The next prompt (team room and lobby, submissions, judging, reveal gallery, notifications).
+- The next prompt (lobby, submission form (Prompt 8), judging, reveal gallery, notifications).
 
 **Staging test data, as left on 2026-09-30**
 - Sprint #4 (registration): the test admin is on Rockets, and Test Crew has Sam plus a pending
@@ -54,7 +58,11 @@ which project is the target.
 - Sprint #11 has been matched.
 - Re-running the seed resets the times, and the flip Sprint's teams; it doesn't remove extra
   teams or messages.
-- The pane was last signed in as the spectator.
+- Sprint #6, Rockets (Phase 6 checks): a "Pitch plan" doc, a decided vote "Which demo goes first?",
+  a "Live demo" link from Leo, and "Phase 6 check" messages.
+- A Collab project "Staging check: Collab room" (the test admin's, with a message, a link and a
+  decision) and an untitled Vault note, both from the refactor checks.
+- The pane was last signed in as the test admin.
 
 ---
 
@@ -170,7 +178,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–027** |
+| Migrations applied | up to **017** | **018–028** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -314,7 +322,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-09-30, Phase 5):** all 436 tests pass locally and on staging.
+- **Last run (2026-09-30, Phase 6):** all 481 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -701,6 +709,113 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 
 ---
 
+## 5e. Phase 6: the team room (migration 028)
+
+### What the owner decided at the plan
+- **Docs use the Vault's full editor**, shared rather than copied. The Collab room's "docs" are only
+  a title and plain notes, so the brief's "docs with the full editor" meant the Vault's Tiptap
+  editor.
+- **Rooms stay writable until the reveal** (decision 12 kept). The brief said read-only from
+  `ends_at`; the owner chose the reveal, so `can_write_team_room` is unchanged.
+- **Quiet teammates:** flagged after **3 waking hours**, where night (11 pm – 7 am in their own time
+  zone) doesn't count, and neither does time they marked "Sleeping until…".
+- **Both refactors approved:** the Collab room's pieces and the Vault's editor, each proven
+  identical.
+
+### Database: `028_hackathon_team_room.sql`
+- **`hackathon_team_member_activity`**, one row per person on a team: `last_active_at` (last
+  contribution), `last_seen_at` (last time the room was open), `time_zone`, `sleeping_until`.
+  - Readable by that team and admins (`can_read_team_room`); never spectators, judges or other
+    teams. Nobody writes it directly. In realtime.
+  - Rows follow membership (trigger on `hackathon_team_members`: join, leave, move). Backfilled.
+  - Triggers credit the actor: messages (not system lines, edits or deletions), docs created or
+    edited, links, votes, ballots. Any contribution ends a sleep still running.
+- **`hackathon_room_seen(team, time_zone)`:** members only; at most once a minute; a zone the
+  database doesn't know (`pg_timezone_names`) is ignored.
+- **`hackathon_room_sleep(team, until)`:** members, while the room is writable; up to 12 hours ahead;
+  `null` wakes them (and keeps the moment they woke, so quiet time counts from it).
+- **Tests:** 45 new (**481** total), locally and on staging. Deliberate breaks caught: the table
+  readable by anyone, system lines counting, "seen" without a membership check.
+
+### Refactors (no Collab or Vault behaviour change)
+- **`components/rooms/`**, moved unchanged out of `components/collab/ProjectRoomClient.tsx`:
+  `RoomThread` (thread + composer), `RoomVotes` (decision cards + form), `RoomItemCard` /
+  `DocIcon` (doc and link cards), `kit.ts` (styles and helpers). They take data and actions as
+  props. Collab keeps its own queries, realtime, client-side closing and notes-plus-links docs.
+- **`components/editor/RichTextEditor.tsx`:** `useRichEditor` (Tiptap setup, slash menu, Cmd/Ctrl+K,
+  word count, read-only) and `EditorToolbar`, from the Vault's `NoteEditor`, which keeps its frame,
+  title, tags and save.
+- **Proof:** a temporary fixed-data page rendered the Collab room's three tabs and the Vault editor
+  before and after; the HTML was **byte-identical** (checked again after the last change). Live on
+  staging: a Collab project's message, link and decision (open → vote → closed); a Vault note
+  (slash menu, checklist, autosave PATCH 200).
+- **Found, not changed:** the Collab decision card says "Unanimous" whenever everyone has voted,
+  even after a 2–1 split. Sprint votes count it properly (`strictUnanimous`); Collab keeps the old
+  wording until the owner decides (flagged as a task).
+
+### Routes
+| Route | What |
+|---|---|
+| `/hackathon/[n]/team` | Redirects to your team's room; no team → the Sprint page with "You're not on a team in this Sprint". |
+| `/hackathon/[n]/team/[slug]` | The room. Team members and admins; anyone else → the Sprint page with "That team room is private to its team". Slugs never change on rename, so links last. |
+| `/hackathon/[n]/team/[slug]/submission` | PLACEHOLDER for Prompt 8; same door as the room. |
+
+The arena's "Go to my team room" now links straight to the slug. The admin console's teams tab has
+"open room ↗" (admins read rooms; read-only).
+
+### The room (`components/hackathon/room/`)
+- **Header (`RoomHeader.tsx`):** emblem and name; the countdown for the state (respecting the
+  admin's in-app countdown switch and headline); the theme from kickoff; the submission button
+  ("Submit project" / "Edit submission" while live, "Opens at kickoff" before, "View submission ·
+  Submissions closed" after) with its status, live from the team's pulse.
+- **Members:** the app's online dot (`usePresence`), "Active 12 min ago" / "Seen …" / "Sleeping until
+  7:00 AM", and while live a soft amber "Hasn't been active in 5 hours · seen 5 h ago" for a quiet
+  teammate (never shown to anyone outside the team; never about yourself). Your own card has
+  "Sleeping…" (2/4/6/8 hours, or until 7 am) and "I'm up". On phones the members are one swipeable
+  row, yours first, so the room starts on the first screen.
+- **Quiet logic:** `lib/hackathons/quiet.ts`, worked out in the browser on the server clock; nothing
+  stored.
+- **Tabs:** Thread · Docs · Links · Votes.
+  - **Thread:** the Collab thread; your message shows as soon as it's saved.
+  - **Docs (`TeamDocs.tsx`):** list, then the shared editor. Autosave a second after typing stops;
+    saves are conditional on the version you started from (`updated_at`). A teammate's save
+    reloads the doc if you have nothing unsaved; otherwise "Maya saved a newer version" → Keep
+    mine / Load theirs. Stored as the editor's JSON in `content` (100,000-character limit, checked
+    before saving). No live co-editing (would need a new library).
+  - **Links (`TeamLinks.tsx`):** Collab's link cards; whoever added a link can remove it.
+  - **Votes:** Collab's cards; the database closes them (decision 6), and the closing arrives live.
+- **Live:** one realtime channel per room table filtered to the team (via `realtimeDb()`), plus
+  unfiltered DELETE channels for docs and links (ids only), the activity table, the pulse (for the
+  submission status) and team membership (refresh). Returning to the tab after 30 s re-reads it all;
+  `SprintAutoRefresh` moves the page on at each phase boundary.
+- **Read-only:** after the reveal, while paused or cancelled, and for admins: the composer, editor
+  (no toolbar, `contenteditable=false`), New doc, Add link, Start a vote and Sleeping… disappear,
+  with a note saying why. The database refuses regardless.
+- **"Seen" heartbeat:** members only, on open and every 5 minutes while the tab is visible, with the
+  browser's time zone.
+
+### Checked on staging (2026-09-30)
+- **As the spectator:** `/hackathon/6/team` and `/hackathon/6/team/rockets` go back to the Sprint
+  page with the right note; no room text in what the browser received.
+- **As the test admin on Rockets (#6, live), with Maya and Leo played by a staging-only script:**
+  - Sent a message; Maya's reply appeared without a reload; both "Active just now" lines updated
+    live.
+  - Leo set 5 hours back → the amber quiet note appeared live; his next link cleared it.
+  - Sleeping until 7:00 AM, then "I'm up".
+  - Doc: created, typed, saved. Maya's edit reloaded it; Maya saving mid-typing raised the
+    conflict; "Keep mine" saved mine (confirmed in the database).
+  - Links: a bad URL refused in words; added one; Leo's arrived live; removed mine.
+  - Vote: opened; Maya and Leo's ballots arrived live (2 of 3); mine closed it in the database →
+    "✓ Alerts · 2 of 3 votes".
+  - Moved the reveal a minute ahead: the open room switched to "Results are out" and locked itself
+    within seconds, no reload.
+  - Comets as admin: read-only, "Viewing as admin", its submission shown as Submitted ✓.
+  - Phone width (375): no sideways scroll; members row; sleep menu not clipped; editor fits.
+- **Not checked in the browser:** two real people in one doc at once (the conflict path was
+  driven by a script); the admin console's "open room ↗" link (needs the admin code).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -752,31 +867,44 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 | 45 | Motion only on activity (a ripple, a glow while hot), none when quiet or with reduced motion. | Reconciles "static finish" with the brief's animated pulse. Owner OK'd. |
 | 46 | Realtime subscriptions set the member's token explicitly first (`realtimeDb`). | Without it the socket stayed anonymous and RLS dropped every event. |
 | 47 | The in-app countdown bar shows 1 row on phones and 3 elsewhere, with "+N more". | The app's header rows are fixed, so every row shrank the page; it hurt the arena on phones. |
+| 48 | Team rooms stay writable until the reveal, not until `ends_at` as the Phase 6 brief said. | Owner, at the Phase 6 plan (decision 12 kept). |
+| 49 | Team docs use the Vault's full editor, shared through `components/editor/`; the Collab room's pieces are shared through `components/rooms/`. Both refactors are proven byte-identical. | The Collab room has no rich editor. Owner approved both refactors. |
+| 50 | A quiet teammate is flagged after 3 waking hours: their own 11 pm – 7 am doesn't count, nor does time marked "Sleeping until…" (up to 12 h). | Owner: "unless sleeping"; chose both night hours and the button. |
+| 51 | Room docs: last save wins, with a conditional save and a Keep mine / Load theirs choice; no live co-editing. | Co-editing needs a new library (e.g. Yjs); not asked for. |
+| 52 | Per-member activity is its own table, readable by the team only, not columns on `hackathon_team_members`. | Team rosters are readable by the arena's audience; when teammates are active or asleep is the team's business. |
+| 53 | Sprint votes say "Unanimous" only when everyone chose the winner; the Collab card keeps its wording until the owner decides. | Collab must stay identical without approval. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 027** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 028** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
-      and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, and
-      without 027 the arena has no pulse or cohorts.
+      and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
+      027 the arena has no pulse or cohorts, and without 028 the team room has no activity, quiet
+      notes or sleep.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
       to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- Team room and lobby: replace the placeholders at `/hackathon/[n]/team` and `/lobby` (keep their
-  access checks). Submission form, judging, public project pages.
+- Lobby: replace the placeholder at `/hackathon/[n]/lobby` (keep its access check). `RoomThread`
+  in `components/rooms/` is ready to reuse.
+- **Prompt 8:** the submission form at `/hackathon/[n]/team/[slug]/submission` (placeholder; the
+  room's button already points there and shows the status). Judging, public project pages.
 - **Prompt 10:** the reveal gallery (replace `GallerySlot` in `components/hackathon/RevealGallery.tsx`).
 - **Prompt 9:** external judge accounts. Link `invite_email` judges to accounts, and build decision
   14 (judge-only accounts never counted as founding seats and never placed in a cohort).
 
 **Known gaps and ideas, not yet built:**
-- The Collab room tabs need the "room adapter" refactor (with approval) before the Hackathon room
-  can reuse them.
+- **Collab decision wording:** "Unanimous" after a split vote (flagged task; needs the owner's OK).
+- **Collab thread:** your own message only appears after a reload, because the Collab room waits
+  for its realtime echo and its socket is anonymous (the realtime lead below). Pre-existing;
+  unchanged by the refactor.
+- Team room messages can't be edited or deleted in the UI yet (the database allows the author to;
+  the Collab thread has neither, and the room matches it).
 - **Realtime elsewhere in the app** (lead, flagged as a separate task): 10 non-Hackathon components
   subscribe without setting the member's token, and may be missing live updates for RLS tables.
   The Collab ones need the owner's approval to change.

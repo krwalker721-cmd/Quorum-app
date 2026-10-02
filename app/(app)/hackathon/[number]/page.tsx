@@ -28,11 +28,20 @@ import { stageCountdown, toTiming } from "@/lib/hackathons/sprint";
 
 export const dynamic = "force-dynamic";
 
+// Why someone was sent back here from a team room (?notice=…).
+const NOTICES: Record<string, string> = {
+  "room-private": "That team room is private to its team. Only its members (and admins) can open it.",
+  "no-team": "You're not on a team in this Sprint, so there's no team room for you.",
+};
+
 // One page for a Sprint in every state. The database derives the state
 // (hackathon_overview); this page only chooses the layout for it, and
 // SprintAutoRefresh reloads it when the state changes or an admin moves a time.
-export default async function SprintPage(props: { params: Promise<{ number: string }> }) {
-  const { number } = await props.params;
+export default async function SprintPage(props: {
+  params: Promise<{ number: string }>;
+  searchParams: Promise<{ notice?: string }>;
+}) {
+  const [{ number }, { notice }] = await Promise.all([props.params, props.searchParams]);
   const n = Number(number);
   if (!Number.isInteger(n) || n < 1) notFound();
 
@@ -72,6 +81,22 @@ export default async function SprintPage(props: { params: Promise<{ number: stri
           </Link>
         </div>
 
+        {notice && NOTICES[notice] && (
+          <p
+            role="status"
+            style={{
+              fontSize: 13,
+              color: "var(--text-secondary)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              background: "rgba(255, 255, 255, 0.03)",
+              borderRadius: 12,
+              padding: "10px 14px",
+              marginBottom: 16,
+            }}
+          >
+            {NOTICES[notice]}
+          </p>
+        )}
         <StatusBanner sprint={sprint} />
         <SprintHero sprint={sprint} />
 

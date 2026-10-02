@@ -1,15 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import RoomPlaceholder from "@/components/hackathon/RoomPlaceholder";
 import { loadSprint } from "@/lib/hackathons/page";
-import { getMemberStanding } from "@/lib/hackathons/viewer";
+import { roomHref } from "@/lib/hackathons/room";
 
 export const dynamic = "force-dynamic";
 
-// Your team's private room. PLACEHOLDER until the team room prompt builds it.
-// Only the team's own members get past this check (the room's tables are
-// sealed by RLS regardless); everyone else goes back to the Sprint page.
-export default async function TeamRoomPage(props: { params: Promise<{ number: string }> }) {
+// "My team room": sends a team member to their own team's room (its address
+// carries the team's slug). Anyone without a team goes back to the Sprint
+// page, which says why.
+export default async function MyTeamRoomPage(props: { params: Promise<{ number: string }> }) {
   const { number } = await props.params;
   const n = Number(number);
   if (!Number.isInteger(n) || n < 1) notFound();
@@ -23,24 +22,16 @@ export default async function TeamRoomPage(props: { params: Promise<{ number: st
   const sprint = await loadSprint(supabase, n);
   if (!sprint) notFound();
 
-  const [{ tier }, { data: membership }] = await Promise.all([
-    getMemberStanding(supabase, user.id),
-    supabase
-      .from("hackathon_team_members")
-      .select("team_id")
-      .eq("hackathon_id", sprint.id)
-      .eq("user_id", user.id)
-      .maybeSingle(),
-  ]);
-  if (!membership) redirect(`/hackathon/${n}`);
-
-  return (
-    <RoomPlaceholder
-      number={n}
-      title="Team room"
-      line="Your team's private room (thread, docs, links and votes) opens here soon."
-      tier={tier}
-      userId={user.id}
-    />
-  );
+  const { data: membership } = await supabase
+    .from("hackathon_team_members")
+    .select("team_id")
+    .eq("hackathon_id", sprint.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const { data: team } = membership
+    ? await supabase.from("hackathon_teams").select("slug").eq("id", membership.team_id).maybeSingle()
+    : { data: null };
+  const slug = team?.slug as string | undefined;
+  if (!slug) redirect(`/hackathon/${n}?notice=no-team`);
+  redirect(roomHref(n, slug));
 }

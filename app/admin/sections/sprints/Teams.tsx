@@ -10,11 +10,13 @@ import type { Participant, Team } from "./types";
  */
 export default function Teams({
   sprintId,
+  sprintNumber,
   teams,
   participants,
   onChanged,
 }: {
   sprintId: string;
+  sprintNumber: number;
   teams: Team[];
   participants: Participant[];
   onChanged: () => void;
@@ -49,7 +51,7 @@ export default function Teams({
       {teams.length === 0 && <p className="font-mono text-xs text-text-faint">no teams yet</p>}
 
       {teams.map((t) => (
-        <TeamCard key={t.id} team={t} teams={teams} unteamed={unteamed} run={run} />
+        <TeamCard key={t.id} sprintNumber={sprintNumber} team={t} teams={teams} unteamed={unteamed} run={run} />
       ))}
 
       <Card>
@@ -85,11 +87,13 @@ export default function Teams({
 }
 
 function TeamCard({
+  sprintNumber,
   team,
   teams,
   unteamed,
   run,
 }: {
+  sprintNumber: number;
   team: Team;
   teams: Team[];
   unteamed: Participant[];
@@ -111,8 +115,19 @@ function TeamCard({
             {team.is_random_matched ? " · random" : ""}
           </span>
         </p>
-        <span className="font-mono text-[0.6rem]" style={{ color: team.submission ? "#22c55e" : "var(--text-faint)" }}>
-          {team.submission ? `submitted: ${team.submission.project_name}` : "no submission"}
+        <span className="flex items-baseline gap-3">
+          <span className="font-mono text-[0.6rem]" style={{ color: team.submission ? "#22c55e" : "var(--text-faint)" }}>
+            {team.submission ? `submitted: ${team.submission.project_name}` : "no submission"}
+          </span>
+          {/* Admins can read every room (read-only); the room logs nothing. */}
+          <a
+            href={`/hackathon/${sprintNumber}/team/${team.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[0.6rem] text-text-muted hover:text-text-primary"
+          >
+            open room ↗
+          </a>
         </span>
       </div>
 
