@@ -44,7 +44,6 @@ export default function RoomVotes({
   onVote,
   labels = COLLAB_LABELS,
   readOnly = false,
-  strictUnanimous = false,
 }: {
   decisions: RoomDecision[];
   votes: RoomBallot[];
@@ -55,11 +54,6 @@ export default function RoomVotes({
   labels?: RoomVotesLabels;
   /** No new votes and no ballots (the room has closed). */
   readOnly?: boolean;
-  /**
-   * "Unanimous" only when everyone chose the winner. Off for the Collab room,
-   * which says it whenever everyone has voted (kept as it was; flagged).
-   */
-  strictUnanimous?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -139,7 +133,8 @@ export default function RoomVotes({
                 <span style={{ color: "#4ade80" }}>✓ {d.winning_option}</span>
                 <span style={META}>
                   {" "}
-                  · {(strictUnanimous ? (tally[d.winning_option] ?? 0) === totalMembers : totalVoted === totalMembers)
+                  {/* Unanimous: everyone chose the winner, not merely everyone voted. */}
+                  · {(tally[d.winning_option] ?? 0) === totalMembers
                     ? "Unanimous"
                     : `${tally[d.winning_option] ?? 0} of ${totalMembers} votes`}
                 </span>

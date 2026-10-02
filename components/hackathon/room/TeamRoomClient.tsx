@@ -401,7 +401,6 @@ export default function TeamRoomClient({
             onVote={(d, option) => void castBallot(d.id, option)}
             labels={VOTE_LABELS}
             readOnly={!writable}
-            strictUnanimous
           />
         )}
       </div>

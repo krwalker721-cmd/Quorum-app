@@ -5,9 +5,8 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
-- **Status (2026-09-30):** Phases 1–5 are built, checked on staging, and approved by the owner
-  (Phase 5: "looks good"). **Phase 6 (the team room) is built and checked on staging, waiting for
-  the owner's look; not committed yet.**
+- **Status (2026-10-02):** Phases 1–6 are built, checked on staging, approved and committed
+  locally (Phase 6: `a1652f8`). Next is the owner's Phase 7 prompt.
 
 ### Start here (handoff, 2026-09-30)
 **Where things stand**
@@ -43,8 +42,6 @@ which project is the target.
 | 6 · Team room | 028 `hackathon_team_member_activity`, `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/` (room, `submission` placeholder); `components/hackathon/room/*`; shared `components/rooms/*` (from the Collab room) and `components/editor/RichTextEditor.tsx` (from the Vault); `lib/hackathons/room.ts`, `quiet.ts` |
 
 **Waiting on the owner**
-- Look at Phase 6 (then it gets committed locally).
-- Whether to fix the Collab decision card's "Unanimous" wording (flagged task; see 5e).
 - Paste 018–028 into production before any deploy that needs them.
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
@@ -749,9 +746,9 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
   before and after; the HTML was **byte-identical** (checked again after the last change). Live on
   staging: a Collab project's message, link and decision (open → vote → closed); a Vault note
   (slash menu, checklist, autosave PATCH 200).
-- **Found, not changed:** the Collab decision card says "Unanimous" whenever everyone has voted,
-  even after a 2–1 split. Sprint votes count it properly (`strictUnanimous`); Collab keeps the old
-  wording until the owner decides (flagged as a task).
+- **Found and fixed (owner approved, 2026-10-02):** the decision card said "Unanimous" whenever
+  everyone had voted, even after a 2–1 split. Now, in both Collab and Sprint rooms, it says
+  "Unanimous" only when everyone chose the winner, otherwise "2 of 3 votes".
 
 ### Routes
 | Route | What |
@@ -872,7 +869,7 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 | 50 | A quiet teammate is flagged after 3 waking hours: their own 11 pm – 7 am doesn't count, nor does time marked "Sleeping until…" (up to 12 h). | Owner: "unless sleeping"; chose both night hours and the button. |
 | 51 | Room docs: last save wins, with a conditional save and a Keep mine / Load theirs choice; no live co-editing. | Co-editing needs a new library (e.g. Yjs); not asked for. |
 | 52 | Per-member activity is its own table, readable by the team only, not columns on `hackathon_team_members`. | Team rosters are readable by the arena's audience; when teammates are active or asleep is the team's business. |
-| 53 | Sprint votes say "Unanimous" only when everyone chose the winner; the Collab card keeps its wording until the owner decides. | Collab must stay identical without approval. |
+| 53 | "Unanimous" only when everyone chose the winner, in Collab and Sprint rooms alike. | It said so whenever everyone had voted, even after a split; the owner approved changing Collab too. |
 
 ---
 
@@ -899,7 +896,6 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
   14 (judge-only accounts never counted as founding seats and never placed in a cohort).
 
 **Known gaps and ideas, not yet built:**
-- **Collab decision wording:** "Unanimous" after a split vote (flagged task; needs the owner's OK).
 - **Collab thread:** your own message only appears after a reload, because the Collab room waits
   for its realtime echo and its socket is anonymous (the realtime lead below). Pre-existing;
   unchanged by the refactor.
@@ -965,3 +961,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `47cdf9d` | Registration and teams, the team matcher, kickoff check-in (025–026) |
 | `8287dcb` | Record the Phase 4 commit |
 | `785a37c` | The arena, live and sealed by design (027) |
+| `8ef8388`, `2ac37b8` | Record the Phase 5 commit; start-here handoff |
+| `a1652f8` | The team room: thread, docs, links, votes, who's active and who's asleep (028) |
