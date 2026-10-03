@@ -9,7 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
---   Needs migrations 018-027.
+--   Needs migrations 018-032.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -2165,5 +2165,86 @@ select hackathon_finalize_awards(tests.h12());
 select tests.as_db();
 select tests.lives('finalized (031): deleting the Sprint still works', $$ delete from public.hackathons where id = tests.h12() $$);
 select tests.eq('finalized (031): ...and its awards go with it', tests.award_count12()::text, '0');
+
+-- ============================================================================
+-- Phase 10 (032): the public showcase, only after the reveal
+-- ============================================================================
+select tests.as_db();
+create function tests.h13() returns uuid language sql immutable as $$ select 'cd000000-0000-0000-0000-00000000000d'::uuid $$;
+create function tests.n13() returns integer
+language sql stable security definer set search_path = public as $$
+  select number from public.hackathons where id = tests.h13()
+$$;
+create function tests.team13(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h13()
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+-- Sprint 13: Shippers (m5, m6) finish; Drafty (m7) leaves a draft; Ghost (m8)
+-- submits nothing. m5–m7 are in cohort 2, m8 in cohort 3.
+insert into public.hackathons (id, slug, title, theme_hidden, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h13(), 'test-showcase', 'Showcase Sprint', 'Tools for night owls', true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h13(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h13(), tests.m(i), 'team' from generate_series(5, 8) i;
+select hackathon_admin_create_team(tests.h13(), 'Shippers', array[tests.m(5), tests.m(6)]);
+select hackathon_admin_create_team(tests.h13(), 'Drafty', array[tests.m(7)]);
+select hackathon_admin_create_team(tests.h13(), 'Ghost', array[tests.m(8)]);
+select tests.set_phase(tests.h13(), 'live');
+insert into public.hackathon_submissions (team_id, hackathon_id, project_name, tagline, problem, demo_url, built_with) values
+  (tests.team13('Shippers'), tests.h13(), 'Ship It', 'Ships things', 'Nothing ships', 'https://ship.example', array['Next.js', 'Supabase']);
+insert into public.hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team13('Drafty'), tests.h13(), 'Secret Draft');
+
+-- Sealed in every state before the reveal.
+select tests.anon();
+select tests.eq('showcase (032): nothing while live',
+  (tests.count($$ select 1 from hackathon_public_sprint(tests.n13()) $$) + tests.count($$ select 1 from hackathon_public_projects(tests.h13()) $$))::text, '0');
+select tests.set_phase(tests.h13(), 'judging');
+select tests.eq('showcase (032): nothing while judging',
+  (tests.count($$ select 1 from hackathon_public_sprint(tests.n13()) $$) + tests.count($$ select 1 from hackathon_public_projects(tests.h13()) $$))::text, '0');
+select tests.login('oscar');
+select tests.eq('showcase (032): not for members either before the reveal',
+  tests.count($$ select 1 from hackathon_public_projects(tests.h13()) $$)::text, '0');
+select tests.eq('showcase (032): the sitemap leaves it out', tests.count($$ select 1 from hackathon_public_sitemap() where number = tests.n13() $$)::text, '0');
+
+-- Revealed.
+select tests.set_phase(tests.h13(), 'revealed');
+select tests.anon();
+select tests.ok('showcase (032): signed out sees the Sprint and its numbers',
+  (select title = 'Showcase Sprint' and theme = 'Tools for night owls' and teams = 3 and builders = 4 and cohorts = 2 and shipped = 1
+   from hackathon_public_sprint(tests.n13())),
+  (select to_jsonb(x)::text from hackathon_public_sprint(tests.n13()) x));
+select tests.eq('showcase (032): only the complete project, never the draft',
+  (select string_agg(project_name, ',') from hackathon_public_projects(tests.h13())), 'Ship It');
+select tests.ok('showcase (032): with its team and its tags',
+  (select bool_and(team_name = 'Shippers' and team_slug is not null and built_with = array['next.js', 'supabase']) from hackathon_public_projects(tests.h13())));
+select tests.eq('showcase (032): signed out, builders are first names only',
+  (select string_agg(members::text, ' ') from hackathon_public_projects(tests.h13()) where team_name = 'Shippers'), '[{"first_name": "Member"}, {"first_name": "Member"}]');
+select tests.eq('showcase (032): the sitemap lists its project', (select array_to_string(team_slugs, ',') from hackathon_public_sitemap() where number = tests.n13()), 'shippers');
+select tests.login('pete');
+select tests.ok('showcase (032): an account not yet approved gets first names only',
+  (select bool_and(not (members -> 0 ? 'username') and not (members -> 0 ? 'id')) from hackathon_public_projects(tests.h13())));
+select tests.login('oscar');
+select tests.ok('showcase (032): an approved member gets names and usernames for profile links',
+  (select members -> 0 ->> 'id' = tests.m(5)::text and members -> 0 ? 'username' and members -> 0 ->> 'full_name' = 'Member 5'
+   from hackathon_public_projects(tests.h13()) where team_name = 'Shippers'),
+  (select string_agg(members::text, ' ') from hackathon_public_projects(tests.h13())));
+select tests.anon();
+select tests.eq('showcase (032): signed out still can''t read teams directly', tests.count($$ select 1 from hackathon_teams where hackathon_id = tests.h13() $$)::text, '0');
+
+-- Frozen before the reveal, or unpublished: sealed again.
+select tests.pause(tests.h13(), now() - interval '2 hours');
+select tests.eq('showcase (032): paused before its reveal, it stays sealed',
+  (tests.count($$ select 1 from hackathon_public_sprint(tests.n13()) $$) + tests.count($$ select 1 from hackathon_public_projects(tests.h13()) $$)
+   + tests.count($$ select 1 from hackathon_public_sitemap() where number = tests.n13() $$))::text, '0');
+select tests.clear_override(tests.h13());
+select tests.as_db();
+update public.hackathons set is_published = false where id = tests.h13();
+select tests.anon();
+select tests.eq('showcase (032): an unpublished Sprint shows nothing',
+  (tests.count($$ select 1 from hackathon_public_sprint(tests.n13()) $$) + tests.count($$ select 1 from hackathon_public_projects(tests.h13()) $$))::text, '0');
 
 select tests.finish();

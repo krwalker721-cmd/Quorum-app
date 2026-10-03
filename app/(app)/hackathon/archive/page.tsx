@@ -56,8 +56,8 @@ export default async function HackathonArchive() {
           <ul className="flex flex-col" style={{ gap: 10 }}>
             {past.map((s) => (
               <li key={s.number}>
-                <Link href={`/hackathon/${s.number}`} style={{ textDecoration: "none", display: "block" }}>
-                  <Tile padding="14px 16px">
+                <Tile padding="14px 16px">
+                  <Link href={`/hackathon/${s.number}`} style={{ textDecoration: "none", display: "block" }}>
                     <div className="flex items-baseline justify-between gap-3 flex-wrap">
                       <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Sprint #{s.number}</span>
                       <span className={ui.chip} style={s.state === "cancelled" ? { color: "#fca5a5" } : undefined}>
@@ -70,8 +70,13 @@ export default async function HackathonArchive() {
                       {s.state === "cancelled" ? "Cancelled " : "Revealed "}
                       <LocalTime iso={s.state === "cancelled" ? s.status_override_at : s.reveal_at} format="date" />
                     </p>
-                  </Tile>
-                </Link>
+                  </Link>
+                  {s.state === "revealed" && (
+                    <Link href={`/hackathon/${s.number}/recap`} style={{ display: "inline-block", fontSize: 12.5, color: "#f8c56a", textDecoration: "none", marginTop: 8 }}>
+                      Public recap ↗
+                    </Link>
+                  )}
+                </Tile>
               </li>
             ))}
           </ul>

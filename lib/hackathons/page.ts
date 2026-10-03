@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SPRINT_COLUMNS, type SprintRow } from "@/lib/hackathons/sprint";
-import { NAMED_AWARDS, loadJudgeQueue, type AwardType } from "@/lib/hackathons/judging";
+import { loadJudgeQueue } from "@/lib/hackathons/judging";
+import { loadPublicProjects, type PublicProject } from "@/lib/hackathons/showcase";
 
 // Everything the Sprint page reads, through the signed-in member's own client,
 // so RLS decides what comes back: a spectator gets the teams but never a team
@@ -55,16 +56,6 @@ export type ArenaTeam = {
 
 export type Registrant = ArenaPerson & { registered_at: string };
 
-export type Award = {
-  id: string;
-  award_type: AwardType;
-  custom_label: string | null;
-  /** One line on why it won (migration 031). */
-  citation: string | null;
-  project_name: string | null;
-  tagline: string | null;
-  team_name: string | null;
-};
 
 export type SprintLink = Pick<SprintRow, "number" | "title" | "state" | "registration_opens_at" | "starts_at">;
 
@@ -97,7 +88,8 @@ export type SprintPageData = {
   viewer: Viewer;
   teams: ArenaTeam[];
   registrants: Registrant[] | null; // null: not shown in this state
-  awards: Award[];
+  /** After the reveal: every complete project with its awards (032); empty otherwise. */
+  showcase: PublicProject[];
   /** For a spectator's "join the next one": the next announced Sprint, if any. */
   nextSprint: SprintLink | null;
   /** From registration through the live Sprint; null otherwise. */
@@ -300,52 +292,6 @@ async function loadQueue(
   };
 }
 
-// Awards show once they're finalized (031). RLS already hides unfinalized
-// ones from everyone but admins; checking here too means an admin sees the
-// page as the public does.
-async function loadAwards(db: SupabaseClient, sprintId: string): Promise<Award[]> {
-  const { data: final } = await db.from("hackathons").select("awards_finalized_at").eq("id", sprintId).maybeSingle();
-  if (!final?.awards_finalized_at) return [];
-  const { data: awards } = await db
-    .from("hackathon_awards")
-    .select("id, award_type, custom_label, citation, submission_id, created_at")
-    .eq("hackathon_id", sprintId)
-    .order("created_at");
-  if (!awards || awards.length === 0) return [];
-
-  const subIds = Array.from(new Set(awards.map((a) => a.submission_id as string)));
-  const { data: subs } = await db
-    .from("hackathon_submissions")
-    .select("id, project_name, tagline, team_id")
-    .in("id", subIds);
-  const teamIds = Array.from(new Set((subs ?? []).map((s) => s.team_id as string)));
-  const { data: teams } = teamIds.length
-    ? await db.from("hackathon_teams").select("id, name").in("id", teamIds)
-    : { data: [] as { id: string; name: string }[] };
-  const subById = new Map((subs ?? []).map((s) => [s.id as string, s]));
-  const teamName = new Map((teams ?? []).map((t) => [t.id as string, t.name as string]));
-
-  // Named awards in their own order (Judges' pick first), then custom ones as given.
-  const rank = (t: string) => {
-    const i = NAMED_AWARDS.findIndex((n) => n.type === t);
-    return i === -1 ? NAMED_AWARDS.length : i;
-  };
-  awards.sort((x, y) => rank(x.award_type as string) - rank(y.award_type as string));
-
-  return awards.map((a) => {
-    const s = subById.get(a.submission_id as string);
-    return {
-      id: a.id as string,
-      award_type: a.award_type as Award["award_type"],
-      custom_label: (a.custom_label as string | null) ?? null,
-      citation: (a.citation as string | null) ?? null,
-      project_name: (s?.project_name as string | undefined) ?? null,
-      tagline: (s?.tagline as string | null | undefined) ?? null,
-      team_name: s ? (teamName.get(s.team_id as string) ?? null) : null,
-    };
-  });
-}
-
 async function loadNextSprint(db: SupabaseClient, exceptNumber: number): Promise<SprintLink | null> {
   const { data } = await db
     .from("hackathon_overview")
@@ -373,11 +319,11 @@ export async function loadSprintPage(
   const showsActivity = ["teams_locked", "live", "judging", "revealed"].includes(phase);
   const showsQueue = sprint.state !== "cancelled" && ["registration", "teams_locked", "live"].includes(phase);
 
-  const [viewer, teams, registrants, awards] = await Promise.all([
+  const [viewer, teams, registrants, showcase] = await Promise.all([
     loadViewer(db, sprint.id, userId, opts.isAdmin, opts.isActive),
     showsTeams ? loadTeams(db, sprint, showsActivity) : Promise.resolve([]),
     phase === "registration" ? loadRegistrants(db, sprint.id) : Promise.resolve(null),
-    sprint.state === "revealed" ? loadAwards(db, sprint.id) : Promise.resolve([]),
+    phase === "revealed" ? loadPublicProjects(db, sprint.id) : Promise.resolve([]),
   ]);
 
   const judges = viewer.role === "judge" && (phase === "judging" || phase === "revealed");
@@ -392,5 +338,5 @@ export async function loadSprintPage(
       : Promise.resolve(null),
   ]);
 
-  return { sprint, viewer, teams, registrants, awards, nextSprint, queue, judging };
+  return { sprint, viewer, teams, registrants, showcase, nextSprint, queue, judging };
 }

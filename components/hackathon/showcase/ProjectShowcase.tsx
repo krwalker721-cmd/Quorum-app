@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Markdown from "@/components/Markdown";
 import PersonAvatar from "@/components/ui/PersonAvatar";
 import ui from "@/components/ui/sleek.module.css";
@@ -28,12 +29,15 @@ export default function ProjectShowcase({
   team,
   members,
   sprintNumber,
+  cohortOf,
 }: {
   fields: SubmissionFields;
   screenshotUrls: string[];
   team: ShowcaseTeam;
   members: ShowcasePerson[];
   sprintNumber: number;
+  /** Members only (Phase 10): each builder's cohort name, by person id. */
+  cohortOf?: Record<string, string>;
 }) {
   const embed = videoEmbed(fields.video_url);
   const links = [
@@ -145,7 +149,14 @@ export default function ProjectShowcase({
             {members.map((m) => (
               <div key={m.id} className="flex items-center gap-2">
                 <PersonAvatar name={m.full_name} stage={m.stage} username={m.username} size={28} />
-                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{m.full_name ?? m.username ?? "Founder"}</span>
+                {m.username ? (
+                  <Link href={`/profile/${m.username}`} style={{ fontSize: 13, color: "var(--text-primary)", textDecoration: "none" }}>
+                    {m.full_name ?? m.username}
+                  </Link>
+                ) : (
+                  <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{m.full_name ?? "Founder"}</span>
+                )}
+                {cohortOf?.[m.id] && <span className={ui.chip}>{cohortOf[m.id]}</span>}
               </div>
             ))}
           </div>

@@ -11,7 +11,8 @@ import TeamPanel from "@/components/hackathon/TeamPanel";
 import CheckIn from "@/components/hackathon/CheckIn";
 import QueueLive from "@/components/hackathon/QueueLive";
 import Arena from "@/components/hackathon/Arena";
-import { Awards, GallerySlot } from "@/components/hackathon/RevealGallery";
+import RevealedShowcase from "@/components/hackathon/RevealGallery";
+import { SealWatcher } from "@/components/hackathon/showcase/RevealMoment";
 import {
   RegistrantsTile,
   RulesTile,
@@ -141,7 +142,7 @@ export default async function SprintPage(props: {
 
 /** The part that changes most from state to state. Each block is its own file for later prompts. */
 function MainColumn({ data }: { data: SprintPageData }) {
-  const { sprint, viewer, teams, registrants, awards, queue } = data;
+  const { sprint, viewer, teams, registrants, showcase, queue } = data;
   const myTeam = viewer.teamId;
   const mine = myTeam ? teams.find((t) => t.id === myTeam) : undefined;
   // The pulse is live while teams can still be busy.
@@ -197,6 +198,8 @@ function MainColumn({ data }: { data: SprintPageData }) {
     case "judging":
       return (
         <>
+          {/* Whoever is here when it turns over gets the reveal moment (Phase 10). */}
+          {sprint.state === "judging" && <SealWatcher sprintNumber={sprint.number} />}
           <ThemeTile sprint={sprint} />
           <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="judging" myTeamId={myTeam} />
         </>
@@ -204,8 +207,7 @@ function MainColumn({ data }: { data: SprintPageData }) {
     case "revealed":
       return (
         <>
-          <Awards awards={awards} />
-          <GallerySlot />
+          <RevealedShowcase sprintNumber={sprint.number} revealAt={sprint.reveal_at!} teams={teams} projects={showcase} />
           <ThemeTile sprint={sprint} />
           <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="revealed" myTeamId={myTeam} title="Teams" />
         </>

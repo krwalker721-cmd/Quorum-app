@@ -7,12 +7,13 @@ then check `git log main..feat/hackathon-db` for anything newer.
   The owner decides when to push.
 - **Status (2026-10-03):** Phases 1–8 are built, checked on staging, approved and committed
   locally. Phase 9 (judging, without external judges) is built, checked on staging, approved and
-  committed locally (`bb8c9be`). Next is the owner's Prompt 10.
+  committed locally (`bb8c9be`). Phase 10 (the reveal, gallery, public project and recap pages)
+  is built and checked on staging, waiting for the owner's look.
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
-- **Migrations:** 018–031 are on staging. Production has none of them (it's at 017).
-- **Tests:** 617 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Migrations:** 018–032 are on staging. Production has none of them (it's at 017).
+- **Tests:** 631 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -60,6 +61,7 @@ which project is the target.
 | 6 · Team room | 028 `hackathon_team_member_activity` (team-only), `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/page.tsx` (and `/team` redirects there); `components/hackathon/room/*` (`TeamRoomClient`, `RoomHeader`, `TeamDocs`, `TeamLinks`, `roomError`); shared `components/rooms/*` (`RoomThread`, `RoomVotes`, `RoomItemCard`, `kit.ts`, moved from the Collab room) and `components/editor/RichTextEditor.tsx` (moved from the Vault's `NoteEditor`); `lib/hackathons/room.ts`, `quiet.ts`; admin teams tab "open room ↗" |
 | 7 · Lobby | 029 `hackathons.lobby_welcome`, `hackathon_lobby_messages.system_key`, `hackathon_post_lobby_milestones()`, `hackathon_lobby_welcome()`, `hackathon_lobby_people()`, length/rate limits, moved-milestone withdrawal, moderation logging | `app/(app)/hackathon/[number]/lobby/page.tsx`; `components/hackathon/lobby/LobbyClient.tsx`; `RoomThread` opt-in avatars, tags, milestone banners, actions; `lib/hackathons/lobby.ts`, `lobbyMilestones.ts`; milestones posted from the Sprint page, the lobby page and the timing route; admin Sprint form "welcome note" |
 | 9 · Judging | 031 `hackathons.awards_finalized_at` / `_by`, `hackathon_finalize_awards()`, `hackathon_unfinalize_awards()`, award guard (complete only, after the deadline, locked while finalized), one winner per named award, `citation`, scores on complete submissions only, award changes in `admin_change_log` (area `award`) | `app/(app)/hackathon/[number]/judge/page.tsx`, `judge/[slug]/page.tsx`; `components/hackathon/judging/*` (`ScorePanel`, `ScoringStatus`, `RubricTile`, `AcceptJudgeInvite`); `lib/hackathons/judging.ts`; admin `sprints/Judging.tsx` + `/api/admin/hackathons/[id]/judging`; Sprint page judge callout and finalized awards with citations |
+| 10 · Reveal and showcase | 032 `hackathon_public_sprint()`, `hackathon_public_projects()`, `hackathon_public_sitemap()` (public after the reveal only; first names signed out) | `app/(showcase)/hackathon/[number]/project/[slug]/` and `/recap/` (page + `opengraph-image`), outside the sign-in gate; `components/hackathon/showcase/*` (`RevealMoment` + `SealWatcher`, `AwardsShowcase`, `Gallery`, `ProjectCard`, `ShareButtons`, `PublicShell`, `showcase.module.css`); `RevealGallery.tsx` (members' revealed section); `lib/hackathons/showcase.ts`, `og.tsx`; `app/sitemap.ts` (dynamic); archive recap links |
 | 8 · Submission | 030 drafts: `project_name` optional; `is_complete`, `completed_at`, `last_edited_by` set by the guard; drafts sealed for good; pulse and `get_team_activity` count complete only; submissions in realtime | `app/(app)/hackathon/[number]/team/[slug]/submission/page.tsx`; `components/hackathon/submission/*` (`SubmissionForm`, `Screenshots`, `TagInput`, `DeadlineWarning`); `components/hackathon/showcase/ProjectShowcase.tsx` (for Prompt 10); `lib/hackathons/submission.ts`; `components/Markdown.tsx` (links, numbered lists) |
 
 **Refactors outside the Hackathon tab (owner-approved, Phase 6):** the Collab room
@@ -69,9 +71,9 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 (`e2e386b`, decision 53).
 
 **Waiting on the owner**
-- The next prompt: the reveal gallery and public pages (Prompt 10/11), then notifications
-  (Prompt 12); external-judge accounts for Sprint #2 (decision 14).
-- Paste 018–031 into production before any deploy that needs them (section 7).
+- A look at Phase 10 (section 5i), then the commit. Next: notifications (Prompt 12);
+  external-judge accounts for Sprint #2 (decision 14).
+- Paste 018–032 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
 - Optionally: sign the production session out of the browser pane.
@@ -219,7 +221,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–031** |
+| Migrations applied | up to **017** | **018–032** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -366,7 +368,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-03, Phase 9):** all 617 tests pass locally and on staging.
+- **Last run (2026-10-03, Phase 10):** all 631 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -1103,6 +1105,96 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 
 ---
 
+## 5i. Phase 10: the reveal, the gallery, public project and recap pages (migration 032)
+
+### What the owner decided
+- **Teams without a project: option C.** The members' Sprint page names them gently at the end of
+  the gallery ("Also in the Sprint: Comets, who shipped learnings, not a project"); the public recap
+  and project pages leave them out. A team with an unfinished draft reads the same as one that never
+  started.
+- The rest of the plan as proposed: public pages in their own route group with the landing page's
+  look; members get the same pages plus profile links and cohort names; the reveal moment for
+  whoever was watching, with `?reveal=replay`.
+
+### Database: `032_hackathon_showcase.sql`
+- Signed-out visitors couldn't read teams, members or profiles (the arena's audience only). Instead of
+  opening those tables, three narrow SECURITY DEFINER functions, callable signed out:
+  - `hackathon_public_sprint(number)`: title, tagline, theme, times, and the recap numbers (teams,
+    builders, cohorts represented as a count, projects shipped).
+  - `hackathon_public_projects(sprint)`: complete submissions with their team; builders as **first
+    name only** unless the caller is an approved member (then also id, full name, username, stage).
+  - `hackathon_public_sitemap()`: revealed Sprints and their project slugs.
+- Each answers only for a published Sprint **revealed on its own clock** (`private.is_revealed`, the
+  same test as the submissions' read policy), so a Sprint paused or cancelled before its reveal stays
+  sealed. Drafts never appear. Awards keep 031's rule (revealed and finalized).
+- **Tests:** 14 new (**631**). Deliberate breaks caught: projects before the reveal, drafts in the
+  showcase, full names signed out, "revealed" from the deadline.
+
+### App
+- **Public pages** (`app/(showcase)/…`, outside `app/(app)`'s sign-in redirect; 404 before the reveal):
+  - `/hackathon/[n]/project/[slug]`: award badges with citations, the Phase 8 `ProjectShowcase`
+    (every screenshot, signed URLs made by whoever is viewing; the storage policy allows it after the
+    reveal), share buttons (copy link, X, LinkedIn, always the quorumhq.co URL), "More from Sprint #N"
+    (three other projects), and for signed-out visitors the call to action "Built in 48 hours at a
+    Quorum Sprint… Want in on the next one?" → `/`.
+  - `/hackathon/[n]/recap`: headline, tagline, date and theme; the numbers (a zero cohort count is
+    hidden); awards; "Everything that shipped" (the gallery); share; the call to action signed out.
+  - Frame (`PublicShell`): the landing page's header and a still glow. Signed out: "log in" and "Join
+    Quorum →". Members: "← Sprint #N" back into the app.
+  - Members also get profile links on names and avatars, and cohort chips (`hackathon_arena_cohorts`).
+- **Members' Sprint page after the reveal** (`RevealGallery.tsx`, replacing the placeholder): the
+  reveal moment, then an "Awards" tile, then "Everything that shipped" with "Public recap ↗" and the
+  gentle line.
+- **Awards** (`AwardsShowcase`): Judges' pick first; each with the winning project's screenshot (or
+  the team colour and emblem), name, tagline, citation, team and builders.
+- **Gallery** (`Gallery`, `ProjectCard`): cards with the first screenshot, name, tagline, up to 4 tags,
+  team, award badges; filters All · Award winners · tags (most used first, "+N more"). Winners first.
+- **The reveal moment** (`RevealMoment`): `SealWatcher` marks the browser session while the Sprint is
+  judging; when the page turns to revealed (the existing `SprintAutoRefresh`), within 10 minutes of
+  `reveal_at`, it plays once: sealed team cards, wax seals cracking one by one, each card turning over
+  into its project (teams without one go quiet), "Here's what everyone built", then the awards and
+  gallery fade in. About 3.5 s, "Skip", nothing under `prefers-reduced-motion` (a plain "The results
+  are in" line). `?reveal=replay` replays it. CSS only.
+- **Link previews** (`lib/hackathons/og.tsx`, `opengraph-image.tsx` per page): the site card's style;
+  project: award pill, name, tagline, team initial in its colour, first names, "Built in 48h at Quorum
+  Sprint #N"; recap: title, the numbers, up to three winners. Signed-out data only; before the reveal,
+  the plain "48-hour Sprints" card. Screenshots aren't drawn (WebP isn't supported by the renderer),
+  and emblems are drawn as the team's initial (the glyphs aren't in its font). Per-page titles,
+  descriptions, canonical URLs and `summary_large_image`.
+- **Sitemap** (`app/sitemap.ts`): re-read hourly; each revealed Sprint with at least one project adds
+  its recap and project pages. **Archive:** "Public recap ↗" per revealed Sprint.
+- `ProjectShowcase` gained optional cohort chips, and names link to profiles when a username is given
+  (members only; the submission preview now links names too).
+
+### Checked on staging (2026-10-03)
+- **Signed out** (curl, no cookies): #8's recap and project pages 200; judging #7 and live #6 → 404;
+  the members' Sprint page → /login. The HTML has first names only (no surnames, no `/profile/` links,
+  no cohort names), the call to action, the share links and the citation. Titles, canonicals,
+  `og:*` and `twitter:card` correct.
+- **Link previews** rendered and looked at: #8's project card (award pill, first names), the recap card,
+  and #7's (not yet revealed) falling back to the plain card.
+- **Signed in:** recap and project pages with full names and profile links, no call to action;
+  filters (openai → Standup Bot only; Award winners; All). At 280 px and 375 px no sideways scroll
+  (fixed on the way: grids' minimum widths now `min(…, 100%)`).
+- **The live reveal** on #6 (moved to judging with the reveal 75 s out, page open): the page turned
+  ~4.7 s after `reveal_at` (Phase 3's refresh and retry), went straight into the stage with no flash,
+  cracked both seals, turned Rockets into NightDesk, quieted Comets, and settled into the gallery with
+  "Also in the Sprint: Comets, who shipped learnings, not a project." The draft's title appears
+  nowhere. Signed out, #6's recap shows NightDesk and no Comets; Comets' project page is a 404.
+- **Found and fixed:** the first live run stuck on an invisible stage (moving to "leaving" cleared the
+  timer that ends it); a stray zero "cohorts" stat (staging members have no cohorts); recaps with
+  nothing shipped listed in the sitemap.
+- **og:image host:** in development Next always uses localhost for file-based images; in production
+  it uses `metadataBase` (quorumhq.co), on a Vercel preview the preview URL (checked in Next's
+  `resolve-url.js`).
+- **Not checked:** pasting a link into X, LinkedIn and iMessage (needs a public URL: check after
+  deploy, or on a Vercel preview, with each site's card validator); `prefers-reduced-motion` in the
+  browser (the pane can't emulate it; the code path is a media query and a `matchMedia` check).
+- Staging data: #8's two projects got one PNG screenshot each and new tags (a check script; logged in
+  the after-deadline audit).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1178,27 +1270,36 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 | 69 | Judges get collaboration signals as counts (builders, messages, docs, links), never room content. | `get_team_activity` already serves judges; rooms stay sealed. |
 | 70 | Each judge sees the projects in their own fixed order. | Spreads first-look and tired-judge bias. |
 | 71 | `awards_finalized_at` is readable by anyone; `awards_finalized_by` isn't. | Admins can read every award; the page needs to know whether to show them so admins see what the public sees. |
+| 72 | Teams without a complete project are named gently on the members' Sprint page only; the public recap and project pages omit them. | Owner chose option C at the Phase 10 plan. |
+| 73 | The public showcase is served by three narrow functions (032), not by opening teams, members or profiles to signed-out reads. | Keeps the arena's tables limited to its audience; the functions give exactly the showcase. |
+| 74 | Signed out (and for unapproved accounts), builders are first names only; approved members also get full names, usernames and stages. | Brief: "team first names/avatars" for the public; members can read profiles anyway. |
+| 75 | The public pages live in their own route group with the landing look, for members too (plus profile links, cohorts and a way back). | One shareable URL must work for everyone; the app's layout redirects signed-out visitors. |
+| 76 | The reveal moment plays for whoever had the sealed page open, once, within 10 minutes of the reveal; `?reveal=replay` replays it. | "Anyone on the page as the countdown hits zero"; everything on the stage is already public. |
+| 77 | Link previews are type-only (no screenshots) and draw emblems as the team's initial. | The OG renderer can't draw WebP, and its font lacks the emblem glyphs. |
+| 78 | The sitemap re-reads revealed Sprints hourly and leaves out recaps with nothing shipped. | New reveals reach search without a deploy; an empty recap isn't worth indexing. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 031** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 032** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
       027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
       notes or sleep, without 029 the lobby page fails to load (it reads `system_key`), without 030 the
-      submission page and team room fail (they read `is_complete`), and without 031 the admin
-      judging tab fails and revealed Sprints show no awards (the page reads `awards_finalized_at`).
+      submission page and team room fail (they read `is_complete`), without 031 the admin
+      judging tab fails and revealed Sprints show no awards (the page reads `awards_finalized_at`),
+      and without 032 the recap and project pages are 404s and the revealed Sprint page has no
+      gallery (the sitemap just lists the static pages).
+- [ ] After the first deploy with a revealed Sprint: paste a project and a recap link into X,
+      LinkedIn (Post Inspector) and iMessage to confirm the previews.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
       to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- Public project pages (Prompt 10/11): reuse `ProjectShowcase`; screenshots need signed URLs.
-- **Prompt 10:** the reveal gallery (replace `GallerySlot` in `components/hackathon/RevealGallery.tsx`).
 - **Sprint #2 (deferred from Phase 9):** external judge accounts. Link `invite_email` judges to
   accounts, and build decision 14 (judge-only accounts never counted as founding seats and never
   placed in a cohort). The admin Judges tab's email invite stores the address and says judges
@@ -1244,7 +1345,8 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 - `min_team_size` is stored but not enforced; the matcher can make a team of 2 from leftovers.
 - The admin console's matcher summary and check-in highlight haven't been checked in the browser
   (they need the admin code).
-- Public project pages must show screenshots through **signed URLs** (the bucket is private).
+- Public pages show screenshots through **signed URLs** good for six hours (the bucket is private), so a
+  page left open longer shows broken images until reloaded.
 - The `hackathons` table is deliberately **not** in realtime (column grants). Pause and resume
   reach people through lobby system messages.
 - The Collab RLS gaps above: reported, not fixed; the owner hasn't decided.
