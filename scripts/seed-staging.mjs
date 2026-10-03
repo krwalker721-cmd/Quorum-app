@@ -4,7 +4,7 @@
 //
 //   node scripts/seed-staging.mjs
 //
-// Creates, if missing: test members member-1 … member-6 @quorum.test (approved,
+// Creates, if missing: test members member-1 … member-8 @quorum.test (approved,
 // on a trial), a published Sprint "UI test" that is open for registration, all
 // six registered, a team "Alpha" with two of them, and a few lobby messages.
 // Safe to run again. Refuses to run against production.
@@ -42,7 +42,9 @@ const must = ({ data, error }, what) => {
   return data;
 };
 
-const NAMES = ["Maya Chen", "Leo Okafor", "Priya Nair", "Sam Ortiz", "Jonah Weiss", "Ava Laurent"];
+// Members 7 and 8 (Phase 9) are a third team and a second judge in the
+// judging Sprint (seed-staging-sprints.mjs).
+const NAMES = ["Maya Chen", "Leo Okafor", "Priya Nair", "Sam Ortiz", "Jonah Weiss", "Ava Laurent", "Noor Haddad", "Theo Brandt"];
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
@@ -100,7 +102,12 @@ if (!sprint) {
 }
 console.log(`  Sprint "UI test" (${sprint.id})`);
 
+// Anyone made a judge of this Sprint in an admin check can't be registered
+// (judges can't compete, 018), so they're left as judges.
+const { data: judgeRows } = await db.from("hackathon_judges").select("user_id").eq("hackathon_id", sprint.id);
+const judgeIds = new Set((judgeRows ?? []).map((j) => j.user_id));
 for (const [i, id] of ids.entries()) {
+  if (judgeIds.has(id)) continue;
   must(
     await db
       .from("hackathon_registrations")

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SPRINT_COLUMNS, type SprintRow } from "@/lib/hackathons/sprint";
+import { NAMED_AWARDS, loadJudgeQueue, type AwardType } from "@/lib/hackathons/judging";
 
 // Everything the Sprint page reads, through the signed-in member's own client,
 // so RLS decides what comes back: a spectator gets the teams but never a team
@@ -56,8 +57,10 @@ export type Registrant = ArenaPerson & { registered_at: string };
 
 export type Award = {
   id: string;
-  award_type: "judges_pick" | "most_shipped" | "best_collaboration" | "most_likely_to_become_real" | "custom";
+  award_type: AwardType;
   custom_label: string | null;
+  /** One line on why it won (migration 031). */
+  citation: string | null;
   project_name: string | null;
   tagline: string | null;
   team_name: string | null;
@@ -99,6 +102,8 @@ export type SprintPageData = {
   nextSprint: SprintLink | null;
   /** From registration through the live Sprint; null otherwise. */
   queue: QueueData | null;
+  /** An accepted judge's progress, once submissions close; null otherwise. */
+  judging: { scored: number; total: number } | null;
 };
 
 export async function loadSprint(db: SupabaseClient, number: number): Promise<SprintRow | null> {
@@ -295,10 +300,15 @@ async function loadQueue(
   };
 }
 
+// Awards show once they're finalized (031). RLS already hides unfinalized
+// ones from everyone but admins; checking here too means an admin sees the
+// page as the public does.
 async function loadAwards(db: SupabaseClient, sprintId: string): Promise<Award[]> {
+  const { data: final } = await db.from("hackathons").select("awards_finalized_at").eq("id", sprintId).maybeSingle();
+  if (!final?.awards_finalized_at) return [];
   const { data: awards } = await db
     .from("hackathon_awards")
-    .select("id, award_type, custom_label, submission_id, created_at")
+    .select("id, award_type, custom_label, citation, submission_id, created_at")
     .eq("hackathon_id", sprintId)
     .order("created_at");
   if (!awards || awards.length === 0) return [];
@@ -315,12 +325,20 @@ async function loadAwards(db: SupabaseClient, sprintId: string): Promise<Award[]
   const subById = new Map((subs ?? []).map((s) => [s.id as string, s]));
   const teamName = new Map((teams ?? []).map((t) => [t.id as string, t.name as string]));
 
+  // Named awards in their own order (Judges' pick first), then custom ones as given.
+  const rank = (t: string) => {
+    const i = NAMED_AWARDS.findIndex((n) => n.type === t);
+    return i === -1 ? NAMED_AWARDS.length : i;
+  };
+  awards.sort((x, y) => rank(x.award_type as string) - rank(y.award_type as string));
+
   return awards.map((a) => {
     const s = subById.get(a.submission_id as string);
     return {
       id: a.id as string,
       award_type: a.award_type as Award["award_type"],
       custom_label: (a.custom_label as string | null) ?? null,
+      citation: (a.citation as string | null) ?? null,
       project_name: (s?.project_name as string | undefined) ?? null,
       tagline: (s?.tagline as string | null | undefined) ?? null,
       team_name: s ? (teamName.get(s.team_id as string) ?? null) : null,
@@ -362,10 +380,17 @@ export async function loadSprintPage(
     sprint.state === "revealed" ? loadAwards(db, sprint.id) : Promise.resolve([]),
   ]);
 
-  const [nextSprint, queue] = await Promise.all([
+  const judges = viewer.role === "judge" && (phase === "judging" || phase === "revealed");
+  const [nextSprint, queue, judging] = await Promise.all([
     viewer.role === "spectator" || viewer.role === "outsider" ? loadNextSprint(db, sprint.number) : Promise.resolve(null),
     showsQueue ? loadQueue(db, sprint, viewer, teams) : Promise.resolve(null),
+    judges
+      ? loadJudgeQueue(db, sprint.id, userId).then(({ projects, scores }) => ({
+          scored: projects.filter((p) => scores.has(p.id)).length,
+          total: projects.length,
+        }))
+      : Promise.resolve(null),
   ]);
 
-  return { sprint, viewer, teams, registrants, awards, nextSprint, queue };
+  return { sprint, viewer, teams, registrants, awards, nextSprint, queue, judging };
 }

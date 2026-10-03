@@ -6,12 +6,13 @@ then check `git log main..feat/hackathon-db` for anything newer.
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
 - **Status (2026-10-03):** Phases 1–8 are built, checked on staging, approved and committed
-  locally. Next is the owner's Phase 9 prompt.
+  locally. Phase 9 (judging, without external judges) is built and checked on staging, waiting
+  for the owner's look.
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
-- **Migrations:** 018–030 are on staging. Production has none of them (it's at 017).
-- **Tests:** 560 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Migrations:** 018–031 are on staging. Production has none of them (it's at 017).
+- **Tests:** 617 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -58,6 +59,7 @@ which project is the target.
 | 5 · Arena | 027 `hackathon_team_pulse` (+ triggers, realtime), `hackathon_arena_cohorts()` | `components/hackathon/Arena.tsx`, `arena.module.css`; `realtimeDb()` in `lib/hackathons/actions.ts`; `CountdownStrip.tsx` (row cap); `scripts/simulate-sprint-activity.mjs`; `db.sh staging:seed-spectator` |
 | 6 · Team room | 028 `hackathon_team_member_activity` (team-only), `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/page.tsx` (and `/team` redirects there); `components/hackathon/room/*` (`TeamRoomClient`, `RoomHeader`, `TeamDocs`, `TeamLinks`, `roomError`); shared `components/rooms/*` (`RoomThread`, `RoomVotes`, `RoomItemCard`, `kit.ts`, moved from the Collab room) and `components/editor/RichTextEditor.tsx` (moved from the Vault's `NoteEditor`); `lib/hackathons/room.ts`, `quiet.ts`; admin teams tab "open room ↗" |
 | 7 · Lobby | 029 `hackathons.lobby_welcome`, `hackathon_lobby_messages.system_key`, `hackathon_post_lobby_milestones()`, `hackathon_lobby_welcome()`, `hackathon_lobby_people()`, length/rate limits, moved-milestone withdrawal, moderation logging | `app/(app)/hackathon/[number]/lobby/page.tsx`; `components/hackathon/lobby/LobbyClient.tsx`; `RoomThread` opt-in avatars, tags, milestone banners, actions; `lib/hackathons/lobby.ts`, `lobbyMilestones.ts`; milestones posted from the Sprint page, the lobby page and the timing route; admin Sprint form "welcome note" |
+| 9 · Judging | 031 `hackathons.awards_finalized_at` / `_by`, `hackathon_finalize_awards()`, `hackathon_unfinalize_awards()`, award guard (complete only, after the deadline, locked while finalized), one winner per named award, `citation`, scores on complete submissions only, award changes in `admin_change_log` (area `award`) | `app/(app)/hackathon/[number]/judge/page.tsx`, `judge/[slug]/page.tsx`; `components/hackathon/judging/*` (`ScorePanel`, `ScoringStatus`, `RubricTile`, `AcceptJudgeInvite`); `lib/hackathons/judging.ts`; admin `sprints/Judging.tsx` + `/api/admin/hackathons/[id]/judging`; Sprint page judge callout and finalized awards with citations |
 | 8 · Submission | 030 drafts: `project_name` optional; `is_complete`, `completed_at`, `last_edited_by` set by the guard; drafts sealed for good; pulse and `get_team_activity` count complete only; submissions in realtime | `app/(app)/hackathon/[number]/team/[slug]/submission/page.tsx`; `components/hackathon/submission/*` (`SubmissionForm`, `Screenshots`, `TagInput`, `DeadlineWarning`); `components/hackathon/showcase/ProjectShowcase.tsx` (for Prompt 10); `lib/hackathons/submission.ts`; `components/Markdown.tsx` (links, numbered lists) |
 
 **Refactors outside the Hackathon tab (owner-approved, Phase 6):** the Collab room
@@ -67,17 +69,27 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 (`e2e386b`, decision 53).
 
 **Waiting on the owner**
-- The Phase 9 prompt. By the plan it's judging, with accounts for judges from outside Quorum
-  (decision 14); then the reveal gallery and public pages (Prompt 10/11) and notifications
-  (Prompt 12).
-- Paste 018–030 into production before any deploy that needs them (section 7).
+- A look at Phase 9 (section 5h), then the commit. Next prompts: the reveal gallery and public
+  pages (Prompt 10/11), notifications (Prompt 12); external-judge accounts for Sprint #2
+  (decision 14).
+- Paste 018–031 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
 - Optionally: sign the production session out of the browser pane.
 
-**Staging test data, as left on 2026-10-03**
-- The seed was re-run last, so #3–#11 are each in their state (#6 live) as of 2026-10-02 22:30 EDT;
-  times drift, so re-run it.
+**Staging test data, as left on 2026-10-03 (after Phase 9)**
+- The seed was re-run last (10:20 EDT), so #3–#11 are each in their state; times drift, so re-run it.
+- Two more test members: member-7 Noor Haddad (team Meteors in #7) and member-8 Theo Brandt (a
+  judge of #7, played by a scratchpad script).
+- Sprint #7 (judging): three complete submissions (Nightshift, Standup Bot, Pitch Doctor). The
+  test admin scored Standup Bot; Theo scored all three. Five awards given (Judges' pick and Most
+  shipped → Nightshift, with a citation on Judges' pick; Best collaboration → Standup Bot; Most
+  likely to become real and the custom "Boldest solo build" → Pitch Doctor), currently
+  **reopened** (not finalized), so the owner can try finalizing.
+- Sprint #8 (revealed): awards finalized; Judges' pick has the citation "Shipped a working timer in
+  48 hours." The seed now finalizes #8's awards on every run.
+- #2 "UI test": one test member is a judge there from an earlier admin check, so the member seed
+  skips registering them.
 - Sprint #4 (registration): the test admin is on Rockets; Test Crew has Sam plus a pending invite
   to Priya.
 - Sprint #6, Rockets: a complete submission "NightDesk" (one WebP screenshot, a Markdown
@@ -208,7 +220,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–030** |
+| Migrations applied | up to **017** | **018–031** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -355,7 +367,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-02, Phase 8):** all 560 tests pass locally and on staging.
+- **Last run (2026-10-03, Phase 9):** all 617 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -1002,6 +1014,96 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 
 ---
 
+## 5h. Phase 9: judging, scores, results and awards (migration 031)
+
+### What the owner decided
+- **Sprint #1's judges are existing members** (the owner and one other). The external-judge
+  account flow (item 1 of the Phase 9 prompt, decision 14) is skipped, and nothing here blocks it:
+  every judging path keys on `hackathon_judges.user_id` + `accepted_at`, and nothing asks for a
+  paid membership.
+- **Judges see team names and members** (not blind): the showcase is what the public sees.
+- **One winner per named award**; custom awards unlimited. A project may hold several (the board
+  warns).
+- The Phase 9 prompt text itself never arrived in the session; the plan was built from the brief
+  and the owner's four named pieces (judging view, scoring, admin results, finalizing awards) and
+  approved as written.
+
+### Database: `031_hackathon_judging.sql`
+- **Finalizing:** `hackathons.awards_finalized_at` (readable by anyone) and `awards_finalized_by`
+  (not granted). `hackathon_finalize_awards(id)` (only once submissions close, not when cancelled,
+  idempotent) and `hackathon_unfinalize_awards(id)`, service role only. Both land in
+  `admin_change_log` through the existing `hackathons` trigger.
+- **Who sees awards:** revealed (on the Sprint's clock) **and** finalized, or an admin. Reopening
+  after the reveal hides them again until finalized.
+- **Award guard** (`private.hackathon_awards_guard`): a complete submission only; only from the
+  deadline; no insert, edit or delete while finalized, even from the SQL editor. Deleting the
+  Sprint or the submission still cascades. Trims `custom_label` and the new `citation` (≤ 280).
+- **One winner per named award:** partial unique index `hackathon_awards_one_winner`.
+- **Scores:** a judge can't score a draft (`private.submission_is_complete`, looked up past RLS so
+  a non-judge still gets row-level security's refusal); notes are trimmed and blank notes stored
+  as none.
+- **Change log:** award inserts, edits and removals are written with area `award`
+  ("Judges' pick → Nightshift (team Rockets) (Sprint #7)"), naming the admin and the note.
+- **Backfill:** Sprints already revealed with awards were marked finalized at their reveal time
+  (staging only), with the change-log trigger off.
+- **Tests:** 57 new (**617**); the old "awards public at the reveal" check now finalizes first.
+  Deliberate breaks caught: unfinalized awards readable at the reveal, awards on drafts, scoring a
+  draft, editing while finalized.
+
+### App
+- **`/hackathon/[n]/judge`** (accepted judges only; an invited judge is sent back with "Accept
+  your invitation first", anyone else with "Judging is for this Sprint's judges"):
+  - Status tile on the server clock: "Scoring opens in…", "Scoring closes in…" with progress and
+    "Start judging" / "Next to score", "Scoring is closed", paused, cancelled.
+  - The projects: complete submissions only, in **each judge's own fixed order** (a hash of judge
+    and submission), Scored ✓ with the judge's own overall, or "Not scored".
+  - The rubric beside it.
+- **`/hackathon/[n]/judge/[slug]`:** the Phase 8 `ProjectShowcase` (screenshots via signed URLs
+  made as the judge) beside the **score panel**:
+  - Four rubric rows of 1–5 (radio buttons, words at each end); saves once all four are picked,
+    notes a second after typing stops; "Saved" / the database's own message.
+  - Locks at `judging_ends_at` on the server clock without a reload (it isn't a phase boundary;
+    `SprintAutoRefresh` picks up a moved time within 30 s).
+  - "How the team worked": builders, messages, docs, links, from `get_team_activity` (counts only).
+  - Previous / "Next to score →" (the next one not yet scored).
+- **Sprint page:** judges get "Submissions are in. You've scored N of M." and "Start judging" /
+  "Keep judging"; an invited judge gets **Accept and judge** (`hackathon_accept_judge_invite`).
+  Awards show only once finalized (checked even for admins), Judges' pick first, with citations.
+- **Admin console, Sprint → "judging" tab** (`/api/admin/hackathons/[id]/judging`):
+  - Where things stand: scoring window, reveal time, finalized (when, by whom) or not, a red
+    warning when the reveal is under a day away (or past) and nothing is finalized.
+  - Judges: "scored N of M", "hasn't accepted yet", "email invite · no account yet".
+  - Results (admins only): every complete submission's average per criterion, overall, number of
+    judges and spread; sortable; a row opens each judge's scores and notes and "open submission ↗".
+  - Award board: each named award with its top 3 by the matching average (overall, shipped,
+    collaboration, potential), "give" / "make winner", "or pick any project", citation, remove;
+    custom awards with a form. Warns when a project would get a second award.
+  - **Finalize awards** (confirm lists unfinished judges, unscored projects, empty awards, and
+    whether scoring is still open) and **reopen awards** (warns if already revealed). Locked board
+    while finalized.
+
+### Checked on staging (2026-10-03), as the test admin
+- **Judge view on #7:** three projects, "0 of 3 scored", countdown. Scored Standup Bot: saved on the
+  fourth pick, notes autosaved; the database row matches exactly.
+- **Hard close:** moved `judging_ends_at` 45 s ahead with the panel open; with no reload it said
+  "Scoring is closed", and all 20 buttons and the notes locked. The list agreed.
+- **Access:** #6 (a participant there) → back to the Sprint page with the note; no sealed text.
+  Invited to #5: "Accept and judge" → "You're judging this Sprint" (invite removed afterwards).
+- **Admin tab** (owner entered the admin code): averages correct (two judges on Standup Bot:
+  3.5 / 3.5 / 5.0 / 3.5, overall 3.9, spread 0.3); gave all four named awards (the double-award
+  confirm fired) plus a custom one; citation saved; finalize confirm listed both warnings; board
+  locked; change log has every step with its note.
+- **Reveal:** moved #7's reveal 40 s ahead with its page open; it flipped to revealed and showed all
+  five awards in order with the citation. Signed out: 5 awards, 0 scores.
+- **Reopen on #8 (revealed):** an edit while finalized was refused; reopening hid the awards from a
+  signed-out read and from the admin's own page; finalizing again showed the new citation.
+- Fixed on the way: the "Not scored" chip's style, award order on the reveal, a React key warning
+  in the results table, the member seed's re-registration of a judge.
+- **Not checked in the browser:** two real judges at once (Theo was a script); the admin tab at
+  phone width (the table scrolls sideways inside its card, like the other admin tables).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1070,30 +1172,38 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 | 62 | Teammates' edits merge by field; same field at once, last save wins. | Owner, at the Phase 8 plan. |
 | 63 | The description is Markdown through the app's own renderer, extended with links (http/https only) and numbered lists. | Owner: no new library. |
 | 64 | Screenshots are shrunk in the browser with a canvas (≤ 1920 px, WebP or JPEG, < 5 MB). | Brief asks for client-side compression; no library. |
+| 65 | Sprint #1's judges are existing members; the external-judge account flow waits for Sprint #2. Judging never requires a paid membership and keys only on `hackathon_judges.user_id` + `accepted_at`. | Owner, Phase 9 prompt. Keeps decision 14 buildable later. |
+| 66 | Awards are public only once the Sprint is revealed **and** the awards are finalized; finalizing locks them, reopening unlocks (and hides them again after the reveal). | A half-made list must never leak at the reveal. Owner OK'd. |
+| 67 | One winner per named award; custom awards unlimited; a project may hold several, with a warning. | Owner chose one winner at the Phase 9 plan. |
+| 68 | Judges see team names and members (no blind judging). | Owner, at the Phase 9 plan; the showcase is the public view. |
+| 69 | Judges get collaboration signals as counts (builders, messages, docs, links), never room content. | `get_team_activity` already serves judges; rooms stay sealed. |
+| 70 | Each judge sees the projects in their own fixed order. | Spreads first-look and tired-judge bias. |
+| 71 | `awards_finalized_at` is readable by anyone; `awards_finalized_by` isn't. | Admins can read every award; the page needs to know whether to show them so admins see what the public sees. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 030** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 031** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
       027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
-      notes or sleep, without 029 the lobby page fails to load (it reads `system_key`), and without 030 the
-      submission page and team room fail (they read `is_complete`).
+      notes or sleep, without 029 the lobby page fails to load (it reads `system_key`), without 030 the
+      submission page and team room fail (they read `is_complete`), and without 031 the admin
+      judging tab fails and revealed Sprints show no awards (the page reads `awards_finalized_at`).
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
       to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- Judging (Prompt 9): judges read complete submissions only (030); the scores table and its
-  window exist (020).
 - Public project pages (Prompt 10/11): reuse `ProjectShowcase`; screenshots need signed URLs.
 - **Prompt 10:** the reveal gallery (replace `GallerySlot` in `components/hackathon/RevealGallery.tsx`).
-- **Prompt 9:** external judge accounts. Link `invite_email` judges to accounts, and build decision
-  14 (judge-only accounts never counted as founding seats and never placed in a cohort).
+- **Sprint #2 (deferred from Phase 9):** external judge accounts. Link `invite_email` judges to
+  accounts, and build decision 14 (judge-only accounts never counted as founding seats and never
+  placed in a cohort). The admin Judges tab's email invite stores the address and says judges
+  must be existing members until then.
 
 **Known gaps and ideas, not yet built:**
 - **From Phases 6–8, not built or not checked:**
@@ -1122,8 +1232,10 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
   The Collab ones need the owner's approval to change.
 - Staging's cohorts are auto-named (e.g. "cohort_1790441332626"), so cohort chips look raw there;
   real cohort names will read better.
-- Invited judges see a note on the Sprint page but can't accept yet (`hackathon_accept_judge_invite`
-  exists; the button comes with the judging tools).
+- **From Phase 9, not built:** judges can't decline an invitation (only admins remove them);
+  nothing tells judges when scoring opens (Prompt 12); finalizing early doesn't stop judges
+  changing scores until `judging_ends_at` (the confirm says so); the results "spread" is between
+  judges' overall scores only.
 - Resuming a paused Sprint doesn't bring the nav's LIVE label back until the next page load
   (the open Sprint page itself updates within 30 s).
 - Emails: nothing sends Sprint emails yet ("scheduled emails follow the Sprint's times" is a

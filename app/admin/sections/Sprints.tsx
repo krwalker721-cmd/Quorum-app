@@ -10,6 +10,7 @@ import SprintControls from "./sprints/SprintControls";
 import Participants from "./sprints/Participants";
 import Teams from "./sprints/Teams";
 import Judges from "./sprints/Judges";
+import Judging from "./sprints/Judging";
 import Lobby from "./sprints/Lobby";
 import ChangeLog from "./sprints/ChangeLog";
 import type { SprintDetail, SprintRow } from "./sprints/types";
@@ -113,7 +114,7 @@ function SprintList({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: ()
   );
 }
 
-const TABS = ["settings", "participants", "teams", "judges", "lobby", "log"] as const;
+const TABS = ["settings", "participants", "teams", "judges", "judging", "lobby", "log"] as const;
 type Tab = (typeof TABS)[number];
 
 function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
@@ -201,6 +202,7 @@ function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }
       {tab === "participants" && <Participants sprintId={id} participants={detail.participants} startsAt={detail.sprint.starts_at} onChanged={load} />}
       {tab === "teams" && <Teams sprintId={id} sprintNumber={s.number} teams={detail.teams} participants={detail.participants} onChanged={load} />}
       {tab === "judges" && <Judges sprintId={id} judges={detail.judges} onChanged={load} />}
+      {tab === "judging" && <Judging sprintId={id} />}
       {tab === "lobby" && <Lobby sprintId={id} messages={detail.lobby} onChanged={load} />}
       {tab === "log" && <ChangeLog entries={detail.log} />}
     </div>

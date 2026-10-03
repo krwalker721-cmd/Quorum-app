@@ -7,6 +7,7 @@ import { MILESTONES, labelFor } from "@/lib/hackathons/timeline";
 import { STATE_LABEL, type SprintRow } from "@/lib/hackathons/sprint";
 import type { Registrant, SprintPageData } from "@/lib/hackathons/page";
 import LocalTime from "./LocalTime";
+import AcceptJudgeInvite from "./judging/AcceptJudgeInvite";
 
 // The Sprint page's building blocks that don't belong to a later prompt. The
 // join queue (Prompt 4), the arena (Prompt 5) and the reveal gallery (Prompt
@@ -176,7 +177,7 @@ export function RulesTile({ sprint }: { sprint: SprintRow }) {
  * team room and the lobby, judges the lobby, spectators a way in.
  */
 export function ViewerCallout({ data }: { data: SprintPageData }) {
-  const { sprint, viewer, nextSprint } = data;
+  const { sprint, viewer, nextSprint, judging } = data;
   const n = sprint.number;
   const phase = sprint.phase;
   const over = sprint.state === "cancelled";
@@ -187,6 +188,7 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
   let title: string;
   let body: React.ReactNode = null;
   let links: { href: string; label: string; primary?: boolean }[] = [];
+  let action: React.ReactNode = null;
 
   switch (viewer.role) {
     case "participant":
@@ -210,19 +212,34 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
                 : "Thanks for building.";
       links = [...(room ? [{ ...room, primary: phase === "live" }] : []), lobby];
       break;
-    case "judge":
+    case "judge": {
       title = "You're judging this Sprint";
-      body =
-        phase === "judging"
-          ? "Submissions are in. Scoring is open until judging ends."
-          : phase === "revealed"
-            ? "Judging is done. Thank you."
-            : "Scoring opens at the submission deadline.";
-      links = [lobby];
+      const progress = judging && judging.total > 0 ? ` You've scored ${judging.scored} of ${judging.total}.` : "";
+      body = over
+        ? "It was cancelled, so there's nothing to judge."
+        : sprint.state === "paused"
+          ? "It's paused, so scoring is frozen until it resumes."
+          : phase === "judging"
+            ? judging && judging.total === 0
+              ? "Submissions are closed, and no team finished one."
+              : "Submissions are in." + progress
+            : phase === "revealed"
+              ? "Judging is done. Thank you." + progress
+              : "Scoring opens at the submission deadline. The projects appear in your judging view then.";
+      const judgeLink = {
+        href: `/hackathon/${n}/judge`,
+        label: phase === "judging" && judging && judging.scored < judging.total ? (judging.scored === 0 ? "Start judging" : "Keep judging") : "Judging",
+        primary: phase === "judging" && !over && sprint.state !== "paused",
+      };
+      links = [judgeLink, lobby];
       break;
+    }
     case "invited_judge":
       title = "You're invited to judge this Sprint";
-      body = "Accepting the invitation arrives with the judging tools.";
+      body = over
+        ? "It was cancelled."
+        : "Judges score the finished projects with a short rubric once submissions close. Judges can't also compete in this Sprint.";
+      if (!over) action = <AcceptJudgeInvite sprintId={sprint.id} />;
       break;
     case "outsider":
       title = "You're not in this Sprint";
@@ -273,8 +290,9 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
           <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{title}</p>
           {body && <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 3, lineHeight: 1.55 }}>{body}</p>}
         </div>
-        {links.length > 0 && (
+        {(links.length > 0 || action) && (
           <div className="flex items-center gap-2 flex-wrap">
+            {action}
             {links.map((l) =>
               l.primary ? (
                 <Link key={l.href} href={l.href} className={ui.primaryBtn} style={{ textDecoration: "none" }}>

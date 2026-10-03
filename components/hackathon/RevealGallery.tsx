@@ -1,19 +1,12 @@
 import Tile from "@/components/ui/Tile";
 import ui from "@/components/ui/sleek.module.css";
 import type { Award } from "@/lib/hackathons/page";
+import { AWARD_LABEL } from "@/lib/hackathons/judging";
 
 // After the reveal: awards on top, then the gallery of everything built.
-// The awards are real (the admin console writes them, and the database makes
-// them public at the reveal). The gallery is a PLACEHOLDER until Prompt 10,
-// which replaces this file.
-
-const AWARD_LABEL: Record<Award["award_type"], string> = {
-  judges_pick: "Judges' pick",
-  most_shipped: "Most shipped",
-  best_collaboration: "Best collaboration",
-  most_likely_to_become_real: "Most likely to become real",
-  custom: "Award",
-};
+// The awards are real (the admin console writes and finalizes them, and the
+// database makes them public at the reveal once finalized, 031). The gallery
+// is a PLACEHOLDER until Prompt 10, which replaces this file.
 
 export function Awards({ awards }: { awards: Award[] }) {
   if (awards.length === 0) return null;
@@ -30,6 +23,9 @@ export function Awards({ awards }: { awards: Award[] }) {
             </p>
             <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginTop: 4 }}>{a.project_name ?? "A project"}</p>
             {a.tagline && <p style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 2 }}>{a.tagline}</p>}
+            {a.citation && (
+              <p style={{ fontSize: 12.5, color: "var(--text-primary)", marginTop: 8, lineHeight: 1.5, fontStyle: "italic" }}>“{a.citation}”</p>
+            )}
             {a.team_name && <p style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>by {a.team_name}</p>}
           </li>
         ))}

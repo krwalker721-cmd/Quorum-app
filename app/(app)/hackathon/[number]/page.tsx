@@ -34,6 +34,8 @@ const NOTICES: Record<string, string> = {
   "room-private": "That team room is private to its team. Only its members (and admins) can open it.",
   "no-team": "You're not on a team in this Sprint, so there's no team room for you.",
   "lobby-private": "The lobby is for the people in this Sprint: its participants, judges and admins.",
+  "judging-private": "Judging is for this Sprint's judges. Admins see every score in the admin console.",
+  "judge-accept-first": "Accept your invitation to judge first, then the judging view opens.",
 };
 
 // One page for a Sprint in every state. The database derives the state

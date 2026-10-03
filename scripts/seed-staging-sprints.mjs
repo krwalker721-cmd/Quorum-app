@@ -17,6 +17,10 @@
 // Sprint (random pool), on team Rockets in the live Sprint, and a judge of the
 // judging Sprint; everywhere else they're a spectator.
 //
+// Judging (Phase 9): the judging Sprint has three complete submissions
+// (Rockets, Comets, Meteors) and a second judge, member 8 (Theo Brandt), to
+// play from a script. Scores and awards are left as they are between runs.
+//
 // The flip Sprint is also the team matcher's demo: every run clears its teams
 // and puts the test admin and five members in the random pool, with member 6
 // on "Open Door", a team open to requests. Teams lock four minutes after the
@@ -65,7 +69,7 @@ console.log(`Seeding test Sprints on STAGING project ${ref}`);
 
 // The cast.
 const members = [];
-for (let i = 1; i <= 6; i++) {
+for (let i = 1; i <= 8; i++) {
   const { data } = await db.from("profiles").select("id").eq("email", `member-${i}@quorum.test`).maybeSingle();
   if (!data) throw new Error(`member-${i}@quorum.test is missing: run scripts/seed-staging.mjs first.`);
   members.push(data.id);
@@ -146,20 +150,40 @@ async function team(sprint, name, ids) {
     `creating team ${name}`,
   );
 }
-async function submit(sprint, teamId, name, tagline) {
-  const { data } = await db.from("hackathon_submissions").select("id").eq("team_id", teamId).maybeSingle();
-  if (data) return data.id;
+// A complete submission (030): name, tagline, problem and a demo. An older
+// one missing the problem or demo is filled in (same values: no log entry).
+async function submit(sprint, teamId, name, tagline, problem, demo) {
+  const fields = {
+    project_name: name,
+    tagline,
+    problem: problem ?? `Founders lose hours to work ${name} could do for them.`,
+    demo_url: demo ?? `https://example.com/${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+  };
+  const { data } = await db.from("hackathon_submissions").select("id, is_complete").eq("team_id", teamId).maybeSingle();
+  if (data) {
+    if (!data.is_complete) must(await db.from("hackathon_submissions").update(fields).eq("id", data.id), `completing ${name}`);
+    return data.id;
+  }
   return must(
     await db
       .from("hackathon_submissions")
-      .insert({ hackathon_id: sprint, team_id: teamId, project_name: name, tagline })
+      .insert({ hackathon_id: sprint, team_id: teamId, ...fields })
       .select("id")
       .single(),
     `submitting ${name}`,
   ).id;
 }
+async function judge(sprint, userId) {
+  const { data } = await db.from("hackathon_judges").select("id").eq("hackathon_id", sprint).eq("user_id", userId).maybeSingle();
+  if (!data) {
+    must(
+      await db.from("hackathon_judges").insert({ hackathon_id: sprint, user_id: userId, accepted_at: new Date().toISOString() }),
+      "adding a judge",
+    );
+  }
+}
 
-const [m1, m2, m3, m4, m5, m6] = members;
+const [m1, m2, m3, m4, m5, m6, m7, m8] = members;
 
 // Registration: some in the pool, one team forming, the test admin in the pool.
 {
@@ -201,19 +225,20 @@ for (const slug of ["state-live", "state-paused"]) {
   await team(s, "Open Door", [m6]);
   must(await db.from("hackathon_teams").update({ is_open_to_requests: true }).eq("hackathon_id", s).eq("name", "Open Door"), "opening Open Door");
 }
-// Judging: one team submitted, one didn't; the test admin judges.
+// Judging: three complete submissions; the test admin and Theo (member 8) judge.
 {
   const s = sprintIds["state-judging"];
   const rockets = await team(s, "Rockets", [m1, m2, m3]);
-  await team(s, "Comets", [m4, m5, m6]);
-  await submit(s, rockets, "Nightshift", "A focus timer for founders who work after midnight");
-  const { data: judge } = await db.from("hackathon_judges").select("id").eq("hackathon_id", s).eq("user_id", me).maybeSingle();
-  if (!judge) {
-    must(
-      await db.from("hackathon_judges").insert({ hackathon_id: s, user_id: me, accepted_at: new Date().toISOString() }),
-      "adding the test admin as a judge",
-    );
-  }
+  const comets = await team(s, "Comets", [m4, m5, m6]);
+  const meteors = await team(s, "Meteors", [m7]);
+  await submit(s, rockets, "Nightshift", "A focus timer for founders who work after midnight",
+    "Late-night builders lose track of time and burn out by Wednesday.");
+  await submit(s, comets, "Standup Bot", "Your cohort's weekly check-in, written for you",
+    "Weekly check-ins take an hour to write and nobody reads the long ones.");
+  await submit(s, meteors, "Pitch Doctor", "Paste your deck, get the three questions investors will ask",
+    "First-time founders get blindsided by the same questions in every pitch.");
+  await judge(s, me);
+  await judge(s, m8);
 }
 // Revealed: both submitted, two awards.
 {
@@ -222,6 +247,7 @@ for (const slug of ["state-live", "state-paused"]) {
   const comets = await team(s, "Comets", [m4, m5, m6]);
   const a = await submit(s, rockets, "Nightshift", "A focus timer for founders who work after midnight");
   const b = await submit(s, comets, "Standup Bot", "Your cohort's weekly check-in, written for you");
+  // Shown at the reveal once finalized (031). Finalizing again is a no-op.
   const { count } = await db.from("hackathon_awards").select("id", { count: "exact", head: true }).eq("hackathon_id", s);
   if (!count) {
     must(
@@ -232,6 +258,7 @@ for (const slug of ["state-live", "state-paused"]) {
       "awards",
     );
   }
+  must(await db.rpc("hackathon_finalize_awards", { p_hackathon_id: s }), "finalizing the awards");
 }
 // Cancelled: a few people had registered.
 {

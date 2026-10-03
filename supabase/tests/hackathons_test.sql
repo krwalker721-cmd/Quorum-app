@@ -829,7 +829,11 @@ select tests.set_phase(tests.h1(), 'revealed');
 select tests.anon();
 select tests.eq('REVEAL: signed out reads every submission', tests.count($$ select 1 from hackathon_submissions where hackathon_id = tests.h1() $$)::text, '2');
 select tests.eq('REVEAL: ...and the screenshots', tests.count($$ select 1 from storage.objects where name = tests.path('Rockets', 'shot1.png') $$)::text, '1');
-select tests.eq('REVEAL: ...and the awards', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h1() $$)::text, '2');
+select tests.eq('REVEAL (031): awards stay hidden until they''re finalized', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h1() $$)::text, '0');
+select tests.service();
+select hackathon_finalize_awards(tests.h1());
+select tests.anon();
+select tests.eq('REVEAL: ...and the awards, once finalized', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h1() $$)::text, '2');
 select tests.eq('REVEAL: scores stay private', tests.count($$ select 1 from hackathon_scores $$)::text, '0');
 select tests.eq('REVEAL: rooms stay sealed signed out', tests.count($$ select 1 from hackathon_team_messages where team_id = tests.team('Rockets') $$)::text, '0');
 select tests.login('carol');
@@ -1976,5 +1980,190 @@ select tests.eq('reveal: a team still sees its own draft',
 select tests.as_db();
 select tests.ok('realtime: submissions are in realtime', exists (
   select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'hackathon_submissions'));
+
+-- ============================================================================
+-- Phase 9 (031): judging, award rules, finalizing
+-- ============================================================================
+select tests.as_db();
+create function tests.h12() returns uuid language sql immutable as $$ select 'cc000000-0000-0000-0000-00000000000c'::uuid $$;
+create function tests.team12(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h12()
+$$;
+create function tests.sub12(p_team text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_submissions where team_id = tests.team12(p_team)
+$$;
+create function tests.award_count12() returns bigint
+language sql stable security definer set search_path = public as $$
+  select count(*) from public.hackathon_awards where hackathon_id = tests.h12()
+$$;
+create function tests.sprint12() returns public.hackathons
+language sql stable security definer set search_path = public as $$
+  select * from public.hackathons where id = tests.h12()
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+-- Sprint 12: Alpha (m1, m2) and Beta (m3) finish; Gamma (m4) leaves a draft.
+-- Jude and m14 judge it; oscar is invited and hasn't accepted.
+insert into public.hackathons (id, slug, title, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h12(), 'test-judging', 'Judging Sprint', true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h12(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h12(), tests.m(i), 'team' from generate_series(1, 4) i;
+select hackathon_admin_create_team(tests.h12(), 'Alpha', array[tests.m(1), tests.m(2)]);
+select hackathon_admin_create_team(tests.h12(), 'Beta', array[tests.m(3)]);
+select hackathon_admin_create_team(tests.h12(), 'Gamma', array[tests.m(4)]);
+insert into public.hackathon_judges (hackathon_id, user_id, accepted_at) values
+  (tests.h12(), tests.u('jude'), now()), (tests.h12(), tests.m(14), now());
+insert into public.hackathon_judges (hackathon_id, user_id) values (tests.h12(), tests.u('oscar'));
+select tests.set_phase(tests.h12(), 'live');
+insert into public.hackathon_submissions (team_id, hackathon_id, project_name, tagline, problem, demo_url) values
+  (tests.team12('Alpha'), tests.h12(), 'Alpha App', 'Ships fast', 'Slow shipping', 'https://alpha.example'),
+  (tests.team12('Beta'), tests.h12(), 'Beta Bot', 'Bots for betas', 'Testers vanish', 'https://beta.example');
+insert into public.hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team12('Gamma'), tests.h12(), 'Gamma WIP');
+
+-- Before the deadline: nothing to judge, nothing to award.
+select tests.service();
+select tests.throws('awards (031): none before submissions close', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type) values (tests.h12(), tests.sub12('Alpha'), 'judges_pick') $$, 'once submissions close');
+select tests.throws('finalize (031): not before submissions close', $$ select hackathon_finalize_awards(tests.h12()) $$, 'once submissions close');
+select tests.login_m(14);
+select tests.throws('scores: not before the deadline', $$
+  insert into hackathon_scores (submission_id, hackathon_id, judge_id, score_problem, score_shipped, score_collaboration, score_potential)
+  values (tests.sub12('Alpha'), tests.h12(), tests.m(14), 3, 3, 3, 3) $$, 'Scoring is closed');
+
+-- Judging.
+select tests.set_phase(tests.h12(), 'judging');
+select tests.login_m(14);
+select tests.eq('judging: a judge sees the complete submissions, not the draft',
+  (select string_agg(project_name, ',' order by project_name) from hackathon_submissions where hackathon_id = tests.h12()), 'Alpha App,Beta Bot');
+select tests.eq('judging: ...and every team''s activity counts (no content)',
+  tests.count($$ select 1 from get_team_activity(tests.h12()) $$)::text, '3');
+select tests.throws('scores (031): a judge can''t score a draft, even knowing its id', $$
+  insert into hackathon_scores (submission_id, hackathon_id, judge_id, score_problem, score_shipped, score_collaboration, score_potential)
+  values (tests.sub12('Gamma'), tests.h12(), tests.m(14), 3, 3, 3, 3) $$, 'complete submissions');
+select tests.lives('scores: the second judge scores Alpha', $$
+  insert into hackathon_scores (submission_id, hackathon_id, judge_id, score_problem, score_shipped, score_collaboration, score_potential, notes)
+  values (tests.sub12('Alpha'), tests.h12(), tests.m(14), 5, 4, 5, 4, '  Great demo  ') $$);
+select tests.lives('scores: ...and Beta, with blank notes', $$
+  insert into hackathon_scores (submission_id, hackathon_id, judge_id, score_problem, score_shipped, score_collaboration, score_potential, notes)
+  values (tests.sub12('Beta'), tests.h12(), tests.m(14), 3, 3, 3, 3, '   ') $$);
+select tests.eq('scores (031): notes are trimmed, and blank notes are none',
+  (select string_agg(coalesce(notes, '-'), ',' order by score_problem desc) from hackathon_scores where hackathon_id = tests.h12()), 'Great demo,-');
+select tests.login('jude');
+select tests.lives('scores: Jude scores Alpha too', $$
+  insert into hackathon_scores (submission_id, hackathon_id, judge_id, score_problem, score_shipped, score_collaboration, score_potential)
+  values (tests.sub12('Alpha'), tests.h12(), tests.u('jude'), 4, 5, 4, 5) $$);
+select tests.eq('scores: each judge reads only their own', tests.count($$ select 1 from hackathon_scores where hackathon_id = tests.h12() $$)::text, '1');
+select tests.login('oscar');
+select tests.eq('judging: an invited judge who hasn''t accepted sees nothing', tests.count($$ select 1 from hackathon_submissions where hackathon_id = tests.h12() $$)::text, '0');
+select tests.throws('judging: ...and can''t score', $$
+  insert into hackathon_scores (submission_id, hackathon_id, judge_id, score_problem, score_shipped, score_collaboration, score_potential)
+  values (tests.sub12('Alpha'), tests.h12(), tests.u('oscar'), 3, 3, 3, 3) $$, 'row-level security');
+select tests.lives('judging: accepting the invite', $$ select hackathon_accept_judge_invite(tests.h12()) $$);
+select tests.eq('judging: ...opens the complete submissions', tests.count($$ select 1 from hackathon_submissions where hackathon_id = tests.h12() $$)::text, '2');
+select tests.login_m(1);
+select tests.eq('judging: participants read no scores', tests.count($$ select 1 from hackathon_scores where hackathon_id = tests.h12() $$)::text, '0');
+select tests.throws('finalize (031): members can''t finalize', $$ select hackathon_finalize_awards(tests.h12()) $$, 'permission denied');
+select tests.throws('finalize (031): ...or reopen', $$ select hackathon_unfinalize_awards(tests.h12()) $$, 'permission denied');
+select tests.login('admin');
+select tests.throws('finalize (031): even an admin''s own sign-in can''t (the console uses the service role)', $$ select hackathon_finalize_awards(tests.h12()) $$, 'permission denied');
+select tests.throws('awards: an admin''s own sign-in can''t write awards', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type) values (tests.h12(), tests.sub12('Alpha'), 'judges_pick') $$, 'row-level security');
+select tests.eq('scores: admins read every judge''s', tests.count($$ select 1 from hackathon_scores where hackathon_id = tests.h12() $$)::text, '3');
+
+-- The award board.
+select tests.service();
+select tests.admin_headers('Gave an award');
+select tests.lives('awards: Judges'' pick, with a citation', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type, citation) values (tests.h12(), tests.sub12('Alpha'), 'judges_pick', '  Shipped the whole thing  ') $$);
+select tests.eq('awards (031): the citation is trimmed',
+  (select citation from hackathon_awards where hackathon_id = tests.h12() and award_type = 'judges_pick'), 'Shipped the whole thing');
+select tests.lives('awards: one project may hold two', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type) values (tests.h12(), tests.sub12('Alpha'), 'most_shipped') $$);
+select tests.throws('awards (031): one winner per named award', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type) values (tests.h12(), tests.sub12('Beta'), 'judges_pick') $$, 'hackathon_awards_one_winner');
+select tests.lives('awards: a custom award', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type, custom_label) values (tests.h12(), tests.sub12('Beta'), 'custom', 'Best name') $$);
+select tests.lives('awards: custom awards are unlimited', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type, custom_label) values (tests.h12(), tests.sub12('Beta'), 'custom', 'Night owls') $$);
+select tests.throws('awards (031): never for a draft', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type) values (tests.h12(), tests.sub12('Gamma'), 'best_collaboration') $$, 'complete submission');
+select tests.throws('awards (031): citations are short', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type, citation) values (tests.h12(), tests.sub12('Beta'), 'best_collaboration', repeat('x', 281)) $$, 'citation_length');
+select tests.ok('awards (031): a new award is in the change log, with who and why',
+  (select c.area = 'award' and c.action = 'insert' and c.subject = 'Night owls → Beta Bot (team Beta) (Sprint #' || (select number from tests.sprint12()) || ')'
+          and c.actor = 'Ada Admin (admin console)' and c.actor_id = tests.u('admin') and c.summary = 'Gave an award'
+   from tests.last_change() c),
+  (select 'last change: ' || to_jsonb(c)::text from tests.last_change() c));
+select tests.admin_headers('Reworded a citation');
+update hackathon_awards set citation = 'Shipped it all' where hackathon_id = tests.h12() and award_type = 'judges_pick';
+select tests.ok('awards (031): an edit is logged old → new',
+  (select c.action = 'update' and c.changes = '{"citation": {"old": "Shipped the whole thing", "new": "Shipped it all"}}'::jsonb
+   from tests.last_change() c),
+  (select 'last change: ' || to_jsonb(c)::text from tests.last_change() c));
+select tests.lives('awards: removing one', $$ delete from hackathon_awards where hackathon_id = tests.h12() and custom_label = 'Night owls' $$);
+select tests.eq('awards (031): every change logged: 4 given, 1 edited, 1 removed', tests.changes_where('award', tests.h12())::text, '6');
+select tests.anon();
+select tests.eq('awards: hidden while judging', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h12() $$)::text, '0');
+
+-- Finalizing.
+select tests.service();
+select tests.admin_headers('Finalized the awards');
+select tests.lives('finalize (031): the admin console finalizes', $$ select hackathon_finalize_awards(tests.h12()) $$);
+select tests.ok('finalize (031): records when, and which admin',
+  (select awards_finalized_at = now() and awards_finalized_by = tests.u('admin') from tests.sprint12()));
+select tests.ok('finalize (031): logged as a change to the Sprint',
+  (select c.area = 'sprint' and c.changes ? 'awards_finalized_at' and c.summary = 'Finalized the awards' from tests.last_change() c),
+  (select 'last change: ' || to_jsonb(c)::text from tests.last_change() c));
+select tests.anon();
+select tests.lives('finalize (031): anyone may read when awards were finalized', $$ select awards_finalized_at from hackathons where id = tests.h12() $$);
+select tests.throws('finalize (031): ...but not who finalized them', $$ select awards_finalized_by from hackathons where id = tests.h12() $$, 'permission denied');
+select tests.service();
+select tests.eq('finalize (031): finalizing again changes nothing',
+  (hackathon_finalize_awards(tests.h12()) = (select awards_finalized_at from tests.sprint12()))::text, 'true');
+select tests.throws('finalized (031): no new awards', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type) values (tests.h12(), tests.sub12('Beta'), 'best_collaboration') $$, 'finalized');
+select tests.throws('finalized (031): no edits', $$ update hackathon_awards set citation = 'x' where hackathon_id = tests.h12() $$, 'finalized');
+select tests.throws('finalized (031): no removals', $$ delete from hackathon_awards where hackathon_id = tests.h12() $$, 'finalized');
+select tests.as_db();
+select tests.throws('finalized (031): not even from the SQL editor', $$ delete from public.hackathon_awards where hackathon_id = tests.h12() $$, 'finalized');
+select tests.anon();
+select tests.eq('finalized: still hidden until the reveal', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h12() $$)::text, '0');
+select tests.login('jude');
+select tests.eq('finalized: judges don''t see them early either', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h12() $$)::text, '0');
+
+-- The reveal.
+select tests.set_phase(tests.h12(), 'revealed');
+select tests.anon();
+select tests.eq('reveal (031): finalized awards are public', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h12() $$)::text, '3');
+select tests.eq('reveal: scores stay private', tests.count($$ select 1 from hackathon_scores where hackathon_id = tests.h12() $$)::text, '0');
+select tests.service();
+select tests.lives('reopen (031): the admin console reopens them', $$ select hackathon_unfinalize_awards(tests.h12()) $$);
+select tests.ok('reopen (031): clears when and who', (select awards_finalized_at is null and awards_finalized_by is null from tests.sprint12()));
+select tests.anon();
+select tests.eq('reopen (031): which hides them again', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h12() $$)::text, '0');
+select tests.service();
+select tests.lives('reopen (031): awards can change again', $$
+  insert into hackathon_awards (hackathon_id, submission_id, award_type) values (tests.h12(), tests.sub12('Beta'), 'best_collaboration') $$);
+select hackathon_finalize_awards(tests.h12());
+select tests.anon();
+select tests.eq('reopen (031): finalized again, all four show', tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h12() $$)::text, '4');
+
+-- Cancelled Sprints have no awards to finalize.
+select tests.service();
+select hackathon_unfinalize_awards(tests.h12());
+select tests.pause(tests.h12(), now() - interval '2 hours', 'cancelled');
+select tests.throws('finalize (031): not for a cancelled Sprint', $$ select hackathon_finalize_awards(tests.h12()) $$, 'cancelled');
+select tests.clear_override(tests.h12());
+
+-- Deleting a Sprint takes its finalized awards with it.
+select hackathon_finalize_awards(tests.h12());
+select tests.as_db();
+select tests.lives('finalized (031): deleting the Sprint still works', $$ delete from public.hackathons where id = tests.h12() $$);
+select tests.eq('finalized (031): ...and its awards go with it', tests.award_count12()::text, '0');
 
 select tests.finish();

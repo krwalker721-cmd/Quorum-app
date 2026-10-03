@@ -28,6 +28,11 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   hackathon_teams_name_unique: "Another team in this Sprint already has that name.",
   hackathon_judges_email_unique: "That email has already been invited to judge this Sprint.",
   hackathon_judges_hackathon_id_user_id_key: "They're already a judge of this Sprint.",
+  hackathon_awards_one_winner: "That award already has a winner. Change the winner instead.",
+  hackathon_awards_citation_length: "Keep the citation to 280 characters.",
+  hackathon_awards_submission_id_award_type_custom_label_key: "That project already has an award with that name.",
+  hackathon_awards_custom_label_check: "Give the custom award a name (80 characters at most).",
+  hackathon_awards_custom_label: "A custom award needs a name, and a named award doesn't take one.",
 };
 
 type DbError = { message: string; hint?: string | null; code?: string } | null;

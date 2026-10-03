@@ -9,7 +9,7 @@ type Member = { id: string; full_name: string | null; username: string | null; e
 
 /**
  * Judges: pick an existing member, or invite an email (for someone without an
- * account; linking comes in Prompt 9). A registered participant can't judge the
+ * account; linking comes with the external-judge flow, deferred to Sprint #2). A registered participant can't judge the
  * same Sprint, so the screen offers to withdraw their registration first.
  */
 export default function Judges({ sprintId, judges, onChanged }: { sprintId: string; judges: Judge[]; onChanged: () => void }) {
@@ -118,7 +118,7 @@ export default function Judges({ sprintId, judges, onChanged }: { sprintId: stri
             invite
           </Btn>
         </div>
-        <p className="font-mono text-[0.6rem] text-text-faint mt-2">Stored for now; how they get an account comes in Prompt 9.</p>
+        <p className="font-mono text-[0.6rem] text-text-faint mt-2">Stored for now. Judges from outside Quorum get accounts in a later release (planned for Sprint #2); until then, judges must be existing members.</p>
       </Card>
       <ErrorLine>{error}</ErrorLine>
     </div>
