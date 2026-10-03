@@ -8,7 +8,8 @@ then check `git log main..feat/hackathon-db` for anything newer.
 - **Status (2026-10-03):** Phases 1–8 are built, checked on staging, approved and committed
   locally. Phase 9 (judging, without external judges) is built, checked on staging, approved and
   committed locally (`bb8c9be`). Phase 10 (the reveal, gallery, public project and recap pages)
-  is built and checked on staging, waiting for the owner's look.
+  is built, checked on staging, approved and committed locally (`a6241a9`). Next is the owner's
+  Prompt 12 (notifications).
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
@@ -71,8 +72,7 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 (`e2e386b`, decision 53).
 
 **Waiting on the owner**
-- A look at Phase 10 (section 5i), then the commit. Next: notifications (Prompt 12);
-  external-judge accounts for Sprint #2 (decision 14).
+- The next prompt: notifications (Prompt 12); external-judge accounts for Sprint #2 (decision 14).
 - Paste 018–032 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
@@ -1399,4 +1399,6 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `821a0b1` | Record the Phase 8 commit |
 | `184811b` | Handoff for Phases 6–8; milestone test ignores tie order |
 | `bb8c9be` | Judging, scores, results and finalized awards (031) |
-| (next) | Record the Phase 9 commit |
+| `3f88695` | Record the Phase 9 commit |
+| `a6241a9` | The reveal, the gallery, and public project and recap pages (032) |
+| (next) | Record the Phase 10 commit |
