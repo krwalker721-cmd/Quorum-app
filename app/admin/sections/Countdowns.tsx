@@ -10,6 +10,7 @@ import CountdownView, { formatRemaining, resolveCountdown } from "@/components/c
 import type { SiteCountdown, SprintCountdown } from "@/lib/countdowns";
 import { nextMilestone } from "@/lib/hackathons/timeline";
 import { useServerNow } from "@/lib/useServerNow";
+import { pickRelay, type RelayData } from "@/lib/landingRelay";
 import { formatNy, nyInputToUtc, nyZoneLabel, utcToNyInput } from "@/lib/time/newYork";
 
 type SiteRow = SiteCountdown & {
@@ -166,6 +167,8 @@ export default function CountdownsSection() {
           </p>
         </div>
       )}
+
+      <LandingNow version={data} now={now} waitlistOn={doorsClosed} />
 
       <ErrorLine>{error}</ErrorLine>
 
@@ -507,6 +510,45 @@ function CountdownForm({
         <Btn onClick={onCancel}>cancel</Btn>
       </div>
       <ErrorLine>{err}</ErrorLine>
+    </Card>
+  );
+}
+
+/**
+ * Which one message the landing page's relay shows right now (Phase 11),
+ * picked by the same code as the page, from the same public data. Re-read
+ * whenever this section reloads.
+ */
+function LandingNow({ version, now, waitlistOn }: { version: unknown; now: number | null; waitlistOn: boolean }) {
+  const [relay, setRelay] = useState<RelayData | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/countdowns/landing", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => !cancelled && j && setRelay(j as RelayData))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [version]);
+  if (!relay || now === null) return null;
+  const item = pickRelay(relay, now, waitlistOn);
+  return (
+    <Card className="mb-4">
+      <p className="font-mono text-[0.65rem] text-text-faint">on the landing page now (one message: standalone, then a sprint about to start, live, judging, the latest recap)</p>
+      <p className="text-sm text-text-primary mt-1">
+        {item ? (
+          <>
+            {item.title}
+            {item.countLabel ? ` · ${item.countLabel.toLowerCase()}` : ""}
+            {item.target !== null ? ` ${formatRemaining(Math.max(0, item.target - now))}` : ""}
+            {item.message ? ` · ${item.message}` : ""}
+          </>
+        ) : (
+          <span className="text-text-muted">nothing: every landing countdown is off or over, so the hero shows no relay</span>
+        )}
+      </p>
+      <p className="font-mono text-[0.6rem] text-text-faint mt-1">visitors see a change within about a minute.</p>
     </Card>
   );
 }

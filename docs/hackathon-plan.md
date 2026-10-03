@@ -8,13 +8,13 @@ then check `git log main..feat/hackathon-db` for anything newer.
 - **Status (2026-10-03):** Phases 1–8 are built, checked on staging, approved and committed
   locally. Phase 9 (judging, without external judges) is built, checked on staging, approved and
   committed locally (`bb8c9be`). Phase 10 (the reveal, gallery, public project and recap pages)
-  is built, checked on staging, approved and committed locally (`a6241a9`). Next is the owner's
-  Prompt 12 (notifications).
+  is built, checked on staging, approved and committed locally (`a6241a9`). Phase 11 (the landing
+  page's countdown relay) is built and checked on staging, waiting for the owner's look.
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
-- **Migrations:** 018–032 are on staging. Production has none of them (it's at 017).
-- **Tests:** 631 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Migrations:** 018–033 are on staging. Production has none of them (it's at 017).
+- **Tests:** 639 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -62,6 +62,7 @@ which project is the target.
 | 6 · Team room | 028 `hackathon_team_member_activity` (team-only), `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/page.tsx` (and `/team` redirects there); `components/hackathon/room/*` (`TeamRoomClient`, `RoomHeader`, `TeamDocs`, `TeamLinks`, `roomError`); shared `components/rooms/*` (`RoomThread`, `RoomVotes`, `RoomItemCard`, `kit.ts`, moved from the Collab room) and `components/editor/RichTextEditor.tsx` (moved from the Vault's `NoteEditor`); `lib/hackathons/room.ts`, `quiet.ts`; admin teams tab "open room ↗" |
 | 7 · Lobby | 029 `hackathons.lobby_welcome`, `hackathon_lobby_messages.system_key`, `hackathon_post_lobby_milestones()`, `hackathon_lobby_welcome()`, `hackathon_lobby_people()`, length/rate limits, moved-milestone withdrawal, moderation logging | `app/(app)/hackathon/[number]/lobby/page.tsx`; `components/hackathon/lobby/LobbyClient.tsx`; `RoomThread` opt-in avatars, tags, milestone banners, actions; `lib/hackathons/lobby.ts`, `lobbyMilestones.ts`; milestones posted from the Sprint page, the lobby page and the timing route; admin Sprint form "welcome note" |
 | 9 · Judging | 031 `hackathons.awards_finalized_at` / `_by`, `hackathon_finalize_awards()`, `hackathon_unfinalize_awards()`, award guard (complete only, after the deadline, locked while finalized), one winner per named award, `citation`, scores on complete submissions only, award changes in `admin_change_log` (area `award`) | `app/(app)/hackathon/[number]/judge/page.tsx`, `judge/[slug]/page.tsx`; `components/hackathon/judging/*` (`ScorePanel`, `ScoringStatus`, `RubricTile`, `AcceptJudgeInvite`); `lib/hackathons/judging.ts`; admin `sprints/Judging.tsx` + `/api/admin/hackathons/[id]/judging`; Sprint page judge callout and finalized awards with citations |
+| 11 · Landing relay | 033 `hackathon_landing_relay()` (public: number, title, tagline, headline, five times, state, phase, landing switch, team and builder counts; no theme, no ids) | `components/landing/CountdownRelay.tsx` (replaces the landing strip), `lib/landingRelay.ts` (`pickRelay`), `lib/landingRelayData.ts` (30 s server cache), `GET /api/countdowns/landing`; admin Countdowns "on the landing page now"; `next.config.js` `allowedDevOrigins` (dev only) |
 | 10 · Reveal and showcase | 032 `hackathon_public_sprint()`, `hackathon_public_projects()`, `hackathon_public_sitemap()` (public after the reveal only; first names signed out) | `app/(showcase)/hackathon/[number]/project/[slug]/` and `/recap/` (page + `opengraph-image`), outside the sign-in gate; `components/hackathon/showcase/*` (`RevealMoment` + `SealWatcher`, `AwardsShowcase`, `Gallery`, `ProjectCard`, `ShareButtons`, `PublicShell`, `showcase.module.css`); `RevealGallery.tsx` (members' revealed section); `lib/hackathons/showcase.ts`, `og.tsx`; `app/sitemap.ts` (dynamic); archive recap links |
 | 8 · Submission | 030 drafts: `project_name` optional; `is_complete`, `completed_at`, `last_edited_by` set by the guard; drafts sealed for good; pulse and `get_team_activity` count complete only; submissions in realtime | `app/(app)/hackathon/[number]/team/[slug]/submission/page.tsx`; `components/hackathon/submission/*` (`SubmissionForm`, `Screenshots`, `TagInput`, `DeadlineWarning`); `components/hackathon/showcase/ProjectShowcase.tsx` (for Prompt 10); `lib/hackathons/submission.ts`; `components/Markdown.tsx` (links, numbered lists) |
 
@@ -72,8 +73,9 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 (`e2e386b`, decision 53).
 
 **Waiting on the owner**
-- The next prompt: notifications (Prompt 12); external-judge accounts for Sprint #2 (decision 14).
-- Paste 018–032 into production before any deploy that needs them (section 7).
+- A look at Phase 11 (section 5j), then the commit. Next: notifications (Prompt 12); external-judge
+  accounts for Sprint #2 (decision 14).
+- Paste 018–033 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
 - Optionally: sign the production session out of the browser pane.
@@ -221,7 +223,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–032** |
+| Migrations applied | up to **017** | **018–033** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -368,7 +370,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-03, Phase 10):** all 631 tests pass locally and on staging.
+- **Last run (2026-10-03, Phase 11):** all 639 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -1195,6 +1197,81 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 
 ---
 
+## 5j. Phase 11: the landing page's countdown relay (migration 033)
+
+### What was there, and what the owner decided
+- Phase 2 already drove the landing page from the admin panel: a strip above the hero showing **every**
+  enabled landing countdown as small pills, from `site_countdowns` and each Sprint's
+  `show_countdown_on_landing`. No dates in code; the "launch" countdown is a `site_countdowns` row
+  (`is_launch`). Phase 11 replaces the strip with a single-message relay.
+- The owner OK'd the plan as proposed, including the two gaps the prompt didn't cover: **judging**
+  ("Sprint #N wrapped: 7 teams, 23 builders. Results revealed in …") and **paused** ("Sprint #N is
+  paused. New times soon.").
+
+### Database: `033_hackathon_landing_relay.sql`
+- **`hackathon_landing_relay()`**, signed out allowed: per published, non-cancelled Sprint, number,
+  title, tagline, headline override, registration opens / team lock / kickoff / deadline / reveal,
+  state, phase, its landing switch, team count and builder count (registrations not withdrawn).
+  Never the theme, team content or ids. Of revealed Sprints, only the latest. A newer Sprint is
+  returned even with its switch off, so the relay knows it's been announced.
+- **Tests:** 8 new (**639**): the exact column list, the theme nowhere, counts, drafts and cancelled
+  left out, latest revealed only, paused. Deliberate breaks caught: drafts included, every revealed
+  Sprint, withdrawn people counted, the theme in place of the tagline.
+- **Two older tests assumed an empty database** and failed on staging (fixed): the Phase 1 "signed out
+  can't read screenshots" counted the whole bucket (Phase 10 put public screenshots on revealed #8),
+  now scoped to its Sprint; the relay's "latest revealed" test now reveals its Sprint at `now()`
+  (staging's flip Sprint had revealed more recently).
+
+### App
+- **`pickRelay`** (`lib/landingRelay.ts`, pure; the page, the browser and the admin console share it):
+  one message, in the owner's order, skipping anything switched off:
+  1. A standalone landing countdown: the soonest still ahead; else the latest past zero that shows
+     its `zero_message` ("hide" just drops out). Its label, subtext, digits and own CTA.
+  2. A Sprint about to start (upcoming, registration, teams locked; the soonest kickoff): "Sprint #N
+     kicks off in" (or the headline override, with "Kicks off in" by the digits), "48 hours. New ideas.
+     Teams across every cohort." plus "Registration is open." or "Teams are set.", and the join button
+     ("Request an invite" or "Start your free trial" by the approval switch → /signup).
+  3. Live: a green LIVE pill, "Sprint #N is LIVE", "N teams building right now.", "Ends in …", and
+     "Want in on the next one? →". Then judging, then paused (above).
+  4. The latest revealed Sprint's recap ("See what founders built at Sprint #N", "See the projects →"
+     → `/hackathon/N/recap`), until a newer Sprint is published (with or without its switch).
+  - Nothing applies: nothing rendered, no gap.
+  - Each Sprint's phase is worked out from its own times at the moment (paused stays paused), so the
+    relay moves on at each boundary without waiting for fresh data.
+- **`CountdownRelay`** (top of the hero's left column, above the seats badge, which is unchanged): a
+  glass card with an amber edge; the shared `CountdownDigits` (blocks on desktop, one compact line on
+  phones) on the server clock; dashes until it's measured. The server renders it into the page (no
+  request on load, no layout shift); it re-checks every 30 s while the tab is visible, and at once on
+  returning to the tab.
+- **Freshness:** the page's data is shared across visitors for 30 s (`unstable_cache`), and
+  `GET /api/countdowns/landing` is edge-cached for 20 s (+10 s stale): an admin's change reaches an
+  open page or a fresh visit within about a minute.
+- **Admin, Countdowns:** "on the landing page now: …", picked by the same code from the same public data.
+- **Unchanged:** the in-app bar and `/api/countdowns` (its `where=landing` branch and the strip's
+  landing variant are now unused by the landing page).
+- **`next.config.js`:** `allowedDevOrigins: ["127.0.0.1"]` (development only), so the dev server's pages
+  hydrate when opened as 127.0.0.1, which carries no localhost cookies: a signed-out tab next to a
+  signed-in one.
+
+### Checked on staging (2026-10-03), signed out
+- Every stage, by flipping the same switches as the admin panel (script) and reading the signed-out
+  HTML: the launch countdown; launch off + #4 → "Sprint #4 kicks off in … Registration is open.
+  Request an invite"; #6 → "LIVE Sprint #6 is LIVE 2 teams building right now. Ends in …"; #7 → "Sprint
+  #7 wrapped: 3 teams, 7 builders. Results revealed in …"; #9 → "Sprint #9 is paused New times soon.";
+  #11 → "See what founders built at Sprint #11"; launch moved past zero with "show message" → "Doors
+  are open" (beats the recap); with "hide" → back to the recap; everything off → no relay, headline and
+  seats badge intact. Each reached a fresh page in 18–34 s.
+- **From the admin panel itself:** switched the launch's "landing" off at 15:55:29; the open signed-out
+  page (no reload) changed at 15:55:53 to "Sprint #5 kicks off in" (teams set, the soonest kickoff).
+- **Nothing hidden:** with every switch on, the endpoint's JSON and the whole landing HTML (with the
+  data shipped to the browser) contain no theme, no team or project names, no draft text, no
+  `hackathon_id`/`team_id` and no uuids at all. The JSON's fields are exactly the public ones.
+- Phone width (369 px): no sideways scroll; the card stacks with compact digits.
+- Staging left as it was: launch countdown on (16:00 UTC, "Doors are open" after), every Sprint's
+  landing switch off.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1277,13 +1354,18 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 | 76 | The reveal moment plays for whoever had the sealed page open, once, within 10 minutes of the reveal; `?reveal=replay` replays it. | "Anyone on the page as the countdown hits zero"; everything on the stage is already public. |
 | 77 | Link previews are type-only (no screenshots) and draw emblems as the team's initial. | The OG renderer can't draw WebP, and its font lacks the emblem glyphs. |
 | 78 | The sitemap re-reads revealed Sprints hourly and leaves out recaps with nothing shipped. | New reveals reach search without a deploy; an empty recap isn't worth indexing. |
+| 79 | The landing page shows ONE countdown message (the relay), not every enabled countdown. | Owner's Phase 11 prompt: a priority order, skipping anything switched off. |
+| 80 | During judging the relay says "Sprint #N wrapped: teams, builders. Results revealed in …"; paused says "paused, new times soon". | Gaps in the prompt's order; owner OK'd at the plan. |
+| 81 | The recap link shows until any newer Sprint is published, even one whose landing switch is off. | "Until the next Sprint is announced." |
+| 82 | The relay's Sprint data comes from one public function with a pinned column list (no theme, no ids). | "Public-safe endpoint… only timestamps, number/title/tagline, team count, builder count, state." |
+| 83 | The page's relay data is cached for 30 s on the server; the open page re-checks every 30 s while visible. | Keeps the landing page fast and off the database, and changes still show within about a minute. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 032** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 033** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
       027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
@@ -1291,7 +1373,8 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
       submission page and team room fail (they read `is_complete`), without 031 the admin
       judging tab fails and revealed Sprints show no awards (the page reads `awards_finalized_at`),
       and without 032 the recap and project pages are 404s and the revealed Sprint page has no
-      gallery (the sitemap just lists the static pages).
+      gallery (the sitemap just lists the static pages); without 033 the relay shows only standalone
+      countdowns (its Sprint data reads as empty).
 - [ ] After the first deploy with a revealed Sprint: paste a project and a recap link into X,
       LinkedIn (Post Inspector) and iMessage to confirm the previews.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`

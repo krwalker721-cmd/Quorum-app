@@ -9,7 +9,7 @@
 --   Staging:   scripts/db.sh staging:test  (or paste this whole file into the
 --              staging project's SQL editor and run it)
 --   NEVER against production.
---   Needs migrations 018-032.
+--   Needs migrations 018-033.
 --
 -- It creates its own users and Sprints, and ENDS BY RAISING AN ERROR ON
 -- PURPOSE, so every change it made is rolled back, in the SQL editor too.
@@ -662,7 +662,7 @@ select tests.throws('scores: not before the deadline', $$
   values (tests.submission('Rockets'), tests.h1(), tests.u('jude'), 4, 4, 4, 4) $$, 'Scoring is closed');
 select tests.anon();
 select tests.eq('SEALED: signed out can''t read submissions before the reveal', tests.count($$ select 1 from hackathon_submissions where hackathon_id = tests.h1() $$)::text, '0');
-select tests.eq('SEALED: ...or screenshots', tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-submissions' $$)::text, '0');
+select tests.eq('SEALED: ...or screenshots', tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h1()::text || '/%' $$)::text, '0');
 
 -- ============================================================================
 -- Live: the arena's activity pulse
@@ -2246,5 +2246,65 @@ update public.hackathons set is_published = false where id = tests.h13();
 select tests.anon();
 select tests.eq('showcase (032): an unpublished Sprint shows nothing',
   (tests.count($$ select 1 from hackathon_public_sprint(tests.n13()) $$) + tests.count($$ select 1 from hackathon_public_projects(tests.h13()) $$))::text, '0');
+
+-- ============================================================================
+-- Phase 11 (033): the landing page's countdown relay
+-- ============================================================================
+select tests.as_db();
+create function tests.h14() returns uuid language sql immutable as $$ select 'ce000000-0000-0000-0000-00000000000e'::uuid $$;
+create function tests.h15() returns uuid language sql immutable as $$ select 'cf000000-0000-0000-0000-00000000000f'::uuid $$;
+create function tests.h16() returns uuid language sql immutable as $$ select 'd1000000-0000-0000-0000-000000000010'::uuid $$;
+create function tests.h17() returns uuid language sql immutable as $$ select 'd2000000-0000-0000-0000-000000000011'::uuid $$;
+create function tests.h18() returns uuid language sql immutable as $$ select 'd3000000-0000-0000-0000-000000000012'::uuid $$;
+create function tests.num(p_id uuid) returns integer
+language sql stable security definer set search_path = public as $$ select number from public.hackathons where id = p_id $$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+insert into public.hackathons (id, slug, title, tagline, theme_hidden, is_published, show_countdown_on_landing,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+select x.id, x.slug, x.title, 'A tagline', 'SECRET THEME ' || x.slug, x.pub, x.landing,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days'
+from (values
+  (tests.h14(), 'relay-live', 'Relay live', true, true),
+  (tests.h15(), 'relay-old', 'Relay old reveal', true, true),
+  (tests.h16(), 'relay-new', 'Relay new reveal', true, false),
+  (tests.h17(), 'relay-draft', 'Relay draft', false, true),
+  (tests.h18(), 'relay-cancelled', 'Relay cancelled', true, true)
+) as x(id, slug, title, pub, landing);
+select tests.set_phase(tests.h14(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h14(), tests.m(i), 'team' from generate_series(1, 4) i;
+select hackathon_admin_create_team(tests.h14(), 'Alpha', array[tests.m(1), tests.m(2)]);
+select hackathon_admin_create_team(tests.h14(), 'Beta', array[tests.m(3)]);
+update public.hackathon_registrations set withdrawn_at = now() where hackathon_id = tests.h14() and user_id = tests.m(4);
+select tests.set_phase(tests.h14(), 'live');
+select tests.set_phase(tests.h15(), 'revealed');
+update public.hackathons set reveal_at = now() - interval '2 days', judging_ends_at = now() - interval '2 days', ends_at = now() - interval '3 days' where id = tests.h15();
+select tests.set_phase(tests.h16(), 'revealed');
+-- Revealed this very moment, so it's the latest even in a database with real
+-- Sprints revealed in the last hour (staging's flip Sprint).
+update public.hackathons set judging_ends_at = now(), reveal_at = now() where id = tests.h16();
+select tests.set_phase(tests.h18(), 'registration');
+update public.hackathons set status_override = 'cancelled' where id = tests.h18();
+
+select tests.anon();
+select tests.eq('relay (033): exactly the public fields, never the theme or an id',
+  (select string_agg(k, ',' order by k) from (select jsonb_object_keys(to_jsonb(r)) k from hackathon_landing_relay() r where r.number = tests.num(tests.h14())) q),
+  'builders,ends_at,headline,number,on_landing,phase,registration_opens_at,reveal_at,starts_at,state,tagline,team_lock_at,teams,title');
+select tests.ok('relay (033): a live Sprint with its team and builder counts (withdrawn left out)',
+  (select state = 'live' and on_landing and teams = 2 and builders = 3 and title = 'Relay live'
+   from hackathon_landing_relay() where number = tests.num(tests.h14())));
+select tests.eq('relay (033): the theme appears nowhere',
+  tests.count($$ select 1 from hackathon_landing_relay() r where to_jsonb(r)::text like '%SECRET THEME%' $$)::text, '0');
+select tests.eq('relay (033): drafts are left out', tests.count($$ select 1 from hackathon_landing_relay() where number = tests.num(tests.h17()) $$)::text, '0');
+select tests.eq('relay (033): cancelled Sprints are left out', tests.count($$ select 1 from hackathon_landing_relay() where number = tests.num(tests.h18()) $$)::text, '0');
+select tests.eq('relay (033): of the revealed Sprints, only the latest',
+  (select string_agg(number::text, ',') from hackathon_landing_relay() where phase = 'revealed'), tests.num(tests.h16())::text);
+select tests.ok('relay (033): ...even with its landing switch off (the relay decides)',
+  (select not on_landing from hackathon_landing_relay() where number = tests.num(tests.h16())));
+select tests.pause(tests.h14(), now() - interval '10 minutes');
+select tests.ok('relay (033): a paused Sprint says so, and where its clock stopped',
+  (select state = 'paused' and phase = 'live' from hackathon_landing_relay() where number = tests.num(tests.h14())));
+select tests.clear_override(tests.h14());
 
 select tests.finish();
