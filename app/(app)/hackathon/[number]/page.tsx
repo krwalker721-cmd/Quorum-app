@@ -24,6 +24,7 @@ import {
 import { loadSprint, loadSprintPage, type SprintPageData } from "@/lib/hackathons/page";
 import { getMemberStanding } from "@/lib/hackathons/viewer";
 import { runMatcherIfDue } from "@/lib/hackathons/matcher";
+import { postLobbyMilestones } from "@/lib/hackathons/lobbyMilestones";
 import { stageCountdown, toTiming } from "@/lib/hackathons/sprint";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export const dynamic = "force-dynamic";
 const NOTICES: Record<string, string> = {
   "room-private": "That team room is private to its team. Only its members (and admins) can open it.",
   "no-team": "You're not on a team in this Sprint, so there's no team room for you.",
+  "lobby-private": "The lobby is for the people in this Sprint: its participants, judges and admins.",
 };
 
 // One page for a Sprint in every state. The database derives the state
@@ -62,6 +64,9 @@ export default async function SprintPage(props: {
     await runMatcherIfDue(sprint.id);
     sprint = (await loadSprint(supabase, n)) ?? sprint;
   }
+
+  // The lobby's milestone messages (once each; the database keeps count).
+  if (sprint.is_published) await postLobbyMilestones(sprint.id);
 
   const data = await loadSprintPage(supabase, sprint, user.id, standing);
   const timing = toTiming(sprint);

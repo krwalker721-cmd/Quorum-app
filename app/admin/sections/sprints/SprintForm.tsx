@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Btn, Card, ErrorLine, Kicker, send } from "../../ui";
 import { MILESTONES, TIME_FIELDS, labelFor, quickSchedule, timelineErrors, type Timeline } from "@/lib/hackathons/timeline";
 import { formatNy, nyInputToUtc, nyZoneLabel, utcToNyInput } from "@/lib/time/newYork";
+import { LOBBY_MAX_LENGTH, LOBBY_WELCOME_DEFAULT } from "@/lib/hackathons/lobby";
 import type { Sprint } from "./types";
 
 type TimeKey = (typeof TIME_FIELDS)[number];
@@ -32,6 +33,8 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
   const [inApp, setInApp] = useState(sprint?.show_countdown_in_app ?? true);
   const [onLanding, setOnLanding] = useState(sprint?.show_countdown_on_landing ?? true);
   const [headline, setHeadline] = useState(sprint?.countdown_headline_override ?? "");
+  // A new Sprint starts with the default welcome; blank hides it.
+  const [welcome, setWelcome] = useState(sprint ? sprint.lobby_welcome ?? "" : LOBBY_WELCOME_DEFAULT);
   const [times, setTimes] = useState<Record<TimeKey, string>>(
     () => Object.fromEntries(TIME_FIELDS.map((f) => [f, utcToNyInput(sprint?.[f] ?? null)])) as Record<TimeKey, string>,
   );
@@ -114,6 +117,7 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
       show_countdown_in_app: inApp,
       show_countdown_on_landing: onLanding,
       countdown_headline_override: headline,
+      lobby_welcome: welcome,
       ...parsed.iso,
     };
     // Editing: send only what changed, so a stale form can't overwrite a
@@ -267,6 +271,13 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
             <input value={headline} onChange={(e) => setHeadline(e.target.value)} />
           </Field>
         </div>
+      </Card>
+
+      <Card>
+        <Kicker>lobby</Kicker>
+        <Field label="welcome note (pinned at the top)" hint={`Blank: no welcome note. ${welcome.length} / ${LOBBY_MAX_LENGTH}`}>
+          <textarea value={welcome} onChange={(e) => setWelcome(e.target.value)} rows={3} maxLength={LOBBY_MAX_LENGTH} />
+        </Field>
       </Card>
 
       <div className="flex items-center gap-3">

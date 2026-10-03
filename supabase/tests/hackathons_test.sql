@@ -1628,4 +1628,226 @@ select tests.ok('room: members still read it after the reveal',
   and tests.count($$ select 1 from hackathon_team_member_activity where team_id = tests.team8('Night Shift') $$) = 1);
 
 
+-- ============================================================================
+-- Phase 7 (029): the lobby's welcome note, milestones, limits, moderation log
+-- ============================================================================
+select tests.as_db();
+create function tests.h9() returns uuid language sql immutable as $$ select 'c9000000-0000-0000-0000-000000000009'::uuid $$;
+create function tests.h10() returns uuid language sql immutable as $$ select 'ca000000-0000-0000-0000-00000000000a'::uuid $$;
+create function tests.milestones(p_hackathon uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select coalesce(string_agg(system_key, ',' order by created_at), '')
+  from public.hackathon_lobby_messages where hackathon_id = p_hackathon and system_key is not null
+$$;
+create function tests.lobby9(p_body text) returns public.hackathon_lobby_messages
+language sql stable security definer set search_path = public as $$
+  select * from public.hackathon_lobby_messages where hackathon_id = tests.h9() and body = p_body
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+-- Sprint 9: m11 and m12 registered (no teams needed for the lobby).
+insert into public.hackathons (id, slug, title, theme_hidden, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h9(), 'test-lobby', 'Lobby Sprint', 'Tools for night owls', true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h9(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h9(), tests.m(i), 'random' from generate_series(11, 12) i;
+
+-- The welcome note.
+select tests.ok('welcome: every new Sprint gets the default note',
+  (select lobby_welcome like 'This is the lobby for everyone in the Sprint%' from public.hackathons where id = tests.h9()));
+select tests.login_m(11);
+select tests.ok('welcome: a participant reads it', hackathon_lobby_welcome(tests.h9()) like 'This is the lobby%');
+select tests.throws('welcome: not on the public columns', $$ select lobby_welcome from public.hackathons $$, 'permission denied');
+select tests.login('oscar');
+select tests.ok('welcome: a spectator gets nothing', hackathon_lobby_welcome(tests.h9()) is null);
+select tests.anon();
+select tests.throws('welcome: signed out can''t call it', $$ select hackathon_lobby_welcome(tests.h9()) $$, 'permission denied');
+select tests.as_db();
+update public.hackathons set lobby_welcome = 'Be kind. No spoilers.' where id = tests.h9();
+select tests.service();
+create temp table dup9 as select hackathon_admin_duplicate(tests.h9()) as id;
+select tests.as_db();
+select tests.eq('welcome: Duplicate copies it',
+  (select lobby_welcome from public.hackathons where id = (select id from dup9)), 'Be kind. No spoilers.');
+select tests.throws('welcome: at most 1,000 characters',
+  $$ update public.hackathons set lobby_welcome = repeat('x', 1001) where id = tests.h9() $$, 'hackathons_lobby_welcome_length');
+
+-- Milestones: each once, on the Sprint's own clock.
+select tests.service();
+select tests.eq('milestones: nothing during registration', hackathon_post_lobby_milestones(tests.h9())::text, '0');
+select tests.set_phase(tests.h9(), 'teams_locked');
+select tests.service();
+select tests.eq('milestones: teams locked', hackathon_post_lobby_milestones(tests.h9())::text, '1');
+select tests.eq('milestones: ...exactly once', hackathon_post_lobby_milestones(tests.h9())::text, '0');
+select tests.ok('milestones: dated at the milestone, not when posted', (
+  select m.created_at = h.team_lock_at from public.hackathon_lobby_messages m join public.hackathons h on h.id = m.hackathon_id
+  where m.hackathon_id = tests.h9() and m.system_key = 'teams_locked'));
+select tests.ok('milestones: posted as the system', (
+  select is_system and user_id is null from public.hackathon_lobby_messages where hackathon_id = tests.h9() and system_key = 'teams_locked'));
+select tests.set_phase(tests.h9(), 'live');
+select tests.service();
+select hackathon_post_lobby_milestones(tests.h9());
+select tests.ok('milestones: kickoff names the theme', exists (
+  select 1 from public.hackathon_lobby_messages where hackathon_id = tests.h9() and system_key = 'live'
+    and body = 'Sprint is LIVE — the theme is: Tools for night owls. Go build!'));
+select tests.eq('milestones: no "1 hour left" with 47 hours to go', tests.milestones(tests.h9()), 'teams_locked,live');
+select tests.as_db();
+update public.hackathons set ends_at = now() + interval '40 minutes' where id = tests.h9();
+select tests.service();
+select hackathon_post_lobby_milestones(tests.h9());
+select tests.eq('milestones: 1 hour left', tests.milestones(tests.h9()), 'teams_locked,live,one_hour_left');
+
+-- Paused: the Sprint's clock stops, so nothing new is due.
+select tests.as_db();
+select tests.pause(tests.h9(), now() - interval '1 minute');
+update public.hackathons set ends_at = now() - interval '30 seconds', judging_ends_at = now() + interval '1 day',
+  reveal_at = now() + interval '2 days' where id = tests.h9();
+select tests.service();
+select tests.eq('milestones: nothing while paused (its clock stopped before the deadline)',
+  hackathon_post_lobby_milestones(tests.h9())::text, '0');
+select tests.as_db();
+select tests.clear_override(tests.h9());
+select tests.service();
+select hackathon_post_lobby_milestones(tests.h9());
+select tests.eq('milestones: submissions locked once it resumes', tests.milestones(tests.h9()),
+  'teams_locked,live,one_hour_left,submissions_locked');
+-- An admin extends the deadline: the announcements that aren't true any more go.
+select tests.service();
+update public.hackathons set ends_at = now() + interval '3 hours' where id = tests.h9();
+select tests.eq('milestones: extending the deadline withdraws "locked" and "1 hour left"', tests.milestones(tests.h9()), 'teams_locked,live');
+select tests.as_db();
+select tests.ok('milestones: the withdrawal is in the change log, saying why', exists (
+  select 1 from public.admin_change_log where hackathon_id = tests.h9() and action = 'delete'
+    and actor = 'Sprint times moved' and summary = 'Withdrew a milestone message whose time moved'));
+select set_config('hackathon.actor', 'Keaton in the SQL editor', true);
+update public.hackathons set ends_at = ends_at + interval '1 minute' where id = tests.h9();
+select tests.eq('milestones: ...and an admin''s own SQL-editor name is put back', current_setting('hackathon.actor', true), 'Keaton in the SQL editor');
+select set_config('hackathon.actor', '', true);
+select tests.as_db();
+update public.hackathons set ends_at = now() - interval '1 minute' where id = tests.h9();
+select tests.service();
+select hackathon_post_lobby_milestones(tests.h9());
+select tests.eq('milestones: ...and "locked" posts again at the new deadline', tests.milestones(tests.h9()),
+  'teams_locked,live,submissions_locked');
+select tests.set_phase(tests.h9(), 'revealed');
+select tests.service();
+select hackathon_post_lobby_milestones(tests.h9());
+select tests.ok('milestones: results are in, and still one of each', (
+  select count(*) = 4 and count(distinct system_key) = 4 from public.hackathon_lobby_messages
+  where hackathon_id = tests.h9() and system_key is not null));
+select tests.eq('milestones: the redone timeline, one of each', (
+  select string_agg(system_key, ',' order by system_key) from public.hackathon_lobby_messages
+  where hackathon_id = tests.h9() and system_key is not null), 'live,results,submissions_locked,teams_locked');
+
+-- A Sprint first looked at after its deadline: no late "1 hour left".
+select tests.as_db();
+insert into public.hackathons (id, slug, title, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h10(), 'test-lobby-late', 'Late Sprint', true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h10(), 'judging');
+select tests.service();
+select hackathon_post_lobby_milestones(tests.h10());
+select tests.eq('milestones: "1 hour left" is skipped when it''s too late', tests.milestones(tests.h10()),
+  'teams_locked,live,submissions_locked');
+select tests.as_db();
+select tests.pause(tests.h10(), now(), 'cancelled');
+update public.hackathons set reveal_at = now() - interval '1 second', judging_ends_at = now() - interval '2 seconds' where id = tests.h10();
+select tests.service();
+select tests.eq('milestones: none once cancelled', hackathon_post_lobby_milestones(tests.h10())::text, '0');
+select tests.login_m(11);
+select tests.throws('milestones: members can''t post them', $$ select hackathon_post_lobby_milestones(tests.h9()) $$, 'permission denied');
+
+-- Members' posts: keys, length, pace.
+select tests.set_phase(tests.h9(), 'live');
+select tests.login_m(11);
+select tests.lives('lobby: a participant posts', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body, system_key, is_system)
+  values (tests.h9(), tests.m(11), 'hello lobby', 'results', true) $$);
+select tests.ok('lobby: ...and can''t make it a system or milestone message',
+  (select not is_system and system_key is null from tests.lobby9('hello lobby')));
+select tests.lives('lobby: 1,000 characters is fine', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.m(11), repeat('a', 1000)) $$);
+select tests.throws('lobby: 1,001 is too long', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.m(11), repeat('a', 1001)) $$, '1,000 characters');
+select tests.lives('lobby: three more quick ones', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values
+    (tests.h9(), tests.m(11), 'two'), (tests.h9(), tests.m(11), 'three'), (tests.h9(), tests.m(11), 'four') $$);
+select tests.throws('lobby: a sixth inside 15 seconds is refused', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.m(11), 'six') $$, 'posting fast');
+select tests.login_m(12);
+select tests.lives('lobby: the limit is per person', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.m(12), 'hi from m12') $$);
+select tests.as_db();
+update public.hackathon_lobby_messages set created_at = now() - interval '1 minute'
+where hackathon_id = tests.h9() and user_id = tests.m(11);
+select tests.login_m(11);
+select tests.lives('lobby: fine again once it has calmed down', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.m(11), 'later') $$);
+select tests.as_db();
+insert into public.hackathon_lobby_messages (hackathon_id, user_id, body, created_at)
+select tests.h9(), tests.m(12), 'old ' || i, now() - interval '2 minutes' from generate_series(1, 29) i;
+select tests.login_m(12);
+select tests.throws('lobby: 30 in 5 minutes is the ceiling', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.m(12), 'one too many') $$, 'posting fast');
+select tests.login('admin');
+select tests.lives('lobby: admins aren''t limited', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.u('admin'), repeat('!', 1500)) $$);
+
+-- Who reads and writes: unchanged from 019, checked again here.
+select tests.login('oscar');
+select tests.eq('lobby: a spectator reads nothing', tests.count($$ select 1 from hackathon_lobby_messages where hackathon_id = tests.h9() $$)::text, '0');
+select tests.throws('lobby: ...and can''t post', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.u('oscar'), 'let me in') $$, 'row-level security');
+select tests.as_db();
+select tests.pause(tests.h9(), now());
+select tests.login_m(12);
+select tests.as_db();
+update public.hackathon_lobby_messages set created_at = now() - interval '10 minutes' where hackathon_id = tests.h9() and user_id = tests.m(12);
+select tests.login_m(12);
+select tests.lives('lobby: still open while paused (decision 9, kept in Phase 7)', $$
+  insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.m(12), 'paused chat') $$);
+select tests.as_db();
+select tests.clear_override(tests.h9());
+
+-- Moderation from the lobby page is logged.
+select set_config('request.headers', '{}', true);
+select tests.login('admin');
+select tests.eq('moderation: an admin pins from the lobby', tests.affected($$
+  update hackathon_lobby_messages set is_pinned = true where hackathon_id = tests.h9() and body = 'hello lobby' $$)::text, '1');
+select tests.as_db();
+select tests.ok('moderation: ...and it''s in the change log, naming them', exists (
+  select 1 from public.admin_change_log
+  where area = 'lobby' and hackathon_id = tests.h9() and summary = 'Pinned a lobby message' and actor like '% (in the lobby)'));
+select tests.login('admin');
+select tests.lives('moderation: an admin deletes someone''s message', $$
+  update hackathon_lobby_messages set deleted_at = now() where hackathon_id = tests.h9() and body = 'hi from m12' $$);
+select tests.as_db();
+select tests.ok('moderation: the deletion is logged too', exists (
+  select 1 from public.admin_change_log where hackathon_id = tests.h9() and summary = 'Deleted a lobby message'));
+select tests.login_m(12);
+update hackathon_lobby_messages set is_pinned = true where hackathon_id = tests.h9() and body = 'paused chat';
+select tests.ok('moderation: a member can''t pin', (select not is_pinned from tests.lobby9('paused chat')));
+select tests.as_db();
+select tests.eq('moderation: members'' own actions aren''t logged',
+  (select count(*) from public.admin_change_log where hackathon_id = tests.h9() and actor like '% (in the lobby)')::text, '2');
+
+
+-- Who's who: the tag beside each name.
+select tests.as_db();
+select hackathon_admin_create_team(tests.h9(), 'Lobby Larks', array[tests.m(11)]);
+select tests.login_m(12);
+select tests.eq('people: a participant sees a teammate''s team',
+  (select team_name from hackathon_lobby_people(tests.h9()) where user_id = tests.m(11)), 'Lobby Larks');
+select tests.eq('people: someone without a team has none',
+  (select coalesce(team_name, '-') || '/' || role from hackathon_lobby_people(tests.h9()) where user_id = tests.m(12)), '-/participant');
+select tests.eq('people: an admin who posted is tagged admin',
+  (select role from hackathon_lobby_people(tests.h9()) where user_id = tests.u('admin')), 'admin');
+select tests.login('oscar');
+select tests.eq('people: a spectator gets nobody', tests.count($$ select 1 from hackathon_lobby_people(tests.h9()) $$)::text, '0');
+select tests.anon();
+select tests.throws('people: signed out can''t call it', $$ select * from hackathon_lobby_people(tests.h9()) $$, 'permission denied');
+
 select tests.finish();

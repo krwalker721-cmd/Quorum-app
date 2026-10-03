@@ -5,13 +5,13 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
-- **Status (2026-10-02):** Phases 1–6 are built, checked on staging, approved and committed
-  locally (Phase 6: `a1652f8`). Next is the owner's Phase 7 prompt.
+- **Status (2026-10-02):** Phases 1–7 are built, checked on staging, approved and committed
+  locally. Next is the owner's Phase 8 prompt (the submission form).
 
 ### Start here (handoff, 2026-09-30)
 **Where things stand**
-- **Migrations:** 018–028 are on staging. Production has none of them (it's at 017).
-- **Tests:** 481 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Migrations:** 018–029 are on staging. Production has none of them (it's at 017).
+- **Tests:** 531 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -39,13 +39,14 @@ which project is the target.
 | 3 · Hackathon tab | 024 `hackathon_registrants()` | `app/(app)/hackathon/` (index, `[number]`, `archive`, `[number]/team`, `[number]/lobby`); `components/hackathon/SprintSections.tsx`, `SprintCountdown.tsx`, `SprintAutoRefresh.tsx`, `LocalTime.tsx`, `RevealGallery.tsx`, `RoomPlaceholder.tsx`; `components/countdown/Countdown.tsx`; `lib/hackathons/sprint.ts`, `page.ts`, `nav.ts`, `viewer.ts`; `app/api/hackathons/[number]/timing`; `lib/useServerNow.ts` (monotonic clock) |
 | 4 · Registration and teams | 025 `hackathon_team_invite_codes`, `hackathon_team_invitations`, `private.join_team`, counts, check-in, renaming; 026 `hackathons.matched_at` / `match_report`, `hackathon_run_matcher()` | `components/hackathon/JoinQueue.tsx`, `JoinQueueClient.tsx`, `TeamPanel.tsx`, `MemberSearch.tsx`, `TeamStyle.tsx`, `CheckIn.tsx`, `QueueLive.tsx`, `JoinByLink.tsx`; `app/(app)/hackathon/[number]/join/[code]`; `lib/hackathons/actions.ts`, `matcher.ts`, `skills.ts`; `app/api/cron/hackathon-matcher` (not scheduled: Hobby); admin `SprintControls.tsx` (matcher), `Participants.tsx` (check-in) |
 | 5 · Arena | 027 `hackathon_team_pulse` (+ triggers, realtime), `hackathon_arena_cohorts()` | `components/hackathon/Arena.tsx`, `arena.module.css`; `realtimeDb()` in `lib/hackathons/actions.ts`; `CountdownStrip.tsx` (row cap); `scripts/simulate-sprint-activity.mjs`; `db.sh staging:seed-spectator` |
+| 7 · Lobby | 029 `hackathons.lobby_welcome`, `hackathon_lobby_messages.system_key`, `hackathon_post_lobby_milestones()`, `hackathon_lobby_welcome()`, `hackathon_lobby_people()`, limits and moderation-log triggers | `app/(app)/hackathon/[number]/lobby/page.tsx`; `components/hackathon/lobby/LobbyClient.tsx`; `RoomThread` (avatars, tags, milestone banners, actions); `lib/hackathons/lobby.ts`, `lobbyMilestones.ts`; timing route and Sprint page post milestones; admin Sprint form "welcome note" |
 | 6 · Team room | 028 `hackathon_team_member_activity`, `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/` (room, `submission` placeholder); `components/hackathon/room/*`; shared `components/rooms/*` (from the Collab room) and `components/editor/RichTextEditor.tsx` (from the Vault); `lib/hackathons/room.ts`, `quiet.ts` |
 
 **Waiting on the owner**
-- Paste 018–028 into production before any deploy that needs them.
+- Paste 018–029 into production before any deploy that needs them.
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
-- The next prompt (lobby, submission form (Prompt 8), judging, reveal gallery, notifications).
+- The next prompt (submission form (Prompt 8), judging, reveal gallery, notifications).
 
 **Staging test data, as left on 2026-09-30**
 - Sprint #4 (registration): the test admin is on Rockets, and Test Crew has Sam plus a pending
@@ -175,7 +176,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–028** |
+| Migrations applied | up to **017** | **018–029** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -319,7 +320,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-09-30, Phase 6):** all 481 tests pass locally and on staging.
+- **Last run (2026-10-02, Phase 7):** all 531 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -813,6 +814,80 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 
 ---
 
+## 5f. Phase 7: the lobby (migration 029)
+
+### What the owner decided at the plan
+- **The lobby stays writable while paused** (decision 9 kept). The brief said no posting while
+  paused; cancelled is read-only, as before.
+- **The welcome note is a Sprint setting**, pre-filled for every Sprint and edited in the admin
+  console, not a real message.
+- **Messages are at most 1,000 characters.**
+- **Milestones are posted without a cron** (Vercel Hobby): from page loads and the 30-second timing
+  check, dated at the milestone, and "1 hour left" is skipped if it's already too late.
+
+### Database: `029_hackathon_lobby.sql`
+- **`hackathons.lobby_welcome`:** defaults to the brief's text (1,000 characters at most); copied
+  by Duplicate. Read through `hackathon_lobby_welcome(id)`, which only answers the lobby's
+  audience. It isn't on the public view.
+- **Milestones:** `hackathon_lobby_messages.system_key`, unique per Sprint.
+  `hackathon_post_lobby_milestones(id)` (service role only) posts whichever of `teams_locked`,
+  `live` ("Sprint is LIVE — the theme is: …"), `one_hour_left`, `submissions_locked` and `results`
+  are due, once each, on the Sprint's own clock (nothing while paused, nothing once cancelled),
+  dated at the milestone.
+- **Moved times:** a trigger on `hackathons` withdraws an announced milestone whose time is in the
+  future again (an extended deadline), so it posts again at the new time and never says something
+  that isn't true yet. Found on staging: a reseed (like an extension) left "Submissions are locked"
+  showing during a live Sprint.
+- **`hackathon_lobby_people(id)`:** name, avatar details, team and role (participant, judge,
+  admin) for everyone the lobby shows. Lobby audience only.
+- **Members' posts:** at most 1,000 characters; at most 5 in 15 seconds and 30 in 5 minutes;
+  can't set `system_key`. Admins are exempt. (Security invoker, like the 019 guard, so it can
+  tell a member's request apart from the server's.)
+- **Moderation log:** an admin pinning, unpinning or deleting someone else's message from the lobby
+  page (their own sign-in, not the console) is written to `admin_change_log` as "Test Admin (in the
+  lobby)". Withdrawn milestones are logged as "Sprint times moved". Both put back any
+  `hackathon.actor` an admin set in the SQL editor.
+- **Tests:** 50 new (**531**). Deliberate breaks caught: milestones ignoring the clock, no rate
+  limit, deletions not logged.
+
+### App
+- **`/hackathon/[n]/lobby`:** participants, accepted judges and admins. Anyone else goes back to
+  the Sprint page with "The lobby is for the people in this Sprint".
+  - **Pinned box:** the welcome note, then any pinned messages.
+  - **Thread:** `RoomThread` with new opt-in props: each message shows the author's avatar, name
+    and a tag (team with its badge, "Judge" or "Admin"), the time ("4m ago", the full time on
+    hover). System messages are amber banners. Admins get Pin/Unpin and Delete under each
+    message.
+  - **Composer:** 1,000-character cap; the database's own messages (posting too fast) are shown.
+  - **Read-only:** after `lobby_closes_at`, when cancelled, and for a lapsed participant after the
+    reveal (decision 12), with a note saying why.
+- **Live:** realtime on the Sprint's lobby messages (new, pinned, deleted), plus an ids-only DELETE
+  channel for withdrawn milestones. The page refreshes itself an hour before the deadline and when
+  the lobby closes; `SprintAutoRefresh` covers the phase boundaries.
+- **Who posts milestones:** the Sprint page and lobby page on every load, and
+  `/api/hackathons/[n]/timing` (every open Sprint page asks it every 30 s; edge-cached 30 s).
+- **Admin console:** the Sprint form has a "lobby → welcome note" field (blank hides it). The
+  existing Lobby tab still pins, unpins and deletes.
+- **Collab unchanged:** the fixture check gives byte-identical HTML again (with "N days ago"
+  normalised, since the fixture's dates aged two days).
+
+### Checked on staging (2026-10-02), signed in as the test admin (on Rockets, #6)
+- The welcome note pinned on top; Priya and Sam (Comets, played by a staging-only script) appeared
+  live with avatars and a "Comets" tag; my reply sent from the composer.
+- Pinned Priya's message (it moved into the pinned box) and deleted Sam's ("Message deleted"); both
+  are in the change log as "Test Admin (in the lobby)".
+- Milestones, live, without reloads: moved the deadline to 61 minutes out → "1 hour left" a minute
+  later (3 s after its moment); deadline to 1 minute → "Submissions are locked" 3 s after it;
+  reveal to 1 minute → "Results are in!" 4 s after it. Staging holds exactly one of each.
+- A reseed that moved the times back withdrew the stale "Submissions are locked" from the open page.
+- Phone width (375): no sideways scroll; the composer is in view; the banners read well.
+- **Not checked in the browser:** the spectator being kept out (the pane is signed in as the test
+  admin; the database tests cover it, and the page check is the one the placeholder already had);
+  the rate limit from the UI (the test admin is exempt; the database tests cover it); the admin
+  console's welcome-note field (needs the admin code).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -870,25 +945,29 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 | 51 | Room docs: last save wins, with a conditional save and a Keep mine / Load theirs choice; no live co-editing. | Co-editing needs a new library (e.g. Yjs); not asked for. |
 | 52 | Per-member activity is its own table, readable by the team only, not columns on `hackathon_team_members`. | Team rosters are readable by the arena's audience; when teammates are active or asleep is the team's business. |
 | 53 | "Unanimous" only when everyone chose the winner, in Collab and Sprint rooms alike. | It said so whenever everyone had voted, even after a split; the owner approved changing Collab too. |
+| 54 | The lobby stays writable while paused, not read-only as the Phase 7 brief said. | Owner, at the Phase 7 plan (decision 9 kept). |
+| 55 | The lobby's welcome note is a per-Sprint setting with the brief's text as its default, read only by the lobby's audience. | Owner chose a setting over a real message; copied by Duplicate. |
+| 56 | Lobby messages: 1,000 characters; 5 per 15 s and 30 per 5 min per person; admins exempt. | Owner chose the length; the rate is "simple" per the brief. |
+| 57 | Milestone messages are posted by an idempotent database function called from page loads and the 30 s timing check, dated at the milestone; "1 hour left" is skipped if late. | No per-minute cron on Hobby. Owner OK'd. |
+| 58 | An announced milestone whose time moves back into the future is withdrawn, and posts again at the new time. | Extending the deadline (decision 19) must not leave "Submissions are locked" up while they're open. |
+| 59 | Admin moderation from the lobby page itself is written to the admin change log. | 022's log skips members' own sign-ins; moderation should be logged wherever it happens. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 028** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 029** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
-      027 the arena has no pulse or cohorts, and without 028 the team room has no activity, quiet
-      notes or sleep.
+      027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
+      notes or sleep, and without 029 the lobby page fails to load (it reads `system_key`).
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
       to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- Lobby: replace the placeholder at `/hackathon/[n]/lobby` (keep its access check). `RoomThread`
-  in `components/rooms/` is ready to reuse.
 - **Prompt 8:** the submission form at `/hackathon/[n]/team/[slug]/submission` (placeholder; the
   room's button already points there and shows the status). Judging, public project pages.
 - **Prompt 10:** the reveal gallery (replace `GallerySlot` in `components/hackathon/RevealGallery.tsx`).

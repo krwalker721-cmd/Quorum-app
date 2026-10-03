@@ -46,7 +46,7 @@ export function dbErrorResponse(error: DbError, status = 400) {
   );
 }
 
-export const TEXT_FIELDS = ["title", "slug", "tagline", "theme_hidden", "rules", "countdown_headline_override"] as const;
+export const TEXT_FIELDS = ["title", "slug", "tagline", "theme_hidden", "rules", "countdown_headline_override", "lobby_welcome"] as const;
 export const INT_FIELDS = ["max_team_size", "min_team_size"] as const;
 export const BOOL_FIELDS = ["show_countdown_in_app", "show_countdown_on_landing"] as const;
 

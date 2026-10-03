@@ -41,6 +41,8 @@ export type Sprint = {
   show_countdown_in_app: boolean;
   show_countdown_on_landing: boolean;
   countdown_headline_override: string | null;
+  /** Pinned at the top of the lobby (migration 029); null hides it. */
+  lobby_welcome: string | null;
   updated_at: string;
   /** Set once the team matcher has run (migration 026). */
   matched_at: string | null;

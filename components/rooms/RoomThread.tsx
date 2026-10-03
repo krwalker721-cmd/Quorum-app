@@ -14,7 +14,13 @@ export type RoomMessage = {
   createdAt: string;
   /** Soft-deleted (the Hackathon room blanks the text and keeps the row). */
   deleted?: boolean;
+  /** A milestone line (the Sprint lobby): drawn as an amber banner. */
+  highlight?: boolean;
+  pinned?: boolean;
 };
+
+/** Who wrote a message, for rooms that show it (the Sprint lobby). */
+export type AuthorMeta = { avatar: ReactNode; tag?: ReactNode };
 
 /**
  * A room's chat thread: the messages and the composer. The room owns the data
@@ -28,6 +34,9 @@ export default function RoomThread({
   placeholder = "Message the team…",
   notice,
   closed,
+  authorMeta,
+  actions,
+  maxLength,
 }: {
   messages: RoomMessage[];
   currentUserId: string;
@@ -38,6 +47,14 @@ export default function RoomThread({
   notice?: ReactNode;
   /** Replaces the composer when the room is read-only. */
   closed?: ReactNode;
+  /**
+   * Avatars and a tag beside each name (the lobby). Without it, messages are
+   * drawn exactly as the Collab room always has.
+   */
+  authorMeta?: (userId: string) => AuthorMeta | null;
+  /** Controls under a message (an admin's pin and delete). */
+  actions?: (m: RoomMessage) => ReactNode;
+  maxLength?: number;
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -91,6 +108,21 @@ export default function RoomThread({
           </div>
         ) : (
           messages.map((m) => {
+            if (m.isSystem && m.highlight) {
+              return <MilestoneLine key={m.id} m={m} />;
+            }
+            if (authorMeta && !m.isSystem) {
+              return (
+                <PersonMessage
+                  key={m.id}
+                  m={m}
+                  mine={m.authorId === currentUserId}
+                  name={(m.authorId ? nameOf(m.authorId) : null) ?? "—"}
+                  meta={m.authorId ? authorMeta(m.authorId) : null}
+                  actions={actions?.(m)}
+                />
+              );
+            }
             if (m.isSystem) {
               return (
                 <p
@@ -162,6 +194,7 @@ export default function RoomThread({
               }
             }}
             placeholder={placeholder}
+            maxLength={maxLength}
             aria-label={placeholder.replace(/…$/, "")}
             className={`${ui.search} flex-1 min-w-0`}
             style={{ colorScheme: "dark" }}
@@ -195,6 +228,100 @@ export default function RoomThread({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+const clockTime = (iso: string) =>
+  new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+
+/** "Sprint is LIVE", "1 hour left": the moments everyone shares. */
+function MilestoneLine({ m }: { m: RoomMessage }) {
+  return (
+    <div style={{ alignSelf: "center", maxWidth: "90%", margin: "6px 0", textAlign: "center" }}>
+      <p
+        style={{
+          display: "inline-block",
+          fontSize: 12.5,
+          fontWeight: 500,
+          lineHeight: 1.5,
+          color: "#f8c56a",
+          border: "1px solid rgba(245, 158, 11, 0.35)",
+          background: "linear-gradient(150deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.04) 70%)",
+          borderRadius: 999,
+          padding: "6px 14px",
+        }}
+      >
+        {m.body}
+      </p>
+      <p style={{ ...META, fontSize: 10.5, marginTop: 4 }} title={clockTime(m.createdAt)} suppressHydrationWarning>
+        {timeAgo(m.createdAt)} ago
+      </p>
+    </div>
+  );
+}
+
+/** A message with its author's avatar and tag (the lobby's way). */
+function PersonMessage({
+  m,
+  mine,
+  name,
+  meta,
+  actions,
+}: {
+  m: RoomMessage;
+  mine: boolean;
+  name: string;
+  meta: AuthorMeta | null;
+  actions?: ReactNode;
+}) {
+  return (
+    <div
+      className="group/msg flex items-end gap-2"
+      style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "85%", flexDirection: mine ? "row-reverse" : "row" }}
+    >
+      {!mine && <div className="shrink-0">{meta?.avatar}</div>}
+      <div className="min-w-0">
+        <div
+          style={{
+            padding: "10px 14px",
+            ...(mine
+              ? {
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  borderRadius: "16px 16px 6px 16px",
+                  background: "linear-gradient(150deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.07) 70%)",
+                }
+              : {
+                  border: "1px solid rgba(255, 255, 255, 0.07)",
+                  borderRadius: "16px 16px 16px 6px",
+                  background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%), var(--card)",
+                }),
+            ...(m.pinned ? { boxShadow: "0 0 0 1px rgba(245, 158, 11, 0.45)" } : null),
+          }}
+        >
+          {!mine && (
+            <p className="flex items-center gap-1.5 flex-wrap" style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
+              <span>{name}</span>
+              {meta?.tag}
+            </p>
+          )}
+          {m.deleted ? (
+            <p style={{ color: "var(--text-muted)", fontSize: 13, fontStyle: "italic", lineHeight: 1.6 }}>Message deleted</p>
+          ) : (
+            <p style={{ color: "var(--text-primary)", fontSize: 13, whiteSpace: "pre-wrap", lineHeight: 1.6, overflowWrap: "anywhere" }}>
+              {m.body}
+            </p>
+          )}
+          <p
+            style={{ fontSize: 10.5, color: mine ? "rgba(248, 197, 106, 0.75)" : "var(--text-muted)", marginTop: 4 }}
+            title={clockTime(m.createdAt)}
+            suppressHydrationWarning
+          >
+            {timeAgo(m.createdAt)} ago{m.pinned ? " · Pinned" : ""}
+          </p>
+        </div>
+        {actions && <div className="flex gap-3 mt-1" style={{ justifyContent: mine ? "flex-end" : "flex-start" }}>{actions}</div>}
+      </div>
     </div>
   );
 }
