@@ -72,7 +72,7 @@ function SprintList({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: ()
       {rows === null ? (
         <p className="font-mono text-xs text-text-faint">loading…</p>
       ) : rows.length === 0 ? (
-        <p className="font-mono text-xs text-text-faint">no sprints yet</p>
+        <p className="font-mono text-xs text-text-faint">no sprint scheduled yet. press new sprint to create sprint #1.</p>
       ) : (
         <div className="overflow-x-auto border" style={{ borderColor: "var(--border)" }}>
           <table className="w-full text-sm min-w-[640px]">

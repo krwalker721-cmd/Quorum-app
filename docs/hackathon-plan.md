@@ -9,7 +9,11 @@ then check `git log main..feat/hackathon-db` for anything newer.
   locally. Phase 9 (judging, without external judges) is built, checked on staging, approved and
   committed locally (`bb8c9be`). Phase 10 (the reveal, gallery, public project and recap pages)
   is built, checked on staging, approved and committed locally (`a6241a9`). Phase 11 (the landing
-  page's countdown relay) is built and checked on staging, waiting for the owner's look.
+  page's countdown relay) is approved and committed locally (`b9a1b06`).
+- **Staging is a clean slate (2026-10-03).** At the owner's request every Sprint, team, message,
+  submission, score, award, countdown, Hackathon admin log and bucket file was deleted with
+  `scripts/reset-hackathon-data.mjs` (section 5k). The owner now creates and edits their own
+  Sprints from the admin console; the next one is Sprint #1. The ten test accounts were kept.
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
@@ -38,6 +42,10 @@ which project is the target.
    - Spectator: `spectator-test@quorum.test`.
    - Both passwords are in `.env.staging-admin.local`.
 3. Test data:
+   - **Staging has no Sprints since 2026-10-03** (section 5k), and the owner is building their own.
+     Don't run the seed scripts below without asking: they bring back the test Sprints, and with
+     the old ones gone they'd take numbers from #1, so "#6", "#7", "#11" below would no longer match.
+   - `node scripts/reset-hackathon-data.mjs staging` empties it again (asks first).
    - `node scripts/seed-staging-sprints.mjs` puts Sprints #3–#11 back in one state each; #11 is
      also the team matcher demo. It also moves times, which withdraws lobby milestones whose
      moment is in the future again (029), so re-run it after any check that moves #6's times.
@@ -73,8 +81,8 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 (`e2e386b`, decision 53).
 
 **Waiting on the owner**
-- A look at Phase 11 (section 5j), then the commit. Next: notifications (Prompt 12); external-judge
-  accounts for Sprint #2 (decision 14).
+- The owner is testing and editing from a clean slate on staging (section 5k). Next: notifications
+  (Prompt 12); external-judge accounts for Sprint #2 (decision 14).
 - Paste 018–033 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
@@ -249,12 +257,17 @@ Tools, all in the repo:
 - `node scripts/simulate-sprint-activity.mjs [minutes] [seconds] [--submit]` (Phase 5): test members
   post in the live test Sprint's team rooms (#6), so the arena's pulse moves. Every message starts
   with "simulated activity" so a network check can search for it. Refuses production.
+- `node scripts/reset-hackathon-data.mjs local | staging` (2026-10-03): deletes every Hackathon
+  row and bucket file, nothing else, after a rolled-back practice run and a typed "delete". Production
+  needs `--allow-production`, `PRODUCTION_DB_URL` for that run, and the production ref typed in.
+  Section 5k.
 - `node scripts/dev-staging.mjs`: the app on http://localhost:3100 against staging.
   - It refuses production and builds into `.next-staging`.
   - The Browser pane's config is `quorum-dev-staging`.
   - This is a Node launcher because the preview's shell isn't allowed to `source` env files.
-- `node scripts/seed-staging.mjs`: six test members (`member-1…6@quorum.test`), a "UI test"
-  Sprint, team Alpha and lobby messages. It refuses production and is safe to run again.
+- `node scripts/seed-staging.mjs`: eight test members (`member-1…8@quorum.test`), a "UI test"
+  Sprint, team Alpha and lobby messages. It refuses production and is safe to run again. The members'
+  passwords are random and never saved, so nobody can sign in as them as things stand.
 - `node scripts/seed-staging-sprints.mjs` (Phase 3): one test Sprint per state, #3–#11 on
   staging ("State: upcoming" … "State: cancelled", plus "State: flips every 2 min", which walks
   through every state two minutes apart). Times are set relative to now, so running it again puts
@@ -370,7 +383,8 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-03, Phase 11):** all 639 tests pass locally and on staging.
+- **Last run (2026-10-03, after the clean-slate reset):** all 639 tests pass locally and on
+  staging, with staging's Hackathon tables empty.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -1272,6 +1286,71 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 
 ---
 
+## 5k. Clean slate: resetting the Hackathon data (2026-10-03)
+
+The owner asked for a clean slate so they could test and edit the feature themselves from scratch:
+no Sprints at all, then their own, made in the admin console. Rows and files only. No table,
+function, policy or test changed, and nothing outside the Hackathon feature was touched.
+
+### Where the test data was (reported before deleting)
+- **Staging** (`ycjqgrcapphfiageaaux`): all of it. 11 Sprints, 54 registrations, 16 teams, 43 team
+  members, 2 join requests, 1 invitation, 2 invite codes, 80 team messages, 1 doc, 1 link, 1 vote,
+  3 ballots, 16 pulse rows, 43 activity rows, 79 lobby messages, 7 submissions, 3 files in
+  `hackathon-submissions`, 3 judges, 4 scores, 7 awards, 10 `hackathon_admin_audit` rows,
+  596 `admin_change_log` rows, 1 countdown (the launch one), 0 notifications.
+- **Production** (`ydbnyujqmhwufwqihefh`): none. It has no Hackathon tables (it's at 017) and no bucket.
+- **Local test database**: none. It's rebuilt on every `db.sh local` run and the tests roll back.
+- `npm run dev` (`.env.local`) points at **production**; `quorum-dev-staging` points at staging.
+- The Hackathon feature has never written to `notifications`, so there was nothing to delete there.
+
+### `scripts/reset-hackathon-data.mjs`
+- `local`, `staging`, or `production --allow-production`. The production target also needs
+  `PRODUCTION_DB_URL` for that run (never stored in a file) and the production ref typed at the
+  prompt. Staging refuses settings that point at production, like the other scripts.
+- It prints the counts for every table and the bucket, then deletes inside a transaction that it
+  rolls back. This practice run catches any blocked delete before anything is removed. After that it
+  asks for a typed "delete", deletes the rows in one transaction, removes the files through the
+  Storage API, and counts again.
+- **What it runs:** `delete from hackathons` (which cascades to every `hackathon_*` table; the
+  append-only guards in 021 and 031 let a row go once its Sprint is gone), `delete from
+  site_countdowns`, Hackathon notifications (`kind like 'hackathon\_%'`, none so far), then
+  `truncate admin_change_log`.
+- **Why truncate:** the change log's trigger refuses every DELETE, even from the table owner (022).
+  A trigger on delete doesn't fire on TRUNCATE, which psql may run as the owner. The table's area check
+  only allows the Hackathon admin screens' areas. The script still refuses if it ever finds a row from
+  another area.
+- Sprint numbers are `max + 1` (018), so nothing needs resetting for the next Sprint to be #1.
+- psql (as the database owner) does the rows, because the API roles may not delete from either admin
+  log. The bucket goes through the Storage API, because Supabase blocks deleting storage rows in SQL.
+
+### The staging run
+- First practice run: the change log's append-only trigger stopped it, and nothing was deleted.
+  That's how the truncate above came about. The second practice run passed, then the real run left
+  zero rows and zero files.
+- Non-Hackathon tables were counted before and after (profiles, auth users, posts, cohorts,
+  members, messages, Collab projects and rooms, notes, notifications, settings): identical.
+- A second run says "Nothing to delete". `db.sh staging:test` and `db.sh local`: 639 pass.
+- **Kept:** all ten test accounts (staging has no other profiles): `admin-test@` and
+  `spectator-test@quorum.test` (passwords in `.env.staging-admin.local`), and
+  `member-1…8@quorum.test` (Maya Chen, Leo Okafor, Priya Nair, Sam Ortiz, Jonah Weiss, Ava Laurent,
+  Noor Haddad, Theo Brandt), whose passwords were never saved.
+
+### Empty states checked (as the test admin, and signed out)
+- `/hackathon`: "No Sprint is scheduled right now. The next one will be announced here." No archive
+  link. `/hackathon/archive`: "No Sprint has finished yet." `/hackathon/1` and every page under it,
+  plus the public recap and project pages: 404. `/home` and the sitemap are fine.
+  `GET /api/countdowns/landing` returns `{"site":[],"sprints":[]}`.
+- **Fixed:** an invite link to a Sprint that no longer exists said "isn't valid any more" and then
+  offered "See Sprint #1 →", which was a 404. It now offers "Go to Sprints →" (`/hackathon`).
+- **Fixed:** admin Sprints said only "no sprints yet". It now says "no sprint scheduled yet. press
+  new sprint to create sprint #1."
+- Admin Countdowns: "nothing: every landing countdown is off or over", "no countdowns yet", "no
+  admin changes yet".
+- Landing page, signed out: no relay, the founding-seats badge and headline intact, all nine sections,
+  no sideways scroll, and no console or server errors.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1453,6 +1532,10 @@ scripts/db.sh staging:test     # the same tests on staging; they roll back
 node scripts/dev-staging.mjs   # the app on http://localhost:3100 against staging
 ```
 
+```bash
+node scripts/reset-hackathon-data.mjs staging   # clean slate: every Sprint and Hackathon file (asks first)
+```
+
 Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see section 3).
 
 ## 9. Commits on `feat/hackathon-db`
@@ -1484,4 +1567,6 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `bb8c9be` | Judging, scores, results and finalized awards (031) |
 | `3f88695` | Record the Phase 9 commit |
 | `a6241a9` | The reveal, the gallery, and public project and recap pages (032) |
-| (next) | Record the Phase 10 commit |
+| `f9de9b1` | Record the Phase 10 commit |
+| `b9a1b06` | The landing page's countdown relay (033) |
+| (next) | Clean-slate reset script; staging's Hackathon data deleted; empty-state fixes |
