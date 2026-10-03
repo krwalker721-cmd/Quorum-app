@@ -1042,3 +1042,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `785a37c` | The arena, live and sealed by design (027) |
 | `8ef8388`, `2ac37b8` | Record the Phase 5 commit; start-here handoff |
 | `a1652f8` | The team room: thread, docs, links, votes, who's active and who's asleep (028) |
+| `e2e386b` | "Unanimous" only when everyone chose the winner (Collab and Sprint rooms) |
+| `fa5e4ae` | The Sprint lobby, with milestones posted exactly once (029) |
