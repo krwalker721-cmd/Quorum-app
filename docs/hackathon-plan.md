@@ -1131,3 +1131,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `a1652f8` | The team room: thread, docs, links, votes, who's active and who's asleep (028) |
 | `e2e386b` | "Unanimous" only when everyone chose the winner (Collab and Sprint rooms) |
 | `fa5e4ae` | The Sprint lobby, with milestones posted exactly once (029) |
+| `9060636` | Record the Phase 7 commit |
+| `5ba01ab` | The submission form, with drafts, autosave and a hard deadline (030) |
