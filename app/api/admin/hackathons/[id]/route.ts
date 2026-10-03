@@ -31,7 +31,7 @@ export async function GET(req: Request, ctx: Ctx) {
     db.from("hackathon_registrations").select("user_id, mode, team_id, checked_in_at, created_at, withdrawn_at").eq("hackathon_id", id).order("created_at"),
     db.from("hackathon_teams").select("id, name, slug, emblem, color, is_random_matched, is_open_to_requests, max_size_override, created_at").eq("hackathon_id", id).order("created_at"),
     db.from("hackathon_team_members").select("team_id, user_id, role, joined_at").eq("hackathon_id", id).order("joined_at"),
-    db.from("hackathon_submissions").select("team_id, project_name, updated_at").eq("hackathon_id", id),
+    db.from("hackathon_submissions").select("team_id, project_name, updated_at, is_complete").eq("hackathon_id", id),
     db.from("hackathon_judges").select("id, user_id, invite_email, invited_at, accepted_at").eq("hackathon_id", id).order("invited_at"),
     db.from("hackathon_lobby_messages").select("id, user_id, body, is_system, is_pinned, created_at, edited_at, deleted_at").eq("hackathon_id", id).order("created_at", { ascending: false }).limit(150),
     db.from("admin_change_log").select("id, area, action, summary, subject, changes, actor, created_at").eq("hackathon_id", id).order("created_at", { ascending: false }).limit(150),

@@ -5,13 +5,13 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 - **Branch:** `feat/hackathon-db`. Everything is committed locally and **nothing is pushed**.
   The owner decides when to push.
-- **Status (2026-10-02):** Phases 1–7 are built, checked on staging, approved and committed
-  locally. Next is the owner's Phase 8 prompt (the submission form).
+- **Status (2026-10-03):** Phases 1–8 are built, checked on staging, approved and committed
+  locally. Next is the owner's Phase 9 prompt.
 
 ### Start here (handoff, 2026-09-30)
 **Where things stand**
-- **Migrations:** 018–029 are on staging. Production has none of them (it's at 017).
-- **Tests:** 531 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Migrations:** 018–030 are on staging. Production has none of them (it's at 017).
+- **Tests:** 560 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -39,14 +39,15 @@ which project is the target.
 | 3 · Hackathon tab | 024 `hackathon_registrants()` | `app/(app)/hackathon/` (index, `[number]`, `archive`, `[number]/team`, `[number]/lobby`); `components/hackathon/SprintSections.tsx`, `SprintCountdown.tsx`, `SprintAutoRefresh.tsx`, `LocalTime.tsx`, `RevealGallery.tsx`, `RoomPlaceholder.tsx`; `components/countdown/Countdown.tsx`; `lib/hackathons/sprint.ts`, `page.ts`, `nav.ts`, `viewer.ts`; `app/api/hackathons/[number]/timing`; `lib/useServerNow.ts` (monotonic clock) |
 | 4 · Registration and teams | 025 `hackathon_team_invite_codes`, `hackathon_team_invitations`, `private.join_team`, counts, check-in, renaming; 026 `hackathons.matched_at` / `match_report`, `hackathon_run_matcher()` | `components/hackathon/JoinQueue.tsx`, `JoinQueueClient.tsx`, `TeamPanel.tsx`, `MemberSearch.tsx`, `TeamStyle.tsx`, `CheckIn.tsx`, `QueueLive.tsx`, `JoinByLink.tsx`; `app/(app)/hackathon/[number]/join/[code]`; `lib/hackathons/actions.ts`, `matcher.ts`, `skills.ts`; `app/api/cron/hackathon-matcher` (not scheduled: Hobby); admin `SprintControls.tsx` (matcher), `Participants.tsx` (check-in) |
 | 5 · Arena | 027 `hackathon_team_pulse` (+ triggers, realtime), `hackathon_arena_cohorts()` | `components/hackathon/Arena.tsx`, `arena.module.css`; `realtimeDb()` in `lib/hackathons/actions.ts`; `CountdownStrip.tsx` (row cap); `scripts/simulate-sprint-activity.mjs`; `db.sh staging:seed-spectator` |
+| 8 · Submission | 030 drafts: `project_name` optional, `is_complete` / `completed_at` / `last_edited_by`; drafts sealed for good; pulse and `get_team_activity` count complete only; submissions in realtime | `app/(app)/hackathon/[number]/team/[slug]/submission/page.tsx`; `components/hackathon/submission/*` (form, screenshots, tags, deadline warning); `components/hackathon/showcase/ProjectShowcase.tsx`; `lib/hackathons/submission.ts`; `components/Markdown.tsx` (links, numbered lists) |
 | 7 · Lobby | 029 `hackathons.lobby_welcome`, `hackathon_lobby_messages.system_key`, `hackathon_post_lobby_milestones()`, `hackathon_lobby_welcome()`, `hackathon_lobby_people()`, limits and moderation-log triggers | `app/(app)/hackathon/[number]/lobby/page.tsx`; `components/hackathon/lobby/LobbyClient.tsx`; `RoomThread` (avatars, tags, milestone banners, actions); `lib/hackathons/lobby.ts`, `lobbyMilestones.ts`; timing route and Sprint page post milestones; admin Sprint form "welcome note" |
 | 6 · Team room | 028 `hackathon_team_member_activity`, `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/` (room, `submission` placeholder); `components/hackathon/room/*`; shared `components/rooms/*` (from the Collab room) and `components/editor/RichTextEditor.tsx` (from the Vault); `lib/hackathons/room.ts`, `quiet.ts` |
 
 **Waiting on the owner**
-- Paste 018–029 into production before any deploy that needs them.
+- Paste 018–030 into production before any deploy that needs them.
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
-- The next prompt (submission form (Prompt 8), judging, reveal gallery, notifications).
+- The next prompt (judging, reveal gallery, notifications).
 
 **Staging test data, as left on 2026-09-30**
 - Sprint #4 (registration): the test admin is on Rockets, and Test Crew has Sam plus a pending
@@ -176,7 +177,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–029** |
+| Migrations applied | up to **017** | **018–030** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -320,7 +321,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-02, Phase 7):** all 531 tests pass locally and on staging.
+- **Last run (2026-10-02, Phase 8):** all 560 tests pass locally and on staging.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -888,6 +889,85 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 
 ---
 
+## 5g. Phase 8: the submission form (migration 030)
+
+### What the owner decided at the plan
+- **Drafts stay with the team.** Judges (from the deadline) and the public (from the reveal) only
+  ever see complete submissions; a draft and its screenshots stay sealed for good.
+- **Co-editing merges by field:** each autosave sends only the fields you changed; teammates'
+  changes appear live in fields you haven't touched; same field at once, last save wins.
+- **Markdown:** the app's own renderer, extended with links and numbered lists (no library).
+- **Preview:** an overlay over the form, including unsaved changes.
+
+### Database: `030_hackathon_submission_drafts.sql`
+- `project_name` is optional. New: `is_complete` (set by the guard on every write: name, tagline,
+  problem, plus a demo URL, a video URL or a screenshot), `completed_at` (when it last became
+  complete), `last_edited_by` (beside `updated_at`). The guard also trims text and turns emptied
+  fields into missing ones. Nobody can set `is_complete` directly.
+- **The deadline is 020's trigger, unchanged:** members' inserts and updates are refused outside
+  live (and while paused); storage writes follow `can_write_submission`.
+- `can_read_submission`: team and admins always; judges and the public only for complete
+  submissions (and so only those screenshots, through the storage policy).
+- **"Submitted" means complete:** the arena's pulse (`has_submitted`, `submitted_at` =
+  `completed_at`) and `get_team_activity`. Emptying a required field takes it back to a draft.
+- `hackathon_submissions` is in realtime (the read policy applies).
+- **Backfill** of existing rows runs with the guard, audit (021) and pulse triggers switched off,
+  so it moves no `updated_at`, bumps no pulse and writes no audit entries.
+- **Tests:** 29 new (**560**); older fixtures that saved only a name were made complete.
+  Deliberate breaks caught: drafts readable by judges and the public, every save counting as
+  complete, the pulse marking drafts submitted.
+
+### App
+- **`/hackathon/[n]/team/[slug]/submission`** (team members and admins; others go back to the
+  Sprint page). Members edit while live; otherwise read-only with a note (opens at kickoff,
+  paused, locked after the deadline, admin view).
+  - **Status card:** Draft / Submitted ✓, "Last edited by Maya · <time>", the save state, the
+    four-point checklist, and "Preview the reveal".
+  - **Fields:** name (80), tagline (140), problem, description (Markdown), demo, video and repo
+    URLs (checked; an invalid one isn't sent), screenshots, built-with tags (20).
+  - **Screenshots:** up to 6; shrunk in the browser (`prepareScreenshot`: ≤ 1920 px, WebP or
+    JPEG, under 5 MB; GIFs kept if they fit), uploaded to the team's folder, shown through signed
+    URLs; drag or arrows to reorder; removing deletes the file.
+  - **Labels:** a global `label` style (mono, lower case) is undone with `LABEL_RESET`.
+- **Autosave:** 1.5 s after typing stops (at once for screenshots and tags, and on leaving a
+  field); only changed fields; an insert that loses a race to a teammate becomes an update.
+- **The deadline:** pending changes are saved 5 s before; the form locks at the deadline on the
+  server clock; a save the database refuses shows "The deadline passed before your last changes
+  saved. Not saved: Description", with "Copy my unsaved text".
+- **Warnings:** `DeadlineWarning` from an hour out ("Less than an hour left") and urgent from 10
+  minutes ("9 minutes left"), while not complete, on the form and in the team room (with "Finish
+  it").
+- **Showcase:** `components/hackathon/showcase/ProjectShowcase.tsx`, the project page Prompt 10
+  will reuse: name, tagline, links, the video embedded (YouTube via youtube-nocookie, Loom,
+  Vimeo) or the first screenshot, the problem, the description, screenshots, built with, the team.
+- **Elsewhere:** the team room says "Finish submission · Draft in progress"; the admin console
+  shows "draft: …" vs "submitted: …" and counts complete submissions only.
+
+### Checked on staging (2026-10-02), as the test admin on Rockets (#6)
+- Autosave ("Saving…" → "All changes saved"); "Last edited by Test Admin"; values back after a
+  reload.
+- Maya's edit (by script) of the problem appeared live; the description I'd typed was kept.
+- A 3000×2000 PNG (2.7 MB) uploaded as a 257 KB WebP; the submission turned Submitted ✓ and the
+  arena's pulse followed.
+- **Sealed:** signed out, the screenshot's download and signed URL were refused, its public URL
+  gave 400, and the submission row read returned 0 rows.
+- Preview: the showcase over the form, Markdown heading, numbered list and link rendered.
+- Maya emptied the tagline with the deadline 9 minutes out: back to Draft, and "9 minutes left"
+  on the form and in the team room, live.
+- **The deadline:** an edit 1.2 s before it was refused; the form locked and named the unsaved
+  field. Then, from the browser with the member's own session, a direct PATCH to the API was
+  refused (400, "The submission deadline has passed.") and so was a direct storage upload
+  (row-level security).
+- Phone width (375): no sideways scroll.
+- **Found on the way:** the pane holds a production Supabase session cookie as well as staging's
+  (localhost once ran the production-pointed app). Nothing used it; the direct-API check
+  only reads the cookie of the project the page was built for, and refuses anything but staging.
+- **Not checked in the browser:** "Copy my unsaved text" (the pane can't use the clipboard), a
+  judge's and the public's view after the reveal (the database tests cover both; Prompt 10 builds
+  the pages).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -951,25 +1031,32 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
 | 57 | Milestone messages are posted by an idempotent database function called from page loads and the 30 s timing check, dated at the milestone; "1 hour left" is skipped if late. | No per-minute cron on Hobby. Owner OK'd. |
 | 58 | An announced milestone whose time moves back into the future is withdrawn, and posts again at the new time. | Extending the deadline (decision 19) must not leave "Submissions are locked" up while they're open. |
 | 59 | Admin moderation from the lobby page itself is written to the admin change log. | 022's log skips members' own sign-ins; moderation should be logged wherever it happens. |
+| 60 | A submission is a draft until complete (name, tagline, problem, and a demo, video or screenshot); the database decides. | The brief's "required to count as submitted", with autosave. |
+| 61 | Drafts never leave the team: judges and the public see complete submissions only, screenshots included. | Owner, at the Phase 8 plan. |
+| 62 | Teammates' edits merge by field; same field at once, last save wins. | Owner, at the Phase 8 plan. |
+| 63 | The description is Markdown through the app's own renderer, extended with links (http/https only) and numbered lists. | Owner: no new library. |
+| 64 | Screenshots are shrunk in the browser with a canvas (≤ 1920 px, WebP or JPEG, < 5 MB). | Brief asks for client-side compression; no library. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 029** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 030** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
       027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
-      notes or sleep, and without 029 the lobby page fails to load (it reads `system_key`).
+      notes or sleep, without 029 the lobby page fails to load (it reads `system_key`), and without 030 the
+      submission page and team room fail (they read `is_complete`).
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
       to `vercel.json` (see section 5c).
 - [ ] Push the branch when the owner says, and set up Vercel Preview env vars for staging when the
       owner is ready.
 
 **Later prompts (from the brief):**
-- **Prompt 8:** the submission form at `/hackathon/[n]/team/[slug]/submission` (placeholder; the
-  room's button already points there and shows the status). Judging, public project pages.
+- Judging (Prompt 9): judges read complete submissions only (030); the scores table and its
+  window exist (020).
+- Public project pages (Prompt 10/11): reuse `ProjectShowcase`; screenshots need signed URLs.
 - **Prompt 10:** the reveal gallery (replace `GallerySlot` in `components/hackathon/RevealGallery.tsx`).
 - **Prompt 9:** external judge accounts. Link `invite_email` judges to accounts, and build decision
   14 (judge-only accounts never counted as founding seats and never placed in a cohort).

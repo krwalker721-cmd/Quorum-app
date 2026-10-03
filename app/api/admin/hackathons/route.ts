@@ -20,7 +20,8 @@ export async function GET(req: Request) {
       const [participants, teams, submissions] = await Promise.all([
         db.from("hackathon_registrations").select("id", { count: "exact", head: true }).eq("hackathon_id", s.id).is("withdrawn_at", null),
         db.from("hackathon_teams").select("id", { count: "exact", head: true }).eq("hackathon_id", s.id),
-        db.from("hackathon_submissions").select("id", { count: "exact", head: true }).eq("hackathon_id", s.id),
+        // Complete ones only: a draft isn't a submission (migration 030).
+        db.from("hackathon_submissions").select("id", { count: "exact", head: true }).eq("hackathon_id", s.id).eq("is_complete", true),
       ]);
       return {
         ...s,

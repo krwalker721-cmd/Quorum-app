@@ -649,7 +649,7 @@ select tests.service();
 select tests.lives('audit: the admin console edits a submission before the deadline', $$ update hackathon_submissions set problem = 'Night owls lack tools' where team_id = tests.team('Rockets') $$);
 select tests.eq('audit: ...which isn''t logged', tests.audit_count('hackathon_submissions')::text, '0');
 select tests.login('carol');
-select tests.lives('submit: Comets submits', $$ insert into hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team('Comets'), tests.h1(), 'Comet Chat') $$);
+select tests.lives('submit: Comets submits', $$ insert into hackathon_submissions (team_id, hackathon_id, project_name, tagline, problem, demo_url) values (tests.team('Comets'), tests.h1(), 'Comet Chat', 'Chat for comets', 'Comets can''t talk', 'https://comet.example') $$);
 select tests.throws('submit: not for another team', $$ insert into hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team('Rockets'), tests.h1(), 'Hijack') $$, 'row-level security');
 select tests.eq('SEALED: another team can''t read the submission', tests.count($$ select 1 from hackathon_submissions where team_id = tests.team('Rockets') $$)::text, '0');
 select tests.eq('SEALED: ...or its screenshots', tests.count($$ select 1 from storage.objects where name = tests.path('Rockets', 'shot1.png') $$)::text, '0');
@@ -1429,7 +1429,8 @@ values (tests.team5('Open Door'), null, 'Carol added a doc', true);
 update public.hackathon_team_messages set deleted_at = now() where team_id = tests.team5('Open Door') and body = 'secret plan';
 select tests.eq('pulse: system lines and deletions don''t',
   (select activity_count - (select activity_count from pulse_before) from tests.pulse(tests.team5('Open Door')))::text, '1');
-insert into public.hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team5('Open Door'), tests.h5(), 'Secret project');
+insert into public.hackathon_submissions (team_id, hackathon_id, project_name, tagline, problem, demo_url)
+values (tests.team5('Open Door'), tests.h5(), 'Secret project', 'Hush', 'Secrets', 'https://secret.example');
 select tests.ok('pulse: a submission marks it submitted (and nothing more)',
   (select has_submitted and submitted_at is not null from tests.pulse(tests.team5('Open Door'))));
 
@@ -1849,5 +1850,128 @@ select tests.login('oscar');
 select tests.eq('people: a spectator gets nobody', tests.count($$ select 1 from hackathon_lobby_people(tests.h9()) $$)::text, '0');
 select tests.anon();
 select tests.throws('people: signed out can''t call it', $$ select * from hackathon_lobby_people(tests.h9()) $$, 'permission denied');
+
+-- ============================================================================
+-- Phase 8 (030): submission drafts, completeness, drafts stay sealed
+-- ============================================================================
+select tests.as_db();
+create function tests.h11() returns uuid language sql immutable as $$ select 'cb000000-0000-0000-0000-00000000000b'::uuid $$;
+create function tests.team11(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h11()
+$$;
+create function tests.sub11(p_team text) returns public.hackathon_submissions
+language sql stable security definer set search_path = public as $$
+  select * from public.hackathon_submissions where team_id = tests.team11(p_team)
+$$;
+create function tests.pulse11(p_team text) returns public.hackathon_team_pulse
+language sql stable security definer set search_path = public as $$
+  select * from public.hackathon_team_pulse where team_id = tests.team11(p_team)
+$$;
+create function tests.path11(p_team text, p_file text) returns text language sql stable as $$
+  select tests.h11()::text || '/' || tests.team11(p_team)::text || '/' || p_file
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+-- Sprint 11: Builders (m11, m12) and Others (m13); jude judges it.
+insert into public.hackathons (id, slug, title, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h11(), 'test-submit', 'Submit Sprint', true,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '4 days');
+select tests.set_phase(tests.h11(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h11(), tests.m(i), 'team' from generate_series(11, 13) i;
+select hackathon_admin_create_team(tests.h11(), 'Builders', array[tests.m(11), tests.m(12)]);
+select hackathon_admin_create_team(tests.h11(), 'Others', array[tests.m(13)]);
+insert into public.hackathon_judges (hackathon_id, user_id, accepted_at) values (tests.h11(), tests.u('jude'), now());
+select tests.set_phase(tests.h11(), 'live');
+
+-- A draft: anything goes, nothing required.
+select tests.login_m(11);
+select tests.lives('draft: autosave starts with just a tagline', $$
+  insert into hackathon_submissions (team_id, hackathon_id, tagline) values (tests.team11('Builders'), tests.h11(), 'Owls who ship') $$);
+select tests.ok('draft: no project name yet is fine, and it isn''t complete',
+  (select project_name is null and not is_complete and completed_at is null from tests.sub11('Builders')));
+select tests.ok('draft: who started it and who edited last',
+  (select submitted_by = tests.m(11) and last_edited_by = tests.m(11) from tests.sub11('Builders')));
+select tests.ok('draft: the arena doesn''t call a draft submitted',
+  (select not has_submitted and submitted_at is null from tests.pulse11('Builders')));
+select tests.login_m(12);
+update hackathon_submissions set project_name = '  Owl Desk  ', tagline = '   ' where team_id = tests.team11('Builders');
+select tests.ok('draft: a teammate edits; text is trimmed and an emptied field is missing',
+  (select project_name = 'Owl Desk' and tagline is null and last_edited_by = tests.m(12) from tests.sub11('Builders')));
+update hackathon_submissions set is_complete = true, completed_at = now() where team_id = tests.team11('Builders');
+select tests.ok('draft: nobody can just declare it complete', (select not is_complete and completed_at is null from tests.sub11('Builders')));
+
+-- Complete: name, tagline, problem, and a demo, video or screenshot.
+update hackathon_submissions set tagline = 'Owls who ship', problem = 'Night builders lose track' where team_id = tests.team11('Builders');
+select tests.ok('complete: not without a demo, video or screenshot', (select not is_complete from tests.sub11('Builders')));
+update hackathon_submissions set demo_url = 'https://owl.example' where team_id = tests.team11('Builders');
+select tests.ok('complete: with a demo it counts', (select is_complete and completed_at = now() from tests.sub11('Builders')));
+select tests.ok('complete: the arena shows it submitted',
+  (select has_submitted and submitted_at = now() from tests.pulse11('Builders')));
+update hackathon_submissions set demo_url = null where team_id = tests.team11('Builders');
+select tests.ok('complete: emptying the demo takes it back to a draft',
+  (select not is_complete and completed_at is null from tests.sub11('Builders'))
+  and (select not has_submitted from tests.pulse11('Builders')));
+select tests.lives('complete: a teammate uploads a screenshot', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-submissions', tests.path11('Builders', 'one.webp')) $$);
+update hackathon_submissions set screenshots = array[tests.path11('Builders', 'one.webp')] where team_id = tests.team11('Builders');
+select tests.ok('complete: a screenshot alone is enough', (select is_complete from tests.sub11('Builders')));
+
+-- The other team keeps a draft (and a screenshot) going.
+select tests.login_m(13);
+select tests.lives('draft: Others start a draft', $$
+  insert into hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team11('Others'), tests.h11(), 'Half done') $$);
+select tests.lives('draft: ...with a screenshot', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-submissions', tests.path11('Others', 'wip.png')) $$);
+select tests.eq('sealed: the other team reads nothing of Builders',
+  tests.count($$ select 1 from hackathon_submissions where team_id = tests.team11('Builders') $$)::text, '0');
+select tests.eq('sealed: ...nor their screenshot',
+  tests.count($$ select 1 from storage.objects where name = tests.path11('Builders', 'one.webp') $$)::text, '0');
+select tests.eq('sealed: ...and can''t change it',
+  tests.affected($$ update hackathon_submissions set project_name = 'Hijacked' where team_id = tests.team11('Builders') $$)::text, '0');
+select tests.login('oscar');
+select tests.ok('activity: get_team_activity counts only complete submissions', (
+  select bool_and(has_submitted = (team_id = tests.team11('Builders'))) from get_team_activity(tests.h11())));
+select tests.eq('sealed: a spectator reads no submission while live',
+  tests.count($$ select 1 from hackathon_submissions where hackathon_id = tests.h11() $$)::text, '0');
+select tests.anon();
+select tests.eq('sealed: signed out, no screenshot either while live',
+  tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h11()::text || '/%' $$)::text, '0');
+
+-- The deadline: late writes refused, straight at the API.
+select tests.set_phase(tests.h11(), 'judging');
+select tests.login_m(11);
+select tests.throws('deadline: a late edit is refused', $$
+  update hackathon_submissions set tagline = 'one more thing' where team_id = tests.team11('Builders') $$, 'deadline has passed');
+select tests.throws('deadline: ...and a late screenshot', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-submissions', tests.path11('Builders', 'late.png')) $$, 'row-level security');
+select tests.login_m(13);
+select tests.throws('deadline: ...and finishing a draft late', $$
+  update hackathon_submissions set tagline = 't', problem = 'p', demo_url = 'https://late.example' where team_id = tests.team11('Others') $$, 'deadline has passed');
+
+-- Judges: complete submissions only.
+select tests.login('jude');
+select tests.eq('judges: see the complete submission, not the draft',
+  (select string_agg(coalesce(project_name, '-'), ',') from hackathon_submissions where hackathon_id = tests.h11()), 'Owl Desk');
+select tests.eq('judges: ...and only its screenshot',
+  (select string_agg(name, ',') from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h11()::text || '/%'),
+  tests.path11('Builders', 'one.webp'));
+
+-- The reveal: complete submissions are public; drafts never are.
+select tests.set_phase(tests.h11(), 'revealed');
+select tests.anon();
+select tests.eq('reveal: signed out reads the complete submission only',
+  (select string_agg(coalesce(project_name, '-'), ',') from hackathon_submissions where hackathon_id = tests.h11()), 'Owl Desk');
+select tests.eq('reveal: ...and its screenshot, not the draft''s',
+  (select string_agg(name, ',') from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h11()::text || '/%'),
+  tests.path11('Builders', 'one.webp'));
+select tests.login_m(13);
+select tests.eq('reveal: a team still sees its own draft',
+  (select project_name from hackathon_submissions where team_id = tests.team11('Others')), 'Half done');
+select tests.as_db();
+select tests.ok('realtime: submissions are in realtime', exists (
+  select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'hackathon_submissions'));
 
 select tests.finish();

@@ -65,7 +65,8 @@ export type MemberActivity = {
   sleeping_until: string | null;
 };
 
-export type RoomSubmission = { submitted_at: string; updated_at: string } | null;
+/** The team's submission: complete (completed_at) or a draft (migration 030). */
+export type RoomSubmission = { is_complete: boolean; completed_at: string | null; updated_at: string } | null;
 
 export type RoomData = {
   team: RoomTeam;
@@ -104,7 +105,7 @@ export async function loadRoom(db: SupabaseClient, team: RoomTeam): Promise<Room
     db.from("hackathon_team_ballots").select(BALLOT_COLUMNS).eq("team_id", team.id),
     // Migration 028. Until it's applied, the header just has no activity.
     db.from("hackathon_team_member_activity").select(ACTIVITY_COLUMNS).eq("team_id", team.id),
-    db.from("hackathon_submissions").select("submitted_at, updated_at").eq("team_id", team.id).maybeSingle(),
+    db.from("hackathon_submissions").select("is_complete, completed_at, updated_at").eq("team_id", team.id).maybeSingle(),
   ]);
 
   const memberRows = (members.data ?? []) as { user_id: string; role: "owner" | "member"; joined_at: string }[];

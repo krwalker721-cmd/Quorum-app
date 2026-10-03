@@ -20,6 +20,7 @@ import {
   type RoomVoteRow,
 } from "@/lib/hackathons/room";
 import RoomHeader from "./RoomHeader";
+import DeadlineWarning from "@/components/hackathon/submission/DeadlineWarning";
 import TeamDocs, { type RemoteDocChange } from "./TeamDocs";
 import TeamLinks from "./TeamLinks";
 import { roomError } from "./roomError";
@@ -79,7 +80,8 @@ export default function TeamRoomClient({
   const [votes, setVotes] = useState(room.votes);
   const [ballots, setBallots] = useState(room.ballots);
   const [activity, setActivity] = useState(() => new Map(room.activity.map((a) => [a.user_id, a])));
-  const [submittedAt, setSubmittedAt] = useState(room.submission?.submitted_at ?? null);
+  const [submittedAt, setSubmittedAt] = useState(room.submission?.completed_at ?? null);
+  const hasDraft = Boolean(room.submission);
   const [openDoc, setOpenDoc] = useState<string | null>(null);
   const [remoteDoc, setRemoteDoc] = useState<RemoteDocChange | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -92,7 +94,7 @@ export default function TeamRoomClient({
     setVotes(room.votes);
     setBallots(room.ballots);
     setActivity(new Map(room.activity.map((a) => [a.user_id, a])));
-    setSubmittedAt(room.submission?.submitted_at ?? null);
+    setSubmittedAt(room.submission?.completed_at ?? null);
   }, [room]);
 
   const names = useMemo(() => new Map(room.members.map((m) => [m.id, m.full_name ?? m.username ?? "Founder"])), [room.members]);
@@ -293,8 +295,18 @@ export default function TeamRoomClient({
         isMember={isMember}
         writable={writable}
         submittedAt={submittedAt}
+        hasDraft={hasDraft}
         onSleep={sleep}
       />
+
+      {isMember && (
+        <DeadlineWarning
+          endsAt={sprint.timing.ends_at}
+          live={sprint.state === "live"}
+          complete={Boolean(submittedAt)}
+          href={`/hackathon/${sprint.number}/team/${room.team.slug}/submission`}
+        />
+      )}
 
       {closedNote && (
         <p

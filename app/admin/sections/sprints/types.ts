@@ -90,7 +90,8 @@ export type Team = {
   is_open_to_requests: boolean;
   max_size_override: number | null;
   limit: number;
-  submission: { project_name: string; updated_at: string } | null;
+  /** A draft until is_complete (migration 030). */
+  submission: { project_name: string | null; updated_at: string; is_complete: boolean } | null;
   members: TeamMember[];
 };
 

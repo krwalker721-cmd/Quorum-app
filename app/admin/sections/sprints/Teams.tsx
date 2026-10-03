@@ -116,8 +116,15 @@ function TeamCard({
           </span>
         </p>
         <span className="flex items-baseline gap-3">
-          <span className="font-mono text-[0.6rem]" style={{ color: team.submission ? "#22c55e" : "var(--text-faint)" }}>
-            {team.submission ? `submitted: ${team.submission.project_name}` : "no submission"}
+          <span
+            className="font-mono text-[0.6rem]"
+            style={{ color: team.submission?.is_complete ? "#22c55e" : team.submission ? "#f59e0b" : "var(--text-faint)" }}
+          >
+            {team.submission?.is_complete
+              ? `submitted: ${team.submission.project_name}`
+              : team.submission
+                ? `draft: ${team.submission.project_name ?? "untitled"}`
+                : "no submission"}
           </span>
           {/* Admins can read every room (read-only); the room logs nothing. */}
           <a

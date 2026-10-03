@@ -42,6 +42,7 @@ export default function RoomHeader({
   isMember,
   writable,
   submittedAt,
+  hasDraft = false,
   onSleep,
 }: {
   sprint: { number: number; state: SprintState; theme: string | null; timing: SprintTiming };
@@ -52,6 +53,8 @@ export default function RoomHeader({
   isMember: boolean;
   writable: boolean;
   submittedAt: string | null;
+  /** A draft exists (it only counts once complete). */
+  hasDraft?: boolean;
   onSleep: (until: number | null) => Promise<string | null>;
 }) {
   const online = usePresence();
@@ -90,7 +93,7 @@ export default function RoomHeader({
               </p>
             </div>
           </div>
-          <SubmissionBox sprint={sprint} team={team} submittedAt={submittedAt} isMember={isMember} />
+          <SubmissionBox sprint={sprint} team={team} submittedAt={submittedAt} hasDraft={hasDraft} isMember={isMember} />
         </div>
 
         <div className="flex flex-wrap items-start gap-x-8 gap-y-3" style={{ marginTop: 16 }}>
@@ -167,11 +170,13 @@ function SubmissionBox({
   sprint,
   team,
   submittedAt,
+  hasDraft,
   isMember,
 }: {
   sprint: { number: number; state: SprintState };
   team: RoomTeam;
   submittedAt: string | null;
+  hasDraft: boolean;
   isMember: boolean;
 }) {
   const href = `${roomHref(sprint.number, team.slug)}/submission`;
@@ -179,6 +184,8 @@ function SubmissionBox({
     <>
       <span style={{ color: "#4ade80" }}>Submitted ✓</span> · <LocalTime iso={submittedAt} />
     </>
+  ) : hasDraft ? (
+    "Draft in progress · not submitted yet"
   ) : (
     "Not submitted yet"
   );
@@ -188,7 +195,7 @@ function SubmissionBox({
   if (sprint.state === "live" && isMember) {
     button = (
       <Link href={href} className={ui.primaryBtn}>
-        {submittedAt ? "Edit submission" : "Submit project"}
+        {submittedAt ? "Edit submission" : hasDraft ? "Finish submission" : "Submit project"}
       </Link>
     );
   } else if (["registration", "teams_locked"].includes(sprint.state)) {
@@ -206,7 +213,7 @@ function SubmissionBox({
     );
     if (sprint.state === "paused") line = <>Paused · {status}</>;
     else if (sprint.state === "live") line = status;
-    else line = submittedAt ? <>Submissions closed · {status}</> : "Submissions closed · no submission";
+    else line = submittedAt ? <>Submissions closed · {status}</> : "Submissions closed · not submitted";
   }
 
   return (
