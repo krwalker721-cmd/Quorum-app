@@ -8,7 +8,7 @@ then check `git log main..feat/hackathon-db` for anything newer.
 - **Status (2026-10-03):** Phases 1–8 are built, checked on staging, approved and committed
   locally. Next is the owner's Phase 9 prompt.
 
-### Start here (handoff, 2026-09-30)
+### Start here (handoff, 2026-10-03)
 **Where things stand**
 - **Migrations:** 018–030 are on staging. Production has none of them (it's at 017).
 - **Tests:** 560 database tests pass locally and on staging (`scripts/db.sh local`,
@@ -18,6 +18,13 @@ then check `git log main..feat/hackathon-db` for anything newer.
 **The working loop:** for each prompt, plan (files, migrations, policies) → wait for the owner's
 OK → build → test on staging → give exact test steps. Ask before every staging migration, saying
 which project is the target.
+- **Migrations go to staging by the owner's hand.** Since Phase 6 the permission check has
+  refused `scripts/db.sh staging:target` and `staging:migrate` from Claude. Give the owner the
+  three commands (`staging:target`, `staging:migrate supabase/migrations/0NN_….sql`,
+  `staging:test`) and read the result from their `!` input or the Terminal panel.
+  `staging:test` itself has sometimes been allowed.
+- Each phase so far ended with: the owner's OK → commit locally → a "record the commit" docs
+  commit. Never push.
 
 **How to resume**
 1. Start the app against staging with the Browser pane's `quorum-dev-staging` config
@@ -29,39 +36,63 @@ which project is the target.
    - Both passwords are in `.env.staging-admin.local`.
 3. Test data:
    - `node scripts/seed-staging-sprints.mjs` puts Sprints #3–#11 back in one state each; #11 is
-     also the team matcher demo.
+     also the team matcher demo. It also moves times, which withdraws lobby milestones whose
+     moment is in the future again (029), so re-run it after any check that moves #6's times.
    - `node scripts/simulate-sprint-activity.mjs` makes the arena's pulses move.
+   - **Playing the other teammates** (Phases 6–8): small staging-only scripts in the session's
+     scratchpad, not in the repo, wrote as Maya, Leo, Priya or Sam with the service role (setting
+     `user_id` / `last_edited_by` themselves) and moved #6's deadline or reveal. Rebuild them the
+     same way if needed: read `.env.staging.local` only through the same parsing the repo's
+     scripts use, refuse the production ref, never print keys.
+4. **The browser pane holds a production session cookie** (`sb-ydbnyujqmhwufwqihefh-auth-token`)
+   next to staging's (`sb-ycjqgrcapphfiageaaux-auth-token`), left from a time localhost served the
+   production-pointed app. Anything that reads the session in the pane must pick the cookie by the
+   staging ref and refuse the other. The owner may want to sign that session out.
 
-**What Phases 3–5 added, at a glance** (details in sections 5b–5d)
+**What Phases 3–8 added, at a glance** (details in sections 5b–5g)
 
 | Phase | Database | Main files |
 |---|---|---|
 | 3 · Hackathon tab | 024 `hackathon_registrants()` | `app/(app)/hackathon/` (index, `[number]`, `archive`, `[number]/team`, `[number]/lobby`); `components/hackathon/SprintSections.tsx`, `SprintCountdown.tsx`, `SprintAutoRefresh.tsx`, `LocalTime.tsx`, `RevealGallery.tsx`, `RoomPlaceholder.tsx`; `components/countdown/Countdown.tsx`; `lib/hackathons/sprint.ts`, `page.ts`, `nav.ts`, `viewer.ts`; `app/api/hackathons/[number]/timing`; `lib/useServerNow.ts` (monotonic clock) |
 | 4 · Registration and teams | 025 `hackathon_team_invite_codes`, `hackathon_team_invitations`, `private.join_team`, counts, check-in, renaming; 026 `hackathons.matched_at` / `match_report`, `hackathon_run_matcher()` | `components/hackathon/JoinQueue.tsx`, `JoinQueueClient.tsx`, `TeamPanel.tsx`, `MemberSearch.tsx`, `TeamStyle.tsx`, `CheckIn.tsx`, `QueueLive.tsx`, `JoinByLink.tsx`; `app/(app)/hackathon/[number]/join/[code]`; `lib/hackathons/actions.ts`, `matcher.ts`, `skills.ts`; `app/api/cron/hackathon-matcher` (not scheduled: Hobby); admin `SprintControls.tsx` (matcher), `Participants.tsx` (check-in) |
 | 5 · Arena | 027 `hackathon_team_pulse` (+ triggers, realtime), `hackathon_arena_cohorts()` | `components/hackathon/Arena.tsx`, `arena.module.css`; `realtimeDb()` in `lib/hackathons/actions.ts`; `CountdownStrip.tsx` (row cap); `scripts/simulate-sprint-activity.mjs`; `db.sh staging:seed-spectator` |
-| 8 · Submission | 030 drafts: `project_name` optional, `is_complete` / `completed_at` / `last_edited_by`; drafts sealed for good; pulse and `get_team_activity` count complete only; submissions in realtime | `app/(app)/hackathon/[number]/team/[slug]/submission/page.tsx`; `components/hackathon/submission/*` (form, screenshots, tags, deadline warning); `components/hackathon/showcase/ProjectShowcase.tsx`; `lib/hackathons/submission.ts`; `components/Markdown.tsx` (links, numbered lists) |
-| 7 · Lobby | 029 `hackathons.lobby_welcome`, `hackathon_lobby_messages.system_key`, `hackathon_post_lobby_milestones()`, `hackathon_lobby_welcome()`, `hackathon_lobby_people()`, limits and moderation-log triggers | `app/(app)/hackathon/[number]/lobby/page.tsx`; `components/hackathon/lobby/LobbyClient.tsx`; `RoomThread` (avatars, tags, milestone banners, actions); `lib/hackathons/lobby.ts`, `lobbyMilestones.ts`; timing route and Sprint page post milestones; admin Sprint form "welcome note" |
-| 6 · Team room | 028 `hackathon_team_member_activity`, `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/` (room, `submission` placeholder); `components/hackathon/room/*`; shared `components/rooms/*` (from the Collab room) and `components/editor/RichTextEditor.tsx` (from the Vault); `lib/hackathons/room.ts`, `quiet.ts` |
+| 6 · Team room | 028 `hackathon_team_member_activity` (team-only), `hackathon_room_seen()`, `hackathon_room_sleep()` | `app/(app)/hackathon/[number]/team/[slug]/page.tsx` (and `/team` redirects there); `components/hackathon/room/*` (`TeamRoomClient`, `RoomHeader`, `TeamDocs`, `TeamLinks`, `roomError`); shared `components/rooms/*` (`RoomThread`, `RoomVotes`, `RoomItemCard`, `kit.ts`, moved from the Collab room) and `components/editor/RichTextEditor.tsx` (moved from the Vault's `NoteEditor`); `lib/hackathons/room.ts`, `quiet.ts`; admin teams tab "open room ↗" |
+| 7 · Lobby | 029 `hackathons.lobby_welcome`, `hackathon_lobby_messages.system_key`, `hackathon_post_lobby_milestones()`, `hackathon_lobby_welcome()`, `hackathon_lobby_people()`, length/rate limits, moved-milestone withdrawal, moderation logging | `app/(app)/hackathon/[number]/lobby/page.tsx`; `components/hackathon/lobby/LobbyClient.tsx`; `RoomThread` opt-in avatars, tags, milestone banners, actions; `lib/hackathons/lobby.ts`, `lobbyMilestones.ts`; milestones posted from the Sprint page, the lobby page and the timing route; admin Sprint form "welcome note" |
+| 8 · Submission | 030 drafts: `project_name` optional; `is_complete`, `completed_at`, `last_edited_by` set by the guard; drafts sealed for good; pulse and `get_team_activity` count complete only; submissions in realtime | `app/(app)/hackathon/[number]/team/[slug]/submission/page.tsx`; `components/hackathon/submission/*` (`SubmissionForm`, `Screenshots`, `TagInput`, `DeadlineWarning`); `components/hackathon/showcase/ProjectShowcase.tsx` (for Prompt 10); `lib/hackathons/submission.ts`; `components/Markdown.tsx` (links, numbered lists) |
+
+**Refactors outside the Hackathon tab (owner-approved, Phase 6):** the Collab room
+(`components/collab/ProjectRoomClient.tsx`) and the Vault editor (`components/vault/NoteEditor.tsx`)
+now render the shared pieces above; both were proven byte-identical with a temporary fixture page.
+The one deliberate Collab change: decision cards say "Unanimous" only when everyone agreed
+(`e2e386b`, decision 53).
 
 **Waiting on the owner**
-- Paste 018–030 into production before any deploy that needs them.
+- The Phase 9 prompt. By the plan it's judging, with accounts for judges from outside Quorum
+  (decision 14); then the reveal gallery and public pages (Prompt 10/11) and notifications
+  (Prompt 12).
+- Paste 018–030 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
-- The next prompt (judging, reveal gallery, notifications).
+- Optionally: sign the production session out of the browser pane.
 
-**Staging test data, as left on 2026-09-30**
-- Sprint #4 (registration): the test admin is on Rockets, and Test Crew has Sam plus a pending
-  invite to Priya.
-- Sprint #6 (live): Comets has a "simulated activity" submission. Several Sprints have
-  "simulated activity" room messages.
+**Staging test data, as left on 2026-10-03**
+- The seed was re-run last, so #3–#11 are each in their state (#6 live) as of 2026-10-02 22:30 EDT;
+  times drift, so re-run it.
+- Sprint #4 (registration): the test admin is on Rockets; Test Crew has Sam plus a pending invite
+  to Priya.
+- Sprint #6, Rockets: a complete submission "NightDesk" (one WebP screenshot, a Markdown
+  description), a "Pitch plan" doc, a decided vote "Which demo goes first?", Leo's "Live demo"
+  link, "Phase 6 check" messages.
+- Sprint #6 lobby: Priya's message pinned, Sam's deleted, the test admin's reply, and milestone
+  messages ("Teams are locked", "Sprint is LIVE"; the later ones were withdrawn by the last reseed).
+- Sprint #6, Comets: an older "simulated activity" submission (now a draft if incomplete).
+  Several Sprints have "simulated activity" room messages.
 - Sprint #11 has been matched.
-- Re-running the seed resets the times, and the flip Sprint's teams; it doesn't remove extra
-  teams or messages.
-- Sprint #6, Rockets (Phase 6 checks): a "Pitch plan" doc, a decided vote "Which demo goes first?",
-  a "Live demo" link from Leo, and "Phase 6 check" messages.
-- A Collab project "Staging check: Collab room" (the test admin's, with a message, a link and a
-  decision) and an untitled Vault note, both from the refactor checks.
-- The pane was last signed in as the test admin.
+- Re-running the seed resets times and the flip Sprint's teams; it doesn't remove extra teams,
+  messages, docs or submissions.
+- Outside the Hackathon: a Collab project "Staging check: Collab room" (the test admin's, with a
+  message, a link and a decided vote) and an untitled Vault note, from the refactor checks.
+- The pane was last signed in as the test admin (and holds the production cookie noted above).
 
 ---
 
@@ -317,6 +348,9 @@ functions aren't.
   change rolls back, even in the SQL editor. **Success reads "ALL n TESTS PASSED".**
 - A deliberate-break check was done for each rule: break it on purpose, then confirm the right
   tests fail.
+- **Tests must not depend on how Postgres breaks ties.** `set_phase` can give two milestones the
+  same moment; `tests.milestones` orders ties by milestone order (fixed 2026-10-03, when staging
+  ordered them differently from local).
 - **Tests must not assume an empty database.** Staging keeps test data from manual checks, so the
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
@@ -427,7 +461,7 @@ name, username, stage, registered_at) to the arena's audience (`private.can_view
 | `/hackathon` | Redirects to the current Sprint (`pickCurrentSprint`): live > judging > teams_locked > registration > upcoming > most recently revealed. Paused ranks where its clock stopped; cancelled and drafts never count. None: "No Sprint is scheduled right now". |
 | `/hackathon/[number]` | The one Sprint page. The layout follows `state` (and `phase` while paused). Drafts: admins only, with a banner. |
 | `/hackathon/archive` | Revealed and cancelled Sprints, newest first. |
-| `/hackathon/[number]/team`, `/lobby` | PLACEHOLDERS. The server lets in only team members (team) or participants, accepted judges and admins (lobby); everyone else goes back to the Sprint page. |
+| `/hackathon/[number]/team`, `/lobby` | PLACEHOLDERS at the time; built in Phase 6 (the team room, now at `/team/[slug]`) and Phase 7 (the lobby). The access checks are unchanged: team members (team), or participants, accepted judges and admins (lobby); everyone else goes back to the Sprint page. |
 | `GET /api/hackathons/[number]/timing` | Stored times, pause/cancel and the countdown switches, for published Sprints only (read signed out). Edge-cached 30 s. |
 
 ### The page, by state
@@ -757,7 +791,7 @@ Files: `app/(app)/hackathon/[number]/page.tsx`; `components/hackathon/*`.
 |---|---|
 | `/hackathon/[n]/team` | Redirects to your team's room; no team → the Sprint page with "You're not on a team in this Sprint". |
 | `/hackathon/[n]/team/[slug]` | The room. Team members and admins; anyone else → the Sprint page with "That team room is private to its team". Slugs never change on rename, so links last. |
-| `/hackathon/[n]/team/[slug]/submission` | PLACEHOLDER for Prompt 8; same door as the room. |
+| `/hackathon/[n]/team/[slug]/submission` | A placeholder in Phase 6; the submission form since Phase 8 (section 5g). Same door as the room. |
 
 The arena's "Go to my team room" now links straight to the slug. The admin console's teams tab has
 "open room ↗" (admins read rooms; read-only).
@@ -1062,6 +1096,22 @@ The arena's "Go to my team room" now links straight to the slug. The admin conso
   14 (judge-only accounts never counted as founding seats and never placed in a cohort).
 
 **Known gaps and ideas, not yet built:**
+- **From Phases 6–8, not built or not checked:**
+  - Team room and lobby messages can't be edited in the UI (the database allows it); lobby
+    authors can't delete their own either; admins can't pin system lines from the lobby page.
+  - Team docs: last save wins with a "Keep mine / Load theirs" choice; no live co-editing (would
+    need a library such as Yjs). Content is capped at 100,000 characters of editor JSON.
+  - Lobby milestones: a time moved *earlier* after its milestone posted keeps the old timestamp;
+    editing the theme after kickoff doesn't update the "Sprint is LIVE" line.
+  - Submission screenshots: two teammates uploading at the same moment can drop one from the list
+    (field-level last save wins; the file is orphaned). Removing a screenshot deletes the file at
+    once, even if that save then fails. Signed URLs last an hour, so an open form older than that
+    shows broken images until reloaded.
+  - Not checked in the browser: the spectator kept out of the lobby (database tests cover it),
+    the lobby rate limit from the UI (admins are exempt), the admin console's welcome-note field
+    and "open room ↗" link (need the admin code), "Copy my unsaved text" (no clipboard in the
+    pane), and what judges and the public see after the reveal (database tests; Prompt 10 builds
+    the pages).
 - **Collab thread:** your own message only appears after a reload, because the Collab room waits
   for its realtime echo and its socket is anonymous (the realtime lead below). Pre-existing;
   unchanged by the refactor.
@@ -1133,3 +1183,4 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `fa5e4ae` | The Sprint lobby, with milestones posted exactly once (029) |
 | `9060636` | Record the Phase 7 commit |
 | `5ba01ab` | The submission form, with drafts, autosave and a hard deadline (030) |
+| `821a0b1` | Record the Phase 8 commit |

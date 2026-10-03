@@ -1635,9 +1635,12 @@ select tests.ok('room: members still read it after the reveal',
 select tests.as_db();
 create function tests.h9() returns uuid language sql immutable as $$ select 'c9000000-0000-0000-0000-000000000009'::uuid $$;
 create function tests.h10() returns uuid language sql immutable as $$ select 'ca000000-0000-0000-0000-00000000000a'::uuid $$;
+-- In time order; ties (set_phase can date two milestones at the same moment)
+-- in milestone order, so the answer doesn't depend on how Postgres breaks them.
 create function tests.milestones(p_hackathon uuid) returns text
 language sql stable security definer set search_path = public as $$
-  select coalesce(string_agg(system_key, ',' order by created_at), '')
+  select coalesce(string_agg(system_key, ',' order by created_at,
+    array_position(array['teams_locked', 'live', 'one_hour_left', 'submissions_locked', 'results'], system_key)), '')
   from public.hackathon_lobby_messages where hackathon_id = p_hackathon and system_key is not null
 $$;
 create function tests.lobby9(p_body text) returns public.hackathon_lobby_messages
