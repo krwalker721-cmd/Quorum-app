@@ -1385,7 +1385,9 @@ with the tab when nothing is on.
   judging with the test admin as a judge (the spectator is the second judge).
 - `node scripts/seed-staging-finished-demo.mjs`: a revealed Sprint ("Finished demo") with a complete
   submission per team and four finalized awards.
-- (Both scripts were not committed with this section; see the commits table.)
+- Both refuse production, start their Sprint fresh on every run, and leave the other Sprints alone.
+- **Admin confirmations are in the page now** (`app/admin/dialog.tsx`): the preview pane answers every
+  `confirm()` with Cancel, which had made save and publish silently do nothing there.
 
 ---
 
@@ -1610,4 +1612,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `f9de9b1` | Record the Phase 10 commit |
 | `b9a1b06` | The landing page's countdown relay (033) |
 | `624d612` | Clean-slate reset script; staging's Hackathon data deleted; empty-state fixes |
-| (next) | The tab is "Buildathon"; its page with no Sprint (5l) |
+| `7ac6eb4` | The tab is "Buildathon"; its page with no Sprint (5l) |
+| (next) | In-page admin confirmations; demo Sprint scripts for staging |
