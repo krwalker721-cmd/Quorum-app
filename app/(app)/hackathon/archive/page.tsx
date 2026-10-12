@@ -37,7 +37,7 @@ export default async function HackathonArchive() {
       <TopBar sleek title="buildathon" tier={tier} userId={user.id} />
       <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 820, margin: "0 auto", width: "100%" }}>
         <Link href="/hackathon" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
-          ← Current Sprint
+          ← Buildathon
         </Link>
         <h1
           className={`${ui.titleGradient} ${ui.balance}`}

@@ -1,16 +1,19 @@
 import Link from "next/link";
 import ui from "@/components/ui/sleek.module.css";
 import { RUBRIC } from "@/lib/hackathons/judging";
-import s from "./empty.module.css";
+import CurrentSprintBanner, { type CurrentSprint } from "./CurrentSprintBanner";
+import s from "./home.module.css";
 
-// The Buildathon tab when no Sprint is on: what the format is, shown as a
-// place to do serious work. An example of a live Sprint, the format's spec,
-// how a Sprint runs and how projects are judged.
+// The Buildathon tab's home: the current Sprint (if any) with its clock and
+// the way in, then what the format is, shown as a place to do serious work: an
+// example of a live Sprint, the format's spec, how a Sprint runs and how
+// projects are judged. Each Sprint keeps its own page (/hackathon/N).
 
-export default function EmptyBuildathon({ hasPast }: { hasPast: boolean }) {
+export default function BuildathonHome({ hasPast, current }: { hasPast: boolean; current: CurrentSprint | null }) {
   return (
     <div className={s.wrap}>
-      <HowItWorks hasPast={hasPast} />
+      {current && <CurrentSprintBanner sprint={current} />}
+      <HowItWorks hasPast={hasPast} current={current} />
     </div>
   );
 }
@@ -55,7 +58,7 @@ function LiveSprintMock() {
     <div aria-hidden>
       <div className={s.mock}>
         <div className={s.mockBar}>
-          <span>Sprint #1 · Arena</span>
+          <span>Example Sprint · Arena</span>
           <span className={s.liveChip}>
             <span className={s.liveDot} />
             Live
@@ -143,14 +146,14 @@ const PHASES: { when: string; title: string; text: string; pic: React.ReactNode 
   },
 ];
 
-function HowItWorks({ hasPast }: { hasPast: boolean }) {
+function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSprint | null }) {
   return (
     <>
       <section className={s.stage}>
         <div aria-hidden className={s.glow} />
         <div className={s.heroGrid}>
           <div>
-            <Status>No Sprint scheduled yet</Status>
+            {!current && <Status>No Sprint scheduled yet</Status>}
             <h1 className={`${s.pageTitle} ${ui.titleGradient}`}>Buildathon</h1>
             <p className={s.heroLede}>
               48-hour Sprints where founders from across the network form teams and build something new from scratch.
@@ -223,7 +226,9 @@ function HowItWorks({ hasPast }: { hasPast: boolean }) {
         ))}
       </div>
 
-      <p className={s.closingLine}>The next Sprint will be announced here, with its dates, a countdown and a way to sign up.</p>
+      {!current && (
+        <p className={s.closingLine}>The next Sprint will be announced here, with its dates, a countdown and a way to sign up.</p>
+      )}
     </>
   );
 }

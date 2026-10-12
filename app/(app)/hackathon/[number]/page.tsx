@@ -18,6 +18,7 @@ import {
   RulesTile,
   ScheduleTile,
   SprintHero,
+  SprintOpener,
   StatusBanner,
   ThemeTile,
   ViewerCallout,
@@ -74,6 +75,8 @@ export default async function SprintPage(props: {
   const data = await loadSprintPage(supabase, sprint, user.id, standing);
   const timing = toTiming(sprint);
   const stage = stageCountdown(sprint.state);
+  // Before kickoff, the page opens by saying what a Sprint is.
+  const opener = sprint.state === "upcoming" || sprint.state === "registration";
 
   return (
     <>
@@ -84,6 +87,9 @@ export default async function SprintPage(props: {
 
       <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 1120, margin: "0 auto", width: "100%" }}>
         <div className="flex items-center justify-between gap-3" style={{ marginBottom: 12 }}>
+          <Link href="/hackathon" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+            ← Buildathon
+          </Link>
           <Link href="/hackathon/archive" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
             All Sprints →
           </Link>
@@ -107,6 +113,7 @@ export default async function SprintPage(props: {
         )}
         <StatusBanner sprint={sprint} />
         <SprintHero sprint={sprint} />
+        {opener && <SprintOpener data={data} />}
 
         {stage && (
           <Tile
@@ -118,7 +125,8 @@ export default async function SprintPage(props: {
           </Tile>
         )}
 
-        {sprint.state !== "draft" && <ViewerCallout data={data} />}
+        {/* The opener speaks to members who haven't joined; everyone else keeps their callout. */}
+        {sprint.state !== "draft" && !(opener && data.viewer.role === "spectator") && <ViewerCallout data={data} />}
 
         {sprint.state === "live" && data.viewer.role === "participant" && (
           <Tile style={{ marginBottom: 16 }} padding="14px 16px">
@@ -176,7 +184,7 @@ function MainColumn({ data }: { data: SprintPageData }) {
           <JoinQueue sprint={sprint} viewer={viewer} teams={teams} queue={queue} />
           {teamPanel}
           {registrants && <RegistrantsTile registrants={registrants} />}
-          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="registration" myTeamId={myTeam} title="Teams so far" />
+          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="registration" myTeamId={myTeam} title="Teams so far" collapseAfter={4} />
         </>
       );
     case "teams_locked":

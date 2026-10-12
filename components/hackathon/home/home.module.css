@@ -1,4 +1,4 @@
-/* The Buildathon tab with no Sprint on (EmptyBuildathon.tsx). Static only,
+/* The Buildathon tab with no Sprint on (BuildathonHome.tsx). Static only,
    like the rest of the app's sleek finish. */
 
 .wrap {
@@ -416,4 +416,64 @@
   .rubric {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The current Sprint (CurrentSprintBanner.tsx): the page's one amber block. */
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  flex-wrap: wrap;
+  padding: 20px 22px;
+  margin-bottom: 8px;
+}
+.bannerMain {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+.bannerKicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.bannerState {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #f8c56a;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.bannerTitle {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-top: 8px;
+}
+.bannerTagline {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.bannerMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.bannerSide {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.bannerClockLabel {
+  font-size: 12px;
+  color: #f8c56a;
+  margin-bottom: 4px;
 }

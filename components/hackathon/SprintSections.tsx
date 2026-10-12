@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Tile from "@/components/ui/Tile";
+import ShowMore from "./ShowMore";
 import PersonAvatar from "@/components/ui/PersonAvatar";
 import Markdown from "@/components/Markdown";
 import ui from "@/components/ui/sleek.module.css";
@@ -90,6 +91,84 @@ export function SprintHero({ sprint }: { sprint: SprintRow }) {
         </p>
       )}
     </header>
+  );
+}
+
+/**
+ * What this Sprint is, before anyone has to decide: shown while it's announced
+ * and while registration is open. Plain facts, the real dates, and (for a
+ * member who hasn't joined) the one Register button, which leads to the join
+ * queue (#join).
+ */
+export function SprintOpener({ data }: { data: SprintPageData }) {
+  const { sprint, viewer } = data;
+  const open = sprint.state === "registration";
+  const canJoin = open && viewer.role === "spectator";
+  const dates: { label: string; iso: string | null }[] = [
+    { label: open ? "Sign-ups close" : "Registration opens", iso: open ? sprint.team_lock_at : sprint.registration_opens_at },
+    { label: "Kickoff", iso: sprint.starts_at },
+    { label: "Submissions close", iso: sprint.ends_at },
+    { label: "Reveal", iso: sprint.reveal_at },
+  ];
+  const points = [
+    {
+      title: "What you commit to",
+      text: `48 hours from kickoff, with a team of ${sprint.min_team_size} to ${sprint.max_team_size}. You work in a private team room and submit a working project (its name, the problem and a demo) before the deadline. The form locks on the dot.`,
+    },
+    {
+      title: "How teams form",
+      text: "Register alone and you go into the random pool: anyone without a team is matched when teams lock. Or start a team and invite people, or ask to join one that's open.",
+    },
+    {
+      title: "What happens to your work",
+      text: "Every project stays sealed until the reveal. Judges score the finished ones on the problem, what shipped, how the team worked and its potential. Then awards go out and each project gets a public page.",
+    },
+  ];
+  return (
+    <Tile kicker="What this is" style={{ marginBottom: 16 }} padding="16px 18px 18px">
+      <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--text-primary)", maxWidth: 720 }}>
+        A 48-hour build with founders from across the network. You join a team, get the theme at kickoff, and ship
+        something new before the clock runs out.
+      </p>
+      <dl
+        className="grid"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: 14 }}
+      >
+        {dates.map((d) => (
+          <div key={d.label} style={{ border: "1px solid rgba(255, 255, 255, 0.07)", borderRadius: 10, padding: "9px 12px" }}>
+            <dt style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{d.label}</dt>
+            <dd style={{ fontSize: 13, color: "var(--text-primary)", marginTop: 2 }}>{d.iso ? <LocalTime iso={d.iso} /> : "To be set"}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px 22px", marginTop: 16 }}>
+        {points.map((pt) => (
+          <div key={pt.title}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{pt.title}</p>
+            <p style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 4 }}>{pt.text}</p>
+          </div>
+        ))}
+      </div>
+      {(canJoin || viewer.isAdmin || (!open && viewer.role === "spectator")) && (
+        <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 18 }}>
+          {canJoin && (
+            <Link href="#join" className={ui.primaryBtn} style={{ textDecoration: "none" }}>
+              Register
+            </Link>
+          )}
+          {!open && viewer.role === "spectator" && sprint.registration_opens_at && (
+            <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+              Registration opens <LocalTime iso={sprint.registration_opens_at} />.
+            </span>
+          )}
+          {viewer.isAdmin && (
+            <Link href="/admin" className={ui.ghostBtn} style={{ textDecoration: "none" }}>
+              Manage in admin
+            </Link>
+          )}
+        </div>
+      )}
+    </Tile>
   );
 }
 
@@ -313,7 +392,6 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
 
 /** Who's registered so far (migration 024): names only, no mode or team. */
 export function RegistrantsTile({ registrants }: { registrants: Registrant[] }) {
-  const shown = registrants.slice(0, 48);
   return (
     <Tile kicker="Registered so far" right={`${registrants.length}`} style={{ marginBottom: 16 }}>
       {registrants.length === 0 ? (
@@ -321,19 +399,14 @@ export function RegistrantsTile({ registrants }: { registrants: Registrant[] }) 
           <p className={ui.emptyTitle}>Nobody yet. Be the first.</p>
         </div>
       ) : (
-        <ul className="flex flex-wrap" style={{ gap: "10px 14px" }}>
-          {shown.map((p) => (
+        <ShowMore limit={12} noun="people" className="flex flex-wrap" style={{ gap: "10px 14px" }}>
+          {registrants.map((p) => (
             <li key={p.id} className="flex items-center gap-2" style={{ minWidth: 0 }}>
               <PersonAvatar name={p.full_name} stage={p.stage} username={p.username} size={24} />
               <span style={{ fontSize: 12.5, color: "var(--text-primary)" }}>{(p.full_name ?? "Founder").split(/\s+/)[0]}</span>
             </li>
           ))}
-          {registrants.length > shown.length && (
-            <li style={{ fontSize: 12.5, color: "var(--text-muted)", alignSelf: "center" }}>
-              +{registrants.length - shown.length} more
-            </li>
-          )}
-        </ul>
+        </ShowMore>
       )}
     </Tile>
   );

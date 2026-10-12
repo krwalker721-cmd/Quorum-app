@@ -1391,6 +1391,29 @@ with the tab when nothing is on.
 
 ---
 
+## 5m. The Buildathon home and the signup page (2026-10-12)
+
+The owner's three asks for a Sprint in its signup period, all approved after a look in the pane:
+
+- **An opener.** "It kinda just throws you in": the Sprint page now starts, while a Sprint is announced
+  or open for registration, with "What this is" (`SprintOpener` in `SprintSections.tsx`): one plain line,
+  the real dates (sign-ups close, kickoff, submissions close, reveal, in the viewer's time zone), what you
+  commit to, how teams form, and what happens to your work. For a member who hasn't joined it holds the
+  one Register button (to `#join`) and replaces the "You're not in this Sprint" callout; participants,
+  judges and lapsed members keep their callout.
+- **The home stays its own page.** `/hackathon` no longer redirects (decision 29 is replaced by 86).
+  It always shows the Buildathon home (`components/hackathon/home/`, renamed from `empty/`); the Sprint
+  that `pickCurrentSprint` chooses gets a banner (`CurrentSprintBanner`) with its state, a countdown to
+  its next moment and the way in: "Sign up" while registration is open (to the top of the Sprint page,
+  so the opener comes first), "You're signed up · open it", "Watch it live" / "Go to your Sprint",
+  "See the results". Sprint pages link back with "← Buildathon".
+- **Busy lists fold.** "Registered so far" shows 12 people and "Teams so far" 4 teams (the viewer's own
+  first), then "Show all N" (`ShowMore.tsx`, `Arena collapseAfter`). Tested by lowering the limits.
+- The example arena on the home is labelled "Example Sprint" so it can't pass for a real one.
+- Open: the opener's Register jumps to the join queue's own "Join Sprint" button (two buttons, one action).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1423,7 +1446,7 @@ with the tab when nothing is on.
 | 26 | Commits stay local until the owner says otherwise; Vercel previews come later and will point at staging. | Owner. |
 | 27 | Spectators see **names** of who's registered, through `hackathon_registrants` (024); the registrations table stays participants-only. | Owner chose names over a count only. |
 | 28 | The Hackathon tab shows for active members, plus anyone registered or judging in a Sprint (even if lapsed). | Brief ("active members") reconciled with decision 12. |
-| 29 | `/hackathon` redirects to the current Sprint's own page (live > judging > teams_locked > registration > upcoming > latest revealed; paused by its frozen phase; never cancelled or draft). | One shareable address per Sprint; the brief's order didn't cover judging or paused. |
+| 29 | *(Replaced by 86, 2026-10-12.)* `/hackathon` redirects to the current Sprint's own page (live > judging > teams_locked > registration > upcoming > latest revealed; paused by its frozen phase; never cancelled or draft). | One shareable address per Sprint; the brief's order didn't cover judging or paused. |
 | 30 | Until Prompt 4, the spectator's "Register" jumps to the join-queue slot, which says it opens soon. Nothing registers yet. | Keeps Prompt 4's scope intact. Owner: "whatever you think is best". |
 | 31 | Countdowns tick on `performance.now()` from one server measurement, never the device's clock. | "Countdown ticks correctly even if I change my device clock", including mid-page. |
 | 32 | The page follows admin changes by polling a 30 s edge-cached timing route (every 30 s, and on focus), not realtime. | `hackathons` isn't in realtime (column grants); the brief asks for ~1 minute. |
@@ -1480,6 +1503,9 @@ with the tab when nothing is on.
 | 83 | The page's relay data is cached for 30 s on the server; the open page re-checks every 30 s while visible. | Keeps the landing page fast and off the database, and changes still show within about a minute. |
 | 84 | The tab is called "Buildathon"; addresses and code names stay `hackathon`. | Owner, 2026-10-12. Moving the address is still open. |
 | 85 | With no Sprint on, the tab explains the format (example arena, spec, timeline, rubric) rather than a one-line empty state. | Owner: it "looks very very empty"; then "a place for serious work and innovation", not a landing page. |
+| 86 | `/hackathon` is always the Buildathon home; the current Sprint (same order as 29) gets a banner with its countdown and the way in. Each Sprint keeps its own page. | Owner: the signup page "shouldn't become the new hackathon home page, it should be separate". |
+| 87 | Before kickoff, the Sprint page opens with what a Sprint is, its real dates and the commitment, in a down-to-business tone. | Owner: "it kinda just throws you in". |
+| 88 | Registered people fold after 12 and teams after 4 during registration. | Owner: many registrations "shouldn't just fill up the whole page". |
 
 ---
 
@@ -1613,4 +1639,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `b9a1b06` | The landing page's countdown relay (033) |
 | `624d612` | Clean-slate reset script; staging's Hackathon data deleted; empty-state fixes |
 | `7ac6eb4` | The tab is "Buildathon"; its page with no Sprint (5l) |
-| (next) | In-page admin confirmations; demo Sprint scripts for staging |
+| `98e2504`, `da7f549` | In-page admin confirmations; demo Sprint scripts for staging |
+| (next) | The Buildathon home with a current-Sprint banner; the Sprint page's opener; folding lists (5m) |

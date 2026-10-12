@@ -54,6 +54,7 @@ export default function Arena({
   myTeamId,
   title = "Arena",
   live = false,
+  collapseAfter,
 }: {
   sprintId: string;
   sprintNumber: number;
@@ -63,7 +64,10 @@ export default function Arena({
   title?: string;
   /** Subscribe to the pulse (while the Sprint is running). */
   live?: boolean;
+  /** Show this many teams, then a "Show all" button (a busy registration). */
+  collapseAfter?: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   const showPulse = ["teams_locked", "live", "judging", "revealed"].includes(phase);
   const showSubmitted = ["live", "judging", "revealed"].includes(phase);
@@ -211,7 +215,7 @@ export default function Arena({
       </div>
 
       <ul className={s.grid}>
-        {ordered.map((t) => {
+        {(collapseAfter && !expanded ? ordered.slice(0, collapseAfter) : ordered).map((t) => {
           const p = pulses.get(t.id) ?? null;
           const heat = showPulse ? heatOf(p?.last_active_at ?? null, now) : "idle";
           const mine = t.id === myTeamId;
@@ -299,6 +303,11 @@ export default function Arena({
           );
         })}
       </ul>
+      {collapseAfter !== undefined && ordered.length > collapseAfter && (
+        <button type="button" className={ui.ghostBtn} style={{ marginTop: 12 }} onClick={() => setExpanded((e) => !e)}>
+          {expanded ? "Show fewer" : `Show all ${ordered.length} teams`}
+        </button>
+      )}
     </section>
   );
 }
