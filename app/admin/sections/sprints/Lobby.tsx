@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Btn, Card, ErrorLine, send, when } from "../../ui";
+import { askConfirm } from "../../dialog";
 import type { LobbyMessage } from "./types";
 
 /** Lobby moderation: pin, unpin, delete. Pinned first, then newest. */
@@ -38,7 +39,7 @@ export default function Lobby({ sprintId, messages, onChanged }: { sprintId: str
             <div className="flex gap-2 mt-2">
               <Btn onClick={() => run(m.is_pinned ? "lobby_unpin" : "lobby_pin", m.id)}>{m.is_pinned ? "unpin" : "pin"}</Btn>
               {!m.is_system && (
-                <Btn variant="danger" onClick={() => window.confirm("Delete this message? Its text is gone for good.") && run("lobby_delete", m.id)}>
+                <Btn variant="danger" onClick={async () => (await askConfirm("Delete this message? Its text is gone for good.", { ok: "delete", danger: true })) && run("lobby_delete", m.id)}>
                   delete
                 </Btn>
               )}

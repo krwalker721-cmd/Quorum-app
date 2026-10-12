@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { adminFetch } from "../../lib/api";
 import { Btn, Card, ErrorLine, Kicker, send, when } from "../../ui";
+import { askConfirm } from "../../dialog";
 import { formatNy } from "@/lib/time/newYork";
 import { AWARD_LABEL, NAMED_AWARDS, RUBRIC, type AwardType, type Averages, type ScoreKey } from "@/lib/hackathons/judging";
 
@@ -105,14 +106,14 @@ export default function Judging({ sprintId }: { sprintId: string }) {
       (revealed ? "The Sprint is revealed, so they appear on the public page right away." : "They become public at the reveal.") +
       " The board locks until you reopen it." +
       (warnings.length ? `\n\nBefore you do:\n• ${warnings.join("\n• ")}` : "");
-    if (window.confirm(msg)) await run({ op: "finalize" });
+    if (await askConfirm(msg, { ok: "finalize" })) await run({ op: "finalize" });
   }
 
   async function reopen() {
     const msg = revealed
       ? "Reopen the awards?\n\nThe Sprint is revealed, so they disappear from the public page until you finalize again."
       : "Reopen the awards so you can change them?";
-    if (window.confirm(msg)) await run({ op: "unfinalize" });
+    if (await askConfirm(msg, { ok: "reopen" })) await run({ op: "unfinalize" });
   }
 
   return (
@@ -401,8 +402,8 @@ function AwardBoard({
                           <Btn
                             className="!py-1"
                             disabled={locked}
-                            onClick={() => {
-                              if (holds.length && !window.confirm(`${p.project_name ?? "This project"} already has ${holds.join(", ")}. Give it ${AWARD_LABEL[slot.type]} too?`)) return;
+                            onClick={async () => {
+                              if (holds.length && !(await askConfirm(`${p.project_name ?? "This project"} already has ${holds.join(", ")}. Give it ${AWARD_LABEL[slot.type]} too?`))) return;
                               run({ op: "award_set", award_type: slot.type, submission_id: p.submission_id, citation: current?.citation ?? null });
                             }}
                           >
@@ -469,7 +470,7 @@ function AwardWinner({
           </span>
         )}
         {!locked && (
-          <Btn className="!py-1" variant="danger" onClick={() => window.confirm(`Remove ${awardName(award)}?`) && run({ op: "award_remove", award_id: award.id })}>
+          <Btn className="!py-1" variant="danger" onClick={async () => (await askConfirm(`Remove ${awardName(award)}?`, { ok: "remove", danger: true })) && run({ op: "award_remove", award_id: award.id })}>
             remove
           </Btn>
         )}

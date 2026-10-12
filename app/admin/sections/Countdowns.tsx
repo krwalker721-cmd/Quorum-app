@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { adminFetch } from "../lib/api";
 import { SectionShell } from "./Overview";
 import { Btn, Card, ErrorLine, Kicker, send } from "../ui";
+import { askConfirm, tell } from "../dialog";
 import ChangeLog from "./sprints/ChangeLog";
 import type { LogEntry } from "./sprints/types";
 import CountdownView, { formatRemaining, resolveCountdown } from "@/components/countdown/CountdownView";
@@ -204,11 +205,11 @@ export default function CountdownsSection() {
 }
 
 /** Asks twice when a time is under an hour away or already reached. */
-function confirmRisky(label: string, current: number | null, next: number | null, now: number | null) {
+async function confirmRisky(label: string, current: number | null, next: number | null, now: number | null) {
   const n = now ?? Date.now();
   const soon = (t: number | null) => t !== null && t <= n + HOUR;
   if (!soon(current) && !soon(next)) return true;
-  return window.confirm(
+  return askConfirm(
     `${label}: that time is under an hour away or has already been reached. Visitors see the change within a minute.\n\nGo ahead?`,
   );
 }
@@ -222,8 +223,8 @@ function SiteCard({ c, now, act }: { c: SiteRow; now: number | null; act: (b: Re
 
   async function saveTarget() {
     const p = nyInputToUtc(target);
-    if (!p.ok) return window.alert(p.error);
-    if (!confirmRisky(`Move "${c.label}"`, target_ms, Date.parse(p.iso), now)) return;
+    if (!p.ok) return tell(p.error);
+    if (!(await confirmRisky(`Move "${c.label}"`, target_ms, Date.parse(p.iso), now))) return;
     await act({ op: "update", id: c.id, values: { target_at: p.iso } });
   }
 
@@ -256,8 +257,8 @@ function SiteCard({ c, now, act }: { c: SiteRow; now: number | null; act: (b: Re
           <Switch
             on={c.is_enabled}
             label={c.is_enabled ? "on" : "off"}
-            onChange={(v) => {
-              if (v && !confirmRisky(`Turn on "${c.label}"`, null, target_ms, now)) return;
+            onChange={async (v) => {
+              if (v && !(await confirmRisky(`Turn on "${c.label}"`, null, target_ms, now))) return;
               act({ op: "update", id: c.id, values: { is_enabled: v } });
             }}
           />
@@ -281,8 +282,8 @@ function SiteCard({ c, now, act }: { c: SiteRow; now: number | null; act: (b: Re
           </div>
         </label>
         <PushBack
-          onPush={(minutes) => {
-            if (!confirmRisky(`Push "${c.label}" back`, target_ms, target_ms + minutes * 60_000, now)) return;
+          onPush={async (minutes) => {
+            if (!(await confirmRisky(`Push "${c.label}" back`, target_ms, target_ms + minutes * 60_000, now))) return;
             act({ op: "push_back", kind: "site", id: c.id, minutes });
           }}
         />
@@ -290,7 +291,7 @@ function SiteCard({ c, now, act }: { c: SiteRow; now: number | null; act: (b: Re
 
       <div className="flex gap-2 mt-3">
         <Btn onClick={() => setEditing((e) => !e)}>{editing ? "close" : "edit text"}</Btn>
-        <Btn variant="danger" onClick={() => window.confirm(`Delete the countdown "${c.label}"?`) && act({ op: "delete", id: c.id })}>
+        <Btn variant="danger" onClick={async () => (await askConfirm(`Delete the countdown "${c.label}"?`, { ok: "delete", danger: true })) && act({ op: "delete", id: c.id })}>
           delete
         </Btn>
       </div>
@@ -355,16 +356,17 @@ function SprintCard({ s, now, act }: { s: SprintRow; now: number | null; act: (b
       {next && (
         <div className="mt-3">
           <PushBack
-            onPush={(minutes) => {
+            onPush={async (minutes) => {
               const at = Date.parse(next.at);
               const running = ["live", "judging", "paused"].includes(s.state);
               const risky = at <= (now ?? Date.now()) + HOUR || running;
               if (
-                !window.confirm(
+                !(await askConfirm(
                   `Push Sprint #${s.number}'s ${next.label.toLowerCase()} and everything after it back by ${minutes >= 1440 && minutes % 1440 === 0 ? `${minutes / 1440} day(s)` : `${minutes / 60} hour(s)`}?\n\n` +
                     "This moves the Sprint's real times: countdowns, locks and emails all follow." +
                     (risky ? "\n\nThat time is under an hour away or the Sprint is running: members see it within a minute." : ""),
-                )
+                  { ok: "push back" },
+                ))
               )
                 return;
               act({ op: "push_back", kind: "sprint", id: s.id, minutes });

@@ -4,6 +4,7 @@
 // lower-case labels, hairline cards, one amber accent.
 
 import { adminFetch } from "./lib/api";
+import { askConfirm } from "./dialog";
 import { formatNy } from "@/lib/time/newYork";
 
 const AMBER: React.CSSProperties = {
@@ -95,7 +96,7 @@ export async function send(path: string, body: unknown, method: "POST" | "PATCH"
 export async function sendWithOverride(path: string, body: Record<string, unknown>): Promise<PostResult> {
   const first = await send(path, body);
   if (first.ok || first.hint !== "team_full") return first;
-  if (!window.confirm(`${first.error}\n\nGo over the size limit on purpose? This is recorded in the log.`)) {
+  if (!(await askConfirm(`${first.error}\n\nGo over the size limit on purpose? This is recorded in the log.`, { ok: "go over the limit" }))) {
     return { ok: false, status: 0 };
   }
   return send(path, { ...body, raise_limit: true });

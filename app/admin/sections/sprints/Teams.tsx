@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Btn, Card, ErrorLine, Kicker, send, sendWithOverride } from "../../ui";
+import { askConfirm } from "../../dialog";
 import type { Participant, Team } from "./types";
 
 /**
@@ -148,10 +149,10 @@ function TeamCard({
             <select
               className="font-mono text-[0.65rem] lowercase !w-auto"
               defaultValue=""
-              onChange={(e) => {
+              onChange={async (e) => {
                 const to = e.target.value;
                 e.target.value = "";
-                if (to && window.confirm(`Move ${m.name} to ${teams.find((x) => x.id === to)?.name}?`)) {
+                if (to && (await askConfirm(`Move ${m.name} to ${teams.find((x) => x.id === to)?.name}?`, { ok: "move" }))) {
                   run({ op: "move", user_id: m.user_id, to_team_id: to });
                 }
               }}
@@ -165,7 +166,7 @@ function TeamCard({
             </select>
             <Btn
               variant="danger"
-              onClick={() => window.confirm(`Remove ${m.name} from ${team.name}? They stay registered, without a team.`) && run({ op: "remove", team_id: team.id, user_id: m.user_id }, false)}
+              onClick={async () => (await askConfirm(`Remove ${m.name} from ${team.name}? They stay registered, without a team.`, { ok: "remove", danger: true })) && run({ op: "remove", team_id: team.id, user_id: m.user_id }, false)}
             >
               remove
             </Btn>
@@ -210,8 +211,8 @@ function TeamCard({
             aria-label="size limit override"
           />
           <Btn
-            onClick={() =>
-              window.confirm(limit ? `Let ${team.name} have up to ${limit} members?` : `Remove ${team.name}'s size override?`) &&
+            onClick={async () =>
+              (await askConfirm(limit ? `Let ${team.name} have up to ${limit} members?` : `Remove ${team.name}'s size override?`)) &&
               run({ op: "set_limit", team_id: team.id, limit: limit || null }, false)
             }
           >
@@ -222,15 +223,16 @@ function TeamCard({
           className="font-mono text-[0.65rem] lowercase"
           defaultValue=""
           disabled={others.length === 0}
-          onChange={(e) => {
+          onChange={async (e) => {
             const target = e.target.value;
             e.target.value = "";
             const t = teams.find((x) => x.id === target);
             if (
               t &&
-              window.confirm(
+              (await askConfirm(
                 `Merge ${team.name} INTO ${t.name}?\n\n${team.name}'s members, thread, docs, links and votes move to ${t.name}, and ${team.name} is deleted.`,
-              )
+                { ok: "merge", danger: true },
+              ))
             ) {
               run({ op: "merge", source_id: team.id, target_id: target });
             }

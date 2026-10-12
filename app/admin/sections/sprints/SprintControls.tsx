@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Btn, Card, ErrorLine, Kicker, send } from "../../ui";
+import { askChoice, askConfirm, askText } from "../../dialog";
 import { formatNy } from "@/lib/time/newYork";
 import { missingMilestones, type Timeline } from "@/lib/hackathons/timeline";
 import type { Sprint } from "./types";
@@ -70,7 +71,7 @@ export default function SprintControls({
   const path = `/api/admin/hackathons/${sprint.id}/actions`;
 
   async function act(body: Record<string, unknown>, confirmText: string | null) {
-    if (confirmText && !window.confirm(confirmText)) return;
+    if (confirmText && !(await askConfirm(confirmText))) return;
     setBusy(true);
     setError(null);
     const r = await send(path, body);
@@ -106,18 +107,17 @@ export default function SprintControls({
     );
   }
 
-  function resume() {
+  async function resume() {
     const pausedFor = sprint.status_override_at ? Date.now() - new Date(sprint.status_override_at).getTime() : 0;
-    const giveBack = window.confirm(
+    const pick = await askChoice(
       `The Sprint has been paused for ${duration(pausedFor)}.\n\n` +
-        `OK: resume AND move every deadline still ahead ${duration(pausedFor)} later, to give that time back.\n` +
-        "Cancel: choose whether to resume without moving anything.",
+        `Give that time back by moving every deadline still ahead ${duration(pausedFor)} later, or resume without moving anything?`,
+      [
+        { value: "keep", label: "resume, times as they are", variant: "ghost" },
+        { value: "extend", label: `resume + ${duration(pausedFor)} back` },
+      ],
     );
-    if (giveBack) {
-      act({ action: "resume", extend: true }, null);
-    } else if (window.confirm("Resume without moving any times?")) {
-      act({ action: "resume", extend: false }, null);
-    }
+    if (pick) act({ action: "resume", extend: pick === "extend" }, null);
   }
 
   return (
@@ -173,9 +173,13 @@ export default function SprintControls({
             <Btn
               variant="danger"
               disabled={busy}
-              onClick={() => {
-                const typed = window.prompt(`Cancel Sprint #${sprint.number}? Everything freezes and the lobby becomes read-only.\n\nType CANCEL to confirm.`);
-                if (typed === "CANCEL") act({ action: "cancel" }, null);
+              onClick={async () => {
+                const typed = await askText(`Cancel Sprint #${sprint.number}? Everything freezes and the lobby becomes read-only.\n\nType CANCEL to confirm.`, {
+                  ok: "cancel sprint",
+                  placeholder: "CANCEL",
+                  danger: true,
+                });
+                if (typed?.trim() === "CANCEL") act({ action: "cancel" }, null);
               }}
             >
               cancel sprint
@@ -208,6 +212,14 @@ export default function SprintControls({
           run team matcher
         </Btn>
       </div>
+
+      {/* The button's tooltip doesn't show on touch screens, so say it plainly. */}
+      {!sprint.is_published && missing.length > 0 && (
+        <p className="font-mono text-[0.6rem] text-text-faint mt-3">
+          to publish, set all six dates under times below (or use quick schedule), then save changes. missing:{" "}
+          {missing.join(", ").toLowerCase()}.
+        </p>
+      )}
 
       <MatchSummary sprint={sprint} />
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Btn, Card, ErrorLine, Kicker, send } from "../../ui";
+import { askConfirm } from "../../dialog";
 import { MILESTONES, TIME_FIELDS, labelFor, quickSchedule, timelineErrors, type Timeline } from "@/lib/hackathons/timeline";
 import { formatNy, nyInputToUtc, nyZoneLabel, utcToNyInput } from "@/lib/time/newYork";
 import { LOBBY_MAX_LENGTH, LOBBY_WELCOME_DEFAULT } from "@/lib/hackathons/lobby";
@@ -95,11 +96,12 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
         const lines = risky.map((f) => `• ${labelFor(f)}: ${formatNy(sprint[f])} → ${formatNy(parsed.iso[f])}`);
         const live = sprint.state === "live" || sprint.state === "judging" || sprint.state === "paused";
         if (
-          !window.confirm(
+          !(await askConfirm(
             `These times are under an hour away or already under way:\n\n${lines.join("\n")}\n\n` +
               (live ? "The Sprint is running: members will see this immediately.\n\n" : "") +
               "Save anyway?",
-          )
+            { ok: "save anyway" },
+          ))
         ) {
           return;
         }

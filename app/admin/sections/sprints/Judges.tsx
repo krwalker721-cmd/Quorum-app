@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminFetch } from "../../lib/api";
 import { Btn, Card, ErrorLine, Kicker, send, when } from "../../ui";
+import { askChoice, askConfirm } from "../../dialog";
 import type { Judge } from "./types";
 
 type Member = { id: string; full_name: string | null; username: string | null; email: string | null };
@@ -45,12 +46,18 @@ export default function Judges({ sprintId, judges, onChanged }: { sprintId: stri
 
   async function addMember(m: Member) {
     const name = m.full_name || m.username || "They";
-    const accepted = window.confirm(
-      `Make ${name} a judge.\n\nOK: mark them as having accepted (for someone you've already asked).\nCancel: invite them and wait for them to accept.`,
+    const pick = await askChoice(
+      `Make ${name} a judge.\n\nMark them as having accepted (for someone you've already asked), or invite them and wait for them to accept?`,
+      [
+        { value: "invite", label: "invite", variant: "ghost" },
+        { value: "accepted", label: "mark accepted" },
+      ],
     );
+    if (!pick) return;
+    const accepted = pick === "accepted";
     const r = await run({ op: "judge_add_member", user_id: m.id, accepted });
     if (!r.ok && r.hint === "participant_cannot_judge") {
-      if (window.confirm(`${name} is registered for this Sprint, so they can't judge it.\n\nWithdraw their registration and make them a judge?`)) {
+      if (await askConfirm(`${name} is registered for this Sprint, so they can't judge it.\n\nWithdraw their registration and make them a judge?`, { ok: "withdraw + make judge" })) {
         const w = await run({ op: "withdraw", user_id: m.id });
         if (w.ok) await run({ op: "judge_add_member", user_id: m.id, accepted });
       }
@@ -77,9 +84,9 @@ export default function Judges({ sprintId, judges, onChanged }: { sprintId: stri
             </div>
             <div className="flex gap-2">
               {!j.accepted_at && j.user_id && (
-                <Btn onClick={() => window.confirm("Mark this judge as accepted?") && run({ op: "judge_accept", judge_id: j.id })}>mark accepted</Btn>
+                <Btn onClick={async () => (await askConfirm("Mark this judge as accepted?")) && run({ op: "judge_accept", judge_id: j.id })}>mark accepted</Btn>
               )}
-              <Btn variant="danger" onClick={() => window.confirm(`Remove ${j.name ?? j.invite_email} as a judge?`) && run({ op: "judge_remove", judge_id: j.id })}>
+              <Btn variant="danger" onClick={async () => (await askConfirm(`Remove ${j.name ?? j.invite_email} as a judge?`, { ok: "remove", danger: true })) && run({ op: "judge_remove", judge_id: j.id })}>
                 remove
               </Btn>
             </div>

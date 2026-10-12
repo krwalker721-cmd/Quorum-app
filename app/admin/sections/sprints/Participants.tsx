@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Btn, ErrorLine, send, when } from "../../ui";
+import { askConfirm } from "../../dialog";
 import type { Participant } from "./types";
 
 // Two hours after kickoff, anyone who hasn't pressed "I'm in" is worth a nudge.
@@ -27,7 +28,7 @@ export default function Participants({
   const rows = onlyMissing ? missing : showWithdrawn ? participants : active;
 
   async function withdraw(p: Participant) {
-    if (!window.confirm(`Withdraw ${p.name} from this Sprint? They leave their team and lose the lobby.`)) return;
+    if (!(await askConfirm(`Withdraw ${p.name} from this Sprint? They leave their team and lose the lobby.`, { ok: "withdraw", danger: true }))) return;
     const r = await send(`/api/admin/hackathons/${sprintId}/people`, { op: "withdraw", user_id: p.user_id });
     if (!r.ok) setError(r.error ?? "Couldn't withdraw them.");
     else onChanged();
