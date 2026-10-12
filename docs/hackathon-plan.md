@@ -1351,6 +1351,44 @@ function, policy or test changed, and nothing outside the Hackathon feature was 
 
 ---
 
+## 5l. The tab is "Buildathon"; its page with no Sprint (2026-10-12)
+
+The owner explored the feature on staging with demo Sprints, then started changing it, beginning
+with the tab when nothing is on.
+
+### The rename
+- Every visible label says **Buildathon**: the sidebar item, the top bar title on every Sprint page
+  (`TopBar title="buildathon"`, with its context line "48-hour Sprints, network-wide").
+- Unchanged for now: the address (`/hackathon/…`), the database and code names (`hackathon_*`), and
+  the events, which are still "Sprints". Open question to the owner: move the address to
+  `/buildathon`, and keep the word "Sprint"?
+
+### The empty page (`components/hackathon/empty/`)
+- Shown at `/hackathon` when no Sprint is published (otherwise that address still opens the current
+  Sprint). Three designs were tried in the preview: **A** how it works, **B** what was built last time,
+  **C** an empty arena. The owner picked A, asked for "a landing page spin" with more visuals and
+  without the header in a card, then for less landing page: "a place for serious work and innovation".
+- What it shows:
+  - An open header: a grey "No Sprint scheduled yet" pill, the gradient title, and a plain description,
+    with one faint glow and two quiet links ("How a Sprint runs ↓", "Past Sprints →" when there are any).
+  - An **example** of the arena during a live Sprint (made-up teams, marked as an example, not clickable).
+  - The format's spec: duration, teams, visibility, outcome.
+  - How a Sprint runs, as a timeline with real timing.
+  - How projects are judged, from `RUBRIC` in `lib/hackathons/judging.ts`, so it can't drift from the
+    judges' form.
+- Static, no motion. Checked at the pane's width and at 375 px (no sideways scroll).
+- **Development only:** `/hackathon?preview=empty` shows this page even while Sprints exist.
+
+### Demo Sprints for exploring (staging)
+- `node scripts/seed-staging-signup-demo.mjs [live | watch | judging]` resets one Sprint ("Signup
+  demo") to its signup period, live with the test admin on Night Owls, live seen from outside, or in
+  judging with the test admin as a judge (the spectator is the second judge).
+- `node scripts/seed-staging-finished-demo.mjs`: a revealed Sprint ("Finished demo") with a complete
+  submission per team and four finalized awards.
+- (Both scripts were not committed with this section; see the commits table.)
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1438,6 +1476,8 @@ function, policy or test changed, and nothing outside the Hackathon feature was 
 | 81 | The recap link shows until any newer Sprint is published, even one whose landing switch is off. | "Until the next Sprint is announced." |
 | 82 | The relay's Sprint data comes from one public function with a pinned column list (no theme, no ids). | "Public-safe endpoint… only timestamps, number/title/tagline, team count, builder count, state." |
 | 83 | The page's relay data is cached for 30 s on the server; the open page re-checks every 30 s while visible. | Keeps the landing page fast and off the database, and changes still show within about a minute. |
+| 84 | The tab is called "Buildathon"; addresses and code names stay `hackathon`. | Owner, 2026-10-12. Moving the address is still open. |
+| 85 | With no Sprint on, the tab explains the format (example arena, spec, timeline, rubric) rather than a one-line empty state. | Owner: it "looks very very empty"; then "a place for serious work and innovation", not a landing page. |
 
 ---
 
@@ -1569,4 +1609,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `a6241a9` | The reveal, the gallery, and public project and recap pages (032) |
 | `f9de9b1` | Record the Phase 10 commit |
 | `b9a1b06` | The landing page's countdown relay (033) |
-| (next) | Clean-slate reset script; staging's Hackathon data deleted; empty-state fixes |
+| `624d612` | Clean-slate reset script; staging's Hackathon data deleted; empty-state fixes |
+| (next) | The tab is "Buildathon"; its page with no Sprint (5l) |

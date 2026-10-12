@@ -78,7 +78,7 @@ export default async function SprintPage(props: {
   return (
     <>
       <NoGrid />
-      <TopBar sleek title="hackathon" tier={standing.tier} userId={user.id} />
+      <TopBar sleek title="buildathon" tier={standing.tier} userId={user.id} />
       <SprintAutoRefresh timing={timing} state={sprint.state} />
       {sprint.state === "registration" && <QueueLive sprintId={sprint.id} />}
 

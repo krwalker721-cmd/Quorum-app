@@ -74,7 +74,7 @@ export default async function JudgeProjectPage(props: { params: Promise<{ number
   return (
     <>
       <NoGrid />
-      <TopBar sleek title="hackathon" tier={standing.tier} userId={user.id} />
+      <TopBar sleek title="buildathon" tier={standing.tier} userId={user.id} />
       <SprintAutoRefresh timing={toTiming(sprint)} state={sprint.state} />
       <div className="page-pad" style={{ padding: "16px 26px 48px", maxWidth: 1240, margin: "0 auto", width: "100%" }}>
         <div className="flex items-center justify-between gap-3 flex-wrap" style={{ marginBottom: 16 }}>

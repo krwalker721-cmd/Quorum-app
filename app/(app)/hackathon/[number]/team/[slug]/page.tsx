@@ -61,7 +61,7 @@ export default async function TeamRoomPage(props: {
   return (
     <>
       <NoGrid />
-      <TopBar sleek title="hackathon" tier={standing.tier} userId={user.id} />
+      <TopBar sleek title="buildathon" tier={standing.tier} userId={user.id} />
       <SprintAutoRefresh timing={toTiming(sprint)} state={sprint.state} />
       <div className="page-pad" style={{ padding: "16px 26px 40px", maxWidth: 1120, margin: "0 auto", width: "100%" }}>
         <StatusBanner sprint={sprint} />

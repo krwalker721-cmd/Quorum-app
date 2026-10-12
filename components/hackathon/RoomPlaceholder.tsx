@@ -28,7 +28,7 @@ export default function RoomPlaceholder({
   return (
     <>
       <NoGrid />
-      <TopBar sleek title="hackathon" tier={tier} userId={userId} />
+      <TopBar sleek title="buildathon" tier={tier} userId={userId} />
       <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 720, margin: "0 auto", width: "100%" }}>
         <Link href={backHref ?? `/hackathon/${number}`} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
           {backLabel ?? `← Sprint #${number}`}

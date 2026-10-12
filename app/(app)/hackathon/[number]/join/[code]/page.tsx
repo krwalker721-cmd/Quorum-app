@@ -61,7 +61,7 @@ export default async function JoinLinkPage(props: { params: Promise<{ number: st
   return (
     <>
       <NoGrid />
-      <TopBar sleek title="hackathon" tier={standing.tier} userId={user.id} />
+      <TopBar sleek title="buildathon" tier={standing.tier} userId={user.id} />
       <div className="page-pad" style={{ padding: "24px 26px 48px", maxWidth: 560, margin: "0 auto", width: "100%" }}>
         <Tile padding="20px 20px">
           {valid ? (

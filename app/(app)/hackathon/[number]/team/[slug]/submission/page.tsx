@@ -86,7 +86,7 @@ export default async function SubmissionPage(props: { params: Promise<{ number: 
   return (
     <>
       <NoGrid />
-      <TopBar sleek title="hackathon" tier={standing.tier} userId={user.id} />
+      <TopBar sleek title="buildathon" tier={standing.tier} userId={user.id} />
       <SprintAutoRefresh timing={toTiming(sprint)} state={sprint.state} />
       <div className="page-pad" style={{ padding: "16px 26px 48px", maxWidth: 880, margin: "0 auto", width: "100%" }}>
         <Link href={roomHref(n, team.slug)} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
