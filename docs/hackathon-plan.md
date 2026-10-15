@@ -17,9 +17,9 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
-- **Migrations:** 018–033 are on staging; **034 is written and committed but not yet applied to
-  staging** (the owner runs it). Production has none of them (it's at 017).
-- **Tests:** 644 database tests pass locally; staging passes 639 until 034 is applied (`scripts/db.sh local`,
+- **Migrations:** 018–034 are on staging (034 applied by the owner, 2026-10-14). Production has none
+  of them (it's at 017).
+- **Tests:** 644 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -84,7 +84,6 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 **Waiting on the owner**
 - The owner is testing and editing from a clean slate on staging (section 5k). Next: notifications
   (Prompt 12); external-judge accounts for Sprint #2 (decision 14).
-- Apply 034 to staging (`scripts/db.sh staging:migrate supabase/migrations/034_buildathon_live_feed.sql`).
 - Paste 018–034 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
@@ -233,7 +232,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–033** (034 pending) |
+| Migrations applied | up to **017** | **018–034** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -385,7 +384,7 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-14, 034):** all 644 tests pass locally. Five lobby tests changed with 034:
+- **Last run (2026-10-14, 034):** all 644 tests pass locally and on staging. Five lobby tests changed with 034:
   members outside the Sprint now read the feed (but can't post); lapsed outsiders and signed-out
   visitors still see nothing.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
