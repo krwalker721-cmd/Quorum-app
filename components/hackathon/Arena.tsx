@@ -10,6 +10,7 @@ import { realtimeDb } from "@/lib/hackathons/actions";
 import { approxServerNow } from "@/lib/useServerNow";
 import type { SprintPhase } from "@/lib/hackathons/sprint";
 import type { ArenaTeam, TeamPulse } from "@/lib/hackathons/page";
+import ArenaMap from "./ArenaMap";
 import s from "./arena.module.css";
 
 // The arena (Prompt 5): every team, who's on it, which cohorts they come
@@ -49,12 +50,14 @@ const firstName = (n: string | null) => (n ?? "Founder").split(/\s+/)[0];
 export default function Arena({
   sprintId,
   sprintNumber,
-  teams,
+  teams: realTeams,
   phase,
   myTeamId,
   title = "Arena",
   live = false,
   collapseAfter,
+  map,
+  mockTeams = 0,
 }: {
   sprintId: string;
   sprintNumber: number;
@@ -66,7 +69,13 @@ export default function Arena({
   live?: boolean;
   /** Show this many teams, then a "Show all" button (a busy registration). */
   collapseAfter?: number;
+  /** Offer the stadium map (live): what its field shows. Map is the default view. */
+  map?: { label: string; at: string | null; theme: string | null };
+  /** Development only: add this many made-up teams, to see a crowded arena. */
+  mockTeams?: number;
 }) {
+  const [asMap, setAsMap] = useState(true);
+  const teams = useMemo(() => (mockTeams > 0 ? [...realTeams, ...makeMockTeams(mockTeams)] : realTeams), [realTeams, mockTeams]);
   const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   const showPulse = ["teams_locked", "live", "judging", "revealed"].includes(phase);
@@ -195,9 +204,26 @@ export default function Arena({
     <section style={{ marginBottom: 16 }} aria-label={title}>
       <div className="flex items-baseline justify-between flex-wrap gap-x-3 gap-y-1" style={{ marginBottom: 10 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{title}</h2>
-        {sealed && showPulse && (
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Every project is sealed until the reveal</span>
-        )}
+        <span className="flex items-center gap-3 flex-wrap">
+          {sealed && showPulse && (
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Every project is sealed until the reveal</span>
+          )}
+          {map && (
+            <span className="flex gap-1" role="group" aria-label="View">
+              {(["Map", "List"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={`${ui.pill} ${(v === "Map") === asMap ? ui.pillActive : ""}`}
+                  aria-pressed={(v === "Map") === asMap}
+                  onClick={() => setAsMap(v === "Map")}
+                >
+                  {v}
+                </button>
+              ))}
+            </span>
+          )}
+        </span>
       </div>
 
       <div className={s.stats}>
@@ -214,6 +240,21 @@ export default function Arena({
         )}
       </div>
 
+      {map && asMap ? (
+        <div style={{ marginTop: 12 }}>
+          <ArenaMap
+            teams={teams}
+            pulses={pulses}
+            heatOf={heatOf}
+            agoText={agoText}
+            now={now}
+            myTeamId={myTeamId}
+            sprintNumber={sprintNumber}
+            rippling={rippling}
+            center={map}
+          />
+        </div>
+      ) : (
       <ul className={s.grid}>
         {(collapseAfter && !expanded ? ordered.slice(0, collapseAfter) : ordered).map((t) => {
           const p = pulses.get(t.id) ?? null;
@@ -303,7 +344,8 @@ export default function Arena({
           );
         })}
       </ul>
-      {collapseAfter !== undefined && ordered.length > collapseAfter && (
+      )}
+      {!(map && asMap) && collapseAfter !== undefined && ordered.length > collapseAfter && (
         <button type="button" className={ui.ghostBtn} style={{ marginTop: 12 }} onClick={() => setExpanded((e) => !e)}>
           {expanded ? "Show fewer" : `Show all ${ordered.length} teams`}
         </button>
@@ -319,4 +361,43 @@ function Stat({ value, label, amber = false }: { value: number | string; label: 
       <div className={s.statLabel}>{label}</div>
     </div>
   );
+}
+
+// Development only (?mockTeams=N on the Sprint page): made-up teams for seeing
+// a crowded arena. Deterministic, so the server and the browser agree.
+const MOCK_NAMES = ["Nova", "Atlas", "Ember", "Orbit", "Quill", "Harbor", "Pixel", "Summit", "Echo", "Lumen", "Drift", "Forge"];
+const MOCK_EMBLEMS = ["◆", "▲", "●", "■", "✦", "◉", "⬢", "✳"];
+const MOCK_COLORS = ["#f59e0b", "#38bdf8", "#22c55e", "#a78bfa", "#f472b6", "#fb923c", "#2dd4bf", "#facc15"];
+const MOCK_PEOPLE = ["Ada", "Ben", "Cleo", "Dev", "Eli", "Fay", "Gus", "Hana", "Ivo", "Jun", "Kai", "Lea"];
+function makeMockTeams(n: number): ArenaTeam[] {
+  const base = Math.floor(Date.now() / MIN) * MIN;
+  return Array.from({ length: n }, (_, i) => {
+    const size = 2 + ((i * 7) % 3);
+    const ago = [2, 12, 45, 200][(i * 5) % 4] * MIN;
+    return {
+      id: `mock-${i}`,
+      name: `${MOCK_NAMES[i % MOCK_NAMES.length]} ${Math.floor(i / MOCK_NAMES.length) + 1}`,
+      slug: `mock-${i}`,
+      emblem: MOCK_EMBLEMS[i % MOCK_EMBLEMS.length],
+      color: MOCK_COLORS[(i * 3) % MOCK_COLORS.length],
+      is_random_matched: i % 4 === 0,
+      is_open_to_requests: false,
+      max_size: 4,
+      members: Array.from({ length: size }, (_, k) => ({
+        id: `mock-${i}-${k}`,
+        full_name: `${MOCK_PEOPLE[(i + k * 5) % MOCK_PEOPLE.length]} Example`,
+        username: null,
+        stage: null,
+        role: k === 0 ? ("owner" as const) : ("member" as const),
+        cohort: null,
+      })),
+      pulse: {
+        team_id: `mock-${i}`,
+        activity_count: i,
+        last_active_at: new Date(base - ago).toISOString(),
+        has_submitted: i % 6 === 0,
+        submitted_at: null,
+      },
+    };
+  });
 }

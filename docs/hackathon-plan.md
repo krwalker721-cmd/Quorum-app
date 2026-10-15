@@ -1414,6 +1414,33 @@ The owner's three asks for a Sprint in its signup period, all approved after a l
 
 ---
 
+## 5n. The arena as a stadium map (2026-10-14)
+
+First piece of the owner's live-page rework (the plan: map → live feed with the lobby merged in →
+the team room like a Collab project room). Owner's answers at the plan: the feed is readable by every
+member (posting stays with participants, judges, admins); presentations are PDFs for now (an in-app
+slide maker maybe later); the live page is "Pulse's feed plus the Collab board's projects".
+
+- `components/hackathon/ArenaMap.tsx` (+ `arenaMap.module.css`), shown in the live Sprint's arena with a
+  Map / List switch (List is the existing cards). No new library: HTML pods over an SVG stadium.
+- The field in the middle shows the deadline clock, "n of N submitted" and the theme. Teams sit on
+  rings around it, evenly spaced by arc length; your team takes the top seat, the rest keep the server's
+  order, so nothing moves as teams work. Each ring holds as many pods as fit; more teams add rings.
+- Pods are compact versions of the arena's team card (owner: the first version was "too cartoonish"):
+  a team-colour hairline, small emblem, name, activity bars, faces with first names, and a status line.
+  Activity shows as the border and bars, not a glow; one small ripple on new activity.
+- Levels of detail by team count and zoom (owner: compress "only even farther out and more teams"):
+  up to 16 teams always full pods; up to 60, names only below 40 % zoom; beyond that, plain plates
+  below 20 %. The field's words grow a little when zoomed out but never past the field.
+- Drag to move; pinch or ⌘/Ctrl + scroll to zoom (a plain scroll still scrolls the page); + / − / fit.
+  Tapping a team opens a card (members, cohorts, activity, sealed; "Go to my team room" for yours).
+  In a box taller than wide the stadium stands upright. Positions are whole pixels (a decimal mismatch
+  broke hydration).
+- Development only: `?mockTeams=N` on a Sprint page adds N made-up teams to see a crowd.
+- Checked with 3 real teams and 23, 43 and 83 made-up ones, at the pane's width, wide, and 375 px.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1506,6 +1533,7 @@ The owner's three asks for a Sprint in its signup period, all approved after a l
 | 86 | `/hackathon` is always the Buildathon home; the current Sprint (same order as 29) gets a banner with its countdown and the way in. Each Sprint keeps its own page. | Owner: the signup page "shouldn't become the new hackathon home page, it should be separate". |
 | 87 | Before kickoff, the Sprint page opens with what a Sprint is, its real dates and the commitment, in a down-to-business tone. | Owner: "it kinda just throws you in". |
 | 88 | Registered people fold after 12 and teams after 4 during registration. | Owner: many registrations "shouldn't just fill up the whole page". |
+| 89 | The live arena is a zoomable stadium map with fixed seats and levels of detail by team count and zoom; the card list stays one click away. | Owner: "an almost interactive map… arranged in an arena shape", zoomable, not squished when big. |
 
 ---
 
@@ -1640,4 +1668,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `624d612` | Clean-slate reset script; staging's Hackathon data deleted; empty-state fixes |
 | `7ac6eb4` | The tab is "Buildathon"; its page with no Sprint (5l) |
 | `98e2504`, `da7f549` | In-page admin confirmations; demo Sprint scripts for staging |
-| (next) | The Buildathon home with a current-Sprint banner; the Sprint page's opener; folding lists (5m) |
+| `0206d47` | The Buildathon home with a current-Sprint banner; the Sprint page's opener; folding lists (5m) |
+| (next) | The arena as a stadium map (5n) |

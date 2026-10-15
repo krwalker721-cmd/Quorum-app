@@ -45,9 +45,11 @@ const NOTICES: Record<string, string> = {
 // SprintAutoRefresh reloads it when the state changes or an admin moves a time.
 export default async function SprintPage(props: {
   params: Promise<{ number: string }>;
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{ notice?: string; mockTeams?: string }>;
 }) {
-  const [{ number }, { notice }] = await Promise.all([props.params, props.searchParams]);
+  const [{ number }, { notice, mockTeams }] = await Promise.all([props.params, props.searchParams]);
+  // Development only: ?mockTeams=N adds made-up teams to the live arena map.
+  const mock = process.env.NODE_ENV === "development" ? Math.min(200, Math.max(0, Number(mockTeams) || 0)) : 0;
   const n = Number(number);
   if (!Number.isInteger(n) || n < 1) notFound();
 
@@ -136,7 +138,7 @@ export default async function SprintPage(props: {
 
         <div className="grid stack-md" style={{ gap: 16, gridTemplateColumns: "minmax(0, 1fr) 320px", alignItems: "start" }}>
           <div style={{ minWidth: 0 }}>
-            <MainColumn data={data} />
+            <MainColumn data={data} mockTeams={mock} />
           </div>
           <aside style={{ minWidth: 0 }}>
             <ScheduleTile sprint={sprint} nowMs={Date.now()} />
@@ -149,7 +151,7 @@ export default async function SprintPage(props: {
 }
 
 /** The part that changes most from state to state. Each block is its own file for later prompts. */
-function MainColumn({ data }: { data: SprintPageData }) {
+function MainColumn({ data, mockTeams }: { data: SprintPageData; mockTeams: number }) {
   const { sprint, viewer, teams, registrants, showcase, queue } = data;
   const myTeam = viewer.teamId;
   const mine = myTeam ? teams.find((t) => t.id === myTeam) : undefined;
@@ -200,7 +202,16 @@ function MainColumn({ data }: { data: SprintPageData }) {
         <>
           <ThemeTile sprint={sprint} />
           {teamPanel}
-          <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="live" myTeamId={myTeam} />
+          <Arena
+            sprintId={sprint.id}
+            sprintNumber={sprint.number}
+            live={pulseLive}
+            teams={teams}
+            phase="live"
+            myTeamId={myTeam}
+            map={{ label: "Submissions close in", at: sprint.ends_at, theme: sprint.theme }}
+            mockTeams={mockTeams}
+          />
         </>
       );
     case "judging":
