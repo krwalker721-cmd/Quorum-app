@@ -36,6 +36,41 @@
   color: var(--text-secondary);
 }
 
+/* On the live stage the arena measures itself (container queries): as the
+   chat grows and the arena narrows, the four stat tiles become one slim line
+   and the header note goes, so the map keeps the room. */
+.fillSection {
+  container-type: inline-size;
+}
+@container (max-width: 760px) {
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-bottom: 4px;
+  }
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+  }
+  .statValue {
+    font-size: 15px;
+  }
+  .statLabel {
+    margin-top: 0;
+    font-size: 12px;
+  }
+}
+@container (max-width: 600px) {
+  .sealNote {
+    display: none;
+  }
+}
+
 /* ── Grid */
 .grid {
   display: grid;

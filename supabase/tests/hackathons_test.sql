@@ -618,8 +618,14 @@ select tests.throws('lobby: a judge who hasn''t accepted can''t post', $$ insert
 select tests.lives('judges: accepting the invite', $$ select hackathon_accept_judge_invite(tests.h1()) $$);
 select tests.lives('lobby: an accepted judge posts', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('jude'), 'good luck!') $$);
 select tests.login('oscar');
-select tests.eq('lobby: closed to members outside the Sprint', tests.count($$ select 1 from hackathon_lobby_messages where hackathon_id = tests.h1() $$)::text, '0');
-select tests.throws('lobby: ...who can''t post either', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('oscar'), 'hi') $$, 'row-level security');
+-- 034: the lobby is the Sprint page's feed, readable by every active member.
+select tests.ok('feed (034): a member outside the Sprint reads it', tests.count($$ select 1 from hackathon_lobby_messages where hackathon_id = tests.h1() $$) > 0);
+select tests.throws('feed (034): ...but can''t post', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('oscar'), 'hi') $$, 'row-level security');
+select tests.login('erin');
+select tests.eq('feed (034): a lapsed member outside the Sprint can''t read it', tests.count($$ select 1 from hackathon_lobby_messages where hackathon_id = tests.h1() $$)::text, '0');
+select tests.throws('feed (034): ...or post', $$ insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h1(), tests.u('erin'), 'hi') $$, 'row-level security');
+select tests.anon();
+select tests.eq('feed (034): signed out reads nothing', tests.count($$ select 1 from hackathon_lobby_messages $$)::text, '0');
 select tests.login('admin');
 select tests.lives('lobby: admins pin', $$ update hackathon_lobby_messages set is_pinned = true where body = 'hi all' $$);
 select tests.eq('lobby: ...and it is pinned', (select is_pinned::text from hackathon_lobby_messages where body = 'hi all'), 'true');
@@ -1669,7 +1675,9 @@ select tests.login_m(11);
 select tests.ok('welcome: a participant reads it', hackathon_lobby_welcome(tests.h9()) like 'This is the lobby%');
 select tests.throws('welcome: not on the public columns', $$ select lobby_welcome from public.hackathons $$, 'permission denied');
 select tests.login('oscar');
-select tests.ok('welcome: a spectator gets nothing', hackathon_lobby_welcome(tests.h9()) is null);
+select tests.ok('welcome (034): a member outside the Sprint reads it too', hackathon_lobby_welcome(tests.h9()) like 'This is the lobby%');
+select tests.login('erin');
+select tests.ok('welcome (034): a lapsed member outside gets nothing', hackathon_lobby_welcome(tests.h9()) is null);
 select tests.anon();
 select tests.throws('welcome: signed out can''t call it', $$ select hackathon_lobby_welcome(tests.h9()) $$, 'permission denied');
 select tests.as_db();
@@ -1804,9 +1812,9 @@ select tests.login('admin');
 select tests.lives('lobby: admins aren''t limited', $$
   insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.u('admin'), repeat('!', 1500)) $$);
 
--- Who reads and writes: unchanged from 019, checked again here.
+-- Who reads and writes: posting unchanged from 019; reading widened in 034.
 select tests.login('oscar');
-select tests.eq('lobby: a spectator reads nothing', tests.count($$ select 1 from hackathon_lobby_messages where hackathon_id = tests.h9() $$)::text, '0');
+select tests.ok('lobby (034): a spectator reads it', tests.count($$ select 1 from hackathon_lobby_messages where hackathon_id = tests.h9() $$) > 0);
 select tests.throws('lobby: ...and can''t post', $$
   insert into hackathon_lobby_messages (hackathon_id, user_id, body) values (tests.h9(), tests.u('oscar'), 'let me in') $$, 'row-level security');
 select tests.as_db();
@@ -1854,7 +1862,9 @@ select tests.eq('people: someone without a team has none',
 select tests.eq('people: an admin who posted is tagged admin',
   (select role from hackathon_lobby_people(tests.h9()) where user_id = tests.u('admin')), 'admin');
 select tests.login('oscar');
-select tests.eq('people: a spectator gets nobody', tests.count($$ select 1 from hackathon_lobby_people(tests.h9()) $$)::text, '0');
+select tests.ok('people (034): a member outside the Sprint sees who''s in the feed', tests.count($$ select 1 from hackathon_lobby_people(tests.h9()) $$) > 0);
+select tests.login('erin');
+select tests.eq('people (034): a lapsed member outside gets nobody', tests.count($$ select 1 from hackathon_lobby_people(tests.h9()) $$)::text, '0');
 select tests.anon();
 select tests.throws('people: signed out can''t call it', $$ select * from hackathon_lobby_people(tests.h9()) $$, 'permission denied');
 

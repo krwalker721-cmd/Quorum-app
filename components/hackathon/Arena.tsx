@@ -58,6 +58,7 @@ export default function Arena({
   collapseAfter,
   map,
   mockTeams = 0,
+  fill = false,
 }: {
   sprintId: string;
   sprintNumber: number;
@@ -73,6 +74,8 @@ export default function Arena({
   map?: { label: string; at: string | null; theme: string | null };
   /** Development only: add this many made-up teams, to see a crowded arena. */
   mockTeams?: number;
+  /** Stretch the map to the height of its row (the live page's stage, beside the chat). */
+  fill?: boolean;
 }) {
   const [asMap, setAsMap] = useState(true);
   const teams = useMemo(() => (mockTeams > 0 ? [...realTeams, ...makeMockTeams(mockTeams)] : realTeams), [realTeams, mockTeams]);
@@ -201,12 +204,16 @@ export default function Arena({
   }
 
   return (
-    <section style={{ marginBottom: 16 }} aria-label={title}>
+    <section
+      className={fill ? s.fillSection : undefined}
+      style={fill ? { display: "flex", flexDirection: "column", height: "100%" } : { marginBottom: 16 }}
+      aria-label={title}
+    >
       <div className="flex items-baseline justify-between flex-wrap gap-x-3 gap-y-1" style={{ marginBottom: 10 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{title}</h2>
         <span className="flex items-center gap-3 flex-wrap">
           {sealed && showPulse && (
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Every project is sealed until the reveal</span>
+            <span className={s.sealNote} style={{ fontSize: 12, color: "var(--text-muted)" }}>Every project is sealed until the reveal</span>
           )}
           {map && (
             <span className="flex gap-1" role="group" aria-label="View">
@@ -241,7 +248,7 @@ export default function Arena({
       </div>
 
       {map && asMap ? (
-        <div style={{ marginTop: 12 }}>
+        <div style={fill ? { marginTop: 8, flex: 1, minHeight: 280 } : { marginTop: 12 }}>
           <ArenaMap
             teams={teams}
             pulses={pulses}
@@ -252,6 +259,7 @@ export default function Arena({
             sprintNumber={sprintNumber}
             rippling={rippling}
             center={map}
+            fill={fill}
           />
         </div>
       ) : (

@@ -108,6 +108,7 @@ export default function ArenaMap({
   sprintNumber,
   rippling,
   center,
+  fill = false,
 }: {
   teams: ArenaTeam[];
   pulses: Map<string, TeamPulse>;
@@ -118,6 +119,8 @@ export default function ArenaMap({
   sprintNumber: number;
   rippling: Set<string>;
   center: { label: string; at: string | null; theme: string | null };
+  /** Fill the height of its container (beside the Sprint chat) instead of its own. */
+  fill?: boolean;
 }) {
   // Your team takes the top seat; the rest keep the server's order.
   const seated = useMemo(() => {
@@ -268,10 +271,11 @@ export default function ArenaMap({
   const chosenPulse = chosen ? pulses.get(chosen.id) ?? null : null;
 
   return (
-    <div className={s.frame}>
+    <div className={s.frame} style={fill ? { height: "100%" } : undefined}>
       <div
         ref={viewport}
         className={`${s.viewport} ${lod === "near" ? "" : lod === "mid" ? s.mid : s.far}`}
+        style={fill ? { height: "100%", minHeight: 280 } : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

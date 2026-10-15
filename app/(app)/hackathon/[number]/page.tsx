@@ -17,8 +17,10 @@ import {
   RegistrantsTile,
   RulesTile,
   ScheduleTile,
+  LiveExplainer,
   SprintHero,
   SprintOpener,
+  TeamProjectCards,
   StatusBanner,
   ThemeTile,
   ViewerCallout,
@@ -28,6 +30,10 @@ import { getMemberStanding } from "@/lib/hackathons/viewer";
 import { runMatcherIfDue } from "@/lib/hackathons/matcher";
 import { postLobbyMilestones } from "@/lib/hackathons/lobbyMilestones";
 import { stageCountdown, toTiming } from "@/lib/hackathons/sprint";
+import { hasFeed, loadFeed, type FeedData } from "@/lib/hackathons/feed";
+import SprintFeed from "@/components/hackathon/feed/SprintFeed";
+import LiveStage from "@/components/hackathon/feed/LiveStage";
+import liveCss from "@/components/hackathon/feed/liveStage.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +81,10 @@ export default async function SprintPage(props: {
   if (sprint.is_published) await postLobbyMilestones(sprint.id);
 
   const data = await loadSprintPage(supabase, sprint, user.id, standing);
+  const feed = hasFeed(sprint) ? await loadFeed(supabase, sprint, data.viewer, data.teams) : null;
+  // While it's live (paused included) the page is the feed, the projects and
+  // the stadium; before and after, the main column leads and the feed follows.
+  const liveLayout = sprint.phase === "live" && sprint.state !== "cancelled";
   const timing = toTiming(sprint);
   const stage = stageCountdown(sprint.state);
   // Before kickoff, the page opens by saying what a Sprint is.
@@ -127,6 +137,8 @@ export default async function SprintPage(props: {
           </Tile>
         )}
 
+        {liveLayout && <LiveExplainer sprint={sprint} teamCount={data.teams.length} />}
+
         {/* The opener speaks to members who haven't joined; everyone else keeps their callout. */}
         {sprint.state !== "draft" && !(opener && data.viewer.role === "spectator") && <ViewerCallout data={data} />}
 
@@ -136,22 +148,92 @@ export default async function SprintPage(props: {
           </Tile>
         )}
 
-        <div className="grid stack-md" style={{ gap: 16, gridTemplateColumns: "minmax(0, 1fr) 320px", alignItems: "start" }}>
-          <div style={{ minWidth: 0 }}>
-            <MainColumn data={data} mockTeams={mock} />
+        {liveLayout ? (
+          <>
+            {/* The stage: the stadium, with the Sprint chat in a drawer beside it. */}
+            <LiveStage
+              arena={
+                <Arena
+                  sprintId={sprint.id}
+                  sprintNumber={sprint.number}
+                  live
+                  teams={data.teams}
+                  phase="live"
+                  myTeamId={data.viewer.teamId}
+                  map={{ label: "Submissions close in", at: sprint.ends_at, theme: sprint.theme }}
+                  mockTeams={mock}
+                  fill
+                />
+              }
+              chat={feed ? <Feed data={data} feed={feed} userId={user.id} /> : null}
+            />
+
+            <section aria-label="About this Sprint">
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10 }}>About this Sprint</h2>
+              <div className={liveCss.row}>
+                <MyTeamPanel data={data} />
+                <ScheduleTile sprint={sprint} nowMs={Date.now()} />
+                <RulesTile sprint={sprint} />
+              </div>
+            </section>
+
+            {/* Last: every team, as Collab-style project cards. */}
+            <div style={{ marginTop: 28 }}>
+              <TeamProjectCards teams={data.teams} myTeamId={data.viewer.teamId} sprintNumber={sprint.number} grid />
+            </div>
+          </>
+        ) : (
+          <div className="grid stack-md" style={{ gap: 16, gridTemplateColumns: "minmax(0, 1fr) 320px", alignItems: "start" }}>
+            <div style={{ minWidth: 0 }}>
+              <MainColumn data={data} />
+              {feed && <Feed data={data} feed={feed} userId={user.id} />}
+            </div>
+            <aside style={{ minWidth: 0 }}>
+              <ScheduleTile sprint={sprint} nowMs={Date.now()} />
+              {sprint.phase !== "upcoming" && sprint.phase !== "draft" && <RulesTile sprint={sprint} />}
+            </aside>
           </div>
-          <aside style={{ minWidth: 0 }}>
-            <ScheduleTile sprint={sprint} nowMs={Date.now()} />
-            {sprint.phase !== "upcoming" && sprint.phase !== "draft" && <RulesTile sprint={sprint} />}
-          </aside>
-        </div>
+        )}
       </div>
     </>
   );
 }
 
 /** The part that changes most from state to state. Each block is its own file for later prompts. */
-function MainColumn({ data, mockTeams }: { data: SprintPageData; mockTeams: number }) {
+/** The Sprint's feed (034), wherever the layout puts it. */
+function Feed({ data, feed, userId }: { data: SprintPageData; feed: FeedData; userId: string }) {
+  const { sprint, viewer } = data;
+  return (
+    <SprintFeed
+      sprint={{ id: sprint.id, number: sprint.number, endsAt: sprint.ends_at, lobbyClosesAt: sprint.lobby_closes_at, frozen: Boolean(sprint.status_override) }}
+      initialMessages={feed.messages}
+      initialSubmissions={feed.submissions}
+      welcome={feed.welcome}
+      initialPeople={feed.people}
+      viewerId={userId}
+      isAdmin={viewer.isAdmin}
+      canPost={feed.canPost}
+      closedReason={feed.closedReason}
+    />
+  );
+}
+
+/** Your team's panel (members, renaming, invites), from registration through the live Sprint. */
+function MyTeamPanel({ data }: { data: SprintPageData }) {
+  const { sprint, viewer, teams, queue } = data;
+  const mine = viewer.teamId ? teams.find((t) => t.id === viewer.teamId) : undefined;
+  if (!mine || !queue?.team) return null;
+  return (
+    <TeamPanel
+      sprint={{ id: sprint.id, number: sprint.number, phase: sprint.phase, frozen: sprint.state === "paused" }}
+      team={mine}
+      panel={queue.team}
+      viewerId={viewer.userId}
+    />
+  );
+}
+
+function MainColumn({ data }: { data: SprintPageData }) {
   const { sprint, viewer, teams, registrants, showcase, queue } = data;
   const myTeam = viewer.teamId;
   const mine = myTeam ? teams.find((t) => t.id === myTeam) : undefined;
@@ -198,22 +280,8 @@ function MainColumn({ data, mockTeams }: { data: SprintPageData; mockTeams: numb
         </>
       );
     case "live":
-      return (
-        <>
-          <ThemeTile sprint={sprint} />
-          {teamPanel}
-          <Arena
-            sprintId={sprint.id}
-            sprintNumber={sprint.number}
-            live={pulseLive}
-            teams={teams}
-            phase="live"
-            myTeamId={myTeam}
-            map={{ label: "Submissions close in", at: sprint.ends_at, theme: sprint.theme }}
-            mockTeams={mockTeams}
-          />
-        </>
-      );
+      // The live layout is the page's own (feed, projects, stadium).
+      return null;
     case "judging":
       return (
         <>

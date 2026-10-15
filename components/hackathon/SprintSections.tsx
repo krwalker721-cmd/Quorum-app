@@ -6,7 +6,9 @@ import Markdown from "@/components/Markdown";
 import ui from "@/components/ui/sleek.module.css";
 import { MILESTONES, labelFor } from "@/lib/hackathons/timeline";
 import { STATE_LABEL, type SprintRow } from "@/lib/hackathons/sprint";
-import type { Registrant, SprintPageData } from "@/lib/hackathons/page";
+import type { ArenaTeam, Registrant, SprintPageData } from "@/lib/hackathons/page";
+import { timeAgo } from "@/lib/stage";
+import { TeamBadge } from "./TeamStyle";
 import LocalTime from "./LocalTime";
 import AcceptJudgeInvite from "./judging/AcceptJudgeInvite";
 
@@ -172,6 +174,129 @@ export function SprintOpener({ data }: { data: SprintPageData }) {
   );
 }
 
+/**
+ * The live Sprint's "what this is": the format in one line, then the theme,
+ * the deadline and the reveal, with the rules a click away. Shorter than the
+ * opener before kickoff: by now people are here to watch or build.
+ */
+export function LiveExplainer({ sprint, teamCount }: { sprint: SprintRow; teamCount: number }) {
+  const facts: { label: string; value: React.ReactNode }[] = [
+    { label: "Theme", value: sprint.theme ?? "Revealed at kickoff" },
+    { label: "Submissions close", value: sprint.ends_at ? <LocalTime iso={sprint.ends_at} /> : "To be set" },
+    { label: "Reveal", value: sprint.reveal_at ? <LocalTime iso={sprint.reveal_at} /> : "To be set" },
+  ];
+  return (
+    <Tile kicker="What this is" style={{ marginBottom: 16 }} padding="14px 18px 16px">
+      <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-primary)", maxWidth: 760 }}>
+        {`A 48-hour build. ${teamCount} team${teamCount === 1 ? " is" : "s are"} making something new from scratch around the theme, in private rooms.`}{" "}
+        Every project stays sealed until the reveal, when the judges&rsquo; awards go out
+        and each project gets a public page.{" "}
+        {sprint.rules?.trim() && (
+          <a href="#rules" style={{ color: "var(--text-muted)", textDecoration: "none", whiteSpace: "nowrap" }}>
+            The rules ↓
+          </a>
+        )}
+      </p>
+      <dl className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginTop: 12 }}>
+        {facts.map((f) => (
+          <div key={f.label} style={{ border: "1px solid rgba(255, 255, 255, 0.07)", borderRadius: 10, padding: "9px 12px" }}>
+            <dt style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{f.label}</dt>
+            <dd style={{ fontSize: 13, color: f.label === "Theme" ? AMBER : "var(--text-primary)", marginTop: 2, fontWeight: f.label === "Theme" ? 600 : 400 }}>
+              {f.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </Tile>
+  );
+}
+
+/**
+ * The teams as Collab-board project cards (live): who's building, how busy
+ * they are, sealed or submitted. Your team first, with the way into its room.
+ */
+export function TeamProjectCards({
+  teams,
+  myTeamId,
+  sprintNumber,
+  grid = false,
+}: {
+  teams: ArenaTeam[];
+  myTeamId: string | null;
+  sprintNumber: number;
+  /** A full-width grid, like the Collab board (otherwise one column). */
+  grid?: boolean;
+}) {
+  const ordered = [...teams].sort((a, b) => (a.id === myTeamId ? -1 : b.id === myTeamId ? 1 : a.name.localeCompare(b.name)));
+  return (
+    <section aria-label="Projects" style={{ marginBottom: 16 }}>
+      <div className="flex items-baseline justify-between gap-3" style={{ marginBottom: 10 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>Projects</h2>
+        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{teams.length} building</span>
+      </div>
+      {teams.length === 0 ? (
+        <Tile>
+          <p className={ui.emptyTitle}>No teams in this Sprint.</p>
+        </Tile>
+      ) : (
+        <ShowMore
+          limit={grid ? 9 : 6}
+          noun="projects"
+          className={grid ? "grid" : "flex flex-col"}
+          style={grid ? { gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" } : { gap: 10 }}
+        >
+          {ordered.map((t) => {
+            const mine = t.id === myTeamId;
+            const done = t.pulse?.has_submitted;
+            const active = t.pulse?.last_active_at;
+            return (
+              <li key={t.id}>
+                <article className={ui.tile} style={{ padding: "13px 15px", ...(mine ? { borderColor: "rgba(245, 158, 11, 0.5)" } : {}) }}>
+                  <div className="flex items-center gap-2.5">
+                    <TeamBadge name={t.name} emblem={t.emblem} color={t.color} size={30} />
+                    <div className="min-w-0">
+                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+                        {t.name}
+                      </p>
+                      <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
+                        {t.members.length} builder{t.members.length === 1 ? "" : "s"}
+                        {t.is_random_matched ? " · matched" : ""}
+                      </p>
+                    </div>
+                    {mine && <span className={`${ui.chip} ${ui.chipAmber}`} style={{ marginLeft: "auto" }}>Your team</span>}
+                  </div>
+                  <div className="flex items-center gap-2" style={{ marginTop: 10 }}>
+                    <span className="flex">
+                      {t.members.slice(0, 5).map((m, i) => (
+                        <span key={m.id} style={{ marginLeft: i ? -6 : 0, borderRadius: 999, boxShadow: "0 0 0 2px var(--bg-surface)", lineHeight: 0 }}>
+                          <PersonAvatar name={m.full_name} stage={m.stage} username={m.username} size={22} />
+                        </span>
+                      ))}
+                    </span>
+                    <span className="truncate" style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                      {t.members.map((m) => (m.full_name ?? "Founder").split(/\s+/)[0]).join(", ")}
+                    </span>
+                  </div>
+                  <div className={`${ui.cardFoot} flex items-center justify-between gap-3 flex-wrap`}>
+                    <span style={{ fontSize: 11.5, color: done ? "#22c55e" : "var(--text-muted)" }}>
+                      {done ? "Submitted ✓ · sealed until the reveal" : `Sealed · ${active ? `active ${timeAgo(active)} ago` : "no activity yet"}`}
+                    </span>
+                    {mine && (
+                      <Link href={`/hackathon/${sprintNumber}/team/${t.slug}`} className={ui.softBtn} style={{ textDecoration: "none" }}>
+                        Open team room →
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+        </ShowMore>
+      )}
+    </section>
+  );
+}
+
 /** The theme: sealed until kickoff by the database (theme is NULL until then). */
 export function ThemeTile({ sprint }: { sprint: SprintRow }) {
   const sealed = !["live", "judging", "revealed"].includes(sprint.phase);
@@ -243,8 +368,8 @@ export function ScheduleTile({ sprint, nowMs }: { sprint: SprintRow; nowMs: numb
 export function RulesTile({ sprint }: { sprint: SprintRow }) {
   if (!sprint.rules?.trim()) return null;
   return (
-    <Tile kicker="Rules" style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 13 }}>
+    <Tile kicker="Rules" style={{ marginBottom: 16, scrollMarginTop: 80 }}>
+      <div id="rules" style={{ fontSize: 13 }}>
         <Markdown source={sprint.rules} />
       </div>
     </Tile>
@@ -261,7 +386,8 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
   const phase = sprint.phase;
   const over = sprint.state === "cancelled";
 
-  const lobby = { href: `/hackathon/${n}/lobby`, label: "Lobby" };
+  // The feed is on this page now (034); the old lobby page redirects here.
+  const lobby = { href: "#feed", label: "Feed" };
   const room = viewer.teamId ? { href: `/hackathon/${n}/team`, label: "My team room" } : null;
 
   let title: string;

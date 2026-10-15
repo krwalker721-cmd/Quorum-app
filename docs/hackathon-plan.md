@@ -17,8 +17,9 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
-- **Migrations:** 018–033 are on staging. Production has none of them (it's at 017).
-- **Tests:** 639 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Migrations:** 018–033 are on staging; **034 is written and committed but not yet applied to
+  staging** (the owner runs it). Production has none of them (it's at 017).
+- **Tests:** 644 database tests pass locally; staging passes 639 until 034 is applied (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -83,7 +84,8 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 **Waiting on the owner**
 - The owner is testing and editing from a clean slate on staging (section 5k). Next: notifications
   (Prompt 12); external-judge accounts for Sprint #2 (decision 14).
-- Paste 018–033 into production before any deploy that needs them (section 7).
+- Apply 034 to staging (`scripts/db.sh staging:migrate supabase/migrations/034_buildathon_live_feed.sql`).
+- Paste 018–034 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
 - Optionally: sign the production session out of the browser pane.
@@ -231,7 +233,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–033** |
+| Migrations applied | up to **017** | **018–033** (034 pending) |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -383,8 +385,9 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-03, after the clean-slate reset):** all 639 tests pass locally and on
-  staging, with staging's Hackathon tables empty.
+- **Last run (2026-10-14, 034):** all 644 tests pass locally. Five lobby tests changed with 034:
+  members outside the Sprint now read the feed (but can't post); lapsed outsiders and signed-out
+  visitors still see nothing.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
   files, and then `pg_ctl` says it "is not a database cluster directory". Move the folder aside
   and run `scripts/db.sh local` again: it makes a fresh one.
@@ -1441,6 +1444,35 @@ slide maker maybe later); the live page is "Pulse's feed plus the Collab board's
 
 ---
 
+## 5o. The live page: the Sprint chat, the stage, and migration 034 (2026-10-14)
+
+Second piece of the live-page rework (after the map, 5n), approved after several looks in the pane.
+
+- **The lobby is the Sprint chat on the Sprint page.** `/hackathon/N/lobby` redirects to
+  `/hackathon/N#feed`; `LobbyClient` is gone. `components/hackathon/feed/SprintFeed.tsx` draws one
+  text-message thread with the rooms' chat (`components/rooms/RoomThread`, unchanged; owner: "chat
+  bubbles, not full-length cards"): your messages on the right, others with face, name and team tag,
+  milestones as amber banners, "✓ Team submitted their project" (from the public pulse) as quiet
+  lines. Welcome note and pins on top; admins pin and delete in the page (two-step, no pop-up).
+  Loaded by `lib/hackathons/feed.ts`; shown from registration on (below the main column outside live).
+- **Migration 034** (`034_buildathon_live_feed.sql`): `private.can_read_lobby` adds active members, so
+  every member can read the chat (and the welcome note and people list that use it). Posting is
+  unchanged. Owner's call at the plan.
+- **The stage** (`feed/LiveStage.tsx`, owner's option B of three sketched): the stadium takes the stage
+  and the chat sits in a drawer on its right, the same height. A size switch (Arena · Even · Chat) and
+  a visible grip (‹›, "Drag to resize" until the first resize) set the split; the arena never drops
+  below 460 px nor the chat below 320 px, and the arena folds its stats into one line when narrow
+  (container queries). × closes the chat; a "Chat · n new" pill reopens it. On phones the chat opens
+  over the arena. Width and open/closed are remembered per browser (localStorage).
+- **Order of the live page:** title and clock → "What this is" (`LiveExplainer`: the format, theme,
+  deadline, reveal, rules link) → your team and check-in → the stage → "About this Sprint" (your team
+  panel, schedule, rules, one even row) → **Projects** last (`TeamProjectCards`, Collab-style cards,
+  yours first; owner: "Pulse's feed plus the Collab board's projects").
+- Checked at the pane's width, 1440 px (measured) and 375 px; posting and admin removal tested, then
+  the demo Sprint reset. A JSX quirk dropped a space ("teams aremaking"); that sentence is one string.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1534,6 +1566,9 @@ slide maker maybe later); the live page is "Pulse's feed plus the Collab board's
 | 87 | Before kickoff, the Sprint page opens with what a Sprint is, its real dates and the commitment, in a down-to-business tone. | Owner: "it kinda just throws you in". |
 | 88 | Registered people fold after 12 and teams after 4 during registration. | Owner: many registrations "shouldn't just fill up the whole page". |
 | 89 | The live arena is a zoomable stadium map with fixed seats and levels of detail by team count and zoom; the card list stays one click away. | Owner: "an almost interactive map… arranged in an arena shape", zoomable, not squished when big. |
+| 90 | The lobby is no longer its own page: it's the Sprint chat on the Sprint page, readable by every active member (034), posting unchanged. | Owner: "the lobby shouldn't be this separate page"; every member reads (plan answer). |
+| 91 | The Sprint chat is a text-message thread (the rooms' chat), not a card feed. | Owner: "chat bubbles not full length cards". |
+| 92 | Live layout: the arena as the stage with a resizable chat drawer; projects last. | Owner picked option B, asked for resizing that squishes nothing and is obvious, and projects at the end. |
 
 ---
 
@@ -1669,4 +1704,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `7ac6eb4` | The tab is "Buildathon"; its page with no Sprint (5l) |
 | `98e2504`, `da7f549` | In-page admin confirmations; demo Sprint scripts for staging |
 | `0206d47` | The Buildathon home with a current-Sprint banner; the Sprint page's opener; folding lists (5m) |
-| (next) | The arena as a stadium map (5n) |
+| `9e4f7d4` | The arena as a stadium map (5n) |
+| (next) | The live page: Sprint chat, stage, migration 034 (5o) |
