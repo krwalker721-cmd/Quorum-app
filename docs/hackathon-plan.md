@@ -17,9 +17,9 @@ then check `git log main..feat/hackathon-db` for anything newer.
 
 ### Start here (handoff, 2026-10-03)
 **Where things stand**
-- **Migrations:** 018–034 are on staging (034 applied by the owner, 2026-10-14). Production has none
+- **Migrations:** 018–035 are on staging (035 applied by the owner, 2026-10-17). Production has none
   of them (it's at 017).
-- **Tests:** 644 database tests pass locally and on staging (`scripts/db.sh local`,
+- **Tests:** 664 database tests pass locally and on staging (`scripts/db.sh local`,
   `scripts/db.sh staging:test`).
 - **Branch:** `feat/hackathon-db`, with every commit local only. Don't push until the owner says so.
 
@@ -84,7 +84,7 @@ The one deliberate Collab change: decision cards say "Unanimous" only when every
 **Waiting on the owner**
 - The owner is testing and editing from a clean slate on staging (section 5k). Next: notifications
   (Prompt 12); external-judge accounts for Sprint #2 (decision 14).
-- Paste 018–034 into production before any deploy that needs them (section 7).
+- Paste 018–035 into production before any deploy that needs them (section 7).
 - The flagged task about realtime in 10 non-Hackathon features. The Collab ones need approval.
 - Whether to push, and when.
 - Optionally: sign the production session out of the browser pane.
@@ -232,7 +232,7 @@ Collab behaviour changes. Its UI may be refactored to be shareable, but only wit
 |---|---|---|
 | Supabase project | `ydbnyujqmhwufwqihefh` ("quorum") | `ycjqgrcapphfiageaaux` |
 | Env file | `.env.local` | `.env.staging.local` (gitignored) |
-| Migrations applied | up to **017** | **018–034** |
+| Migrations applied | up to **017** | **018–035** |
 
 Rules the owner set:
 - **Never** run migrations or tests against production.
@@ -384,7 +384,8 @@ functions aren't.
   tests create their own Sprints, users and countdown keys (`test-launch`, `test-teaser`) and
   count only their own rows. Written 2026-09-26, when a real `launch` countdown on staging broke
   three tests that counted every row.
-- **Last run (2026-10-14, 034):** all 644 tests pass locally and on staging. Five lobby tests changed with 034:
+- **Last run (2026-10-17, 035):** all 664 tests pass locally and on staging (20 new for decks).
+- **034 (2026-10-14):** five lobby tests changed:
   members outside the Sprint now read the feed (but can't post); lapsed outsiders and signed-out
   visitors still see nothing.
 - The local cluster lives in `$TMPDIR/quorum-pg16`. macOS's temp cleaner can strip its top-level
@@ -1472,6 +1473,34 @@ Second piece of the live-page rework (after the map, 5n), approved after several
 
 ---
 
+## 5p. The team room like a Collab project room, with a checklist and the deck (migration 035) (2026-10-17)
+
+Last piece of the live-page rework. Owner's call: the presentation is **optional** (it never counts
+toward a complete submission); an in-app slide maker may come later.
+
+- **Layout** (`TeamRoomClient`, `RoomHeader`, `RoomSide`): a Collab project room's title (← Sprint, emblem
+  and name, Live / Paused…, "Team room · private", the clock, the theme in amber), then the members as one
+  row of chips (active / quiet / "Sleeping…"), then the Collab grid: Thread · Docs · Links · Votes on the
+  left; on the right, kept in view while scrolling, "A vote needs you" (when there's one) and **Your
+  checklist**. The owner found six right-column panels "way too far" down, so members moved up, recent
+  activity went, and what to do, presentation and submission became one panel.
+- **The checklist** ticks itself: check in (the viewer's), agree on the idea (a decided vote or a doc), a
+  repo or demo link, the presentation, submitted. The presentation step holds the drop zone (PDF, up to
+  25 MB; View · Replace · Remove, remove asked once in the page); the submit step says what's missing and
+  opens the form. "Read the rules" at the bottom. Teammates see deck changes live (submissions realtime).
+- **Migration 035** (`035_buildathon_presentations.sql`): `presentation_path/name/size` on submissions,
+  governed by the existing submission guard (team, live, not paused) plus a check that the path is a PDF
+  in the team's folder; a private **hackathon-decks** bucket (PDFs only, 25 MB, enforced by storage; the
+  screenshots bucket is unchanged) with the same read/write rules as screenshots; and
+  `hackathon_public_projects` returns the deck. 20 new tests.
+- **Where the deck shows:** judges get "View the presentation" from the deadline, and so does everyone on
+  the public project page after the reveal (short-lived signed links).
+- `scripts/reset-hackathon-data.mjs` empties both buckets.
+- Checked at 1440 px (right column 516 px beside a 612 px conversation) and in the narrow pane; the
+  upload itself is for the owner to try (the pane can't pick local files).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1568,6 +1597,8 @@ Second piece of the live-page rework (after the map, 5n), approved after several
 | 90 | The lobby is no longer its own page: it's the Sprint chat on the Sprint page, readable by every active member (034), posting unchanged. | Owner: "the lobby shouldn't be this separate page"; every member reads (plan answer). |
 | 91 | The Sprint chat is a text-message thread (the rooms' chat), not a card feed. | Owner: "chat bubbles not full length cards". |
 | 92 | Live layout: the arena as the stage with a resizable chat drawer; projects last. | Owner picked option B, asked for resizing that squishes nothing and is obvious, and projects at the end. |
+| 93 | The team room takes a Collab project room's layout, with members as a strip and one self-ticking checklist on the right. | Owner: "look exactly like a collab board project"; the first right column ran "way too far". |
+| 94 | A team may add one PDF presentation (25 MB, own bucket); optional, sealed like the submission, shown to judges and at the reveal. | Owner: "for now pdf"; optional. |
 
 ---
 
@@ -1704,4 +1735,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `98e2504`, `da7f549` | In-page admin confirmations; demo Sprint scripts for staging |
 | `0206d47` | The Buildathon home with a current-Sprint banner; the Sprint page's opener; folding lists (5m) |
 | `9e4f7d4` | The arena as a stadium map (5n) |
-| (next) | The live page: Sprint chat, stage, migration 034 (5o) |
+| `4c857cc`, `9a73a42` | The live page: Sprint chat, stage, migration 034 (5o) |
+| (next) | The team room like a Collab project room; checklist and deck (035, 5p) |

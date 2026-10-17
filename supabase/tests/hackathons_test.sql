@@ -1936,12 +1936,45 @@ select tests.lives('complete: a teammate uploads a screenshot', $$
 update hackathon_submissions set screenshots = array[tests.path11('Builders', 'one.webp')] where team_id = tests.team11('Builders');
 select tests.ok('complete: a screenshot alone is enough', (select is_complete from tests.sub11('Builders')));
 
+-- 035: the deck, a PDF in its own bucket; optional.
+select tests.lives('deck (035): a team member uploads a PDF', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-decks', tests.path11('Builders', 'deck-1.pdf')) $$);
+select tests.throws('deck (035): only .pdf files in the deck bucket', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-decks', tests.path11('Builders', 'deck.png')) $$, 'row-level security');
+select tests.throws('deck (035): not outside the folder layout', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-decks', 'loose-deck.pdf') $$, 'row-level security');
+update hackathon_submissions set presentation_path = tests.path11('Builders', 'deck-1.pdf'), presentation_name = '  Owl Desk.pdf ', presentation_size = 1200000
+  where team_id = tests.team11('Builders');
+select tests.ok('deck (035): attached to the submission, name trimmed',
+  (select presentation_path = tests.path11('Builders', 'deck-1.pdf') and presentation_name = 'Owl Desk.pdf' and presentation_size = 1200000 from tests.sub11('Builders')));
+select tests.ok('deck (035): it changes nothing about being complete', (select is_complete from tests.sub11('Builders')));
+select tests.throws('deck (035): must be a PDF in this team''s folder', $$
+  update hackathon_submissions set presentation_path = tests.path11('Others', 'theirs.pdf') where team_id = tests.team11('Builders') $$, 'must be a PDF');
+select tests.throws('deck (035): ...and a PDF', $$
+  update hackathon_submissions set presentation_path = tests.path11('Builders', 'one.webp') where team_id = tests.team11('Builders') $$, 'must be a PDF');
+select tests.throws('deck (035): no files over 25 MB', $$
+  update hackathon_submissions set presentation_size = 26214401 where team_id = tests.team11('Builders') $$, 'hackathon_submissions_presentation_size');
+select tests.as_db();
+select tests.ok('deck (035): its bucket takes PDFs only, up to 25 MB',
+  (select file_size_limit = 26214400 and allowed_mime_types = array['application/pdf'] and not public from storage.buckets where id = 'hackathon-decks'));
+select tests.ok('deck (035): the screenshots bucket is unchanged',
+  (select file_size_limit = 5242880 and not ('application/pdf' = any(allowed_mime_types)) from storage.buckets where id = 'hackathon-submissions'));
+select tests.login_m(12);
+
 -- The other team keeps a draft (and a screenshot) going.
 select tests.login_m(13);
 select tests.lives('draft: Others start a draft', $$
   insert into hackathon_submissions (team_id, hackathon_id, project_name) values (tests.team11('Others'), tests.h11(), 'Half done') $$);
 select tests.lives('draft: ...with a screenshot', $$
   insert into storage.objects (bucket_id, name) values ('hackathon-submissions', tests.path11('Others', 'wip.png')) $$);
+select tests.lives('deck (035): Others upload a deck too', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-decks', tests.path11('Others', 'draft-deck.pdf')) $$);
+update hackathon_submissions set presentation_path = tests.path11('Others', 'draft-deck.pdf'), presentation_name = 'Draft.pdf' where team_id = tests.team11('Others');
+select tests.ok('deck (035): a deck doesn''t make a draft complete', (select not is_complete from hackathon_submissions where team_id = tests.team11('Others')));
+select tests.throws('deck (035): another team can''t upload into Builders'' folder', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-decks', tests.path11('Builders', 'evil.pdf')) $$, 'row-level security');
+select tests.eq('deck (035): ...nor read Builders'' deck',
+  tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-decks' and name = tests.path11('Builders', 'deck-1.pdf') $$)::text, '0');
 select tests.eq('sealed: the other team reads nothing of Builders',
   tests.count($$ select 1 from hackathon_submissions where team_id = tests.team11('Builders') $$)::text, '0');
 select tests.eq('sealed: ...nor their screenshot',
@@ -1956,6 +1989,8 @@ select tests.eq('sealed: a spectator reads no submission while live',
 select tests.anon();
 select tests.eq('sealed: signed out, no screenshot either while live',
   tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h11()::text || '/%' $$)::text, '0');
+select tests.eq('deck (035): signed out, no deck while live',
+  tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-decks' $$)::text, '0');
 
 -- The deadline: late writes refused, straight at the API.
 select tests.set_phase(tests.h11(), 'judging');
@@ -1964,6 +1999,10 @@ select tests.throws('deadline: a late edit is refused', $$
   update hackathon_submissions set tagline = 'one more thing' where team_id = tests.team11('Builders') $$, 'deadline has passed');
 select tests.throws('deadline: ...and a late screenshot', $$
   insert into storage.objects (bucket_id, name) values ('hackathon-submissions', tests.path11('Builders', 'late.png')) $$, 'row-level security');
+select tests.throws('deck (035): no deck uploads after the deadline', $$
+  insert into storage.objects (bucket_id, name) values ('hackathon-decks', tests.path11('Builders', 'late.pdf')) $$, 'row-level security');
+select tests.throws('deck (035): ...and no swapping it', $$
+  update hackathon_submissions set presentation_path = null where team_id = tests.team11('Builders') $$, 'deadline has passed');
 select tests.login_m(13);
 select tests.throws('deadline: ...and finishing a draft late', $$
   update hackathon_submissions set tagline = 't', problem = 'p', demo_url = 'https://late.example' where team_id = tests.team11('Others') $$, 'deadline has passed');
@@ -1975,6 +2014,9 @@ select tests.eq('judges: see the complete submission, not the draft',
 select tests.eq('judges: ...and only its screenshot',
   (select string_agg(name, ',') from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h11()::text || '/%'),
   tests.path11('Builders', 'one.webp'));
+select tests.eq('deck (035): judges read the complete submission''s deck, not the draft''s',
+  (select string_agg(name, ',') from storage.objects where bucket_id = 'hackathon-decks' and name like tests.h11()::text || '/%'),
+  tests.path11('Builders', 'deck-1.pdf'));
 
 -- The reveal: complete submissions are public; drafts never are.
 select tests.set_phase(tests.h11(), 'revealed');
@@ -1984,6 +2026,11 @@ select tests.eq('reveal: signed out reads the complete submission only',
 select tests.eq('reveal: ...and its screenshot, not the draft''s',
   (select string_agg(name, ',') from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h11()::text || '/%'),
   tests.path11('Builders', 'one.webp'));
+select tests.eq('deck (035): signed out reads the revealed deck, not the draft''s',
+  (select string_agg(name, ',') from storage.objects where bucket_id = 'hackathon-decks' and name like tests.h11()::text || '/%'),
+  tests.path11('Builders', 'deck-1.pdf'));
+select tests.eq('deck (035): the public project carries its deck',
+  (select presentation_name from hackathon_public_projects(tests.h11()) where team_id = tests.team11('Builders')), 'Owl Desk.pdf');
 select tests.login_m(13);
 select tests.eq('reveal: a team still sees its own draft',
   (select project_name from hackathon_submissions where team_id = tests.team11('Others')), 'Half done');

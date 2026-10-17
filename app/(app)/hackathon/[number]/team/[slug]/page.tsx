@@ -53,7 +53,16 @@ export default async function TeamRoomPage(props: {
     redirect(`/hackathon/${n}?notice=room-private`);
   }
 
-  const room = await loadRoom(supabase, team);
+  const [room, { data: reg }] = await Promise.all([
+    loadRoom(supabase, team),
+    supabase
+      .from("hackathon_registrations")
+      .select("checked_in_at")
+      .eq("hackathon_id", sprint.id)
+      .eq("user_id", user.id)
+      .is("withdrawn_at", null)
+      .maybeSingle(),
+  ]);
   // Writable on the database's terms (private.can_write_team_room); the
   // database refuses anything else regardless.
   const open = ["registration", "teams_locked", "live", "judging"].includes(sprint.state);
@@ -63,7 +72,7 @@ export default async function TeamRoomPage(props: {
       <NoGrid />
       <TopBar sleek title="buildathon" tier={standing.tier} userId={user.id} />
       <SprintAutoRefresh timing={toTiming(sprint)} state={sprint.state} />
-      <div className="page-pad" style={{ padding: "16px 26px 40px", maxWidth: 1120, margin: "0 auto", width: "100%" }}>
+      <div className="page-pad" style={{ padding: "16px 26px 40px", maxWidth: 1280, margin: "0 auto", width: "100%" }}>
         <StatusBanner sprint={sprint} />
         <TeamRoomClient
           sprint={{
@@ -72,6 +81,7 @@ export default async function TeamRoomPage(props: {
             state: sprint.state,
             phase: sprint.phase,
             theme: sprint.theme,
+            rules: sprint.rules,
             timing: toTiming(sprint),
           }}
           room={room}
@@ -79,6 +89,7 @@ export default async function TeamRoomPage(props: {
           isMember={isMember}
           writable={isMember && open}
           initialTab={tab}
+          checkedInAt={(reg as { checked_in_at: string | null } | null)?.checked_in_at ?? null}
         />
       </div>
     </>

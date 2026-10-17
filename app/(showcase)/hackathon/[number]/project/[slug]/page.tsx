@@ -111,6 +111,7 @@ export default async function PublicProjectPage(props: Props) {
             members={project.members.map(showcasePerson)}
             sprintNumber={sprint.number}
             cohortOf={cohortOf}
+            deckUrl={project.deckUrl}
           />
         </div>
 

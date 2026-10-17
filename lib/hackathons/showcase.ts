@@ -45,6 +45,8 @@ export type PublicProject = {
   awards: PublicAward[];
   /** Signed URLs, in order; the gallery asks for the first one only. */
   screenshotUrls: string[];
+  /** The deck (035), signed for the team named in `allFor` only. */
+  deckUrl: string | null;
 };
 
 const SIGNED_FOR = 60 * 60 * 6; // six hours: a recap left open all afternoon keeps its images
@@ -72,6 +74,8 @@ type Row = {
   built_with: string[] | null;
   completed_at: string | null;
   members: PublicPerson[];
+  presentation_path?: string | null;
+  presentation_name?: string | null;
 };
 
 /**
@@ -102,6 +106,9 @@ export async function loadPublicProjects(
     ? await db.storage.from(SUBMISSION_BUCKET).createSignedUrls(paths, SIGNED_FOR)
     : { data: [] as { path: string | null; signedUrl: string }[] };
   const url = new Map((signed ?? []).filter((s) => s.path && s.signedUrl).map((s) => [s.path as string, s.signedUrl]));
+  // The project page's own deck (035), if its team added one.
+  const deckPath = opts.allFor ? list.find((r) => r.team_slug === opts.allFor)?.presentation_path ?? null : null;
+  const { data: deck } = deckPath ? await db.storage.from("hackathon-decks").createSignedUrl(deckPath, SIGNED_FOR) : { data: null };
 
   return list.map((r) => ({
     submission_id: r.submission_id,
@@ -124,6 +131,7 @@ export async function loadPublicProjects(
     screenshotUrls: wanted(r)
       .map((p) => url.get(p))
       .filter((u): u is string => Boolean(u)),
+    deckUrl: r.team_slug === opts.allFor ? deck?.signedUrl ?? null : null,
   }));
 }
 

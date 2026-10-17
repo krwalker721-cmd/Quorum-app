@@ -17,16 +17,23 @@ import {
   type RoomDocRow,
   type RoomLinkRow,
   type RoomMessageRow,
+  type RoomSubmission,
   type RoomVoteRow,
 } from "@/lib/hackathons/room";
-import RoomHeader from "./RoomHeader";
+import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
+import { MembersStrip, RoomTitle } from "./RoomHeader";
+import { ChecklistPanel } from "./RoomSide";
 import DeadlineWarning from "@/components/hackathon/submission/DeadlineWarning";
 import TeamDocs, { type RemoteDocChange } from "./TeamDocs";
 import TeamLinks from "./TeamLinks";
 import { roomError } from "./roomError";
 
 // A team's private room (Phase 6): thread, docs, links and votes, built from
-// the Collab room's pieces (components/rooms) on the Sprint's own tables.
+// the Collab room's pieces (components/rooms) on the Sprint's own tables, and
+// laid out like a Collab project room (2026-10-17): the conversation on the
+// left; on the right a vote callout, members, what to do, the presentation,
+// the submission and recent activity.
 //
 // Live: one realtime channel per room table, filtered to this team, on a
 // connection signed in as the member (realtimeDb; an anonymous socket would
@@ -63,13 +70,24 @@ export default function TeamRoomClient({
   isMember,
   writable,
   initialTab,
+  checkedInAt,
 }: {
-  sprint: { id: string; number: number; state: SprintState; phase: SprintPhase; theme: string | null; timing: SprintTiming };
+  sprint: {
+    id: string;
+    number: number;
+    state: SprintState;
+    phase: SprintPhase;
+    theme: string | null;
+    rules: string | null;
+    timing: SprintTiming;
+  };
   room: RoomData;
   viewerId: string;
   isMember: boolean;
   writable: boolean;
   initialTab?: string;
+  /** The viewer's kickoff check-in, for the checklist. */
+  checkedInAt: string | null;
 }) {
   const router = useRouter();
   const teamId = room.team.id;
@@ -81,7 +99,7 @@ export default function TeamRoomClient({
   const [ballots, setBallots] = useState(room.ballots);
   const [activity, setActivity] = useState(() => new Map(room.activity.map((a) => [a.user_id, a])));
   const [submittedAt, setSubmittedAt] = useState(room.submission?.completed_at ?? null);
-  const hasDraft = Boolean(room.submission);
+  const [submission, setSubmission] = useState<RoomSubmission>(room.submission);
   const [openDoc, setOpenDoc] = useState<string | null>(null);
   const [remoteDoc, setRemoteDoc] = useState<RemoteDocChange | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -95,6 +113,7 @@ export default function TeamRoomClient({
     setBallots(room.ballots);
     setActivity(new Map(room.activity.map((a) => [a.user_id, a])));
     setSubmittedAt(room.submission?.completed_at ?? null);
+    setSubmission(room.submission);
   }, [room]);
 
   const names = useMemo(() => new Map(room.members.map((m) => [m.id, m.full_name ?? m.username ?? "Founder"])), [room.members]);
@@ -155,6 +174,10 @@ export default function TeamRoomClient({
           if (p.eventType === "DELETE") return;
           const a = p.new as MemberActivity;
           setActivity((m) => new Map(m).set(a.user_id, { ...m.get(a.user_id), ...a }));
+        }),
+        // The submission (and its deck), as teammates change it.
+        on("hackathon_submissions", (p) => {
+          if (p.eventType !== "DELETE") setSubmission(p.new as RoomSubmission);
         }),
         on("hackathon_team_pulse", (p) => {
           if (p.eventType !== "DELETE") setSubmittedAt((p.new.submitted_at as string | null) ?? null);
@@ -286,18 +309,8 @@ export default function TeamRoomClient({
 
   return (
     <>
-      <RoomHeader
-        sprint={sprint}
-        team={room.team}
-        members={room.members}
-        activity={activity}
-        viewerId={viewerId}
-        isMember={isMember}
-        writable={writable}
-        submittedAt={submittedAt}
-        hasDraft={hasDraft}
-        onSleep={sleep}
-      />
+      <RoomTitle sprint={sprint} team={room.team} />
+      <MembersStrip sprint={sprint} members={room.members} activity={activity} viewerId={viewerId} writable={writable} onSleep={sleep} />
 
       {isMember && (
         <DeadlineWarning
@@ -325,6 +338,7 @@ export default function TeamRoomClient({
         </p>
       )}
 
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
       <div className="min-w-0 space-y-4">
         <div style={{ overflowX: "auto" }} className="scroll-thin">
           <TabPillRow>
@@ -415,6 +429,30 @@ export default function TeamRoomClient({
             readOnly={!writable}
           />
         )}
+      </div>
+
+      {/* Right column, like a Collab project room's: kept short and in view. */}
+      <aside className="min-w-0 space-y-4 lg:sticky lg:top-20">
+        {writable && openForMe.length > 0 && (
+          <Tile gradient kicker="A vote needs you" kickerColor="#f8c56a">
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--text-primary)" }}>{openForMe[0].title}</p>
+            <button type="button" onClick={() => setTab("votes")} className={ui.primaryBtn} style={{ marginTop: 14 }}>
+              Cast your vote →
+            </button>
+          </Tile>
+        )}
+        <ChecklistPanel
+          sprint={sprint}
+          team={room.team}
+          checkedInAt={checkedInAt}
+          isMember={isMember}
+          docs={docs}
+          links={links}
+          votes={votes}
+          submission={submission}
+          onSubmissionChanged={setSubmission}
+        />
+      </aside>
       </div>
     </>
   );

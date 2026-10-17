@@ -11,7 +11,7 @@ import LocalTime from "@/components/hackathon/LocalTime";
 import { approxServerNow } from "@/lib/useServerNow";
 import { stageCountdown, type SprintState, type SprintTiming } from "@/lib/hackathons/sprint";
 import { quietState, spanText, NIGHT_ENDS_HOUR } from "@/lib/hackathons/quiet";
-import { roomHref, type MemberActivity, type RoomMember, type RoomTeam } from "@/lib/hackathons/room";
+import type { MemberActivity, RoomMember, RoomTeam } from "@/lib/hackathons/room";
 
 const AMBER = "#f8c56a";
 const MIN = 60_000;
@@ -28,33 +28,98 @@ function ago(iso: string, now: number) {
 const clock = (ms: number) => new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(ms);
 
 /**
- * The top of the team room: the team, where the Sprint stands (countdown,
- * theme from kickoff), the submission button, and every teammate with whether
- * they're online, when they were last active, and, while the Sprint is live,
- * a soft note when one has gone quiet for three waking hours.
+ * The top of the team room, laid out like a Collab project room's: the way
+ * back, the team's name, a line of facts (where the Sprint stands, its clock,
+ * matched or not) and the theme from kickoff.
  */
-export default function RoomHeader({
+export function RoomTitle({
   sprint,
   team,
-  members,
-  activity,
-  viewerId,
-  isMember,
-  writable,
-  submittedAt,
-  hasDraft = false,
-  onSleep,
 }: {
   sprint: { number: number; state: SprintState; theme: string | null; timing: SprintTiming };
   team: RoomTeam;
+}) {
+  const showTheme = Boolean(sprint.theme) && ["live", "judging", "revealed"].includes(sprint.state);
+  const live = sprint.state === "live";
+  const status =
+    sprint.state === "live"
+      ? "Live"
+      : sprint.state === "paused"
+        ? "Paused"
+        : ["registration", "teams_locked"].includes(sprint.state)
+          ? "Before kickoff"
+          : sprint.state === "judging"
+            ? "Judging"
+            : sprint.state === "cancelled"
+              ? "Cancelled"
+              : "Read-only";
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <Link href={`/hackathon/${sprint.number}`} className={ui.tileLink}>
+        ← Sprint #{sprint.number}
+      </Link>
+      <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
+        <TeamBadge name={team.name} emblem={team.emblem} color={team.color} size={34} />
+        <h1
+          className={`${ui.titleGradient} ${ui.balance} min-w-0`}
+          style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+        >
+          {team.name}
+        </h1>
+      </div>
+      <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap" style={{ marginTop: 10 }}>
+        <span className="inline-flex items-center gap-1.5" style={{ fontSize: 12, color: live ? "var(--green)" : "var(--text-muted)" }}>
+          <span aria-hidden className={ui.quietDot} style={live ? { background: "#22c55e", opacity: 1 } : undefined} />
+          {status}
+        </span>
+        <span className={ui.chip}>Team room · private to the team</span>
+        {team.is_random_matched && <span className={ui.chip}>Matched</span>}
+        <InlineClock state={sprint.state} timing={sprint.timing} />
+      </div>
+      {showTheme && (
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: 12, maxWidth: "72ch" }}>
+          <span style={{ color: "var(--text-muted)" }}>Theme · </span>
+          <span style={{ color: AMBER }}>{sprint.theme}</span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The clock as one line in the title's facts: "Submissions close in 1d 21:40:02". */
+function InlineClock({ state, timing }: { state: SprintState; timing: SprintTiming }) {
+  const stage = stageCountdown(state);
+  const target = stage ? (timing[stage.key] as string | null) : null;
+  if (!stage || !target) return null;
+  return (
+    <span className="inline-flex items-baseline gap-1.5" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+      {timing.countdown_headline_override || stage.label}
+      <span style={{ color: state === "live" ? AMBER : "var(--text-primary)" }}>
+        {timing.show_countdown_in_app ? <Countdown target={target} size="inline" /> : <LocalTime iso={target} />}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * The team, as a row of compact chips under the title: each teammate, whether
+ * they're online, when they were last active, and, while the Sprint is live,
+ * a soft note when one has gone quiet for three waking hours. Your own chip
+ * has "Sleeping…", so you don't show as quiet.
+ */
+export function MembersStrip({
+  sprint,
+  members,
+  activity,
+  viewerId,
+  writable,
+  onSleep,
+}: {
+  sprint: { state: SprintState; timing: SprintTiming };
   members: RoomMember[];
   activity: Map<string, MemberActivity>;
   viewerId: string;
-  isMember: boolean;
   writable: boolean;
-  submittedAt: string | null;
-  /** A draft exists (it only counts once complete). */
-  hasDraft?: boolean;
   onSleep: (until: number | null) => Promise<string | null>;
 }) {
   const online = usePresence();
@@ -69,157 +134,26 @@ export default function RoomHeader({
 
   const live = sprint.state === "live";
   const kickoff = sprint.timing.starts_at ? Date.parse(sprint.timing.starts_at) : 0;
-  const showTheme = Boolean(sprint.theme) && ["live", "judging", "revealed"].includes(sprint.state);
-
   return (
-    <header style={{ marginBottom: 18 }}>
-      <Link href={`/hackathon/${sprint.number}`} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
-        ← Sprint #{sprint.number}
-      </Link>
-
-      <div className={ui.tile} style={{ marginTop: 12, padding: "18px 20px" }}>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3 min-w-0">
-            <TeamBadge name={team.name} emblem={team.emblem} color={team.color} size={44} />
-            <div className="min-w-0">
-              <h1
-                className={`${ui.titleGradient} ${ui.balance}`}
-                style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}
-              >
-                {team.name}
-              </h1>
-              <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-                Team room · private to the team{team.is_random_matched ? " · matched" : ""}
-              </p>
-            </div>
-          </div>
-          <SubmissionBox sprint={sprint} team={team} submittedAt={submittedAt} hasDraft={hasDraft} isMember={isMember} />
-        </div>
-
-        <div className="flex flex-wrap items-start gap-x-8 gap-y-3" style={{ marginTop: 16 }}>
-          <StageClock state={sprint.state} timing={sprint.timing} />
-          {showTheme && (
-            <div className="min-w-0" style={{ maxWidth: "60ch" }}>
-              <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Theme</p>
-              <p style={{ fontSize: 14, color: "var(--text-primary)", marginTop: 2, lineHeight: 1.45 }}>{sprint.theme}</p>
-            </div>
-          )}
-        </div>
-
-        {/* One swipeable row on phones, so the room itself starts on the first screen. */}
-        <div
-          className="flex sm:grid gap-2.5 overflow-x-auto sm:overflow-visible scroll-thin"
-          style={{
-            marginTop: 16,
-            paddingTop: 14,
-            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          }}
-        >
-          {[...members].sort((a, b) => Number(b.id === viewerId) - Number(a.id === viewerId)).map((m) => (
-            <MemberRow
-              key={m.id}
-              member={m}
-              activity={activity.get(m.id)}
-              online={online.has(m.id)}
-              isYou={m.id === viewerId}
-              live={live}
-              kickoff={kickoff}
-              now={now}
-              canSleep={m.id === viewerId && live && writable}
-              onSleep={onSleep}
-            />
-          ))}
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function StageClock({ state, timing }: { state: SprintState; timing: SprintTiming }) {
-  const stage = stageCountdown(state);
-  const target = stage ? (timing[stage.key] as string | null) : null;
-  if (!stage || !target) {
-    if (state === "revealed") return <ClockText label="Results are out" value="The room is read-only now" />;
-    if (state === "paused") return <ClockText label="Sprint paused" value="The clock has stopped" />;
-    if (state === "cancelled") return <ClockText label="Sprint cancelled" value="Nothing more will happen" />;
-    return null;
-  }
-  return (
-    <div>
-      <p style={{ fontSize: 12, color: state === "live" ? AMBER : "var(--text-muted)" }}>
-        {timing.countdown_headline_override || stage.label}
-      </p>
-      <div style={{ fontSize: 15, color: "var(--text-primary)", marginTop: 2 }}>
-        {timing.show_countdown_in_app ? <Countdown target={target} size="inline" /> : <LocalTime iso={target} />}
-      </div>
-    </div>
-  );
-}
-
-function ClockText({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{label}</p>
-      <p style={{ fontSize: 14, color: "var(--text-primary)", marginTop: 2 }}>{value}</p>
-    </div>
-  );
-}
-
-function SubmissionBox({
-  sprint,
-  team,
-  submittedAt,
-  hasDraft,
-  isMember,
-}: {
-  sprint: { number: number; state: SprintState };
-  team: RoomTeam;
-  submittedAt: string | null;
-  hasDraft: boolean;
-  isMember: boolean;
-}) {
-  const href = `${roomHref(sprint.number, team.slug)}/submission`;
-  const status = submittedAt ? (
-    <>
-      <span style={{ color: "#4ade80" }}>Submitted ✓</span> · <LocalTime iso={submittedAt} />
-    </>
-  ) : hasDraft ? (
-    "Draft in progress · not submitted yet"
-  ) : (
-    "Not submitted yet"
-  );
-
-  let button: React.ReactNode;
-  let line: React.ReactNode = status;
-  if (sprint.state === "live" && isMember) {
-    button = (
-      <Link href={href} className={ui.primaryBtn}>
-        {submittedAt ? "Edit submission" : hasDraft ? "Finish submission" : "Submit project"}
-      </Link>
-    );
-  } else if (["registration", "teams_locked"].includes(sprint.state)) {
-    button = (
-      <span className={ui.softBtn} aria-disabled style={{ opacity: 0.55, cursor: "default" }}>
-        Submit project
-      </span>
-    );
-    line = "Opens at kickoff";
-  } else {
-    button = (
-      <Link href={href} className={ui.softBtn}>
-        View submission
-      </Link>
-    );
-    if (sprint.state === "paused") line = <>Paused · {status}</>;
-    else if (sprint.state === "live") line = status;
-    else line = submittedAt ? <>Submissions closed · {status}</> : "Submissions closed · not submitted";
-  }
-
-  return (
-    <div className="flex flex-col items-start sm:items-end gap-1.5">
-      {button}
-      <p style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{line}</p>
+    <div
+      className="grid"
+      aria-label="Your team"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginTop: -6, marginBottom: 18 }}
+    >
+        {[...members].sort((a, b) => Number(b.id === viewerId) - Number(a.id === viewerId)).map((m) => (
+          <MemberRow
+            key={m.id}
+            member={m}
+            activity={activity.get(m.id)}
+            online={online.has(m.id)}
+            isYou={m.id === viewerId}
+            live={live}
+            kickoff={kickoff}
+            now={now}
+            canSleep={m.id === viewerId && live && writable}
+            onSleep={onSleep}
+          />
+        ))}
     </div>
   );
 }
@@ -270,7 +204,7 @@ function MemberRow({
 
   return (
     <div
-      className="flex items-center gap-3 min-w-[230px] sm:min-w-0 shrink-0 sm:shrink"
+      className="flex items-center gap-3 min-w-0"
       style={{
         padding: "8px 10px",
         borderRadius: 10,

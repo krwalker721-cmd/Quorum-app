@@ -30,6 +30,7 @@ export default function ProjectShowcase({
   members,
   sprintNumber,
   cohortOf,
+  deckUrl,
 }: {
   fields: SubmissionFields;
   screenshotUrls: string[];
@@ -38,12 +39,15 @@ export default function ProjectShowcase({
   sprintNumber: number;
   /** Members only (Phase 10): each builder's cohort name, by person id. */
   cohortOf?: Record<string, string>;
+  /** The team's presentation (035): a short-lived signed link to its PDF. */
+  deckUrl?: string | null;
 }) {
   const embed = videoEmbed(fields.video_url);
   const links = [
     { label: "Try the demo", href: fields.demo_url, primary: true },
     { label: "Watch the video", href: embed ? "" : fields.video_url, primary: false },
     { label: "See the code", href: fields.repo_url, primary: false },
+    { label: "View the presentation", href: deckUrl ?? "", primary: false },
   ].filter((l) => l.href && /^https?:\/\//i.test(l.href));
 
   return (

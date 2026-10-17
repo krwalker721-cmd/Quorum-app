@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Clean slate for the Hackathon feature: deletes every Sprint and everything
 // hanging off it, the countdowns, the Hackathon admin logs and the files in
-// the hackathon-submissions bucket. Rows and files only: no table, function,
+// the hackathon-submissions (screenshots) and hackathon-decks (035) buckets. Rows and files only: no table, function,
 // policy or test is touched, and nothing outside the Hackathon feature
 // (accounts, profiles, cohorts, payments, Pulse, Collab, Vault, DMs…).
 //
@@ -38,7 +38,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const root = resolve(import.meta.dirname, "..");
 const PSQL = resolve(process.env.PG_BIN ?? "/opt/homebrew/opt/postgresql@16/bin", "psql");
-const BUCKET = "hackathon-submissions";
+const BUCKETS = ["hackathon-submissions", "hackathon-decks"];
 
 const parseEnv = (p) =>
   existsSync(p)
@@ -167,43 +167,51 @@ const parseCounts = (out) =>
       .map(([t, n]) => [t, Number(n)]),
   );
 
-// Storage: every file in the bucket, walking the team folders.
+// Storage: every file in each bucket, walking the team folders.
 const storage = api
   ? createClient(`https://${api.ref}.supabase.co`, api.key, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { headers: { "x-quorum-via": "reset-hackathon-data script" } },
-    }).storage.from(BUCKET)
+    }).storage
   : null;
-async function listFiles(prefix = "") {
+async function listBucket(bucket, prefix = "") {
   const files = [];
   for (let offset = 0; ; offset += 1000) {
-    const { data, error } = await storage.list(prefix, { limit: 1000, offset });
+    const { data, error } = await storage.from(bucket).list(prefix, { limit: 1000, offset });
     if (error) {
       if (/not found/i.test(error.message)) return files; // no bucket: nothing to delete
-      fail(`Listing ${BUCKET}/${prefix}: ${error.message}`);
+      fail(`Listing ${bucket}/${prefix}: ${error.message}`);
     }
     for (const o of data) {
       const path = prefix ? `${prefix}/${o.name}` : o.name;
-      if (o.id === null) files.push(...(await listFiles(path)));
+      if (o.id === null) files.push(...(await listBucket(bucket, path)));
       else files.push(path);
     }
     if (data.length < 1000) return files;
   }
 }
+/** { bucket: [paths] } for every bucket, or null without a Storage API. */
+async function listFiles() {
+  if (!storage) return null;
+  const out = {};
+  for (const b of BUCKETS) out[b] = await listBucket(b);
+  return out;
+}
+const fileCount = (files) => (files ? Object.values(files).reduce((n, l) => n + l.length, 0) : 0);
 
 function printCounts(counts, files) {
   for (const [t, name] of TABLES) console.log(`  ${String(counts[t] ?? 0).padStart(6)}  ${name} (${t})`);
-  if (files) console.log(`  ${String(files.length).padStart(6)}  files in the ${BUCKET} bucket`);
+  if (files) for (const b of BUCKETS) console.log(`  ${String(files[b].length).padStart(6)}  files in the ${b} bucket`);
   else console.log(`       –  storage (no Storage API on the local test database)`);
 }
 
 // 1. What's there.
 console.log(`Hackathon data on ${label}:\n`);
 const before = parseCounts(psql(COUNT_SQL));
-const files = storage ? await listFiles() : null;
+const files = await listFiles();
 printCounts(before, files);
 
-const total = Object.values(before).reduce((a, b) => a + b, 0) + (files?.length ?? 0);
+const total = Object.values(before).reduce((a, b) => a + b, 0) + fileCount(files);
 if (total === 0) {
   console.log("\nNothing to delete: the Hackathon feature is already a clean slate here.");
   process.exit(0);
@@ -235,18 +243,18 @@ rl.close();
 
 // 4. Rows (one transaction), then files.
 psql(`begin;\n${DELETE_SQL}\ncommit;`);
-if (files?.length) {
-  for (let i = 0; i < files.length; i += 100) {
-    const { error } = await storage.remove(files.slice(i, i + 100));
-    if (error) fail(`Removing files: ${error.message}. The rows are gone; run this again to finish the files.`);
+for (const [bucket, list] of Object.entries(files ?? {})) {
+  for (let i = 0; i < list.length; i += 100) {
+    const { error } = await storage.from(bucket).remove(list.slice(i, i + 100));
+    if (error) fail(`Removing files from ${bucket}: ${error.message}. The rows are gone; run this again to finish the files.`);
   }
 }
 
 // 5. Check.
 const after = parseCounts(psql(COUNT_SQL));
-const filesAfter = storage ? await listFiles() : null;
+const filesAfter = await listFiles();
 console.log(`\nAfter the reset on ${label}:\n`);
 printCounts(after, filesAfter);
-const left = Object.values(after).reduce((a, b) => a + b, 0) + (filesAfter?.length ?? 0);
+const left = Object.values(after).reduce((a, b) => a + b, 0) + fileCount(filesAfter);
 if (left) fail("\nSomething was left behind (see above).");
 console.log("\nClean slate. The next Sprint you create will be Sprint #1.");

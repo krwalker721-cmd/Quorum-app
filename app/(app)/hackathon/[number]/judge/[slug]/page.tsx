@@ -62,6 +62,11 @@ export default async function JudgeProjectPage(props: { params: Promise<{ number
   const byPath = new Map((signed ?? []).filter((s) => s.path && s.signedUrl).map((s) => [s.path as string, s.signedUrl as string]));
   const screenshotUrls = paths.map((p) => byPath.get(p)).filter((u): u is string => Boolean(u));
 
+  // The team's deck (035), if it added one: a link for the judge.
+  const { data: deck } = await supabase.from("hackathon_submissions").select("presentation_path").eq("id", project.id).maybeSingle();
+  const deckPath = (deck as { presentation_path?: string | null } | null)?.presentation_path ?? null;
+  const { data: deckSigned } = deckPath ? await supabase.storage.from("hackathon-decks").createSignedUrl(deckPath, 3600) : { data: null };
+
   const counts = ((activity ?? []) as { team_id: string; message_count: number; doc_count: number; link_count: number }[]).find(
     (a) => a.team_id === project.team_id,
   );
@@ -94,6 +99,7 @@ export default async function JudgeProjectPage(props: { params: Promise<{ number
               team={project.team}
               members={(people ?? []) as ShowcasePerson[]}
               sprintNumber={n}
+              deckUrl={deckSigned?.signedUrl ?? null}
             />
           </div>
           <aside style={{ minWidth: 0, position: "sticky", top: 16 }}>
