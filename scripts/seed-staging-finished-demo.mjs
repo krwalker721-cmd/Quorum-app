@@ -17,6 +17,10 @@
 // real (Pitch Doctor), Best collaboration (Standup Bot). No judges or scores:
 // the judging screens show none. The spectator is left out.
 //
+// Decks (035): Afterhours and Pitch Doctor get a short generated PDF in the
+// hackathon-decks bucket, for the demo day stage; Standup Bot has none, to
+// show a team presenting without slides.
+//
 // Nothing else is touched. scripts/reset-hackathon-data.mjs removes it with
 // everything else. Refuses production.
 
@@ -101,6 +105,7 @@ if (existing) {
   if (existing.awards_finalized_at) must(await db.rpc("hackathon_unfinalize_awards", { p_hackathon_id: sprint }), "reopening the awards");
   must(await db.from("hackathons").update(row).eq("id", sprint), "resetting the Sprint");
   must(await db.from("hackathon_teams").delete().eq("hackathon_id", sprint), "clearing teams");
+  await clearDecks(sprint);
   must(await db.from("hackathon_registrations").delete().eq("hackathon_id", sprint), "clearing registrations");
 } else {
   sprint = must(await db.from("hackathons").insert(row).select("id").single(), "creating the Sprint").id;
@@ -170,6 +175,19 @@ const standupBot = await submit(studio, theo, {
   built_with: ["TypeScript", "Slack API", "Linear API"],
 });
 
+// Decks for two of the three (035).
+await addDeck(sprint, owls, afterhours, "Afterhours.pdf", [
+  ["Afterhours", "A planner that learns when you actually do your best work"],
+  ["The problem", "Founders who build at night plan around office hours, then fight their calendar every evening."],
+  ["What we built", "It reads your commits, docs and messages, finds your three best windows, and moves meetings out of them."],
+  ["Next", "A nudge before you burn out. Try it: example.com/afterhours"],
+]);
+await addDeck(sprint, rockets, pitchDoctor, "Pitch Doctor.pdf", [
+  ["Pitch Doctor", "Paste your deck, get the three questions investors will ask"],
+  ["Why", "First-time founders get blindsided by the same questions in every pitch meeting."],
+  ["How it works", "It reads the deck like a partner would and drafts answers from your own numbers."],
+]);
+
 // Awards, then finalize: public once revealed AND finalized (031).
 must(
   await db.from("hackathon_awards").insert([
@@ -185,3 +203,61 @@ must(await db.rpc("hackathon_finalize_awards", { p_hackathon_id: sprint }), "fin
 const { data: view } = await db.from("hackathon_overview").select("number, title, state").eq("id", sprint).single();
 console.log(`  #${view.number}  ${view.title}  ${view.state} · 3 teams, 3 submissions, 4 awards (finalized)`);
 console.log(`  Members: /hackathon/${view.number} · public: /hackathon/${view.number}/recap and /hackathon/${view.number}/project/night-owls`);
+
+// ── Decks: a tiny PDF, one slide per page, in the team's folder.
+async function clearDecks(sprintId) {
+  const { data: folders } = await db.storage.from("hackathon-decks").list(sprintId, { limit: 1000 });
+  for (const f of folders ?? []) {
+    const { data: files } = await db.storage.from("hackathon-decks").list(`${sprintId}/${f.name}`, { limit: 1000 });
+    const paths = (files ?? []).map((x) => `${sprintId}/${f.name}/${x.name}`);
+    if (paths.length) await db.storage.from("hackathon-decks").remove(paths);
+  }
+}
+async function addDeck(sprintId, teamId, submissionId, name, slides) {
+  const bytes = makePdf(slides);
+  const path = `${sprintId}/${teamId}/deck-demo.pdf`;
+  const up = await db.storage.from("hackathon-decks").upload(path, bytes, { contentType: "application/pdf", upsert: true });
+  if (up.error) throw new Error(`uploading ${name}: ${up.error.message}`);
+  must(
+    await db.from("hackathon_submissions").update({ presentation_path: path, presentation_name: name, presentation_size: bytes.length }).eq("id", submissionId),
+    `attaching ${name}`,
+  );
+}
+/** A valid little PDF: 16:9 pages, a dark slide with a title and a line of text. */
+function makePdf(slides) {
+  const esc = (t) => t.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  const wrap = (t, n) => t.split(" ").reduce((lines, w) => {
+    const last = lines[lines.length - 1];
+    if (last && (last + " " + w).length <= n) lines[lines.length - 1] = last + " " + w;
+    else lines.push(w);
+    return lines;
+  }, []);
+  const objs = [];
+  const add = (body) => objs.push(body) && objs.length;
+  const catalog = add("<< /Type /Catalog /Pages 2 0 R >>");
+  add("PAGES");
+  const font = add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+  const font2 = add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const pages = [];
+  slides.forEach(([title, text], i) => {
+    const lines = wrap(text, 52);
+    const content =
+      `0.05 0.07 0.09 rg 0 0 960 540 re f 0.96 0.62 0.04 rg 60 470 120 4 re f ` +
+      `BT /F1 44 Tf 0.95 0.95 0.95 rg 60 400 Td (${esc(title)}) Tj ET ` +
+      lines.map((l, k) => `BT /F2 24 Tf 0.75 0.78 0.82 rg 60 ${330 - k * 34} Td (${esc(l)}) Tj ET`).join(" ") +
+      ` BT /F2 14 Tf 0.5 0.53 0.58 rg 60 40 Td (Quorum Sprint demo deck - ${i + 1} / ${slides.length}) Tj ET`;
+    const stream = add(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+    pages.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 ${font} 0 R /F2 ${font2} 0 R >> >> /Contents ${stream} 0 R >>`));
+  });
+  objs[1] = `<< /Type /Pages /Kids [${pages.map((p) => `${p} 0 R`).join(" ")}] /Count ${pages.length} >>`;
+  let out = "%PDF-1.4\n";
+  const offsets = [];
+  objs.forEach((body, i) => {
+    offsets.push(out.length);
+    out += `${i + 1} 0 obj\n${body}\nendobj\n`;
+  });
+  const xref = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n \n`).join("");
+  out += `trailer\n<< /Size ${objs.length + 1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(out, "latin1");
+}

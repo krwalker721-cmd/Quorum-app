@@ -1,0 +1,249 @@
+/* Demo day (Theatre.tsx): one team on the stage at a time. */
+
+.theatre {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 30%), var(--bg-surface);
+  outline: none;
+}
+.fill {
+  height: 100%;
+  min-height: 0;
+}
+.theatre:not(.fill) .screen {
+  height: clamp(320px, 56vh, 560px);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.barTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.nav {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+}
+.nav button {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.nav button:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #f8c56a;
+}
+
+/* The screen: the deck, a video, screenshots, or a placeholder. */
+.screen {
+  flex: 1;
+  min-height: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0b0e13;
+  display: flex;
+}
+.frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0b0e13;
+}
+.shots {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.shot {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  background: #0b0e13;
+}
+.thumbs {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  overflow-x: auto;
+}
+.thumb {
+  flex: 0 0 64px;
+  height: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumbOn {
+  opacity: 1;
+  border-color: rgba(245, 158, 11, 0.7);
+}
+.placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 20px;
+}
+.placeholderEmblem {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--team);
+  background: color-mix(in srgb, var(--team) 12%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--team) 35%, transparent);
+}
+.demoBtn {
+  font-size: 13px;
+  color: #f8c56a;
+  text-decoration: none;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 9px;
+  padding: 7px 12px;
+}
+
+/* Who's presenting. */
+.info {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+}
+.infoMain {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+.award {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #f8c56a;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.name {
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  margin-top: 6px;
+}
+.tagline {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.link {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.link:hover {
+  color: #f8c56a;
+}
+
+/* Every team, to jump to. */
+.strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 220px;
+  padding: 5px 10px 5px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: color-mix(in srgb, var(--team) 50%, transparent);
+}
+.chipOn {
+  border-color: var(--team);
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--team) 10%, transparent);
+}
+.chipEmblem {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--team);
+  background: color-mix(in srgb, var(--team) 12%, var(--bg-surface));
+}
+.chipName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chipDeck {
+  font-size: 10px;
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}

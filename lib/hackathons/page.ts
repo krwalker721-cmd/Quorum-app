@@ -323,7 +323,7 @@ export async function loadSprintPage(
     loadViewer(db, sprint.id, userId, opts.isAdmin, opts.isActive),
     showsTeams ? loadTeams(db, sprint, showsActivity) : Promise.resolve([]),
     phase === "registration" ? loadRegistrants(db, sprint.id) : Promise.resolve(null),
-    phase === "revealed" ? loadPublicProjects(db, sprint.id) : Promise.resolve([]),
+    phase === "revealed" ? loadPublicProjects(db, sprint.id, { every: true }) : Promise.resolve([]),
   ]);
 
   const judges = viewer.role === "judge" && (phase === "judging" || phase === "revealed");

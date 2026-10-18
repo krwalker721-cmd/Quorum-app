@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PublicShell, { SprintCta } from "@/components/hackathon/showcase/PublicShell";
 import AwardsShowcase from "@/components/hackathon/showcase/AwardsShowcase";
+import Theatre from "@/components/hackathon/showcase/Theatre";
+import SprintTimeline from "@/components/hackathon/showcase/SprintTimeline";
 import Gallery from "@/components/hackathon/showcase/Gallery";
 import ShareButtons from "@/components/hackathon/showcase/ShareButtons";
 import LocalTime from "@/components/hackathon/LocalTime";
@@ -27,7 +29,7 @@ const loadRecap = cache(async (number: string) => {
   const db = await createClient();
   const sprint = await loadPublicSprint(db, n);
   if (!sprint) return null;
-  return { sprint, projects: await loadPublicProjects(db, sprint.id) };
+  return { sprint, projects: await loadPublicProjects(db, sprint.id, { every: true }) };
 });
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -104,6 +106,15 @@ export default async function RecapPage(props: Props) {
         </section>
       )}
 
+      {projects.length > 0 && (
+        <section style={{ marginTop: 40 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 650, letterSpacing: "-0.02em", color: "var(--text-primary)", marginBottom: 14 }}>
+            Demo day
+          </h2>
+          <Theatre projects={projects} sprintNumber={sprint.number} />
+        </section>
+      )}
+
       <section style={{ marginTop: 40 }}>
         <h2 style={{ fontSize: 20, fontWeight: 650, letterSpacing: "-0.02em", color: "var(--text-primary)", marginBottom: 14 }}>
           Everything that shipped
@@ -111,9 +122,13 @@ export default async function RecapPage(props: Props) {
         {projects.length === 0 ? (
           <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>The projects from this Sprint will appear here.</p>
         ) : (
-          <Gallery projects={projects} sprintNumber={sprint.number} />
+          <Gallery projects={projects} sprintNumber={sprint.number} presentable />
         )}
       </section>
+
+      <div style={{ marginTop: 40 }}>
+        <SprintTimeline startsAt={sprint.starts_at} endsAt={sprint.ends_at} revealAt={sprint.reveal_at} projects={projects} teamCount={sprint.teams} />
+      </div>
 
       <section style={{ marginTop: 32, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted)", marginBottom: 10 }}>Share this recap</p>

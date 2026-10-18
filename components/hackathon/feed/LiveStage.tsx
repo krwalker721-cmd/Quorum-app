@@ -40,23 +40,38 @@ const SIZES: { key: Size; label: string; title: string }[] = [
   { key: "chat", label: "Chat", title: "Most of the stage for the chat" },
 ];
 
-function readSaved(): { open: boolean; width: number } | null {
+function readSaved(key: string): { open: boolean; width: number } | null {
   try {
-    const v = JSON.parse(localStorage.getItem(KEY) ?? "null");
+    const v = JSON.parse(localStorage.getItem(key) ?? "null");
     return v && typeof v.open === "boolean" && typeof v.width === "number" ? v : null;
   } catch {
     return null;
   }
 }
-function save(v: { open: boolean; width: number }) {
+function saveTo(key: string, v: { open: boolean; width: number }) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(v));
+    localStorage.setItem(key, JSON.stringify(v));
   } catch {
     // Private window or blocked storage: the stage just won't remember.
   }
 }
 
-export default function LiveStage({ arena, chat }: { arena: ReactNode; chat: ReactNode }) {
+export default function LiveStage({
+  arena,
+  chat,
+  storageKey = "live",
+  startEven = false,
+}: {
+  arena: ReactNode;
+  chat: ReactNode;
+  /** Each page remembers its own split ("live", "recap"). */
+  storageKey?: string;
+  /** With nothing remembered, start half and half (the recap, where the chat leads). */
+  startEven?: boolean;
+}) {
+  const key = `${KEY}.${storageKey}`;
+  const save = (v: { open: boolean; width: number }) => saveTo(key, v);
+  const savedRef = useRef<{ open: boolean; width: number } | null>(null);
   const stage = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(true);
   const [width, setWidth] = useState(DEFAULT_W);
@@ -73,7 +88,8 @@ export default function LiveStage({ arena, chat }: { arena: ReactNode; chat: Rea
     const mq = window.matchMedia("(max-width: 767px)");
     const apply = () => setPhone(mq.matches);
     apply();
-    const saved = readSaved();
+    const saved = readSaved(key);
+    savedRef.current = saved;
     if (mq.matches) setOpen(false);
     else if (saved) {
       setOpen(saved.open);
@@ -95,8 +111,10 @@ export default function LiveStage({ arena, chat }: { arena: ReactNode; chat: Rea
     const ro = new ResizeObserver(() => setStageW(el.clientWidth));
     ro.observe(el);
     setStageW(el.clientWidth);
+    // Nothing remembered and asked to start even: half and half.
+    if (startEven && !savedRef.current && el.clientWidth > 0) setWidth(Math.round((el.clientWidth - HANDLE) / 2));
     return () => ro.disconnect();
-  }, []);
+  }, [startEven]);
 
   const maxWidth = useCallback(() => Math.max(CHAT_MIN, (stageW || 1000) - HANDLE - ARENA_MIN), [stageW]);
   const clamp = useCallback((w: number) => Math.round(Math.min(maxWidth(), Math.max(CHAT_MIN, w))), [maxWidth]);

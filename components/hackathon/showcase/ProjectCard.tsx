@@ -19,8 +19,32 @@ export function ProjectMedia({ project, className }: { project: PublicProject; c
   );
 }
 
-/** One project in the gallery. */
-export default function ProjectCard({ project, sprintNumber }: { project: PublicProject; sprintNumber: number }) {
+/**
+ * One project in the gallery. With `presentable`, a "Present" button opens it
+ * on the page's demo day stage (Theatre, via #present=slug).
+ */
+export default function ProjectCard({
+  project,
+  sprintNumber,
+  presentable = false,
+}: {
+  project: PublicProject;
+  sprintNumber: number;
+  presentable?: boolean;
+}) {
+  const card = <CardLink project={project} sprintNumber={sprintNumber} />;
+  if (!presentable) return card;
+  return (
+    <div className={s.cardWrap}>
+      {card}
+      <a href={`#present=${project.team.slug}`} className={s.presentBtn}>
+        ▸ Present
+      </a>
+    </div>
+  );
+}
+
+function CardLink({ project, sprintNumber }: { project: PublicProject; sprintNumber: number }) {
   const tags = project.fields.built_with;
   return (
     <Link href={projectHref(sprintNumber, project.team.slug)} className={`${s.card} ${project.awards.length ? s.cardWinner : ""}`}>

@@ -45,7 +45,7 @@ export type PublicProject = {
   awards: PublicAward[];
   /** Signed URLs, in order; the gallery asks for the first one only. */
   screenshotUrls: string[];
-  /** The deck (035), signed for the team named in `allFor` only. */
+  /** The deck (035), signed for the team named in `allFor`, or for every team with `every`. */
   deckUrl: string | null;
 };
 
@@ -80,13 +80,14 @@ type Row = {
 
 /**
  * Every complete project of a revealed Sprint, with its awards and signed
- * screenshot URLs: the first for each card, and every one for the team named
- * in `allFor` (the project page's own project).
+ * screenshot URLs: the first for each card, and every one (and the deck) for
+ * the team named in `allFor` (the project page's own project), or for every
+ * team with `every` (the recap's presentation theatre).
  */
 export async function loadPublicProjects(
   db: SupabaseClient,
   sprintId: string,
-  opts: { allFor?: string } = {},
+  opts: { allFor?: string; every?: boolean } = {},
 ): Promise<PublicProject[]> {
   const [{ data: rows }, { data: awards }] = await Promise.all([
     db.rpc("hackathon_public_projects", { p_hackathon_id: sprintId }),
@@ -100,15 +101,19 @@ export async function loadPublicProjects(
   const { data: final } = await db.from("hackathons").select("awards_finalized_at").eq("id", sprintId).maybeSingle();
   const awardList = final?.awards_finalized_at ? sortAwards((awards ?? []) as (PublicAward & { submission_id: string })[]) : [];
 
-  const wanted = (r: Row) => (r.team_slug === opts.allFor ? (r.screenshots ?? []) : (r.screenshots ?? []).slice(0, 1));
+  const full = (r: Row) => opts.every || r.team_slug === opts.allFor;
+  const wanted = (r: Row) => (full(r) ? (r.screenshots ?? []) : (r.screenshots ?? []).slice(0, 1));
   const paths = list.flatMap(wanted);
   const { data: signed } = paths.length
     ? await db.storage.from(SUBMISSION_BUCKET).createSignedUrls(paths, SIGNED_FOR)
     : { data: [] as { path: string | null; signedUrl: string }[] };
   const url = new Map((signed ?? []).filter((s) => s.path && s.signedUrl).map((s) => [s.path as string, s.signedUrl]));
-  // The project page's own deck (035), if its team added one.
-  const deckPath = opts.allFor ? list.find((r) => r.team_slug === opts.allFor)?.presentation_path ?? null : null;
-  const { data: deck } = deckPath ? await db.storage.from("hackathon-decks").createSignedUrl(deckPath, SIGNED_FOR) : { data: null };
+  // Decks (035): the project page's own, or every one for the theatre.
+  const deckPaths = list.filter((r) => full(r) && r.presentation_path).map((r) => r.presentation_path as string);
+  const { data: decks } = deckPaths.length
+    ? await db.storage.from("hackathon-decks").createSignedUrls(deckPaths, SIGNED_FOR)
+    : { data: [] as { path: string | null; signedUrl: string }[] };
+  const deckUrl = new Map((decks ?? []).filter((d) => d.path && d.signedUrl).map((d) => [d.path as string, d.signedUrl]));
 
   return list.map((r) => ({
     submission_id: r.submission_id,
@@ -131,7 +136,7 @@ export async function loadPublicProjects(
     screenshotUrls: wanted(r)
       .map((p) => url.get(p))
       .filter((u): u is string => Boolean(u)),
-    deckUrl: r.team_slug === opts.allFor ? deck?.signedUrl ?? null : null,
+    deckUrl: full(r) && r.presentation_path ? deckUrl.get(r.presentation_path) ?? null : null,
   }));
 }
 

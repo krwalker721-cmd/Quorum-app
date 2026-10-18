@@ -12,7 +12,16 @@ const TAGS_SHOWN = 8;
  * with" tag (the most used first). Filtering happens here; everything shown
  * is already public.
  */
-export default function Gallery({ projects, sprintNumber }: { projects: PublicProject[]; sprintNumber: number }) {
+export default function Gallery({
+  projects,
+  sprintNumber,
+  presentable = false,
+}: {
+  projects: PublicProject[];
+  sprintNumber: number;
+  /** Each card gets a "Present" button for the page's demo day stage. */
+  presentable?: boolean;
+}) {
   const [filter, setFilter] = useState<{ kind: "all" } | { kind: "winners" } | { kind: "tag"; tag: string }>({ kind: "all" });
   const [moreTags, setMoreTags] = useState(false);
   const tags = useMemo(() => tagCounts(projects), [projects]);
@@ -49,7 +58,7 @@ export default function Gallery({ projects, sprintNumber }: { projects: PublicPr
       </div>
       <div className={s.grid}>
         {ordered.map((p) => (
-          <ProjectCard key={p.submission_id} project={p} sprintNumber={sprintNumber} />
+          <ProjectCard key={p.submission_id} project={p} sprintNumber={sprintNumber} presentable={presentable} />
         ))}
       </div>
     </div>

@@ -11,7 +11,9 @@ import TeamPanel from "@/components/hackathon/TeamPanel";
 import CheckIn from "@/components/hackathon/CheckIn";
 import QueueLive from "@/components/hackathon/QueueLive";
 import Arena from "@/components/hackathon/Arena";
-import RevealedShowcase from "@/components/hackathon/RevealGallery";
+import RevealedShowcase, { RevealedRecap } from "@/components/hackathon/RevealGallery";
+import Theatre from "@/components/hackathon/showcase/Theatre";
+import SprintTimeline from "@/components/hackathon/showcase/SprintTimeline";
 import { SealWatcher } from "@/components/hackathon/showcase/RevealMoment";
 import {
   RegistrantsTile,
@@ -85,6 +87,8 @@ export default async function SprintPage(props: {
   // While it's live (paused included) the page is the feed, the projects and
   // the stadium; before and after, the main column leads and the feed follows.
   const liveLayout = sprint.phase === "live" && sprint.state !== "cancelled";
+  // After the reveal: the recap around the Sprint chat (demo day beside it).
+  const recapLayout = sprint.phase === "revealed" && sprint.state !== "cancelled" && Boolean(sprint.reveal_at);
   const timing = toTiming(sprint);
   const stage = stageCountdown(sprint.state);
   // Before kickoff, the page opens by saying what a Sprint is.
@@ -148,7 +152,43 @@ export default async function SprintPage(props: {
           </Tile>
         )}
 
-        {liveLayout ? (
+        {recapLayout ? (
+          <RevealedRecap
+            sprintNumber={sprint.number}
+            revealAt={sprint.reveal_at!}
+            teams={data.teams}
+            projects={data.showcase}
+            stats={recapStats(data, feed)}
+            stage={
+              <LiveStage
+                storageKey="recap"
+                startEven
+                arena={<Theatre projects={data.showcase} sprintNumber={sprint.number} fill />}
+                chat={feed ? <Feed data={data} feed={feed} userId={user.id} /> : null}
+              />
+            }
+            timeline={
+              <SprintTimeline
+                startsAt={sprint.starts_at}
+                endsAt={sprint.ends_at}
+                revealAt={sprint.reveal_at}
+                projects={data.showcase}
+                teamCount={data.teams.length}
+              />
+            }
+            arena={
+              <Arena
+                sprintId={sprint.id}
+                sprintNumber={sprint.number}
+                teams={data.teams}
+                phase="revealed"
+                myTeamId={data.viewer.teamId}
+                title="The final arena"
+                map={{ label: "Final", at: null, theme: sprint.theme }}
+              />
+            }
+          />
+        ) : liveLayout ? (
           <>
             {/* The stage: the stadium, with the Sprint chat in a drawer beside it. */}
             <LiveStage
@@ -200,6 +240,21 @@ export default async function SprintPage(props: {
 }
 
 /** The part that changes most from state to state. Each block is its own file for later prompts. */
+/** The finished Sprint's numbers, for the recap. */
+function recapStats(data: SprintPageData, feed: FeedData | null) {
+  const builders = data.teams.reduce((n, t) => n + t.members.length, 0);
+  const cohorts = new Set(data.teams.flatMap((t) => t.members.map((m) => m.cohort).filter(Boolean))).size;
+  const messages = feed ? feed.messages.filter((m) => !m.is_system && !m.deleted_at).length : 0;
+  const plural = (n: number, one: string, many: string) => ({ value: n, label: n === 1 ? one : many });
+  return [
+    plural(data.teams.length, "team", "teams"),
+    plural(builders, "builder", "builders"),
+    plural(data.showcase.length, "project shipped", "projects shipped"),
+    ...(cohorts > 0 ? [plural(cohorts, "cohort represented", "cohorts represented")] : []),
+    plural(messages, "message in the chat", "messages in the chat"),
+  ];
+}
+
 /** The Sprint's feed (034), wherever the layout puts it. */
 function Feed({ data, feed, userId }: { data: SprintPageData; feed: FeedData; userId: string }) {
   const { sprint, viewer } = data;

@@ -1501,6 +1501,32 @@ toward a complete submission); an in-app slide maker may come later.
 
 ---
 
+## 5q. The finished Sprint: the recap around the chat, and demo day (2026-10-18)
+
+Owner: after the reveal the lobby (the Sprint chat) should lead again (option b of two), with "a better
+showoff and way to show the presentations… a recap mix of everything". No migration.
+
+- **Members' page after the reveal** (`RevealedRecap` in `RevealGallery.tsx`, inside the reveal moment as
+  before): the numbers (teams, builders, shipped, cohorts, chat messages) → awards → **the stage**:
+  demo day beside the Sprint chat (`LiveStage` with `storageKey="recap"` and `startEven`, so it opens
+  half and half and remembers its own split; the live page's is now `buildathon.stage.live`) → every
+  project (the gallery with **▸ Present** on each card) → **How it went** → **the final arena** (the map,
+  frozen, every pod marked submitted).
+- **Demo day** (`components/hackathon/showcase/Theatre.tsx`): one team at a time; its deck in the
+  browser's PDF viewer, or its video, screenshots or demo when there's no deck; ‹ › and the arrow keys,
+  a strip of team chips, award winners first; "Open the deck" always offered (Android browsers can't
+  draw a PDF inside a page). "Present" anywhere on the page sets `#present=<slug>`, which the theatre
+  picks up and clears.
+- **How it went** (`SprintTimeline.tsx`): kickoff → deadline as one track with each submission's emblem
+  where it landed; shipped n of N, first in, last in (time to spare), revealed.
+- **The public recap** gets demo day, Present and How it went too (no chat: it's for members).
+  `loadPublicProjects(…, { every: true })` signs every deck and screenshot for both pages.
+- `scripts/seed-staging-finished-demo.mjs` now generates short PDF decks for two of its three projects.
+- Checked: decks served inline as real PDFs, Present and the arrow keys, 501/501 px at 1280 px, the
+  recap signed out (decks play, no chat).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1599,6 +1625,7 @@ toward a complete submission); an in-app slide maker may come later.
 | 92 | Live layout: the arena as the stage with a resizable chat drawer; projects last. | Owner picked option B, asked for resizing that squishes nothing and is obvious, and projects at the end. |
 | 93 | The team room takes a Collab project room's layout, with members as a strip and one self-ticking checklist on the right. | Owner: "look exactly like a collab board project"; the first right column ran "way too far". |
 | 94 | A team may add one PDF presentation (25 MB, own bucket); optional, sealed like the submission, shown to judges and at the reveal. | Owner: "for now pdf"; optional. |
+| 95 | After the reveal, the Sprint page is a recap around the chat: demo day beside it on the stage, then the gallery, the timeline and the final arena. The public recap gets demo day and the timeline. | Owner chose (b): "the lobby should be the main page once again", plus "a better showoff and way to show the presentations". |
 
 ---
 
@@ -1736,4 +1763,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `0206d47` | The Buildathon home with a current-Sprint banner; the Sprint page's opener; folding lists (5m) |
 | `9e4f7d4` | The arena as a stadium map (5n) |
 | `4c857cc`, `9a73a42` | The live page: Sprint chat, stage, migration 034 (5o) |
-| (next) | The team room like a Collab project room; checklist and deck (035, 5p) |
+| `d535a93` | The team room like a Collab project room; checklist and deck (035, 5p) |
+| (next) | The finished Sprint: recap around the chat, demo day, how it went (5q) |
