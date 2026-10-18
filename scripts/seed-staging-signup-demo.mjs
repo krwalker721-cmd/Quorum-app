@@ -4,11 +4,11 @@
 //   node scripts/seed-staging-signup-demo.mjs         signup period, test admin not in it
 //   node scripts/seed-staging-signup-demo.mjs live    live, test admin on Night Owls
 //   node scripts/seed-staging-signup-demo.mjs watch   live, test admin watching from outside
-//   node scripts/seed-staging-signup-demo.mjs judging judging, test admin is a judge
+//   node scripts/seed-staging-signup-demo.mjs judging review round, test admin on Night Owls
 //
 // Creates or resets "Signup demo" (slug signup-demo): published, registration
 // opened a day ago, teams lock in 3 days, kickoff an hour after that, then the
-// usual 48 h build and 48 h of judging. Times are relative to now, so running
+// usual 48 h build and a 2 h review round. Times are relative to now, so running
 // it again puts it back in its signup period.
 //
 // Signed up, from the test members (scripts/seed-staging.mjs):
@@ -29,14 +29,11 @@
 // recent activity, Rockets has a complete (sealed) submission and Solo Studio
 // a draft, so the arena reads "1 of 3 teams submitted".
 //
-// judging: the deadline was yesterday and judging closes in two days. Teams
-// as in watch, every team with a complete submission. The test admin is an
-// accepted judge with nothing scored yet; the spectator (the only other
-// account in no team) is a second judge who has scored two of the three.
-//
-// Nothing else is touched.
-// scripts/reset-hackathon-data.mjs removes it with everything else.
-// Refuses production.
+// judging: the deadline passed half an hour ago and reviews close in an hour
+// and a half (peer reviews, 036: a short window). Teams as in live, the test
+// admin on Night Owls, every team with a complete submission. The reviews are handed out (two each: there are
+// three projects and nobody reviews their own), and Maya, Leo and Sam have
+// already finished theirs, so the test admin has a review round to do.
 
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -79,10 +76,10 @@ const mode = process.argv[2] ?? "signup";
 if (!["signup", "live", "watch", "judging"].includes(mode))
   throw new Error("Usage: node scripts/seed-staging-signup-demo.mjs [live | watch | judging]");
 const live = mode !== "signup";
-const meIn = mode === "live";
+const meIn = mode === "live" || mode === "judging";
 
 console.log(
-  `Seeding the demo Sprint (${{ signup: "signup period", live: "live, test admin on Night Owls", watch: "live, test admin outside", judging: "judging, test admin judges" }[mode]}) on STAGING project ${ref}`,
+  `Seeding the demo Sprint (${{ signup: "signup period", live: "live, test admin on Night Owls", watch: "live, test admin outside", judging: "review round, test admin on Night Owls" }[mode]}) on STAGING project ${ref}`,
 );
 
 const byEmail = async (email) => {
@@ -115,9 +112,9 @@ const row = {
         registration_opens_at: at(-6 * DAY),
         team_lock_at: at(-3 * DAY - HOUR),
         starts_at: at(-3 * DAY),
-        ends_at: at(-DAY),
-        judging_ends_at: at(2 * DAY),
-        reveal_at: at(2 * DAY),
+        ends_at: at(-30 * MIN),
+        judging_ends_at: at(90 * MIN),
+        reveal_at: at(90 * MIN),
       }
     : live
     ? {
@@ -125,16 +122,16 @@ const row = {
         team_lock_at: at(-3 * HOUR),
         starts_at: at(-2 * HOUR),
         ends_at: at(46 * HOUR),
-        judging_ends_at: at(94 * HOUR),
-        reveal_at: at(94 * HOUR),
+        judging_ends_at: at(48 * HOUR),
+        reveal_at: at(48 * HOUR),
       }
     : {
         registration_opens_at: at(-DAY),
         team_lock_at: at(3 * DAY),
         starts_at: at(3 * DAY + HOUR),
         ends_at: at(5 * DAY + HOUR),
-        judging_ends_at: at(7 * DAY + HOUR),
-        reveal_at: at(7 * DAY + HOUR),
+        judging_ends_at: at(5 * DAY + 3 * HOUR),
+        reveal_at: at(5 * DAY + 3 * HOUR),
       }),
   lobby_closes_at: null,
   max_team_size: 4,
@@ -149,7 +146,10 @@ const { data: existing } = await db.from("hackathons").select("id, status_overri
 let sprint;
 if (existing) {
   if (existing.status_override) must(await db.from("hackathons").update({ status_override: null }).eq("id", existing.id), "unfreezing");
-  must(await db.from("hackathons").update({ ...row, matched_at: null, match_report: null }).eq("id", existing.id), "resetting the Sprint");
+  must(
+    await db.from("hackathons").update({ ...row, matched_at: null, match_report: null, reviews_assigned_at: null, awards_finalized_at: null }).eq("id", existing.id),
+    "resetting the Sprint",
+  );
   sprint = existing.id;
   // A fresh start for its people, so every run looks the same.
   must(await db.from("hackathon_teams").delete().eq("hackathon_id", sprint), "clearing teams");
@@ -253,23 +253,21 @@ if (mode === "judging") {
     "submitting Afterhours",
   );
 
-  // Judges: the test admin (nothing scored yet) and the spectator (two of three).
-  const { data: spectator } = await db.from("profiles").select("id").eq("email", "spectator-test@quorum.test").maybeSingle();
-  must(
-    await db.from("hackathon_judges").insert(
-      [me, spectator?.id].filter(Boolean).map((user_id) => ({ hackathon_id: sprint, user_id, accepted_at: at(-2 * DAY) })),
-    ),
-    "adding judges",
-  );
-  if (spectator) {
-    const { data: subs } = await db.from("hackathon_submissions").select("id, team_id").eq("hackathon_id", sprint);
-    const sub = (teamId) => subs.find((x) => x.team_id === teamId).id;
+  // Peer reviews (036): handed out now, as the first page load after the
+  // deadline would; three of the other builders have finished theirs.
+  must(await db.rpc("hackathon_assign_reviews", { p_hackathon_id: sprint }), "handing out the reviews");
+  const { data: given } = await db.from("hackathon_reviews").select("id, reviewer_id, submission_id").eq("hackathon_id", sprint);
+  const notes = [
+    ["Clear problem, and the demo just worked.", "Show the onboarding in the deck."],
+    ["I'd use this tomorrow.", "Say who it's for on the first slide."],
+    ["Tight scope, well executed.", "A pricing idea would help."],
+  ];
+  let k = 0;
+  for (const r of (given ?? []).filter((x) => [maya, leo, sam].includes(x.reviewer_id))) {
+    const [strength, suggestion] = notes[k++ % notes.length];
     must(
-      await db.from("hackathon_scores").insert([
-        { hackathon_id: sprint, submission_id: sub(rockets), judge_id: spectator.id, score_problem: 5, score_shipped: 5, score_collaboration: 4, score_potential: 5, notes: "Clear problem, polished demo." },
-        { hackathon_id: sprint, submission_id: sub(owls), judge_id: spectator.id, score_problem: 4, score_shipped: 3, score_collaboration: 5, score_potential: 4, notes: "Would use it. Calendar sync was flaky in the demo." },
-      ]),
-      "the spectator's scores",
+      await db.from("hackathon_reviews").update({ score_problem: 4, score_works: 4 + (k % 2), score_use: 3 + (k % 3), strength, suggestion }).eq("id", r.id),
+      "filling a review",
     );
   }
 }
@@ -299,11 +297,11 @@ const { data: view } = await db.from("hackathon_overview").select("number, title
 const { count: regs } = await db.from("hackathon_registrations").select("*", { count: "exact", head: true }).eq("hackathon_id", sprint).is("withdrawn_at", null);
 if (live) {
   console.log(
-    `  #${view.number}  ${view.title}  ${view.state} · ${regs} in 3 teams · the test admin ${meIn ? "is on Night Owls" : mode === "judging" ? "is a judge" : "is watching from outside"}`,
+    `  #${view.number}  ${view.title}  ${view.state} · ${regs} in 3 teams · the test admin ${meIn ? "is on Night Owls" : "is watching from outside"}`,
   );
   console.log(
     mode === "judging"
-      ? `  Judging closes ${new Date(t + 2 * DAY).toLocaleString()}. Judge: /hackathon/${view.number}/judge · admin: Sprints → #${view.number} → judging.`
+      ? `  Reviews close ${new Date(t + 90 * MIN).toLocaleString()}. Review round: /hackathon/${view.number} · admin: Sprints → #${view.number} → reviews.`
       : `  Deadline ${new Date(t + 46 * HOUR).toLocaleString()}. Open /hackathon/${view.number}.`,
   );
 } else {

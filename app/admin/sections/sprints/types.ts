@@ -44,6 +44,10 @@ export type Sprint = {
   /** Pinned at the top of the lobby (migration 029); null hides it. */
   lobby_welcome: string | null;
   updated_at: string;
+  /** How many projects each person reviews after the deadline (migration 036). */
+  reviews_per_person?: number;
+  /** When the reviews were handed out (036). */
+  reviews_assigned_at?: string | null;
   /** Set once the team matcher has run (migration 026). */
   matched_at: string | null;
   match_report: MatchReport | null;

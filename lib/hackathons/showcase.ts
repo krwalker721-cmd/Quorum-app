@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AWARD_LABEL, NAMED_AWARDS, type AwardType } from "@/lib/hackathons/judging";
+import { AWARD_LABEL, type AwardType } from "@/lib/hackathons/judging";
 import { SUBMISSION_BUCKET, type SubmissionFields } from "@/lib/hackathons/submission";
 
 // The public showcase (Phase 10): what anyone may see once a Sprint is
@@ -144,10 +144,13 @@ export const awardName = (a: Pick<PublicAward, "award_type" | "custom_label">) =
   a.award_type === "custom" ? (a.custom_label ?? "Award") : AWARD_LABEL[a.award_type];
 
 /** Named awards in their own order (Judges' pick first), then custom ones as given. */
+/** Award order on every page: the peer-review awards (036) first, then the judges' (031), then custom. */
+const AWARD_ORDER = ["community_pick", "most_shipped", "most_likely_to_become_real", "crowd_favourite", "judges_pick", "best_collaboration"];
+
 export function sortAwards<T extends { award_type: string }>(awards: T[]): T[] {
   const rank = (t: string) => {
-    const i = NAMED_AWARDS.findIndex((n) => n.type === t);
-    return i === -1 ? NAMED_AWARDS.length : i;
+    const i = AWARD_ORDER.indexOf(t);
+    return i === -1 ? AWARD_ORDER.length : i;
   };
   return [...awards].sort((a, b) => rank(a.award_type) - rank(b.award_type));
 }

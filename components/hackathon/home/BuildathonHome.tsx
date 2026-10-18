@@ -1,6 +1,6 @@
 import Link from "next/link";
 import ui from "@/components/ui/sleek.module.css";
-import { RUBRIC } from "@/lib/hackathons/judging";
+import { REVIEW_QUESTIONS } from "@/lib/hackathons/reviewShared";
 import CurrentSprintBanner, { type CurrentSprint } from "./CurrentSprintBanner";
 import s from "./home.module.css";
 
@@ -134,12 +134,12 @@ const PHASES: { when: string; title: string; text: string; pic: React.ReactNode 
     ),
   },
   {
-    when: "After judging",
-    title: "The reveal",
-    text: "Every project unseals at once, with the awards and a public page for each.",
+    when: "After the deadline",
+    title: "Review, then the reveal",
+    text: "Everyone who built reviews a few other projects. Then every project unseals at once, with the awards that came out of it.",
     pic: (
       <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-        <span className={s.miniAward}>★ Judges&rsquo; pick</span>
+        <span className={s.miniAward}>★ Community pick</span>
         <span className={s.miniProject}>Afterhours</span>
       </span>
     ),
@@ -157,8 +157,8 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
             <h1 className={`${s.pageTitle} ${ui.titleGradient}`}>Buildathon</h1>
             <p className={s.heroLede}>
               48-hour Sprints where founders from across the network form teams and build something new from scratch.
-              Every project is judged on the problem it solves, what actually shipped, how the team worked, and where it
-              could go.
+              There are no judges: after the deadline everyone who built reviews a few other projects, and the awards work
+              themselves out from those reviews.
             </p>
             <div className={s.quietLinks}>
               <a href="#runs" className={s.quietLink}>
@@ -204,16 +204,16 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
 
       <div className={s.secHead}>
         <h2 className={s.secTitle}>How projects are judged</h2>
-        <span className={s.secNote}>Each criterion scored 1 to 5 by every judge</span>
+        <span className={s.secNote}>By the builders themselves, 1 to 5, in a few minutes after the deadline</span>
       </div>
       <div className={s.rubric}>
-        {RUBRIC.map((r) => (
+        {REVIEW_QUESTIONS.map((r) => (
           <div key={r.key} className={s.criterion}>
             <div className={s.critTop}>
               <span className={s.critName}>{r.label}</span>
               <span className={s.critScale}>1–5</span>
             </div>
-            <p className={s.critQ}>{r.question}</p>
+            <p className={s.critQ}>{r.q}</p>
             <div className={s.pips} aria-hidden>
               {[1, 2, 3, 4, 5].map((n) => (
                 <span key={n} className={s.pip} style={{ background: `rgba(245, 158, 11, ${0.12 + n * 0.12})` }} />
@@ -224,6 +224,14 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
             </p>
           </div>
         ))}
+        <div className={s.criterion}>
+          <div className={s.critTop}>
+            <span className={s.critName}>Favourite</span>
+            <span className={s.critScale}>one pick</span>
+          </div>
+          <p className={s.critQ}>Which of the projects you reviewed did you like most?</p>
+          <p className={s.critRange}>Picks decide the Crowd favourite</p>
+        </div>
       </div>
 
       {!current && (

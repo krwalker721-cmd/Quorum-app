@@ -13,7 +13,7 @@
 //   hackathons, which cascades to every hackathon_* table: registrations,
 //     teams, team members, invitations, invite codes, join requests, team
 //     messages, docs, links, votes, ballots, pulse, member activity, lobby
-//     messages, submissions, judges, scores, awards and hackathon_admin_audit
+//     messages, submissions, judges, scores, awards, peer reviews and hackathon_admin_audit
 //   site_countdowns (every countdown, the launch one included)
 //   admin_change_log, the Hackathon admin screens' history (every row in it)
 //   notifications whose kind starts with "hackathon_" (none exist today)
@@ -118,6 +118,7 @@ const TABLES = [
   ["hackathon_judges", "judges"],
   ["hackathon_scores", "scores"],
   ["hackathon_awards", "awards"],
+  ["hackathon_reviews", "peer reviews (036)"],
   ["hackathon_admin_audit", "admin audit (post-deadline edits)"],
   ["admin_change_log", "admin change log"],
   ["site_countdowns", "countdowns"],

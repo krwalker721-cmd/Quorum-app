@@ -1527,6 +1527,49 @@ showoff and way to show the presentations… a recap mix of everything". No migr
 
 ---
 
+## 5r. Peer reviews instead of judges (migration 036) (2026-10-18)
+
+Owner: judging by the competitors "might feel more like a community… and get people talking more".
+When the build ends, everyone who competed goes through a short questionnaire over a few other teams'
+projects, the awards work themselves out, and nobody judges by hand. Owner's calls: **6 projects per
+person** by default (set per Sprint), a quick format, reviewing **counts toward award eligibility**,
+four awards (Community pick, Most shipped, Most likely to become real, Crowd favourite), feedback to
+teams **without names**, and a **short review window** (2 hours by default, not two days).
+
+- **Timing:** reviews are handed out at the deadline (`ends_at`) and close at `judging_ends_at`, shown
+  as "Reviews close"; the awards are worked out at the reveal. Quick schedule sets the deadline 48 h
+  after kickoff and reviews closing (and the reveal) 2 h after that; all still editable. Both moments
+  run on page load (`runReviewsIfDue`, like the matcher; no cron on Hobby).
+- **Migration 036** (`036_buildathon_peer_reviews.sql`): `reviews_per_person` (1–20, default 6) and
+  `reviews_assigned_at` on hackathons; `hackathon_reviews` (three 1–5 ratings, a strongest part and a
+  suggestion of up to 280 characters each, one favourite per reviewer, `hidden_at` for admins), readable
+  and editable only by the reviewer, and only while scoring is open, through a guard trigger.
+  `hackathon_assign_reviews` hands out once, balanced, in random order, never the reviewer's own team.
+  `hackathon_compute_awards` adjusts each reviewer's lean (shrunk by n/(n+1)), needs 2 reviews to win
+  (or fewer when there aren't enough people), skips teams where nobody finished their reviews, and
+  writes the four awards with citations. `hackathon_team_feedback` gives a team its ratings and lines
+  after the reveal, with no names. Standings are admin-only. 52 new tests (696 in all).
+- **The review round** (`components/hackathon/reviews/ReviewFlow.tsx`), above the Sprint page from the
+  deadline to the reveal: one project at a time (its deck, video, screenshots or demo beside the three
+  questions), saved as you go, then a favourite, then thanks; "Reviews close in" counts down. Others
+  see progress counts only.
+- **After the reveal:** the team room shows "What fellow builders said" above the checklist; the four
+  awards appear on the recap and the public pages like any other.
+- **Admin:** a Reviews tab (when they go out, a "hand out now" and "recompute awards" for nudging, who
+  has reviewed, the standings, and every piece of feedback with hide / show again). The Judges tab is
+  no longer offered; its code stays for Sprints judged the old way.
+- **Demo scripts:** `seed-staging-signup-demo.mjs judging` puts the test admin in a live review round
+  (deadline 30 min ago, 90 min left); `seed-staging-finished-demo.mjs` reviews and computes its awards.
+- **Checked on staging:** 036 applied and all 696 tests pass there (after scoping one deck test to its
+  own Sprint, since staging holds demo decks). The test admin filled in both reviews and a favourite,
+  which stayed after a reload; the finished demo's four awards and Night Owls' anonymous feedback show.
+  The admin Reviews tab is for the owner to open (it needs the admin code).
+- **Also fixed:** `RoomThread` (shared with Collab, owner OK'd) showed "Ns ago" on messages under a minute
+  old a second apart on the server and in the browser, a hydration warning in dev. Its system and
+  bubble time lines now take `suppressHydrationWarning`, as its other two time lines already did.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1626,13 +1669,19 @@ showoff and way to show the presentations… a recap mix of everything". No migr
 | 93 | The team room takes a Collab project room's layout, with members as a strip and one self-ticking checklist on the right. | Owner: "look exactly like a collab board project"; the first right column ran "way too far". |
 | 94 | A team may add one PDF presentation (25 MB, own bucket); optional, sealed like the submission, shown to judges and at the reveal. | Owner: "for now pdf"; optional. |
 | 95 | After the reveal, the Sprint page is a recap around the chat: demo day beside it on the stage, then the gallery, the timeline and the final arena. The public recap gets demo day and the timeline. | Owner chose (b): "the lobby should be the main page once again", plus "a better showoff and way to show the presentations". |
+| 96 | Competitors review each other's projects; no judges. The awards are worked out by the database at the reveal. | Owner: more of a community, "get people talking", no manual judging. |
+| 97 | Each person reviews 6 projects by default (set per Sprint, 1–20); three 1–5 questions, two optional lines, one favourite. | Owner: quick, more projects per person rather than minutes on each. |
+| 98 | A team's project can win only if a teammate finished their reviews (or the team had none to do). | Owner: "reviewing can count". |
+| 99 | Four automatic awards: Community pick, Most shipped, Most likely to become real, Crowd favourite; a project needs 2 reviews to win. | Owner liked the four. Two reviews keeps one opinion from deciding. |
+| 100 | Teams see their feedback without reviewer names; admins see names and can hide a review. | Owner: anonymous. Admins need a way to deal with abuse. |
+| 101 | The review window is short: 2 hours after the deadline by default, the reveal when it closes. | Owner: "the review do not need two days". |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 033** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 036** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
       027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
@@ -1641,7 +1690,8 @@ showoff and way to show the presentations… a recap mix of everything". No migr
       judging tab fails and revealed Sprints show no awards (the page reads `awards_finalized_at`),
       and without 032 the recap and project pages are 404s and the revealed Sprint page has no
       gallery (the sitemap just lists the static pages); without 033 the relay shows only standalone
-      countdowns (its Sprint data reads as empty).
+      countdowns (its Sprint data reads as empty). 034–036 are needed by the Sprint chat, the deck and
+      the review round.
 - [ ] After the first deploy with a revealed Sprint: paste a project and a recap link into X,
       LinkedIn (Post Inspector) and iMessage to confirm the previews.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
@@ -1764,4 +1814,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `9e4f7d4` | The arena as a stadium map (5n) |
 | `4c857cc`, `9a73a42` | The live page: Sprint chat, stage, migration 034 (5o) |
 | `d535a93` | The team room like a Collab project room; checklist and deck (035, 5p) |
-| (next) | The finished Sprint: recap around the chat, demo day, how it went (5q) |
+| `3c8b183` | The finished Sprint: recap around the chat, demo day, how it went (5q) |
+| (next) | Peer reviews instead of judges, with a short review window (036, 5r) |

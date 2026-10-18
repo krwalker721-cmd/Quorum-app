@@ -85,6 +85,13 @@ export function sprintFields(
     values[f] = n;
   }
 
+  // Peer reviews (036): how many projects each person reviews.
+  if ("reviews_per_person" in body) {
+    const n = Number(body.reviews_per_person);
+    if (!Number.isInteger(n) || n < 1 || n > 20) return { ok: false, error: "Reviews per person is a whole number from 1 to 20." };
+    values.reviews_per_person = n;
+  }
+
   for (const f of BOOL_FIELDS) {
     if (f in body) values[f] = Boolean(body[f]);
   }

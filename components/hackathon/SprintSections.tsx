@@ -123,7 +123,7 @@ export function SprintOpener({ data }: { data: SprintPageData }) {
     },
     {
       title: "What happens to your work",
-      text: "Every project stays sealed until the reveal. Judges score the finished ones on the problem, what shipped, how the team worked and its potential. Then awards go out and each project gets a public page.",
+      text: "Every project stays sealed until the reveal. After the deadline everyone who built reviews a few other projects; the awards work themselves out from those reviews, each project gets a public page, and every team gets its feedback.",
     },
   ];
   return (
@@ -189,7 +189,7 @@ export function LiveExplainer({ sprint, teamCount }: { sprint: SprintRow; teamCo
     <Tile kicker="What this is" style={{ marginBottom: 16 }} padding="14px 18px 16px">
       <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-primary)", maxWidth: 760 }}>
         {`A 48-hour build. ${teamCount} team${teamCount === 1 ? " is" : "s are"} making something new from scratch around the theme, in private rooms.`}{" "}
-        Every project stays sealed until the reveal, when the judges&rsquo; awards go out
+        Every project stays sealed until the reveal, when the awards the builders voted for go out
         and each project gets a public page.{" "}
         {sprint.rules?.trim() && (
           <a href="#rules" style={{ color: "var(--text-muted)", textDecoration: "none", whiteSpace: "nowrap" }}>
@@ -413,7 +413,7 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
             : phase === "live"
               ? "It's on. Build, then submit before the deadline."
               : phase === "judging"
-                ? "Submissions are closed. The judges are scoring."
+                ? "Submissions are closed. Everyone's reviewing a few projects."
                 : "Thanks for building.";
       links = [...(room ? [{ ...room, primary: phase === "live" }] : []), lobby];
       break;

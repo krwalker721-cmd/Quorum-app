@@ -57,7 +57,7 @@ export function ChecklistPanel({
       hint: "Start a vote or a doc so everyone builds the same thing.",
       done: votes.some((v) => v.status === "decided") || docs.length > 0,
     },
-    { key: "link", label: "Add your repo or demo link", hint: "In Links, so the judges can try it later.", done: links.length > 0 },
+    { key: "link", label: "Add your repo or demo link", hint: "In Links, so reviewers can try it after the deadline.", done: links.length > 0 },
     {
       key: "deck",
       label: "Add your presentation",
@@ -339,5 +339,64 @@ function SubmitControl({
         {live && isMember ? (complete ? "Edit submission →" : submission ? "Finish submission →" : "Open the submission form →") : "View submission →"}
       </Link>
     </>
+  );
+}
+
+// ── After the reveal: what fellow builders said (036), without names
+export type TeamFeedback = {
+  strength: string | null;
+  suggestion: string | null;
+  score_problem: number;
+  score_works: number;
+  score_use: number;
+  completed_at: string;
+};
+
+export function FeedbackPanel({ feedback }: { feedback: TeamFeedback[] }) {
+  const avg = (k: "score_problem" | "score_works" | "score_use") =>
+    feedback.length ? (feedback.reduce((n, f) => n + f[k], 0) / feedback.length).toFixed(1) : "—";
+  const lines = feedback.filter((f) => f.strength || f.suggestion);
+  return (
+    <Tile gradient kicker="What fellow builders said" right={`${feedback.length} review${feedback.length === 1 ? "" : "s"}`}>
+      {feedback.length === 0 ? (
+        <p style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>Nobody reviewed this project.</p>
+      ) : (
+        <>
+          <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+            {[
+              { label: "Problem", v: avg("score_problem") },
+              { label: "Works", v: avg("score_works") },
+              { label: "Would use", v: avg("score_use") },
+            ].map((x) => (
+              <div key={x.label} style={{ border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: 10, padding: "8px 10px" }}>
+                <div style={{ fontFamily: "var(--font-mono, ui-monospace, monospace)", fontSize: 18, fontWeight: 650, color: "var(--text-primary)" }}>{x.v}</div>
+                <div style={META}>{x.label} · of 5</div>
+              </div>
+            ))}
+          </div>
+          {lines.length > 0 && (
+            <ul className="flex flex-col" style={{ gap: 10, marginTop: 12 }}>
+              {lines.map((f, i) => (
+                <li key={i} style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                  {f.strength && (
+                    <p style={{ color: "var(--text-primary)" }}>
+                      <span style={{ color: "#4ade80" }}>+ </span>
+                      {f.strength}
+                    </p>
+                  )}
+                  {f.suggestion && (
+                    <p style={{ color: "var(--text-secondary)", marginTop: f.strength ? 2 : 0 }}>
+                      <span style={{ color: "#f8c56a" }}>→ </span>
+                      {f.suggestion}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p style={{ ...META, marginTop: 10 }}>Anonymous: you see what was said, not who said it.</p>
+        </>
+      )}
+    </Tile>
   );
 }

@@ -9,7 +9,7 @@ export const MILESTONES = [
   { key: "team_lock_at", label: "Team lock" },
   { key: "starts_at", label: "Kickoff" },
   { key: "ends_at", label: "Submission deadline" },
-  { key: "judging_ends_at", label: "Judging ends" },
+  { key: "judging_ends_at", label: "Reviews close" },
   { key: "reveal_at", label: "Reveal" },
 ] as const;
 
@@ -65,7 +65,8 @@ const DAY = 24 * HOUR;
 /**
  * The quick-schedule defaults from a kickoff time: registration opens 7 days
  * before, teams lock 1 hour before, the deadline is 48 hours after kickoff,
- * judging ends 48 hours after that, and the reveal is when judging ends.
+ * peer reviews close 2 hours after that (036: everyone does a few minutes of
+ * reviewing, so a short window), and the reveal is when they close.
  */
 export function quickSchedule(kickoffIso: string): Record<MilestoneKey, string> {
   const k = new Date(kickoffIso).getTime();
@@ -75,8 +76,8 @@ export function quickSchedule(kickoffIso: string): Record<MilestoneKey, string> 
     team_lock_at: iso(k - HOUR),
     starts_at: iso(k),
     ends_at: iso(k + 48 * HOUR),
-    judging_ends_at: iso(k + 96 * HOUR),
-    reveal_at: iso(k + 96 * HOUR),
+    judging_ends_at: iso(k + 50 * HOUR),
+    reveal_at: iso(k + 50 * HOUR),
   };
 }
 

@@ -31,6 +31,7 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
   const [rules, setRules] = useState(sprint?.rules ?? "");
   const [maxSize, setMaxSize] = useState(String(sprint?.max_team_size ?? 4));
   const [minSize, setMinSize] = useState(String(sprint?.min_team_size ?? 1));
+  const [perPerson, setPerPerson] = useState(String(sprint?.reviews_per_person ?? 6));
   const [inApp, setInApp] = useState(sprint?.show_countdown_in_app ?? true);
   const [onLanding, setOnLanding] = useState(sprint?.show_countdown_on_landing ?? true);
   const [headline, setHeadline] = useState(sprint?.countdown_headline_override ?? "");
@@ -116,6 +117,7 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
       rules,
       max_team_size: Number(maxSize),
       min_team_size: Number(minSize),
+      reviews_per_person: Number(perPerson),
       show_countdown_in_app: inApp,
       show_countdown_on_landing: onLanding,
       countdown_headline_override: headline,
@@ -187,6 +189,9 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
           <Field label="min team size">
             <input type="number" min={1} max={12} value={minSize} onChange={(e) => setMinSize(e.target.value)} />
           </Field>
+          <Field label="projects each person reviews">
+            <input type="number" min={1} max={20} value={perPerson} onChange={(e) => setPerPerson(e.target.value)} />
+          </Field>
         </div>
       </Card>
 
@@ -211,8 +216,8 @@ export default function SprintForm({ sprint, onSaved }: { sprint: Sprint | null;
             fill the rest
           </Btn>
           <p className="basis-full font-mono text-[0.6rem] text-text-faint">
-            Registration opens 7 days before, team lock 1 hour before, deadline 48h after kickoff, judging ends 48h
-            after the deadline, reveal when judging ends. All still editable.
+            Registration opens 7 days before, team lock 1 hour before, deadline 48h after kickoff, peer reviews close 2h
+            after the deadline, reveal when reviews close. All still editable.
           </p>
         </div>
 

@@ -129,6 +129,7 @@ export default function RoomThread({
                   key={m.id}
                   className="text-center"
                   style={{ ...META, alignSelf: "center", maxWidth: "80%" }}
+                  suppressHydrationWarning
                 >
                   {m.body} · {timeAgo(m.createdAt)} ago
                 </p>
@@ -170,7 +171,7 @@ export default function RoomThread({
                     {m.body}
                   </p>
                 )}
-                <p style={{ fontSize: 10.5, color: mine ? "rgba(248, 197, 106, 0.75)" : "var(--text-muted)", marginTop: 4 }}>
+                <p style={{ fontSize: 10.5, color: mine ? "rgba(248, 197, 106, 0.75)" : "var(--text-muted)", marginTop: 4 }} suppressHydrationWarning>
                   {timeAgo(m.createdAt)} ago
                 </p>
               </div>

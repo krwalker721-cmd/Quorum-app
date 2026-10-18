@@ -1,0 +1,255 @@
+/* The peer review round (ReviewFlow.tsx). */
+
+.flow {
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 20px;
+  background: linear-gradient(150deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0) 40%), var(--bg-surface);
+}
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+}
+.kicker {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f8c56a;
+}
+.title {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+.sub {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  max-width: 620px;
+}
+.clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.dot {
+  width: 22px;
+  height: 6px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+.dotDone {
+  background: rgba(34, 197, 94, 0.7);
+}
+.dotOn {
+  outline: 2px solid rgba(245, 158, 11, 0.8);
+  outline-offset: 2px;
+}
+.progressText {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  gap: 18px;
+  margin-top: 16px;
+  align-items: start;
+}
+.stage {
+  min-width: 0;
+}
+.screen {
+  height: clamp(260px, 48vh, 460px);
+}
+.missing {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+}
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.projectName {
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.tagline {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.links {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.links a {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.links a:hover {
+  color: #f8c56a;
+}
+.problem {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.question {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+.q {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.pt {
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pt:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+}
+.ptOn {
+  border-color: rgba(245, 158, 11, 0.8);
+  background: rgba(245, 158, 11, 0.16);
+  color: #f8c56a;
+}
+.ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.fieldLabel {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.field input {
+  width: 100%;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.error {
+  font-size: 12.5px;
+  color: #f87171;
+}
+
+.favourites {
+  margin-top: 14px;
+}
+.favGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.fav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.fav:hover {
+  border-color: color-mix(in srgb, var(--team) 55%, transparent);
+}
+.favOn {
+  border-color: var(--team);
+  background: color-mix(in srgb, var(--team) 10%, transparent);
+}
+.favName {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.favTeam {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.favMark {
+  margin-left: auto;
+  color: #f8c56a;
+}
+.thanks {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 860px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

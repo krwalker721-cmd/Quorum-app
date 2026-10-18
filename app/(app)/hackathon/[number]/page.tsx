@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import TopBar from "@/components/TopBar";
 import NoGrid from "@/components/ui/NoGrid";
 import Tile from "@/components/ui/Tile";
+import ui from "@/components/ui/sleek.module.css";
 import SprintAutoRefresh from "@/components/hackathon/SprintAutoRefresh";
 import SprintCountdown from "@/components/hackathon/SprintCountdown";
 import JoinQueue from "@/components/hackathon/JoinQueue";
@@ -30,6 +31,9 @@ import {
 import { loadSprint, loadSprintPage, type SprintPageData } from "@/lib/hackathons/page";
 import { getMemberStanding } from "@/lib/hackathons/viewer";
 import { runMatcherIfDue } from "@/lib/hackathons/matcher";
+import { loadMyReviews, runReviewsIfDue } from "@/lib/hackathons/reviews";
+import type { MyReview } from "@/lib/hackathons/reviewShared";
+import ReviewFlow from "@/components/hackathon/reviews/ReviewFlow";
 import { postLobbyMilestones } from "@/lib/hackathons/lobbyMilestones";
 import { stageCountdown, toTiming } from "@/lib/hackathons/sprint";
 import { hasFeed, loadFeed, type FeedData } from "@/lib/hackathons/feed";
@@ -53,9 +57,13 @@ const NOTICES: Record<string, string> = {
 // SprintAutoRefresh reloads it when the state changes or an admin moves a time.
 export default async function SprintPage(props: {
   params: Promise<{ number: string }>;
-  searchParams: Promise<{ notice?: string; mockTeams?: string }>;
+  searchParams: Promise<{ notice?: string; mockTeams?: string; previewReviews?: string }>;
 }) {
-  const [{ number }, { notice, mockTeams }] = await Promise.all([props.params, props.searchParams]);
+  const [{ number }, { notice, mockTeams, previewReviews }] = await Promise.all([props.params, props.searchParams]);
+  // Development only: ?previewReviews=1 shows the review round with this
+  // Sprint's projects and mock answers (nothing is saved); =progress shows
+  // what everyone else sees.
+  const preview = process.env.NODE_ENV === "development" ? previewReviews ?? null : null;
   // Development only: ?mockTeams=N adds made-up teams to the live arena map.
   const mock = process.env.NODE_ENV === "development" ? Math.min(200, Math.max(0, Number(mockTeams) || 0)) : 0;
   const n = Number(number);
@@ -79,11 +87,26 @@ export default async function SprintPage(props: {
     sprint = (await loadSprint(supabase, n)) ?? sprint;
   }
 
+  // Peer reviews (036): handed out at the deadline, awards worked out at the
+  // reveal, by whichever page load comes first.
+  if (sprint.phase === "judging" || sprint.phase === "revealed") {
+    await runReviewsIfDue(sprint.id);
+  }
+
   // The lobby's milestone messages (once each; the database keeps count).
   if (sprint.is_published) await postLobbyMilestones(sprint.id);
 
   const data = await loadSprintPage(supabase, sprint, user.id, standing);
   const feed = hasFeed(sprint) ? await loadFeed(supabase, sprint, data.viewer, data.teams) : null;
+  // During judging: the viewer's own review round, and everyone's progress.
+  const judgingNow = sprint.phase === "judging" && sprint.state !== "cancelled";
+  const [myReviews, reviewProgress] = judgingNow
+    ? await Promise.all([
+        data.viewer.role === "participant" ? loadMyReviews(supabase, sprint.id, user.id) : Promise.resolve([] as MyReview[]),
+        supabase.rpc("hackathon_review_progress", { p_hackathon_id: sprint.id }),
+      ])
+    : [[] as MyReview[], { data: null }];
+  const progress = ((reviewProgress.data ?? []) as { assigned: number; completed: number; reviewers: number; reviewers_done: number }[])[0] ?? null;
   // While it's live (paused included) the page is the feed, the projects and
   // the stadium; before and after, the main column leads and the feed follows.
   const liveLayout = sprint.phase === "live" && sprint.state !== "cancelled";
@@ -142,6 +165,34 @@ export default async function SprintPage(props: {
         )}
 
         {liveLayout && <LiveExplainer sprint={sprint} teamCount={data.teams.length} />}
+
+        {preview && (
+          <>
+            <p style={{ fontSize: 12, color: "#f8c56a", marginBottom: 8 }}>
+              Design preview (development only): {preview === "progress" ? "what people who didn't compete see" : "mock answers, nothing is saved"}.
+            </p>
+            {preview === "progress" ? (
+              <ReviewProgress progress={{ assigned: 42, completed: 18, reviewers: 7, reviewers_done: 4 }} />
+            ) : (
+              <ReviewFlow
+                preview
+                sprint={{ number: sprint.number, judgingEndsAt: new Date(Date.now() + 2 * 3_600_000).toISOString() }}
+                initial={data.showcase.slice(0, 6).map((p, i) => ({
+                  id: `preview-${i}`,
+                  position: i + 1,
+                  score_problem: null,
+                  score_works: null,
+                  score_use: null,
+                  strength: null,
+                  suggestion: null,
+                  is_favourite: false,
+                  completed_at: null,
+                  project: { ...p, awards: [] },
+                }))}
+              />
+            )}
+          </>
+        )}
 
         {/* The opener speaks to members who haven't joined; everyone else keeps their callout. */}
         {sprint.state !== "draft" && !(opener && data.viewer.role === "spectator") && <ViewerCallout data={data} />}
@@ -225,6 +276,12 @@ export default async function SprintPage(props: {
         ) : (
           <div className="grid stack-md" style={{ gap: 16, gridTemplateColumns: "minmax(0, 1fr) 320px", alignItems: "start" }}>
             <div style={{ minWidth: 0 }}>
+              {judgingNow &&
+                (myReviews.length > 0 ? (
+                  <ReviewFlow sprint={{ number: sprint.number, judgingEndsAt: sprint.judging_ends_at }} initial={myReviews} />
+                ) : (
+                  <ReviewProgress progress={progress} />
+                ))}
               <MainColumn data={data} />
               {feed && <Feed data={data} feed={feed} userId={user.id} />}
             </div>
@@ -240,6 +297,29 @@ export default async function SprintPage(props: {
 }
 
 /** The part that changes most from state to state. Each block is its own file for later prompts. */
+/** For everyone not reviewing: how far along the review round is (counts only). */
+function ReviewProgress({ progress }: { progress: { assigned: number; completed: number; reviewers: number; reviewers_done: number } | null }) {
+  const pct = progress && progress.assigned > 0 ? Math.round((progress.completed / progress.assigned) * 100) : 0;
+  return (
+    <Tile kicker="Review round" style={{ marginBottom: 16 }} padding="16px 18px">
+      <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>The teams are reviewing each other.</p>
+      <p style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 4 }}>
+        Everyone who competed rates a few other projects. The awards work themselves out from those ratings at the reveal.
+      </p>
+      {progress && progress.assigned > 0 && (
+        <>
+          <div className={ui.barTrack} style={{ marginTop: 12 }}>
+            <div className={ui.barFill} style={{ background: "#f59e0b", width: `${pct}%` }} />
+          </div>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+            {progress.completed} of {progress.assigned} reviews in · {progress.reviewers_done} of {progress.reviewers} people finished
+          </p>
+        </>
+      )}
+    </Tile>
+  );
+}
+
 /** The finished Sprint's numbers, for the recap. */
 function recapStats(data: SprintPageData, feed: FeedData | null) {
   const builders = data.teams.reduce((n, t) => n + t.members.length, 0);

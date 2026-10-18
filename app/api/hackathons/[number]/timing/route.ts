@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { TIMING_COLUMNS } from "@/lib/hackathons/sprint";
 import { postLobbyMilestones } from "@/lib/hackathons/lobbyMilestones";
+import { runReviewsIfDue } from "@/lib/hackathons/reviews";
 
 // What an open Sprint page re-checks every minute and when the tab comes back
 // into view: the Sprint's stored times, pause/cancel, and the admin's
@@ -39,6 +40,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ number:
   }
   const { id, ...timing } = data as unknown as { id: string } & Record<string, unknown>;
   await postLobbyMilestones(id);
+  // Peer reviews (036): hand them out at the deadline, work out the awards at the reveal.
+  await runReviewsIfDue(id, "peer reviews (timing check)");
   return NextResponse.json(
     { timing },
     { headers: { "Cache-Control": "public, max-age=0, s-maxage=30, stale-while-revalidate=30" } },

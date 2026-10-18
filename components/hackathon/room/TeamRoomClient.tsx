@@ -23,7 +23,7 @@ import {
 import Tile from "@/components/ui/Tile";
 import ui from "@/components/ui/sleek.module.css";
 import { MembersStrip, RoomTitle } from "./RoomHeader";
-import { ChecklistPanel } from "./RoomSide";
+import { ChecklistPanel, FeedbackPanel, type TeamFeedback } from "./RoomSide";
 import DeadlineWarning from "@/components/hackathon/submission/DeadlineWarning";
 import TeamDocs, { type RemoteDocChange } from "./TeamDocs";
 import TeamLinks from "./TeamLinks";
@@ -71,6 +71,7 @@ export default function TeamRoomClient({
   writable,
   initialTab,
   checkedInAt,
+  feedback,
 }: {
   sprint: {
     id: string;
@@ -88,6 +89,8 @@ export default function TeamRoomClient({
   initialTab?: string;
   /** The viewer's kickoff check-in, for the checklist. */
   checkedInAt: string | null;
+  /** After the reveal: the peer reviews' feedback, anonymous (036); null before. */
+  feedback: TeamFeedback[] | null;
 }) {
   const router = useRouter();
   const teamId = room.team.id;
@@ -441,6 +444,7 @@ export default function TeamRoomClient({
             </button>
           </Tile>
         )}
+        {feedback && <FeedbackPanel feedback={feedback} />}
         <ChecklistPanel
           sprint={sprint}
           team={room.team}

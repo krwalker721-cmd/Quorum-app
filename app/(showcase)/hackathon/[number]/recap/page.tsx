@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import PublicShell, { SprintCta } from "@/components/hackathon/showcase/PublicShell";
 import AwardsShowcase from "@/components/hackathon/showcase/AwardsShowcase";
 import Theatre from "@/components/hackathon/showcase/Theatre";
+import { runReviewsIfDue } from "@/lib/hackathons/reviews";
 import SprintTimeline from "@/components/hackathon/showcase/SprintTimeline";
 import Gallery from "@/components/hackathon/showcase/Gallery";
 import ShareButtons from "@/components/hackathon/showcase/ShareButtons";
@@ -29,6 +30,8 @@ const loadRecap = cache(async (number: string) => {
   const db = await createClient();
   const sprint = await loadPublicSprint(db, n);
   if (!sprint) return null;
+  // The awards are worked out at the reveal by whichever page loads first (036).
+  await runReviewsIfDue(sprint.id);
   return { sprint, projects: await loadPublicProjects(db, sprint.id, { every: true }) };
 });
 

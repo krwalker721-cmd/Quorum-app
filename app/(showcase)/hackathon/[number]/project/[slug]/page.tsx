@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PublicShell, { SprintCta } from "@/components/hackathon/showcase/PublicShell";
 import ProjectShowcase from "@/components/hackathon/showcase/ProjectShowcase";
+import { runReviewsIfDue } from "@/lib/hackathons/reviews";
 import ShareButtons from "@/components/hackathon/showcase/ShareButtons";
 import ProjectCard, { awardName } from "@/components/hackathon/showcase/ProjectCard";
 import s from "@/components/hackathon/showcase/showcase.module.css";
@@ -37,6 +38,8 @@ const loadProject = cache(
     const db = await createClient();
     const sprint = await loadPublicSprint(db, n);
     if (!sprint) return null;
+    // The awards are worked out at the reveal by whichever page loads first (036).
+    await runReviewsIfDue(sprint.id);
     const projects = await loadPublicProjects(db, sprint.id, { allFor: slug });
     const project = projects.find((p) => p.team.slug === slug);
     return project ? { sprint, project, projects } : null;

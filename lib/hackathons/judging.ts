@@ -50,9 +50,20 @@ export type Score = Record<ScoreKey, number> & {
 export const SCORE_COLUMNS =
   "id, submission_id, score_problem, score_shipped, score_collaboration, score_potential, notes, updated_at";
 
-export type AwardType = "judges_pick" | "most_shipped" | "best_collaboration" | "most_likely_to_become_real" | "custom";
+export type AwardType =
+  | "community_pick"
+  | "crowd_favourite"
+  | "judges_pick"
+  | "most_shipped"
+  | "best_collaboration"
+  | "most_likely_to_become_real"
+  | "custom";
 
 export const AWARD_LABEL: Record<AwardType, string> = {
+  // Computed from peer reviews (036).
+  community_pick: "Community pick",
+  crowd_favourite: "Crowd favourite",
+  // From the judges era (031); kept for Sprints judged that way.
   judges_pick: "Judges' pick",
   most_shipped: "Most shipped",
   best_collaboration: "Best collaboration",

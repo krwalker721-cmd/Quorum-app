@@ -9,8 +9,7 @@ import SprintForm from "./sprints/SprintForm";
 import SprintControls from "./sprints/SprintControls";
 import Participants from "./sprints/Participants";
 import Teams from "./sprints/Teams";
-import Judges from "./sprints/Judges";
-import Judging from "./sprints/Judging";
+import Reviews from "./sprints/Reviews";
 import Lobby from "./sprints/Lobby";
 import ChangeLog from "./sprints/ChangeLog";
 import type { SprintDetail, SprintRow } from "./sprints/types";
@@ -114,7 +113,9 @@ function SprintList({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: ()
   );
 }
 
-const TABS = ["settings", "participants", "teams", "judges", "judging", "lobby", "log"] as const;
+// Judges gave way to peer reviews (036); their screens stay in the code for
+// Sprints judged the old way, but aren't offered.
+const TABS = ["settings", "participants", "teams", "reviews", "lobby", "log"] as const;
 type Tab = (typeof TABS)[number];
 
 function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
@@ -150,7 +151,6 @@ function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }
   const counts: Partial<Record<Tab, number>> = {
     participants: detail.participants.filter((p) => !p.withdrawn_at).length,
     teams: detail.teams.length,
-    judges: detail.judges.length,
     lobby: detail.lobby.length,
     log: detail.log.length,
   };
@@ -201,8 +201,7 @@ function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }
       )}
       {tab === "participants" && <Participants sprintId={id} participants={detail.participants} startsAt={detail.sprint.starts_at} onChanged={load} />}
       {tab === "teams" && <Teams sprintId={id} sprintNumber={s.number} teams={detail.teams} participants={detail.participants} onChanged={load} />}
-      {tab === "judges" && <Judges sprintId={id} judges={detail.judges} onChanged={load} />}
-      {tab === "judging" && <Judging sprintId={id} />}
+      {tab === "reviews" && <Reviews sprintId={id} />}
       {tab === "lobby" && <Lobby sprintId={id} messages={detail.lobby} onChanged={load} />}
       {tab === "log" && <ChangeLog entries={detail.log} />}
     </div>

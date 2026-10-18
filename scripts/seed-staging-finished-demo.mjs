@@ -13,9 +13,11 @@
 //   Night Owls   the test admin, Sam, Jonah   → "Afterhours"
 //   Rockets      Maya, Leo, Priya             → "Pitch Doctor"
 //   Solo Studio  Theo, Ava, Noor              → "Standup Bot"
-// Awards: Judges' pick (Afterhours), Most shipped and Most likely to become
-// real (Pitch Doctor), Best collaboration (Standup Bot). No judges or scores:
-// the judging screens show none. The spectator is left out.
+// Peer reviews (036): everyone reviews the two projects that aren't theirs,
+// with ratings, a line of feedback and a favourite, and the awards are then
+// worked out by the database exactly as at a real reveal (Community pick,
+// Most shipped, Most likely to become real, Crowd favourite). Night Owls'
+// room shows its anonymous feedback. The spectator is left out.
 //
 // Decks (035): Afterhours and Pitch Doctor get a short generated PDF in the
 // hackathon-decks bucket, for the demo day stage; Standup Bot has none, to
@@ -103,7 +105,7 @@ if (existing) {
   if (existing.status_override) must(await db.from("hackathons").update({ status_override: null }).eq("id", sprint), "unfreezing");
   // Reopen the awards so they (and the teams under them) can be cleared.
   if (existing.awards_finalized_at) must(await db.rpc("hackathon_unfinalize_awards", { p_hackathon_id: sprint }), "reopening the awards");
-  must(await db.from("hackathons").update(row).eq("id", sprint), "resetting the Sprint");
+  must(await db.from("hackathons").update({ ...row, reviews_assigned_at: null }).eq("id", sprint), "resetting the Sprint");
   must(await db.from("hackathon_teams").delete().eq("hackathon_id", sprint), "clearing teams");
   await clearDecks(sprint);
   must(await db.from("hackathon_registrations").delete().eq("hackathon_id", sprint), "clearing registrations");
@@ -188,20 +190,37 @@ await addDeck(sprint, rockets, pitchDoctor, "Pitch Doctor.pdf", [
   ["How it works", "It reads the deck like a partner would and drafts answers from your own numbers."],
 ]);
 
-// Awards, then finalize: public once revealed AND finalized (031).
-must(
-  await db.from("hackathon_awards").insert([
-    { hackathon_id: sprint, submission_id: afterhours, award_type: "judges_pick", citation: "The one every judge wanted to use the next morning." },
-    { hackathon_id: sprint, submission_id: pitchDoctor, award_type: "most_shipped", citation: "Three integrations, a practice mode and a demo video in 48 hours." },
-    { hackathon_id: sprint, submission_id: pitchDoctor, award_type: "most_likely_to_become_real", citation: "Two founders asked for access during judging." },
-    { hackathon_id: sprint, submission_id: standupBot, award_type: "best_collaboration", citation: "Strangers on Friday, a shipped product by Sunday." },
-  ]),
-  "awards",
-);
-must(await db.rpc("hackathon_finalize_awards", { p_hackathon_id: sprint }), "finalizing the awards");
+// Peer reviews (036), then the awards, worked out as at a real reveal.
+must(await db.rpc("hackathon_assign_reviews", { p_hackathon_id: sprint }), "handing out the reviews");
+const { data: given } = await db.from("hackathon_reviews").select("id, reviewer_id, submission_id").eq("hackathon_id", sprint).order("position");
+const RATINGS = {
+  [afterhours]: [5, 4, 5],
+  [pitchDoctor]: [4, 5, 4],
+  [standupBot]: [4, 3, 4],
+};
+const NOTES = {
+  [afterhours]: [["The calendar move is genuinely clever.", "Show what happens on a day with no free windows."], ["I'd use this tonight.", null], ["Clean, calm design.", "Let me pick my own focus hours too."]],
+  [pitchDoctor]: [["The practice mode is great.", "Shorter answers would read faster."], ["Most complete demo I saw.", null], ["Useful for every first pitch.", "Add a pricing slide."]],
+  [standupBot]: [["Writing check-ins is a real pain; this fixes it.", "Support more than Slack."], ["Simple and quick.", "The draft could sound more like me."], [null, "Show a before and after."]],
+};
+const seen = {};
+const favouredBy = new Set();
+for (const r of given ?? []) {
+  const i = (seen[r.submission_id] = (seen[r.submission_id] ?? -1) + 1);
+  const [p, w, u] = RATINGS[r.submission_id];
+  const [strength, suggestion] = NOTES[r.submission_id][i % 3];
+  // Each reviewer's favourite: Standup Bot when they saw it, else Afterhours.
+  const fav = !favouredBy.has(r.reviewer_id) && (r.submission_id === standupBot || (r.submission_id === afterhours && !(given ?? []).some((x) => x.reviewer_id === r.reviewer_id && x.submission_id === standupBot)));
+  if (fav) favouredBy.add(r.reviewer_id);
+  must(
+    await db.from("hackathon_reviews").update({ score_problem: p, score_works: w, score_use: u, strength, suggestion, is_favourite: fav }).eq("id", r.id),
+    "filling a review",
+  );
+}
+const awarded = must(await db.rpc("hackathon_compute_awards", { p_hackathon_id: sprint, p_force: true }), "working out the awards");
 
 const { data: view } = await db.from("hackathon_overview").select("number, title, state").eq("id", sprint).single();
-console.log(`  #${view.number}  ${view.title}  ${view.state} · 3 teams, 3 submissions, 4 awards (finalized)`);
+console.log(`  #${view.number}  ${view.title}  ${view.state} · 3 teams, 3 submissions, ${(given ?? []).length} reviews, ${awarded} awards worked out`);
 console.log(`  Members: /hackathon/${view.number} · public: /hackathon/${view.number}/recap and /hackathon/${view.number}/project/night-owls`);
 
 // ── Decks: a tiny PDF, one slide per page, in the team's folder.

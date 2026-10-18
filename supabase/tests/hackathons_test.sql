@@ -1990,7 +1990,7 @@ select tests.anon();
 select tests.eq('sealed: signed out, no screenshot either while live',
   tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-submissions' and name like tests.h11()::text || '/%' $$)::text, '0');
 select tests.eq('deck (035): signed out, no deck while live',
-  tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-decks' $$)::text, '0');
+  tests.count($$ select 1 from storage.objects where bucket_id = 'hackathon-decks' and name like tests.h11()::text || '/%' $$)::text, '0');
 
 -- The deadline: late writes refused, straight at the API.
 select tests.set_phase(tests.h11(), 'judging');
@@ -2363,5 +2363,136 @@ select tests.pause(tests.h14(), now() - interval '10 minutes');
 select tests.ok('relay (033): a paused Sprint says so, and where its clock stopped',
   (select state = 'paused' and phase = 'live' from hackathon_landing_relay() where number = tests.num(tests.h14())));
 select tests.clear_override(tests.h14());
+
+-- ============================================================================
+-- 036: peer reviews and computed awards
+-- ============================================================================
+select tests.as_db();
+create function tests.h19() returns uuid language sql immutable as $$ select 'd4000000-0000-0000-0000-000000000013'::uuid $$;
+create function tests.team19(p_name text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_teams where name = p_name and hackathon_id = tests.h19()
+$$;
+create function tests.sub19(p_team text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.hackathon_submissions where team_id = tests.team19(p_team)
+$$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+insert into auth.users (id, email, raw_user_meta_data)
+select tests.m(i), 'm' || i || '@hackathon.test', json_build_object('full_name', 'Member ' || i)::jsonb
+from generate_series(15, 21) i;
+update public.profiles set status = 'approved', trial_ends_at = now() + interval '20 days'
+where id in (select tests.m(i) from generate_series(15, 21) i);
+
+insert into public.hackathons (id, slug, title, is_published, reviews_per_person,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h19(), 'test-reviews', 'Review Sprint', true, 2,
+  now(), now(), now() + interval '1 day', now() + interval '2 days', now() + interval '3 days', now() + interval '3 days');
+select tests.set_phase(tests.h19(), 'registration');
+insert into public.hackathon_registrations (hackathon_id, user_id, mode)
+select tests.h19(), tests.m(i), 'team' from generate_series(15, 21) i;
+select hackathon_admin_create_team(tests.h19(), 'Ayes', array[tests.m(15), tests.m(16)]);
+select hackathon_admin_create_team(tests.h19(), 'Bees', array[tests.m(17), tests.m(18)]);
+select hackathon_admin_create_team(tests.h19(), 'Cees', array[tests.m(19), tests.m(20)]);
+select hackathon_admin_create_team(tests.h19(), 'Dees', array[tests.m(21)]);
+select tests.set_phase(tests.h19(), 'live');
+insert into public.hackathon_submissions (hackathon_id, team_id, project_name, tagline, problem, demo_url)
+select tests.h19(), tests.team19(n), n || ' app', 'tag', 'problem', 'https://' || lower(n) || '.example'
+from unnest(array['Ayes', 'Bees', 'Cees']) n;
+
+select tests.eq('reviews (036): nothing handed out before the deadline', hackathon_assign_reviews(tests.h19())::text, '0');
+select tests.set_phase(tests.h19(), 'judging');
+select tests.eq('reviews (036): handed out at the deadline (7 people x 2)', hackathon_assign_reviews(tests.h19())::text, '14');
+select tests.eq('reviews (036): ...once', hackathon_assign_reviews(tests.h19())::text, '0');
+select tests.eq('reviews (036): nobody reviews their own team',
+  tests.count($$ select 1 from hackathon_reviews r join hackathon_submissions s on s.id = r.submission_id
+                 join hackathon_team_members m on m.team_id = s.team_id and m.user_id = r.reviewer_id
+                 where r.hackathon_id = tests.h19() $$)::text, '0');
+select tests.ok('reviews (036): balanced, every project within one review of the others', (
+  select max(c) - min(c) <= 1 from (select count(*) c from hackathon_reviews where hackathon_id = tests.h19() group by submission_id) x));
+select tests.ok('reviews (036): the team without a project reviews too',
+  (select count(*) = 2 from hackathon_reviews where hackathon_id = tests.h19() and reviewer_id = tests.m(21)));
+
+select tests.login_m(15);
+select tests.eq('reviews (036): a reviewer sees only their own reviews',
+  tests.count($$ select 1 from hackathon_reviews where hackathon_id = tests.h19() $$)::text, '2');
+select tests.throws('reviews (036): nobody inserts reviews', $$
+  insert into hackathon_reviews (hackathon_id, submission_id, reviewer_id, position) values (tests.h19(), tests.sub19('Bees'), tests.m(15), 9) $$, 'permission denied');
+select tests.login_m(21);
+select tests.eq('reviews (036): a reviewer reads exactly the projects they were handed',
+  tests.count($$ select 1 from hackathon_submissions where hackathon_id = tests.h19() $$)::text, '2');
+update hackathon_reviews set score_problem = 4, score_works = 3 where reviewer_id = tests.m(21) and position = 1;
+select tests.ok('reviews (036): two of three ratings isn''t complete',
+  (select completed_at is null from hackathon_reviews where reviewer_id = tests.m(21) and position = 1));
+select tests.throws('reviews (036): can''t favourite an unfinished review', $$
+  select hackathon_pick_favourite((select id from hackathon_reviews where reviewer_id = tests.m(21) and position = 1)) $$, 'Rate a project');
+update hackathon_reviews set score_use = 5, strength = '  Clear demo  ', reviewer_id = tests.m(15) where reviewer_id = tests.m(21) and position = 1;
+select tests.ok('reviews (036): all three makes it complete; text trimmed; the reviewer can''t be changed',
+  (select completed_at is not null and strength = 'Clear demo' from hackathon_reviews where reviewer_id = tests.m(21) and position = 1));
+select tests.throws('reviews (036): feedback is short', $$
+  update hackathon_reviews set suggestion = repeat('x', 281) where reviewer_id = tests.m(21) and position = 1 $$, 'hackathon_reviews_suggestion_check');
+select tests.lives('reviews (036): picks a favourite', $$
+  select hackathon_pick_favourite((select id from hackathon_reviews where reviewer_id = tests.m(21) and position = 1)) $$);
+update hackathon_reviews set score_problem = 3, score_works = 3, score_use = 3 where reviewer_id = tests.m(21) and position = 2;
+select hackathon_pick_favourite((select id from hackathon_reviews where reviewer_id = tests.m(21) and position = 2));
+select tests.ok('reviews (036): one favourite per reviewer',
+  (select string_agg(position::text, ',') = '2' from hackathon_reviews where reviewer_id = tests.m(21) and is_favourite));
+select tests.eq('reviews (036): nobody else''s review changes',
+  tests.affected($$ update hackathon_reviews set score_problem = 1 where hackathon_id = tests.h19() and reviewer_id <> tests.m(21) $$)::text, '0');
+select tests.ok('reviews (036): progress in counts, for anyone following',
+  (select assigned = 14 and completed = 2 and reviewers = 7 and reviewers_done = 1 from hackathon_review_progress(tests.h19())));
+select tests.eq('reviews (036): scores aren''t for members', tests.count($$ select 1 from hackathon_review_standings(tests.h19()) $$)::text, '0');
+select tests.login('admin');
+select tests.eq('reviews (036): admins see the standings', tests.count($$ select 1 from hackathon_review_standings(tests.h19()) $$)::text, '3');
+select tests.as_db();
+select tests.throws('reviews (036): no awards before the reveal', $$ select hackathon_compute_awards(tests.h19()) $$, 'at the reveal');
+
+-- Everyone rates the same way: Bees 4/4/4, Ayes 2/5/2, Cees 5/5/5. Cees'
+-- members leave a review unfinished, so Cees can't win. Ayes collects the favourites.
+update hackathon_reviews r set
+  score_problem = case s.team_id when tests.team19('Ayes') then 2 when tests.team19('Bees') then 4 else 5 end,
+  score_works   = case s.team_id when tests.team19('Ayes') then 5 when tests.team19('Bees') then 4 else 5 end,
+  score_use     = case s.team_id when tests.team19('Ayes') then 2 when tests.team19('Bees') then 4 else 5 end,
+  is_favourite = false
+from hackathon_submissions s where s.id = r.submission_id and r.hackathon_id = tests.h19();
+update hackathon_reviews set score_use = null where hackathon_id = tests.h19() and reviewer_id in (tests.m(19), tests.m(20)) and position = 1;
+update hackathon_reviews set is_favourite = true
+where id in (select r.id from hackathon_reviews r where r.hackathon_id = tests.h19() and r.submission_id = tests.sub19('Ayes') and r.completed_at is not null);
+select tests.ok('reviews (036): Cees isn''t eligible (no teammate finished), the others are',
+  (select string_agg(t.name || ':' || st.eligible, ',' order by t.name) = 'Ayes:true,Bees:true,Cees:false'
+   from private.review_standings(tests.h19()) st join hackathon_teams t on t.id = st.team_id));
+
+select tests.set_phase(tests.h19(), 'revealed');
+select tests.login_m(16);
+select tests.throws('reviews (036): reviews close at the end of judging', $$
+  update hackathon_reviews set score_problem = 1 where reviewer_id = tests.m(16) and position = 1 $$, 'Reviews are closed');
+select tests.as_db();
+select tests.eq('reviews (036): four awards at the reveal', hackathon_compute_awards(tests.h19())::text, '4');
+select tests.eq('reviews (036): ...the right winners',
+  (select string_agg(a.award_type || '=' || t.name, ',' order by a.award_type)
+   from hackathon_awards a join hackathon_submissions s on s.id = a.submission_id join hackathon_teams t on t.id = s.team_id
+   where a.hackathon_id = tests.h19()),
+  'community_pick=Bees,crowd_favourite=Ayes,most_likely_to_become_real=Bees,most_shipped=Ayes');
+select tests.ok('reviews (036): ...finalized, so they''re public', (select awards_finalized_at is not null from hackathons where id = tests.h19()));
+select tests.eq('reviews (036): computed once', hackathon_compute_awards(tests.h19())::text, '0');
+select tests.anon();
+select tests.eq('reviews (036): signed out sees the awards after the reveal',
+  tests.count($$ select 1 from hackathon_awards where hackathon_id = tests.h19() $$)::text, '4');
+
+select tests.login_m(17);
+select tests.ok('reviews (036): a team reads its feedback after the reveal',
+  tests.count($$ select 1 from hackathon_team_feedback(tests.team19('Bees')) $$) > 0);
+select tests.eq('reviews (036): ...with no reviewer in it',
+  (select string_agg(k, ',' order by k) from (select jsonb_object_keys(to_jsonb(f)) k from (select * from hackathon_team_feedback(tests.team19('Bees')) limit 1) f) q),
+  'completed_at,score_problem,score_use,score_works,strength,suggestion');
+select tests.eq('reviews (036): ...and not another team''s',
+  tests.count($$ select 1 from hackathon_team_feedback(tests.team19('Ayes')) $$)::text, '0');
+
+select tests.as_db();
+update hackathon_reviews set hidden_at = now() where hackathon_id = tests.h19() and submission_id = tests.sub19('Ayes');
+select tests.eq('reviews (036): an admin can recompute after hiding reviews (no favourites left: three awards)', hackathon_compute_awards(tests.h19(), true)::text, '3');
+select tests.ok('reviews (036): hidden reviews no longer count (Ayes drops out)',
+  not exists (select 1 from hackathon_awards a where a.hackathon_id = tests.h19() and a.submission_id = tests.sub19('Ayes')));
 
 select tests.finish();

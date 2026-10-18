@@ -5,6 +5,7 @@ import NoGrid from "@/components/ui/NoGrid";
 import SprintAutoRefresh from "@/components/hackathon/SprintAutoRefresh";
 import { StatusBanner } from "@/components/hackathon/SprintSections";
 import TeamRoomClient from "@/components/hackathon/room/TeamRoomClient";
+import type { TeamFeedback } from "@/components/hackathon/room/RoomSide";
 import { loadSprint } from "@/lib/hackathons/page";
 import { getMemberStanding } from "@/lib/hackathons/viewer";
 import { TEAM_COLUMNS, loadRoom, type RoomTeam } from "@/lib/hackathons/room";
@@ -21,9 +22,11 @@ export const dynamic = "force-dynamic";
 // or cancelled; afterwards the room is theirs to read, for good. Admins read.
 export default async function TeamRoomPage(props: {
   params: Promise<{ number: string; slug: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; previewFeedback?: string }>;
 }) {
-  const [{ number, slug }, { tab }] = await Promise.all([props.params, props.searchParams]);
+  const [{ number, slug }, { tab, previewFeedback }] = await Promise.all([props.params, props.searchParams]);
+  // Development only: ?previewFeedback=1 shows mock peer-review feedback (036).
+  const previewing = process.env.NODE_ENV === "development" && previewFeedback === "1";
   const n = Number(number);
   if (!Number.isInteger(n) || n < 1) notFound();
 
@@ -53,7 +56,8 @@ export default async function TeamRoomPage(props: {
     redirect(`/hackathon/${n}?notice=room-private`);
   }
 
-  const [room, { data: reg }] = await Promise.all([
+  const revealed = sprint.phase === "revealed" && sprint.state !== "cancelled";
+  const [room, { data: reg }, { data: feedbackRows }] = await Promise.all([
     loadRoom(supabase, team),
     supabase
       .from("hackathon_registrations")
@@ -62,6 +66,8 @@ export default async function TeamRoomPage(props: {
       .eq("user_id", user.id)
       .is("withdrawn_at", null)
       .maybeSingle(),
+    // After the reveal: what fellow builders said, anonymously (036).
+    revealed ? supabase.rpc("hackathon_team_feedback", { p_team_id: team.id }) : Promise.resolve({ data: null }),
   ]);
   // Writable on the database's terms (private.can_write_team_room); the
   // database refuses anything else regardless.
@@ -90,8 +96,17 @@ export default async function TeamRoomPage(props: {
           writable={isMember && open}
           initialTab={tab}
           checkedInAt={(reg as { checked_in_at: string | null } | null)?.checked_in_at ?? null}
+          feedback={previewing ? PREVIEW_FEEDBACK : revealed ? ((feedbackRows ?? []) as TeamFeedback[]) : null}
         />
       </div>
     </>
   );
 }
+
+/** Development only: what a team's feedback looks like after the reveal. */
+const PREVIEW_FEEDBACK: TeamFeedback[] = [
+  { strength: "The calendar move is genuinely clever.", suggestion: "Show what happens on a day with no free windows.", score_problem: 5, score_works: 4, score_use: 5, completed_at: new Date().toISOString() },
+  { strength: "I'd use this tonight.", suggestion: null, score_problem: 4, score_works: 4, score_use: 5, completed_at: new Date().toISOString() },
+  { strength: null, suggestion: "Let me pick my own focus hours too.", score_problem: 5, score_works: 3, score_use: 4, completed_at: new Date().toISOString() },
+  { strength: "Clean, calm design.", suggestion: "A quick tour on first open would help.", score_problem: 4, score_works: 5, score_use: 4, completed_at: new Date().toISOString() },
+];

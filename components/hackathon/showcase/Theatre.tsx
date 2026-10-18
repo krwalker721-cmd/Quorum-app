@@ -32,14 +32,12 @@ export default function Theatre({
     [projects],
   );
   const [index, setIndex] = useState(0);
-  const [shot, setShot] = useState(0);
   const root = useRef<HTMLElement>(null);
 
   const go = useCallback(
     (i: number) => {
       if (ordered.length === 0) return;
       setIndex(((i % ordered.length) + ordered.length) % ordered.length);
-      setShot(0);
     },
     [ordered.length],
   );
@@ -103,45 +101,7 @@ export default function Theatre({
         </span>
       </div>
 
-      <div className={s.screen}>
-        {p.deckUrl ? (
-          <iframe key={p.submission_id} src={`${p.deckUrl}#view=FitH&toolbar=0`} title={`${p.fields.project_name || "Project"} presentation`} className={s.frame} />
-        ) : embed ? (
-          <iframe
-            key={p.submission_id}
-            src={embed}
-            title={`${p.fields.project_name || "Project"} video`}
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            allowFullScreen
-            className={s.frame}
-          />
-        ) : shots.length > 0 ? (
-          <div className={s.shots}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={shots[Math.min(shot, shots.length - 1)]} alt={`${p.fields.project_name || "Project"} screenshot ${shot + 1}`} className={s.shot} />
-            {shots.length > 1 && (
-              <div className={s.thumbs}>
-                {shots.map((u, i) => (
-                  <button key={u} type="button" className={`${s.thumb} ${i === shot ? s.thumbOn : ""}`} onClick={() => setShot(i)} aria-label={`Screenshot ${i + 1}`}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={u} alt="" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className={s.placeholder} style={{ ["--team" as string]: p.team.color ?? "#f59e0b" }}>
-            <span className={s.placeholderEmblem}>{p.team.emblem || p.team.name.slice(0, 1).toUpperCase()}</span>
-            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No slides or screenshots for this one.</span>
-            {demo && (
-              <a href={demo} target="_blank" rel="noopener noreferrer nofollow" className={s.demoBtn}>
-                Try the demo ↗
-              </a>
-            )}
-          </div>
-        )}
-      </div>
+      <ProjectScreen key={p.submission_id} project={p} />
 
       <div className={s.info}>
         <div className={s.infoMain}>
@@ -193,5 +153,57 @@ export default function Theatre({
         ))}
       </div>
     </section>
+  );
+}
+
+/**
+ * What a team shows on a stage: its deck in the browser's PDF viewer, or its
+ * video, its screenshots, or a placeholder with its demo. Used by demo day
+ * and by the peer reviews (036).
+ */
+export function ProjectScreen({ project: p, className }: { project: PublicProject; className?: string }) {
+  const [shot, setShot] = useState(0);
+  const embed = videoEmbed(p.fields.video_url);
+  const shots = p.screenshotUrls;
+  const demo = /^https?:\/\//i.test(p.fields.demo_url) ? p.fields.demo_url : null;
+  return (
+    <div className={`${s.screen} ${className ?? ""}`}>
+      {p.deckUrl ? (
+        <iframe src={`${p.deckUrl}#view=FitH&toolbar=0`} title={`${p.fields.project_name || "Project"} presentation`} className={s.frame} />
+      ) : embed ? (
+        <iframe
+          src={embed}
+          title={`${p.fields.project_name || "Project"} video`}
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          allowFullScreen
+          className={s.frame}
+        />
+      ) : shots.length > 0 ? (
+        <div className={s.shots}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={shots[Math.min(shot, shots.length - 1)]} alt={`${p.fields.project_name || "Project"} screenshot ${shot + 1}`} className={s.shot} />
+          {shots.length > 1 && (
+            <div className={s.thumbs}>
+              {shots.map((u, i) => (
+                <button key={u} type="button" className={`${s.thumb} ${i === shot ? s.thumbOn : ""}`} onClick={() => setShot(i)} aria-label={`Screenshot ${i + 1}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className={s.placeholder} style={{ ["--team" as string]: p.team.color ?? "#f59e0b" }}>
+          <span className={s.placeholderEmblem}>{p.team.emblem || p.team.name.slice(0, 1).toUpperCase()}</span>
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No slides or screenshots for this one.</span>
+          {demo && (
+            <a href={demo} target="_blank" rel="noopener noreferrer nofollow" className={s.demoBtn}>
+              Try the demo ↗
+            </a>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
