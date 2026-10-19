@@ -5,6 +5,7 @@ export type SprintRow = {
   number: number;
   slug: string;
   title: string;
+  tagline: string | null;
   state: string;
   phase: string;
   is_published: boolean;

@@ -33,7 +33,7 @@ type Section =
 
 const NAV: { id: Section; label: string }[] = [
   { id: "overview", label: "overview" },
-  { id: "sprints", label: "sprints" },
+  { id: "sprints", label: "buildathons" },
   { id: "countdowns", label: "countdowns" },
   { id: "users", label: "users" },
   { id: "subscriptions", label: "subscriptions" },

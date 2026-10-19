@@ -11,6 +11,7 @@ import { LOBBY_MAX_LENGTH } from "@/lib/hackathons/lobby";
 import RoomThread, { type AuthorMeta, type RoomMessage } from "@/components/rooms/RoomThread";
 import { useStage } from "./LiveStage";
 import stageCss from "./liveStage.module.css";
+import { sayBuildathon } from "@/lib/hackathons/defaults";
 
 // The Sprint chat (was the lobby page, Phase 7; on the Sprint page since
 // migration 034): one text-message thread for everyone in the Sprint, drawn
@@ -247,7 +248,7 @@ export default function SprintFeed({
       ...messages.map((m) => ({
         id: m.id,
         authorId: m.user_id,
-        body: m.body,
+        body: m.is_system ? sayBuildathon(m.body) : m.body,
         isSystem: m.is_system,
         createdAt: m.created_at,
         deleted: Boolean(m.deleted_at),
@@ -292,14 +293,14 @@ export default function SprintFeed({
   return (
     <section
       id="feed"
-      aria-label="Sprint chat"
+      aria-label="Buildathon chat"
       style={stage?.inDrawer ? { scrollMarginTop: 80, display: "flex", flexDirection: "column", height: "100%" } : { scrollMarginTop: 80, marginBottom: 16 }}
     >
       <div className="flex items-center justify-between gap-3" style={{ marginBottom: 10, minHeight: 28 }}>
         <span className="flex items-baseline gap-3 min-w-0">
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap" }}>Sprint chat</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap" }}>Buildathon chat</h2>
           <span className="truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            Everyone in Sprint #{sprint.number}, live
+            Everyone in Buildathon #{sprint.number}, live
           </span>
         </span>
         {stage?.controls}
@@ -348,7 +349,7 @@ export default function SprintFeed({
         nameOf={nameOf}
         authorMeta={authorMeta}
         maxLength={LOBBY_MAX_LENGTH}
-        placeholder="Message everyone in the Sprint… (no spoilers: projects stay sealed)"
+        placeholder="Message everyone in the Buildathon… (no spoilers: projects stay sealed)"
         onSend={send}
         actions={
           isAdmin

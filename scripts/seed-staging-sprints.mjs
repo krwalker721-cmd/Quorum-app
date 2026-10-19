@@ -109,7 +109,7 @@ for (const s of SPRINTS) {
     tagline: "A staging Sprint for checking one state of the Hackathon tab",
     theme_hidden: "Tools for founders who build at night",
     rules:
-      "- Build something **new** during the 48 hours.\n- Teams of 2 to 4.\n- Submit before the deadline: the form locks on the dot.",
+      "- A business idea, taken to a working MVP or proven with something real.\n- Teams of 2 to 4.\n- Submit before the deadline: the form locks on the dot.",
     max_team_size: 4,
     min_team_size: 2,
     is_published: true,

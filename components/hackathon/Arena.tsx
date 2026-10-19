@@ -196,7 +196,7 @@ export default function Arena({
     return (
       <Tile kicker={title} style={{ marginBottom: 16 }}>
         <div className={ui.empty}>
-          <p className={ui.emptyTitle}>{phase === "registration" ? "No teams yet." : "No teams in this Sprint."}</p>
+          <p className={ui.emptyTitle}>{phase === "registration" ? "No teams yet." : "No teams in this Buildathon."}</p>
           {phase === "registration" && <p className={ui.emptySub}>Teams appear here as they form.</p>}
         </div>
       </Tile>

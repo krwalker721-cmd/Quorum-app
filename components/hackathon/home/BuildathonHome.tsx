@@ -4,10 +4,11 @@ import { REVIEW_QUESTIONS } from "@/lib/hackathons/reviewShared";
 import CurrentSprintBanner, { type CurrentSprint } from "./CurrentSprintBanner";
 import s from "./home.module.css";
 
-// The Buildathon tab's home: the current Sprint (if any) with its clock and
+// The Buildathon tab's home: the current Buildathon (if any) with its clock and
 // the way in, then what the format is, shown as a place to do serious work: an
-// example of a live Sprint, the format's spec, how a Sprint runs and how
-// projects are judged. Each Sprint keeps its own page (/hackathon/N).
+// example of a live one, the format's spec, what it's for (a business idea made
+// real, with founders you haven't built with yet), how one runs and how
+// projects are judged. Each Buildathon keeps its own page (/hackathon/N).
 
 export default function BuildathonHome({ hasPast, current }: { hasPast: boolean; current: CurrentSprint | null }) {
   return (
@@ -58,7 +59,7 @@ function LiveSprintMock() {
     <div aria-hidden>
       <div className={s.mock}>
         <div className={s.mockBar}>
-          <span>Example Sprint · Arena</span>
+          <span>Example Buildathon · Arena</span>
           <span className={s.liveChip}>
             <span className={s.liveDot} />
             Live
@@ -86,23 +87,40 @@ function LiveSprintMock() {
           <div className={s.barFill} style={{ width: "33%" }} />
         </div>
       </div>
-      <p className={s.mockCaption}>Example: the arena during a live Sprint</p>
+      <p className={s.mockCaption}>Example: the arena during a live Buildathon</p>
     </div>
   );
 }
 
 const SPEC = [
   { key: "Duration", val: "48 hours", note: "kickoff to deadline" },
-  { key: "Teams", val: "2 to 4 founders", note: "your own, or matched" },
-  { key: "Visibility", val: "Sealed", note: "until the reveal" },
-  { key: "Outcome", val: "Awards and a public page", note: "no rankings" },
+  { key: "Teams", val: "2 to 4 founders", note: "your own, or matched across cohorts" },
+  { key: "Build", val: "A business idea", note: "around a theme set each time" },
+  { key: "Outcome", val: "An MVP or a proven idea", note: "a public page and real feedback" },
+];
+
+// Why it exists (owner, 2026-10-18): to get founders creating together and
+// meeting people they'd build with again, around ideas that could be real.
+const PURPOSE = [
+  {
+    title: "A real business idea",
+    text: "Not a toy or a side project: a product or company that solves a problem people would pay for. You leave with a working MVP, or the idea proven with something real: a prototype, a landing page with sign-ups, conversations with customers.",
+  },
+  {
+    title: "People you haven't built with",
+    text: "Teams form across cohorts, and the random pool matches anyone who comes alone. 48 hours of building together tells you more about someone than a year of coffees.",
+  },
+  {
+    title: "Connections that outlast it",
+    text: "Every team gets honest feedback from the founders who reviewed it, and the best projects keep going. Afterwards the team room stays yours, and the people you met stay a message away.",
+  },
 ];
 
 const PHASES: { when: string; title: string; text: string; pic: React.ReactNode }[] = [
   {
     when: "Up to 7 days before",
     title: "Registration",
-    text: "Sign up with your own team, or join the random pool.",
+    text: "Sign up with your own team, or join the random pool to meet founders you don't know yet.",
     pic: (
       <>
         <span className={`${s.miniPill} ${s.miniPillOn}`}>Random pool</span>
@@ -125,7 +143,7 @@ const PHASES: { when: string; title: string; text: string; pic: React.ReactNode 
   {
     when: "Kickoff → 48 hours",
     title: "Build",
-    text: "The theme drops. Each team works in a private room and submits before the deadline.",
+    text: "The theme drops. Each team picks a business problem within it, builds in a private room, and submits before the deadline.",
     pic: (
       <>
         <span className={s.miniDigits}>47:59:59</span>
@@ -153,20 +171,21 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
         <div aria-hidden className={s.glow} />
         <div className={s.heroGrid}>
           <div>
-            {!current && <Status>No Sprint scheduled yet</Status>}
+            {!current && <Status>No Buildathon scheduled yet</Status>}
             <h1 className={`${s.pageTitle} ${ui.titleGradient}`}>Buildathon</h1>
             <p className={s.heroLede}>
-              48-hour Sprints where founders from across the network form teams and build something new from scratch.
-              There are no judges: after the deadline everyone who built reviews a few other projects, and the awards work
-              themselves out from those reviews.
+              48 hours to turn a business idea into something real, with founders from across the network: a working MVP, or
+              the idea proven with something people can see. Teams form across cohorts, so you leave with a project and people
+              you&rsquo;d build with again. There are no judges: everyone who built reviews a few other projects, and the
+              awards work themselves out.
             </p>
             <div className={s.quietLinks}>
               <a href="#runs" className={s.quietLink}>
-                How a Sprint runs ↓
+                How a Buildathon runs ↓
               </a>
               {hasPast && (
                 <Link href="/hackathon/archive" className={s.quietLink}>
-                  Past Sprints →
+                  Past Buildathons →
                 </Link>
               )}
             </div>
@@ -185,9 +204,22 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
         ))}
       </div>
 
+      <div className={s.secHead}>
+        <h2 className={s.secTitle}>What it&rsquo;s for</h2>
+        <span className={s.secNote}>Building together is how founders find the people worth building with</span>
+      </div>
+      <div className={s.purpose}>
+        {PURPOSE.map((p) => (
+          <div key={p.title} className={s.criterion}>
+            <p className={s.critName}>{p.title}</p>
+            <p className={s.critQ}>{p.text}</p>
+          </div>
+        ))}
+      </div>
+
       <div id="runs" className={s.secHead}>
-        <h2 className={s.secTitle}>How a Sprint runs</h2>
-        <span className={s.secNote}>Every time is set per Sprint and shown in your time zone</span>
+        <h2 className={s.secTitle}>How a Buildathon runs</h2>
+        <span className={s.secNote}>Every time is set per Buildathon and shown in your time zone</span>
       </div>
       <div className={s.timeline}>
         {PHASES.map((p) => (
@@ -235,7 +267,7 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
       </div>
 
       {!current && (
-        <p className={s.closingLine}>The next Sprint will be announced here, with its dates, a countdown and a way to sign up.</p>
+        <p className={s.closingLine}>The next Buildathon will be announced here, with its dates, a countdown and a way to sign up.</p>
       )}
     </>
   );

@@ -320,7 +320,7 @@ function SprintCard({ s, now, act }: { s: SprintRow; now: number | null; act: (b
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm text-text-primary">
           {s.countdown_headline_override || s.title}
-          <span className="font-mono text-[0.6rem] text-text-faint ml-2">Sprint #{s.number} · {s.state}</span>
+          <span className="font-mono text-[0.6rem] text-text-faint ml-2">Buildathon #{s.number} · {s.state}</span>
         </p>
         <span className="font-mono text-[0.65rem]" style={{ color: shows ? "#22c55e" : "var(--text-muted)" }}>
           {!s.is_published ? "draft: not shown" : s.status_override === "cancelled" ? "cancelled: not shown" : shows ? "on" : "off"}
@@ -335,7 +335,7 @@ function SprintCard({ s, now, act }: { s: SprintRow; now: number | null; act: (b
           <p className="font-mono text-sm tabular-nums" style={{ color: "#f8c56a" }}>
             {next && now !== null && s.status_override !== "paused" ? formatRemaining(Date.parse(next.at) - now) : "—"}
           </p>
-          <p className="font-mono text-[0.6rem] text-text-faint">Always the Sprint&apos;s real times. Moving it moves the Sprint.</p>
+          <p className="font-mono text-[0.6rem] text-text-faint">Always the Buildathon&apos;s real times. Moving it moves the Buildathon.</p>
         </div>
         <div className="flex flex-wrap gap-4 content-start">
           <Switch
@@ -362,9 +362,9 @@ function SprintCard({ s, now, act }: { s: SprintRow; now: number | null; act: (b
               const risky = at <= (now ?? Date.now()) + HOUR || running;
               if (
                 !(await askConfirm(
-                  `Push Sprint #${s.number}'s ${next.label.toLowerCase()} and everything after it back by ${minutes >= 1440 && minutes % 1440 === 0 ? `${minutes / 1440} day(s)` : `${minutes / 60} hour(s)`}?\n\n` +
-                    "This moves the Sprint's real times: countdowns, locks and emails all follow." +
-                    (risky ? "\n\nThat time is under an hour away or the Sprint is running: members see it within a minute." : ""),
+                  `Push Buildathon #${s.number}'s ${next.label.toLowerCase()} and everything after it back by ${minutes >= 1440 && minutes % 1440 === 0 ? `${minutes / 1440} day(s)` : `${minutes / 60} hour(s)`}?\n\n` +
+                    "This moves the Buildathon's real times: countdowns, locks and emails all follow." +
+                    (risky ? "\n\nThat time is under an hour away or the Buildathon is running: members see it within a minute." : ""),
                   { ok: "push back" },
                 ))
               )
@@ -537,7 +537,7 @@ function LandingNow({ version, now, waitlistOn }: { version: unknown; now: numbe
   const item = pickRelay(relay, now, waitlistOn);
   return (
     <Card className="mb-4">
-      <p className="font-mono text-[0.65rem] text-text-faint">on the landing page now (one message: standalone, then a sprint about to start, live, judging, the latest recap)</p>
+      <p className="font-mono text-[0.65rem] text-text-faint">on the landing page now (one message: standalone, then a buildathon about to start, live, judging, the latest recap)</p>
       <p className="text-sm text-text-primary mt-1">
         {item ? (
           <>

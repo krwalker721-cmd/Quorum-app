@@ -152,12 +152,12 @@ export async function POST(req: Request) {
         .select("number, registration_opens_at, starts_at, ends_at, reveal_at")
         .eq("id", id)
         .maybeSingle();
-      if (!s) return NextResponse.json({ error: "No such Sprint." }, { status: 404 });
+      if (!s) return NextResponse.json({ error: "No such Buildathon." }, { status: 404 });
       const { data: dbNow } = await read.rpc("server_now");
       const next = nextMilestone(s, dbNow ? Date.parse(dbNow as string) : Date.now());
-      if (!next) return NextResponse.json({ error: "This Sprint has nothing left to count down to." }, { status: 400 });
+      if (!next) return NextResponse.json({ error: "This Buildathon has nothing left to count down to." }, { status: 400 });
       return done(
-        await adminDb(g.admin, `Countdown: pushed Sprint #${s.number}'s ${labelFor(next.key).toLowerCase()} and everything after it back ${minutesText(minutes)}`).rpc(
+        await adminDb(g.admin, `Countdown: pushed Buildathon #${s.number}'s ${labelFor(next.key).toLowerCase()} and everything after it back ${minutesText(minutes)}`).rpc(
           "hackathon_admin_shift",
           { p_hackathon_id: id, p_from: next.key, p_minutes: minutes },
         ),
@@ -170,10 +170,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Unknown switch." }, { status: 400 });
       }
       const { data: s } = await read.from("hackathons").select("number").eq("id", String(b.id ?? "")).maybeSingle();
-      if (!s) return NextResponse.json({ error: "No such Sprint." }, { status: 404 });
+      if (!s) return NextResponse.json({ error: "No such Buildathon." }, { status: 404 });
       const where = field === "show_countdown_in_app" ? "in the app" : "on the landing page";
       return done(
-        await adminDb(g.admin, `Countdown: ${b.value ? "showing" : "hiding"} Sprint #${s.number}'s countdown ${where}`)
+        await adminDb(g.admin, `Countdown: ${b.value ? "showing" : "hiding"} Buildathon #${s.number}'s countdown ${where}`)
           .from("hackathons")
           .update({ [field]: Boolean(b.value) })
           .eq("id", String(b.id)),

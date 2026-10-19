@@ -23,7 +23,7 @@ import {
 import Tile from "@/components/ui/Tile";
 import ui from "@/components/ui/sleek.module.css";
 import { MembersStrip, RoomTitle } from "./RoomHeader";
-import { ChecklistPanel, FeedbackPanel, type TeamFeedback } from "./RoomSide";
+import { ChecklistPanel, FeedbackPanel, WhatsNextPanel, type TeamFeedback } from "./RoomSide";
 import DeadlineWarning from "@/components/hackathon/submission/DeadlineWarning";
 import TeamDocs, { type RemoteDocChange } from "./TeamDocs";
 import TeamLinks from "./TeamLinks";
@@ -445,6 +445,9 @@ export default function TeamRoomClient({
           </Tile>
         )}
         {feedback && <FeedbackPanel feedback={feedback} />}
+        {isMember && sprint.state === "revealed" && (
+          <WhatsNextPanel members={room.members} viewerId={viewerId} projectName={submission?.is_complete ? submission.project_name : null} />
+        )}
         <ChecklistPanel
           sprint={sprint}
           team={room.team}
@@ -466,9 +469,9 @@ function closedReason(state: SprintState, isMember: boolean): string {
   if (!isMember) return "You're viewing this room as an admin. Only the team can post or edit here.";
   switch (state) {
     case "paused":
-      return "The Sprint is paused, so the room is read-only until it resumes.";
+      return "The Buildathon is paused, so the room is read-only until it resumes.";
     case "cancelled":
-      return "This Sprint was cancelled. The room is read-only; everything in it stays here for your team.";
+      return "This Buildathon was cancelled. The room is read-only; everything in it stays here for your team.";
     case "revealed":
       return "The results are out, so the room is read-only now. Everything in it stays here for your team.";
     default:

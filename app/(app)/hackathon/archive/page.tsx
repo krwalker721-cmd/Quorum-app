@@ -43,13 +43,13 @@ export default async function HackathonArchive() {
           className={`${ui.titleGradient} ${ui.balance}`}
           style={{ fontSize: 28, fontWeight: 650, letterSpacing: "-0.03em", marginTop: 12, marginBottom: 16 }}
         >
-          Past Sprints
+          Past Buildathons
         </h1>
 
         {past.length === 0 ? (
           <Tile>
             <div className={ui.empty}>
-              <p className={ui.emptyTitle}>No Sprint has finished yet.</p>
+              <p className={ui.emptyTitle}>No Buildathon has finished yet.</p>
             </div>
           </Tile>
         ) : (
@@ -59,12 +59,11 @@ export default async function HackathonArchive() {
                 <Tile padding="14px 16px">
                   <Link href={`/hackathon/${s.number}`} style={{ textDecoration: "none", display: "block" }}>
                     <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                      <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Sprint #{s.number}</span>
+                      <span style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>Buildathon #{s.number}</span>
                       <span className={ui.chip} style={s.state === "cancelled" ? { color: "#fca5a5" } : undefined}>
                         {STATE_LABEL[s.state]}
                       </span>
                     </div>
-                    <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", marginTop: 4 }}>{s.title}</p>
                     {s.tagline && <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>{s.tagline}</p>}
                     <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>
                       {s.state === "cancelled" ? "Cancelled " : "Revealed "}

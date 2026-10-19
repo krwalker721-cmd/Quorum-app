@@ -103,7 +103,7 @@ export default function Judging({ sprintId }: { sprintId: string }) {
     ].filter(Boolean);
     const msg =
       `Finalize ${awards.length} award${awards.length === 1 ? "" : "s"}?\n\n` +
-      (revealed ? "The Sprint is revealed, so they appear on the public page right away." : "They become public at the reveal.") +
+      (revealed ? "The Buildathon is revealed, so they appear on the public page right away." : "They become public at the reveal.") +
       " The board locks until you reopen it." +
       (warnings.length ? `\n\nBefore you do:\n• ${warnings.join("\n• ")}` : "");
     if (await askConfirm(msg, { ok: "finalize" })) await run({ op: "finalize" });
@@ -111,7 +111,7 @@ export default function Judging({ sprintId }: { sprintId: string }) {
 
   async function reopen() {
     const msg = revealed
-      ? "Reopen the awards?\n\nThe Sprint is revealed, so they disappear from the public page until you finalize again."
+      ? "Reopen the awards?\n\nThe Buildathon is revealed, so they disappear from the public page until you finalize again."
       : "Reopen the awards so you can change them?";
     if (await askConfirm(msg, { ok: "reopen" })) await run({ op: "unfinalize" });
   }
@@ -137,7 +137,7 @@ export default function Judging({ sprintId }: { sprintId: string }) {
             </p>
             {!finalized && revealed && (
               <p className="font-mono text-[0.7rem]" style={{ color: "#f87171" }}>
-                the sprint is revealed and its awards aren&apos;t finalized, so the public page shows none.
+                the buildathon is revealed and its awards aren&apos;t finalized, so the public page shows none.
               </p>
             )}
             {!finalized && !revealed && revealMs !== null && revealMs - now < 24 * 3_600_000 && revealMs > now && (

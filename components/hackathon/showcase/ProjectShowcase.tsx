@@ -55,7 +55,7 @@ export default function ProjectShowcase({
       <div className="flex items-center gap-2.5" style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
         <TeamBadge name={team.name} emblem={team.emblem} color={team.color} size={22} />
         <span>
-          {team.name} · Sprint #{sprintNumber}
+          {team.name} · Buildathon #{sprintNumber}
         </span>
       </div>
       <h1

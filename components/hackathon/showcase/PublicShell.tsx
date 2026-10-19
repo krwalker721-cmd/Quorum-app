@@ -39,11 +39,11 @@ export function SprintCta() {
       }}
     >
       <p style={{ fontSize: 22, fontWeight: 650, letterSpacing: "-0.02em", color: "var(--text-primary)", textWrap: "balance" }}>
-        Built in 48 hours at a Quorum Sprint.
+        Built in 48 hours at a Quorum Buildathon.
       </p>
       <p style={{ fontSize: 15, color: "var(--text-secondary)", marginTop: 6, textWrap: "balance" }}>
-        Quorum is a private network of founders. Every Sprint, members team up across cohorts and ship something new. Want in on
-        the next one?
+        Quorum is a private network of founders. At every Buildathon, members team up across cohorts and turn a business idea into
+        something real in 48 hours. Want in on the next one?
       </p>
       <div style={{ marginTop: 18 }}>
         <JoinCta label="See Quorum" />

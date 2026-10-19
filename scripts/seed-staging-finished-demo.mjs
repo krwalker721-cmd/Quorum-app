@@ -75,15 +75,23 @@ const [maya, leo, priya, sam, jonah, ava, noor, theo] = await Promise.all(
 );
 const me = await byEmail("admin-test@quorum.test", "scripts/db.sh staging:seed-admin");
 
+// The standard tagline, rules and welcome, read from lib/hackathons/defaults.ts
+// so the demo says exactly what a new Buildathon starts with.
+const defaultsSrc = readFileSync(resolve(root, "lib/hackathons/defaults.ts"), "utf8");
+const standard = (name) => {
+  const m = new RegExp(`export const ${name} =\\s*(?:\`([\\s\\S]*?)\`|"((?:[^"\\\\]|\\\\.)*)");`).exec(defaultsSrc);
+  if (!m) throw new Error(`${name} not found in lib/hackathons/defaults.ts`);
+  return m[1] ?? JSON.parse(`"${m[2]}"`);
+};
+
 // The Sprint. Kickoff ten days ago; 48 h build; judging until yesterday's reveal.
 const kickoff = -10 * DAY;
 const row = {
   slug: "finished-demo",
-  title: "Finished demo",
-  tagline: "48 hours to build a tool founders actually use",
+  title: "Buildathon",
+  tagline: standard("DEFAULT_TAGLINE"),
   theme_hidden: "Tools for founders who build at night",
-  rules:
-    "- Build something **new** during the 48 hours.\n- Teams of 2 to 4, or join the random pool and we'll match you.\n- Submit before the deadline: the form locks on the dot.",
+  rules: standard("DEFAULT_RULES"),
   registration_opens_at: at(kickoff - 7 * DAY),
   team_lock_at: at(kickoff - HOUR),
   starts_at: at(kickoff),

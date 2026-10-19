@@ -127,8 +127,8 @@ export default function ScorePanel({
       ? "Scoring opens when submissions close."
       : win === "frozen"
         ? sprint.state === "cancelled"
-          ? "This Sprint was cancelled."
-          : "The Sprint is paused, so scores are frozen."
+          ? "This Buildathon was cancelled."
+          : "The Buildathon is paused, so scores are frozen."
         : win === "closed"
           ? row
             ? "Scoring is closed. This is the score you gave."

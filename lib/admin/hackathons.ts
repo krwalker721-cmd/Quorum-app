@@ -21,13 +21,13 @@ export async function guard(req: Request): Promise<Guarded> {
 // Constraint names from migrations 018 and 022, in words.
 const CONSTRAINT_MESSAGES: Record<string, string> = {
   hackathons_timeline_order: "The dates are out of order.",
-  hackathons_published_has_dates: "A published Sprint needs all six dates. Unpublish it first to clear one.",
-  hackathons_slug_key: "That slug is already used by another Sprint.",
+  hackathons_published_has_dates: "A published Buildathon needs all six dates. Unpublish it first to clear one.",
+  hackathons_slug_key: "That slug is already used by another Buildathon.",
   hackathons_team_size_order: "The minimum team size can't be more than the maximum.",
   hackathons_lobby_after_open: "The lobby can't close before registration opens.",
-  hackathon_teams_name_unique: "Another team in this Sprint already has that name.",
-  hackathon_judges_email_unique: "That email has already been invited to judge this Sprint.",
-  hackathon_judges_hackathon_id_user_id_key: "They're already a judge of this Sprint.",
+  hackathon_teams_name_unique: "Another team in this Buildathon already has that name.",
+  hackathon_judges_email_unique: "That email has already been invited to judge this Buildathon.",
+  hackathon_judges_hackathon_id_user_id_key: "They're already a judge of this Buildathon.",
   hackathon_awards_one_winner: "That award already has a winner. Change the winner instead.",
   hackathon_awards_citation_length: "Keep the citation to 280 characters.",
   hackathon_awards_submission_id_award_type_custom_label_key: "That project already has an award with that name.",
@@ -73,7 +73,7 @@ export function sprintFields(
     const s = typeof v === "string" ? v.trim() : "";
     values[f] = s === "" ? null : s;
   }
-  if ("title" in values && !values.title) return { ok: false, error: "Give the Sprint a title." };
+  if ("title" in values && !values.title) return { ok: false, error: "Give the Buildathon a title." };
   if (values.slug && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(String(values.slug))) {
     return { ok: false, error: "The slug may use lower-case letters, numbers and single dashes." };
   }

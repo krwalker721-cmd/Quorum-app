@@ -63,7 +63,7 @@ export default function Theatre({
   if (ordered.length === 0) {
     return (
       <section ref={root} className={`${s.theatre} ${fill ? s.fill : ""}`} aria-label="Demo day">
-        <div className={s.empty}>No project was finished in this Sprint, so there&rsquo;s nothing to present.</div>
+        <div className={s.empty}>No project was finished in this Buildathon, so there&rsquo;s nothing to present.</div>
       </section>
     );
   }

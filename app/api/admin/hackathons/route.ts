@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { adminDb } from "@/lib/admin/db";
 import { dbErrorResponse, guard, sprintFields } from "@/lib/admin/hackathons";
 
-// Every Sprint, drafts included, with its derived state and head counts.
+// Every Buildathon, drafts included, with its derived state and head counts.
 export async function GET(req: Request) {
   const g = await guard(req);
   if (!g.ok) return g.response;
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
   const { data: sprints, error } = await db
     .from("hackathon_overview")
-    .select("id, number, slug, title, state, phase, is_published, registration_opens_at, starts_at, ends_at, reveal_at, status_override")
+    .select("id, number, slug, title, tagline, state, phase, is_published, registration_opens_at, starts_at, ends_at, reveal_at, status_override")
     .order("number", { ascending: false });
   if (error) return dbErrorResponse(error, 500);
 
@@ -41,9 +41,9 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const parsed = sprintFields(body);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
-  if (!parsed.values.title) return NextResponse.json({ error: "Give the Sprint a title." }, { status: 400 });
+  if (!parsed.values.title) return NextResponse.json({ error: "Give the Buildathon a title." }, { status: 400 });
 
-  const { data, error } = await adminDb(g.admin, `Created Sprint "${parsed.values.title}"`)
+  const { data, error } = await adminDb(g.admin, "Created a Buildathon")
     .from("hackathons")
     .insert({ ...parsed.values, created_by: g.admin.id, is_published: false })
     .select("id")

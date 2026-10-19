@@ -129,7 +129,7 @@ export default function RevealMoment({
       >
         Skip
       </button>
-      <p className={s.stageTitle}>{allTurned ? "Here's what everyone built" : `Unsealing Sprint #${sprintNumber}…`}</p>
+      <p className={s.stageTitle}>{allTurned ? "Here's what everyone built" : `Unsealing Buildathon #${sprintNumber}…`}</p>
       <div className={s.stageGrid}>
         {shown.map((team, i) => {
           const isCracked = i < cracked;

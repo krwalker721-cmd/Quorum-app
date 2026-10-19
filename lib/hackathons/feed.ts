@@ -50,7 +50,7 @@ export async function loadFeed(
     ? null
     : !open
       ? sprint.state === "cancelled"
-        ? "This Sprint was cancelled, so the feed is read-only."
+        ? "This Buildathon was cancelled, so the feed is read-only."
         : "The feed has closed. Everything here stays readable."
       : !mayPost
         ? "Your membership has lapsed, so you can read the feed but not post. Renew to join in again."

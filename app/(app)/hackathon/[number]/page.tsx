@@ -13,6 +13,7 @@ import CheckIn from "@/components/hackathon/CheckIn";
 import QueueLive from "@/components/hackathon/QueueLive";
 import Arena from "@/components/hackathon/Arena";
 import RevealedShowcase, { RevealedRecap } from "@/components/hackathon/RevealGallery";
+import PeopleYouMet, { type MetGroup } from "@/components/hackathon/showcase/PeopleYouMet";
 import Theatre from "@/components/hackathon/showcase/Theatre";
 import SprintTimeline from "@/components/hackathon/showcase/SprintTimeline";
 import { SealWatcher } from "@/components/hackathon/showcase/RevealMoment";
@@ -28,7 +29,7 @@ import {
   ThemeTile,
   ViewerCallout,
 } from "@/components/hackathon/SprintSections";
-import { loadSprint, loadSprintPage, type SprintPageData } from "@/lib/hackathons/page";
+import { loadSprint, loadSprintPage, type ArenaPerson, type SprintPageData } from "@/lib/hackathons/page";
 import { getMemberStanding } from "@/lib/hackathons/viewer";
 import { runMatcherIfDue } from "@/lib/hackathons/matcher";
 import { loadMyReviews, runReviewsIfDue } from "@/lib/hackathons/reviews";
@@ -46,9 +47,9 @@ export const dynamic = "force-dynamic";
 // Why someone was sent back here from a team room (?notice=…).
 const NOTICES: Record<string, string> = {
   "room-private": "That team room is private to its team. Only its members (and admins) can open it.",
-  "no-team": "You're not on a team in this Sprint, so there's no team room for you.",
-  "lobby-private": "The lobby is for the people in this Sprint: its participants, judges and admins.",
-  "judging-private": "Judging is for this Sprint's judges. Admins see every score in the admin console.",
+  "no-team": "You're not on a team in this Buildathon, so there's no team room for you.",
+  "lobby-private": "The lobby is for the people in this Buildathon: its participants, judges and admins.",
+  "judging-private": "Judging is for this Buildathon's judges. Admins see every score in the admin console.",
   "judge-accept-first": "Accept your invitation to judge first, then the judging view opens.",
 };
 
@@ -106,6 +107,9 @@ export default async function SprintPage(props: {
         supabase.rpc("hackathon_review_progress", { p_hackathon_id: sprint.id }),
       ])
     : [[] as MyReview[], { data: null }];
+  // After the reveal, for someone who took part: the people they met (their
+  // team, and the builders whose projects they reviewed).
+  const met = sprint.phase === "revealed" && sprint.state !== "cancelled" && data.viewer.role === "participant" ? await peopleMet(supabase, sprint.id, user.id, data) : [];
   const progress = ((reviewProgress.data ?? []) as { assigned: number; completed: number; reviewers: number; reviewers_done: number }[])[0] ?? null;
   // While it's live (paused included) the page is the feed, the projects and
   // the stadium; before and after, the main column leads and the feed follows.
@@ -130,7 +134,7 @@ export default async function SprintPage(props: {
             ← Buildathon
           </Link>
           <Link href="/hackathon/archive" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
-            All Sprints →
+            All Buildathons →
           </Link>
         </div>
 
@@ -218,6 +222,7 @@ export default async function SprintPage(props: {
                 chat={feed ? <Feed data={data} feed={feed} userId={user.id} /> : null}
               />
             }
+            met={<PeopleYouMet groups={met} />}
             timeline={
               <SprintTimeline
                 startsAt={sprint.starts_at}
@@ -259,8 +264,8 @@ export default async function SprintPage(props: {
               chat={feed ? <Feed data={data} feed={feed} userId={user.id} /> : null}
             />
 
-            <section aria-label="About this Sprint">
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10 }}>About this Sprint</h2>
+            <section aria-label="About this Buildathon">
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10 }}>About this Buildathon</h2>
               <div className={liveCss.row}>
                 <MyTeamPanel data={data} />
                 <ScheduleTile sprint={sprint} nowMs={Date.now()} />
@@ -400,7 +405,13 @@ function MainColumn({ data }: { data: SprintPageData }) {
     case "registration":
       return (
         <>
-          <JoinQueue sprint={sprint} viewer={viewer} teams={teams} queue={queue} />
+          <JoinQueue
+            sprint={sprint}
+            viewer={viewer}
+            teams={teams}
+            queue={queue}
+            myBring={registrants?.find((p) => p.id === viewer.userId)?.bring ?? null}
+          />
           {teamPanel}
           {registrants && <RegistrantsTile registrants={registrants} />}
           <Arena sprintId={sprint.id} sprintNumber={sprint.number} live={pulseLive} teams={teams} phase="registration" myTeamId={myTeam} title="Teams so far" collapseAfter={4} />
@@ -435,4 +446,23 @@ function MainColumn({ data }: { data: SprintPageData }) {
         </>
       );
   }
+}
+
+/** The viewer's teammates, then the builders of the projects they reviewed (036). */
+async function peopleMet(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sprintId: string,
+  userId: string,
+  data: SprintPageData,
+): Promise<MetGroup[]> {
+  const { data: rows } = await supabase.from("hackathon_reviews").select("submission_id").eq("hackathon_id", sprintId).eq("reviewer_id", userId);
+  const teamOfSub = new Map(data.showcase.map((p) => [p.submission_id, p.team_id]));
+  const reviewedTeams = new Set(((rows ?? []) as { submission_id: string }[]).map((r) => teamOfSub.get(r.submission_id)).filter(Boolean));
+  const mine = data.teams.find((t) => t.id === data.viewer.teamId);
+  const seen = new Set([userId]);
+  const pick = (people: ArenaPerson[]) => people.filter((p) => !seen.has(p.id) && seen.add(p.id));
+  return [
+    { label: "You built with", people: pick(mine?.members ?? []) },
+    { label: "Whose projects you reviewed", people: pick(data.teams.filter((t) => reviewedTeams.has(t.id)).flatMap((t) => t.members)) },
+  ];
 }

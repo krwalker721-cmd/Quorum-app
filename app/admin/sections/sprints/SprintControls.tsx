@@ -13,7 +13,7 @@ function MatchSummary({ sprint }: { sprint: Sprint }) {
   if (!sprint.matched_at || !r) {
     return (
       <p className="font-mono text-[0.6rem] text-text-faint mt-3">
-        team matcher: runs at team lock ({formatNy(sprint.team_lock_at)}), when the Sprint page next loads, or from the
+        team matcher: runs at team lock ({formatNy(sprint.team_lock_at)}), when the Buildathon page next loads, or from the
         button above
       </p>
     );
@@ -110,7 +110,7 @@ export default function SprintControls({
   async function resume() {
     const pausedFor = sprint.status_override_at ? Date.now() - new Date(sprint.status_override_at).getTime() : 0;
     const pick = await askChoice(
-      `The Sprint has been paused for ${duration(pausedFor)}.\n\n` +
+      `The Buildathon has been paused for ${duration(pausedFor)}.\n\n` +
         `Give that time back by moving every deadline still ahead ${duration(pausedFor)} later, or resume without moving anything?`,
       [
         { value: "keep", label: "resume, times as they are", variant: "ghost" },
@@ -131,7 +131,7 @@ export default function SprintControls({
               act(
                 { action: "unpublish" },
                 running
-                  ? "This Sprint is under way. Unpublishing hides it from everyone and seals every room and lobby. Unpublish?"
+                  ? "This Buildathon is under way. Unpublishing hides it from everyone and seals every room and lobby. Unpublish?"
                   : "Unpublish? It goes back to being a draft only admins can see.",
               )
             }
@@ -143,7 +143,7 @@ export default function SprintControls({
             variant="primary"
             disabled={busy || missing.length > 0}
             title={missing.length ? `Missing: ${missing.join(", ")}` : undefined}
-            onClick={() => act({ action: "publish" }, `Publish Sprint #${sprint.number}? Members and the landing page will see it.`)}
+            onClick={() => act({ action: "publish" }, `Publish Buildathon #${sprint.number}? Members and the landing page will see it.`)}
           >
             publish
           </Btn>
@@ -154,7 +154,7 @@ export default function SprintControls({
             resume
           </Btn>
         ) : sprint.status_override === "cancelled" ? (
-          <Btn disabled={busy} onClick={() => act({ action: "uncancel" }, "Reverse the cancellation? The Sprint picks up from its current times.")}>
+          <Btn disabled={busy} onClick={() => act({ action: "uncancel" }, "Reverse the cancellation? The Buildathon picks up from its current times.")}>
             undo cancel
           </Btn>
         ) : (
@@ -164,7 +164,7 @@ export default function SprintControls({
               onClick={() =>
                 act(
                   { action: "pause" },
-                  "Pause the Sprint? Team rooms, submissions and judging freeze and the lobby says so. The lobby stays open. The clock keeps running, so you can give the time back when you resume.",
+                  "Pause the Buildathon? Team rooms, submissions and judging freeze and the lobby says so. The lobby stays open. The clock keeps running, so you can give the time back when you resume.",
                 )
               }
             >
@@ -174,22 +174,22 @@ export default function SprintControls({
               variant="danger"
               disabled={busy}
               onClick={async () => {
-                const typed = await askText(`Cancel Sprint #${sprint.number}? Everything freezes and the lobby becomes read-only.\n\nType CANCEL to confirm.`, {
-                  ok: "cancel sprint",
+                const typed = await askText(`Cancel Buildathon #${sprint.number}? Everything freezes and the lobby becomes read-only.\n\nType CANCEL to confirm.`, {
+                  ok: "cancel buildathon",
                   placeholder: "CANCEL",
                   danger: true,
                 });
                 if (typed?.trim() === "CANCEL") act({ action: "cancel" }, null);
               }}
             >
-              cancel sprint
+              cancel buildathon
             </Btn>
           </>
         )}
 
         <Btn
           disabled={busy}
-          onClick={() => act({ action: "duplicate" }, `Start Sprint #${sprint.number}'s successor from these settings? It's a new draft with no dates and no theme.`)}
+          onClick={() => act({ action: "duplicate" }, `Start Buildathon #${sprint.number}'s successor from these settings? It's a new draft with no dates and no theme.`)}
         >
           duplicate
         </Btn>
@@ -197,7 +197,7 @@ export default function SprintControls({
           disabled={busy || !canMatch}
           title={
             sprint.matched_at
-              ? "Already ran. It runs once per Sprint."
+              ? "Already ran. It runs once per Buildathon."
               : canMatch
                 ? "Puts everyone without a team into teams, now."
                 : "Runs once teams lock (and not while paused or cancelled)."
@@ -205,7 +205,7 @@ export default function SprintControls({
           onClick={() =>
             act(
               { action: "run_matcher" },
-              `Run the team matcher for Sprint #${sprint.number}? Everyone registered without a team is put into a team. It runs once: you can move people afterwards by hand.`,
+              `Run the team matcher for Buildathon #${sprint.number}? Everyone registered without a team is put into a team. It runs once: you can move people afterwards by hand.`,
             )
           }
         >

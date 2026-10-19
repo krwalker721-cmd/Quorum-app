@@ -28,7 +28,7 @@ export async function GET(req: Request, ctx: Ctx) {
       .maybeSingle(),
     db.from("hackathon_overview").select("state, phase").eq("id", id).maybeSingle(),
   ]);
-  if (!sprint) return NextResponse.json({ error: "No such Sprint." }, { status: 404 });
+  if (!sprint) return NextResponse.json({ error: "No such Buildathon." }, { status: 404 });
 
   const [teams, subs, scores, judges, awards] = await Promise.all([
     db.from("hackathon_teams").select("id, name, slug, emblem, color").eq("hackathon_id", id),

@@ -51,11 +51,11 @@ export default async function JoinLinkPage(props: { params: Promise<{ number: st
   let message: string | null = null;
   if (!valid) message = "This invite link isn't valid any more. Ask the team for a new one.";
   else if (myTeamHere === team!.team_id) message = "You're already on this team.";
-  else if (myTeamHere) message = "You're already on a team in this Sprint. Leave it first to join this one.";
-  else if (sprint!.state !== "registration") message = "Teams are locked for this Sprint, so the link no longer works.";
+  else if (myTeamHere) message = "You're already on a team in this Buildathon. Leave it first to join this one.";
+  else if (sprint!.state !== "registration") message = "Teams are locked for this Buildathon, so the link no longer works.";
   // Someone already registered keeps their access even if their trial ends (decision 12).
   else if (!standing.isActive && !(regs.data ?? []).some((r) => r.hackathon_id === sprint!.id))
-    message = "Joining a Sprint needs an active membership.";
+    message = "Joining a Buildathon needs an active membership.";
   else if (team!.member_count >= team!.max_size) message = "This team is full.";
 
   return (
@@ -67,7 +67,7 @@ export default async function JoinLinkPage(props: { params: Promise<{ number: st
           {valid ? (
             <>
               <p style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>
-                Sprint #{sprint!.number} · {sprint!.title}
+                Buildathon #{sprint!.number}
               </p>
               <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
                 <TeamBadge name={team!.team_name} emblem={team!.emblem} color={team!.color} size={40} />
@@ -88,7 +88,7 @@ export default async function JoinLinkPage(props: { params: Promise<{ number: st
                     <JoinByLink code={code} teamName={team!.team_name} sprintNumber={n} />
                     {sprint!.team_lock_at && (
                       <p className={ui.emptySub} style={{ marginTop: 10 }}>
-                        This registers you for the Sprint if you haven&rsquo;t already. Teams lock <LocalTime iso={sprint!.team_lock_at} />.
+                        This registers you for the Buildathon if you haven&rsquo;t already. Teams lock <LocalTime iso={sprint!.team_lock_at} />.
                       </p>
                     )}
                   </>
@@ -101,7 +101,7 @@ export default async function JoinLinkPage(props: { params: Promise<{ number: st
           <p style={{ marginTop: 18 }}>
             {/* A link to a deleted Sprint goes back to the tab, not to a 404. */}
             <Link href={sprint ? `/hackathon/${n}` : "/hackathon"} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
-              {sprint ? `See Sprint #${n} →` : "Go to Sprints →"}
+              {sprint ? `See Buildathon #${n} →` : "Go to Buildathons →"}
             </Link>
           </p>
         </Tile>

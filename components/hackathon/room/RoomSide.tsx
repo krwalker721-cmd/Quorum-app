@@ -3,12 +3,13 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Tile from "@/components/ui/Tile";
+import PersonAvatar from "@/components/ui/PersonAvatar";
 import Markdown from "@/components/Markdown";
 import ui from "@/components/ui/sleek.module.css";
 import { sprintDb } from "@/lib/hackathons/actions";
 import { LABEL_RESET } from "@/lib/hackathons/submission";
 import type { SprintState } from "@/lib/hackathons/sprint";
-import { roomHref, type RoomDocRow, type RoomLinkRow, type RoomSubmission, type RoomTeam, type RoomVoteRow } from "@/lib/hackathons/room";
+import { roomHref, type RoomDocRow, type RoomLinkRow, type RoomMember, type RoomSubmission, type RoomTeam, type RoomVoteRow } from "@/lib/hackathons/room";
 
 // The team room's checklist, beside the conversation (2026-10-17): what to do,
 // as five steps that tick themselves, with the two that need doing here built
@@ -48,7 +49,7 @@ export function ChecklistPanel({
     {
       key: "checkin",
       label: "Check in at kickoff",
-      hint: before ? "The button appears on the Sprint page at kickoff." : "On the Sprint page, so the team knows you're here.",
+      hint: before ? "The button appears on the Buildathon page at kickoff." : "On the Buildathon page, so the team knows you're here.",
       done: Boolean(checkedInAt),
     },
     {
@@ -78,7 +79,8 @@ export function ChecklistPanel({
   return (
     <Tile kicker="Your checklist" right={`${done} of ${steps.length}`}>
       <p style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--text-secondary)" }}>
-        Build something new in 48 hours, as a team, and submit it before the deadline. Your work stays sealed until the reveal.
+        Turn a business idea into something real in 48 hours: a working MVP, or the idea proven with something people can see.
+        Submit before the deadline; your work stays sealed until the reveal.
       </p>
       <div className={ui.barTrack} style={{ marginTop: 10 }}>
         <div className={ui.barFill} style={{ background: "#f59e0b", width: `${Math.round((done / steps.length) * 100)}%` }} />
@@ -120,7 +122,7 @@ export function ChecklistPanel({
           </button>
           {rulesOpen && (
             <div style={{ fontSize: 12.5, marginTop: 8, color: "var(--text-secondary)" }}>
-              <Markdown source={sprint.rules} />
+              <Markdown source={sprint.rules} plainHeadings />
             </div>
           )}
         </div>
@@ -351,6 +353,45 @@ export type TeamFeedback = {
   score_use: number;
   completed_at: string;
 };
+
+/**
+ * After the reveal (owner, 2026-10-18: the point is building with others and
+ * the connections that come from it): the project doesn't have to end with
+ * the Buildathon. Keep it going on the Collab board, and keep talking to the
+ * people you built it with.
+ */
+export function WhatsNextPanel({ members, viewerId, projectName }: { members: RoomMember[]; viewerId: string; projectName: string | null }) {
+  const others = members.filter((m) => m.id !== viewerId);
+  return (
+    <Tile kicker="What's next">
+      <p style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--text-secondary)" }}>
+        {projectName ? <>Think {projectName} could be real? </> : <>Think it could be real? </>}
+        Keep going together: post it on the Collab board to find the people it still needs.
+      </p>
+      <Link href="/collab" className={ui.ghostBtn} style={{ textDecoration: "none", marginTop: 10, display: "inline-flex" }}>
+        Post it on the Collab board →
+      </Link>
+      {others.length > 0 && (
+        <>
+          <p style={{ ...META, marginTop: 16, marginBottom: 8 }}>The people you built with</p>
+          <ul className="flex flex-col" style={{ gap: 8 }}>
+            {others.map((m) => (
+              <li key={m.id} className="flex items-center gap-2.5">
+                <PersonAvatar name={m.full_name} stage={m.stage} username={m.username} size={26} />
+                <span className="min-w-0 flex-1 truncate" style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                  {m.full_name ?? m.username ?? "Founder"}
+                </span>
+                <Link href={`/messages?to=${m.id}`} className={ui.textBtn} style={{ textDecoration: "none" }}>
+                  Message
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </Tile>
+  );
+}
 
 export function FeedbackPanel({ feedback }: { feedback: TeamFeedback[] }) {
   const avg = (k: "score_problem" | "score_works" | "score_use") =>

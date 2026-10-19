@@ -1670,12 +1670,12 @@ select tests.h9(), tests.m(i), 'random' from generate_series(11, 12) i;
 
 -- The welcome note.
 select tests.ok('welcome: every new Sprint gets the default note',
-  (select lobby_welcome like 'This is the lobby for everyone in the Sprint%' from public.hackathons where id = tests.h9()));
+  (select lobby_welcome like 'Welcome! Introduce yourself%' from public.hackathons where id = tests.h9()));
 select tests.login_m(11);
-select tests.ok('welcome: a participant reads it', hackathon_lobby_welcome(tests.h9()) like 'This is the lobby%');
+select tests.ok('welcome: a participant reads it', hackathon_lobby_welcome(tests.h9()) like 'Welcome! Introduce yourself%');
 select tests.throws('welcome: not on the public columns', $$ select lobby_welcome from public.hackathons $$, 'permission denied');
 select tests.login('oscar');
-select tests.ok('welcome (034): a member outside the Sprint reads it too', hackathon_lobby_welcome(tests.h9()) like 'This is the lobby%');
+select tests.ok('welcome (034): a member outside the Sprint reads it too', hackathon_lobby_welcome(tests.h9()) like 'Welcome! Introduce yourself%');
 select tests.login('erin');
 select tests.ok('welcome (034): a lapsed member outside gets nothing', hackathon_lobby_welcome(tests.h9()) is null);
 select tests.anon();
@@ -2494,5 +2494,46 @@ update hackathon_reviews set hidden_at = now() where hackathon_id = tests.h19() 
 select tests.eq('reviews (036): an admin can recompute after hiding reviews (no favourites left: three awards)', hackathon_compute_awards(tests.h19(), true)::text, '3');
 select tests.ok('reviews (036): hidden reviews no longer count (Ayes drops out)',
   not exists (select 1 from hackathon_awards a where a.hackathon_id = tests.h19() and a.submission_id = tests.sub19('Ayes')));
+
+-- ============================================================================
+-- 037: Buildathon defaults, and "what you bring" at signup
+-- ============================================================================
+select tests.as_db();
+create function tests.h20() returns uuid language sql immutable as $$ select 'd4000000-0000-0000-0000-000000000014'::uuid $$;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+insert into public.hackathons (id, slug, is_published,
+  registration_opens_at, team_lock_at, starts_at, ends_at, judging_ends_at, reveal_at)
+values (tests.h20(), 'test-bring', true,
+  now(), now() + interval '1 day', now() + interval '1 day', now() + interval '3 days', now() + interval '3 days', now() + interval '3 days');
+select tests.eq('defaults (037): a new Buildathon is titled Buildathon', (select title from hackathons where id = tests.h20()), 'Buildathon');
+select tests.ok('defaults (037): ...and its lobby welcome asks people to introduce themselves',
+  (select lobby_welcome like 'Welcome! Introduce yourself%' from hackathons where id = tests.h20()));
+select tests.set_phase(tests.h20(), 'registration');
+
+select tests.login_m(15);
+select tests.lives('bring (037): a member registers with what they bring', $$
+  insert into hackathon_registrations (hackathon_id, user_id, mode, bring) values (tests.h20(), tests.m(15), 'random', '  design,   growth  ') $$);
+select tests.eq('bring (037): ...tidied', (select bring from hackathon_registrations where hackathon_id = tests.h20() and user_id = tests.m(15)), 'design, growth');
+select tests.lives('bring (037): ...and changes it while registration is open', $$
+  update hackathon_registrations set bring = 'backend' where hackathon_id = tests.h20() and user_id = tests.m(15) $$);
+select tests.throws('bring (037): at most 80 characters', $$
+  update hackathon_registrations set bring = repeat('x', 81) where hackathon_id = tests.h20() and user_id = tests.m(15) $$, 'bring_length');
+select tests.lives('bring (037): blank clears it', $$
+  update hackathon_registrations set bring = '   ' where hackathon_id = tests.h20() and user_id = tests.m(15) $$);
+select tests.ok('bring (037): ...to none', (select bring is null from hackathon_registrations where hackathon_id = tests.h20() and user_id = tests.m(15)));
+update hackathon_registrations set bring = 'sales' where hackathon_id = tests.h20() and user_id = tests.m(15);
+select tests.login_m(16);
+select tests.eq('bring (037): another member sees it beside the name',
+  (select bring from hackathon_registrants(tests.h20()) where user_id = tests.m(15)), 'sales');
+select tests.eq('bring (037): ...and can''t change someone else''s',
+  tests.affected($$ update hackathon_registrations set bring = 'hijacked' where hackathon_id = tests.h20() and user_id = tests.m(15) $$)::text, '0');
+
+select tests.set_phase(tests.h20(), 'live');
+select tests.login_m(15);
+select tests.throws('bring (037): fixed once registration closes', $$
+  update hackathon_registrations set bring = 'too late' where hackathon_id = tests.h20() and user_id = tests.m(15) $$, 'while registration is open');
+select tests.as_db();
+select tests.lives('bring (037): the admin console can still correct it', $$
+  update hackathon_registrations set bring = 'ops' where hackathon_id = tests.h20() and user_id = tests.m(15) $$);
 
 select tests.finish();

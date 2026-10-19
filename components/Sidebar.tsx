@@ -305,7 +305,7 @@ export default function Sidebar({
                       <span
                         className={ui.liveDot}
                         style={{ position: "absolute", top: -3, right: -9 }}
-                        aria-label="a Sprint is live"
+                        aria-label="a Buildathon is live"
                       />
                     )}
                     {hasUnseen && (
@@ -320,7 +320,7 @@ export default function Sidebar({
                   <>
                     <span>{item.label}</span>
                     {live && (
-                      <span className="nav-live-pill" aria-label="a Sprint is live">
+                      <span className="nav-live-pill" aria-label="a Buildathon is live">
                         <span className={ui.liveDot} aria-hidden />
                         LIVE
                       </span>

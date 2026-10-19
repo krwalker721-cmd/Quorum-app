@@ -11,6 +11,7 @@ import { timeAgo } from "@/lib/stage";
 import { TeamBadge } from "./TeamStyle";
 import LocalTime from "./LocalTime";
 import AcceptJudgeInvite from "./judging/AcceptJudgeInvite";
+import { buildathonName } from "@/lib/hackathons/defaults";
 
 // The Sprint page's building blocks that don't belong to a later prompt. The
 // join queue (Prompt 4), the arena (Prompt 5) and the reveal gallery (Prompt
@@ -27,10 +28,10 @@ export function StatusBanner({ sprint }: { sprint: SprintRow }) {
   if (sprint.state === "draft") {
     tone = "grey";
     title = "Draft";
-    body = "Only admins can see this page. Publish the Sprint in the admin console to open it to members.";
+    body = "Only admins can see this page. Publish the Buildathon in the admin console to open it to members.";
   } else if (sprint.state === "paused") {
     tone = "amber";
-    title = "This Sprint is paused";
+    title = "This Buildathon is paused";
     body = (
       <>
         The clock stopped{sprint.status_override_at ? <> at <LocalTime iso={sprint.status_override_at} /></> : null}.
@@ -40,7 +41,7 @@ export function StatusBanner({ sprint }: { sprint: SprintRow }) {
     );
   } else if (sprint.state === "cancelled") {
     tone = "red";
-    title = "This Sprint was cancelled";
+    title = "This Buildathon was cancelled";
     body = "Nothing more will happen in it. Participants can still read the lobby.";
   } else {
     return null;
@@ -69,13 +70,12 @@ export function StatusBanner({ sprint }: { sprint: SprintRow }) {
   );
 }
 
-/** Number, title, tagline and where the Sprint stands. */
+/** "Buildathon #N" (every one has the same title), its tagline and where it stands. */
 export function SprintHero({ sprint }: { sprint: SprintRow }) {
   const live = sprint.state === "live";
   return (
     <header style={{ marginBottom: 18 }}>
       <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>Sprint #{sprint.number}</span>
         <span className={`${ui.chip} ${live ? ui.chipAmber : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           {live && <span className={ui.liveDot} aria-hidden style={{ width: 6, height: 6 }} />}
           {STATE_LABEL[sprint.state]}
@@ -85,7 +85,7 @@ export function SprintHero({ sprint }: { sprint: SprintRow }) {
         className={`${ui.titleGradient} ${ui.balance}`}
         style={{ fontSize: "clamp(26px, 5vw, 36px)", fontWeight: 650, letterSpacing: "-0.03em", lineHeight: 1.1 }}
       >
-        {sprint.title}
+        {buildathonName(sprint.number)}
       </h1>
       {sprint.tagline && (
         <p className={ui.balance} style={{ fontSize: 15, color: "var(--text-secondary)", marginTop: 8, maxWidth: 640 }}>
@@ -115,11 +115,11 @@ export function SprintOpener({ data }: { data: SprintPageData }) {
   const points = [
     {
       title: "What you commit to",
-      text: `48 hours from kickoff, with a team of ${sprint.min_team_size} to ${sprint.max_team_size}. You work in a private team room and submit a working project (its name, the problem and a demo) before the deadline. The form locks on the dot.`,
+      text: `48 hours from kickoff, with a team of ${sprint.min_team_size} to ${sprint.max_team_size}, in a private team room. Before the deadline you submit the problem and who has it, plus a working MVP or real proof of the idea: a prototype, a landing page with sign-ups, conversations with customers. The form locks on the dot.`,
     },
     {
       title: "How teams form",
-      text: "Register alone and you go into the random pool: anyone without a team is matched when teams lock. Or start a team and invite people, or ask to join one that's open.",
+      text: "Register alone and you go into the random pool, matched across cohorts when teams lock: the quickest way to meet founders you don't know yet. Or start a team and invite people, or ask to join one that's open.",
     },
     {
       title: "What happens to your work",
@@ -129,8 +129,9 @@ export function SprintOpener({ data }: { data: SprintPageData }) {
   return (
     <Tile kicker="What this is" style={{ marginBottom: 16 }} padding="16px 18px 18px">
       <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--text-primary)", maxWidth: 720 }}>
-        A 48-hour build with founders from across the network. You join a team, get the theme at kickoff, and ship
-        something new before the clock runs out.
+        You team up with founders from across the network, get the theme at kickoff, and have 48 hours to take a business
+        idea to a working MVP, or prove it with something people can see. The project is the output; the people you build
+        it with are the point.
       </p>
       <dl
         className="grid"
@@ -188,7 +189,7 @@ export function LiveExplainer({ sprint, teamCount }: { sprint: SprintRow; teamCo
   return (
     <Tile kicker="What this is" style={{ marginBottom: 16 }} padding="14px 18px 16px">
       <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-primary)", maxWidth: 760 }}>
-        {`A 48-hour build. ${teamCount} team${teamCount === 1 ? " is" : "s are"} making something new from scratch around the theme, in private rooms.`}{" "}
+        {`A 48-hour build. ${teamCount} team${teamCount === 1 ? " is" : "s are"} turning a business idea into something real around the theme, each in a private room.`}{" "}
         Every project stays sealed until the reveal, when the awards the builders voted for go out
         and each project gets a public page.{" "}
         {sprint.rules?.trim() && (
@@ -236,7 +237,7 @@ export function TeamProjectCards({
       </div>
       {teams.length === 0 ? (
         <Tile>
-          <p className={ui.emptyTitle}>No teams in this Sprint.</p>
+          <p className={ui.emptyTitle}>No teams in this Buildathon.</p>
         </Tile>
       ) : (
         <ShowMore
@@ -370,7 +371,7 @@ export function RulesTile({ sprint }: { sprint: SprintRow }) {
   return (
     <Tile kicker="Rules" style={{ marginBottom: 16, scrollMarginTop: 80 }}>
       <div id="rules" style={{ fontSize: 13 }}>
-        <Markdown source={sprint.rules} />
+        <Markdown source={sprint.rules} plainHeadings />
       </div>
     </Tile>
   );
@@ -397,7 +398,7 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
 
   switch (viewer.role) {
     case "participant":
-      title = "You're in this Sprint";
+      title = "You're in this Buildathon";
       body = over
         ? "It was cancelled. The lobby stays readable."
         : sprint.state === "paused"
@@ -418,7 +419,7 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
       links = [...(room ? [{ ...room, primary: phase === "live" }] : []), lobby];
       break;
     case "judge": {
-      title = "You're judging this Sprint";
+      title = "You're judging this Buildathon";
       const progress = judging && judging.total > 0 ? ` You've scored ${judging.scored} of ${judging.total}.` : "";
       body = over
         ? "It was cancelled, so there's nothing to judge."
@@ -440,19 +441,19 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
       break;
     }
     case "invited_judge":
-      title = "You're invited to judge this Sprint";
+      title = "You're invited to judge this Buildathon";
       body = over
         ? "It was cancelled."
-        : "Judges score the finished projects with a short rubric once submissions close. Judges can't also compete in this Sprint.";
+        : "Judges score the finished projects with a short rubric once submissions close. Judges can't also compete in this Buildathon.";
       if (!over) action = <AcceptJudgeInvite sprintId={sprint.id} />;
       break;
     case "outsider":
-      title = "You're not in this Sprint";
-      body = "Sprints are for active members. Renew your membership to take part in the next one.";
+      title = "You're not in this Buildathon";
+      body = "Buildathons are for active members. Renew your membership to take part in the next one.";
       links = [{ href: "/pricing", label: "See plans", primary: true }];
       break;
     default:
-      title = "You're not in this Sprint";
+      title = "You're not in this Buildathon";
       if (!over && phase === "registration") {
         body = (
           <>
@@ -476,13 +477,13 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
       } else if (nextSprint) {
         body = (
           <>
-            You can still watch this one. The next Sprint, #{nextSprint.number} {nextSprint.title},{" "}
+            You can still watch this one. The next one, Buildathon #{nextSprint.number},{" "}
             {nextSprint.state === "registration" ? "is open for registration now." : <>opens registration <LocalTime iso={nextSprint.registration_opens_at} />.</>}
           </>
         );
-        links = [{ href: `/hackathon/${nextSprint.number}`, label: `Sprint #${nextSprint.number}`, primary: true }];
+        links = [{ href: `/hackathon/${nextSprint.number}`, label: `Buildathon #${nextSprint.number}`, primary: true }];
       } else {
-        body = "You can still watch this one. The next Sprint will be announced here.";
+        body = "You can still watch this one. The next Buildathon will be announced here.";
       }
   }
 
@@ -516,10 +517,16 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
   );
 }
 
-/** Who's registered so far (migration 024): names only, no mode or team. */
+/**
+ * Who's registered so far (migration 024): names and, since 037, the line
+ * each person wrote about what they bring. Nothing about mode or team.
+ */
 export function RegistrantsTile({ registrants }: { registrants: Registrant[] }) {
   return (
     <Tile kicker="Registered so far" right={`${registrants.length}`} style={{ marginBottom: 16 }}>
+      {registrants.some((p) => p.bring) && (
+        <p style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 10 }}>Looking for teammates? Here&rsquo;s what people bring.</p>
+      )}
       {registrants.length === 0 ? (
         <div className={ui.empty}>
           <p className={ui.emptyTitle}>Nobody yet. Be the first.</p>
@@ -529,7 +536,14 @@ export function RegistrantsTile({ registrants }: { registrants: Registrant[] }) 
           {registrants.map((p) => (
             <li key={p.id} className="flex items-center gap-2" style={{ minWidth: 0 }}>
               <PersonAvatar name={p.full_name} stage={p.stage} username={p.username} size={24} />
-              <span style={{ fontSize: 12.5, color: "var(--text-primary)" }}>{(p.full_name ?? "Founder").split(/\s+/)[0]}</span>
+              <span className="min-w-0">
+                <span style={{ display: "block", fontSize: 12.5, color: "var(--text-primary)" }}>{(p.full_name ?? "Founder").split(/\s+/)[0]}</span>
+                {p.bring && (
+                  <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)", maxWidth: 200 }} className="truncate" title={p.bring}>
+                    {p.bring}
+                  </span>
+                )}
+              </span>
             </li>
           ))}
         </ShowMore>

@@ -58,7 +58,7 @@ async function describe(
 
   const at = (label: string, iso: string | null) => (iso ? { label, at: iso } : null);
   let countdown: CurrentSprint["countdown"] = null;
-  let cta = { label: `Open Sprint #${sprint.number}`, href };
+  let cta = { label: `Open Buildathon #${sprint.number}`, href };
   switch (sprint.state) {
     case "upcoming":
       countdown = at("Registration opens in", sprint.registration_opens_at);
@@ -74,7 +74,7 @@ async function describe(
       break;
     case "live":
       countdown = at("Submissions close in", sprint.ends_at);
-      cta = { label: registered ? "Go to your Sprint" : "Watch it live", href };
+      cta = { label: registered ? "Go to your Buildathon" : "Watch it live", href };
       break;
     case "judging":
       countdown = at("Results revealed in", sprint.reveal_at);

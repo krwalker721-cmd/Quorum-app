@@ -4,7 +4,7 @@ import { loadPublicProjects, loadPublicSprint } from "@/lib/hackathons/showcase"
 // The link preview for a project page (Phase 10). Signed-out data only, and
 // the plain Sprints card before the reveal (lib/hackathons/og.tsx).
 
-export const alt = "A project built in 48 hours at a Quorum Sprint";
+export const alt = "A project built in 48 hours at a Quorum Buildathon";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

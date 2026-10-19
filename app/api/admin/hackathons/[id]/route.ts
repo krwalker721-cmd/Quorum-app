@@ -25,7 +25,7 @@ export async function GET(req: Request, ctx: Ctx) {
     db.from("hackathons").select("*").eq("id", id).maybeSingle(),
     db.from("hackathon_overview").select("state, phase").eq("id", id).maybeSingle(),
   ]);
-  if (!sprint) return NextResponse.json({ error: "No such Sprint." }, { status: 404 });
+  if (!sprint) return NextResponse.json({ error: "No such Buildathon." }, { status: 404 });
 
   const [regs, teams, members, subs, judges, lobby, log] = await Promise.all([
     db.from("hackathon_registrations").select("user_id, mode, team_id, checked_in_at, created_at, withdrawn_at").eq("hackathon_id", id).order("created_at"),
@@ -120,7 +120,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
     .select(TIME_FIELDS.join(", ") + ", title")
     .eq("id", id)
     .maybeSingle();
-  if (!current) return NextResponse.json({ error: "No such Sprint." }, { status: 404 });
+  if (!current) return NextResponse.json({ error: "No such Buildathon." }, { status: 404 });
   const cur = current as unknown as Timeline & { title: string };
 
   const parsed = sprintFields(body, cur);
@@ -133,8 +133,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
     (f) => f in parsed.values && new Date(parsed.values[f] as string).getTime() !== new Date(cur[f] as string).getTime(),
   );
   const note = moved.length
-    ? `Edited Sprint settings; ${moved.map((f) => `${labelFor(f)} → ${formatNy(parsed.values[f] as string | null)}`).join(", ")}`
-    : "Edited Sprint settings";
+    ? `Edited Buildathon settings; ${moved.map((f) => `${labelFor(f)} → ${formatNy(parsed.values[f] as string | null)}`).join(", ")}`
+    : "Edited Buildathon settings";
 
   const { error } = await adminDb(g.admin, note).from("hackathons").update(parsed.values).eq("id", id);
   if (error) return dbErrorResponse(error);

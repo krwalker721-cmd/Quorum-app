@@ -61,14 +61,14 @@ export default function RevealedShowcase({
       >
         {projects.length === 0 ? (
           <div className={ui.empty}>
-            <p className={ui.emptyTitle}>No project was finished in this Sprint.</p>
+            <p className={ui.emptyTitle}>No project was finished in this Buildathon.</p>
           </div>
         ) : (
           <Gallery projects={projects} sprintNumber={sprintNumber} />
         )}
         {quiet.length > 0 && projects.length > 0 && (
           <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 16, lineHeight: 1.55 }}>
-            Also in the Sprint: {joinNames(quiet)}, who shipped learnings, not a project.
+            Also in the Buildathon: {joinNames(quiet)}, who shipped learnings, not a project.
           </p>
         )}
       </Tile>
@@ -91,6 +91,7 @@ export function RevealedRecap({
   stage,
   timeline,
   arena,
+  met = null,
 }: {
   sprintNumber: number;
   revealAt: string;
@@ -101,6 +102,8 @@ export function RevealedRecap({
   stage: React.ReactNode;
   timeline: React.ReactNode;
   arena: React.ReactNode;
+  /** For someone who took part: the people they built with and reviewed. */
+  met?: React.ReactNode;
 }) {
   const byTeam = new Map(projects.map((p) => [p.team_id, p]));
   const stageTeams: StageTeam[] = teams.map((t) => {
@@ -146,18 +149,19 @@ export function RevealedRecap({
         </div>
         {projects.length === 0 ? (
           <div className={ui.empty}>
-            <p className={ui.emptyTitle}>No project was finished in this Sprint.</p>
+            <p className={ui.emptyTitle}>No project was finished in this Buildathon.</p>
           </div>
         ) : (
           <Gallery projects={projects} sprintNumber={sprintNumber} presentable />
         )}
         {quiet.length > 0 && projects.length > 0 && (
           <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 16, lineHeight: 1.55 }}>
-            Also in the Sprint: {joinNames(quiet)}, who shipped learnings, not a project.
+            Also in the Buildathon: {joinNames(quiet)}, who shipped learnings, not a project.
           </p>
         )}
       </section>
 
+      {met}
       {timeline}
       {arena}
     </RevealMoment>

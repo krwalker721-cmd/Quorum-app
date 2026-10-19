@@ -4,7 +4,7 @@ import { awardName, awardsWithProjects, loadPublicProjects, loadPublicSprint } f
 // The link preview for a Sprint's recap (Phase 10). Signed-out data only, and
 // the plain Sprints card before the reveal (lib/hackathons/og.tsx).
 
-export const alt = "A Quorum Sprint recap: what founders built in 48 hours";
+export const alt = "A Quorum Buildathon recap: what founders built in 48 hours";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

@@ -4,6 +4,7 @@ import Countdown from "@/components/countdown/Countdown";
 import LocalTime from "@/components/hackathon/LocalTime";
 import { STATE_LABEL, type SprintState } from "@/lib/hackathons/sprint";
 import s from "./home.module.css";
+import { buildathonName } from "@/lib/hackathons/defaults";
 
 /** What the Buildathon home says about the Sprint that's on (or next). */
 export type CurrentSprint = {
@@ -24,16 +25,20 @@ export type CurrentSprint = {
 export default function CurrentSprintBanner({ sprint }: { sprint: CurrentSprint }) {
   const live = sprint.state === "live";
   return (
-    <section className={`${ui.tileHero} ${s.banner}`} aria-label={`Sprint #${sprint.number}`}>
+    <section className={`${ui.tileHero} ${s.banner}`} aria-label={`Buildathon #${sprint.number}`}>
       <div className={s.bannerMain}>
         <p className={s.bannerKicker}>
-          Sprint #{sprint.number}
+          {live || sprint.state === "judging" || sprint.state === "paused"
+            ? "Happening now"
+            : sprint.state === "revealed" || sprint.state === "cancelled"
+              ? "The latest Buildathon"
+              : "Coming up"}
           <span className={s.bannerState}>
             {live && <span className={ui.liveDot} aria-hidden style={{ width: 6, height: 6 }} />}
             {STATE_LABEL[sprint.state]}
           </span>
         </p>
-        <h2 className={s.bannerTitle}>{sprint.title}</h2>
+        <h2 className={s.bannerTitle}>{buildathonName(sprint.number)}</h2>
         {sprint.tagline && <p className={s.bannerTagline}>{sprint.tagline}</p>}
         {sprint.meta && <p className={s.bannerMeta}>{sprint.meta}</p>}
       </div>

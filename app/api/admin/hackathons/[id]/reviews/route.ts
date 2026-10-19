@@ -29,7 +29,7 @@ export async function GET(req: Request, ctx: Ctx) {
     db.from("hackathon_submissions").select("id, team_id, project_name").eq("hackathon_id", id),
     db.from("hackathon_awards").select("id, award_type, custom_label, citation, submission_id").eq("hackathon_id", id),
   ]);
-  if (!sprint) return NextResponse.json({ error: "No such Sprint." }, { status: 404 });
+  if (!sprint) return NextResponse.json({ error: "No such Buildathon." }, { status: 404 });
 
   const rows = (reviews.data ?? []) as {
     id: string;

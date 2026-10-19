@@ -54,7 +54,8 @@ export type ArenaTeam = {
   pulse: TeamPulse | null;
 };
 
-export type Registrant = ArenaPerson & { registered_at: string };
+/** bring: one short line about what they bring (037); null when none, or before 037. */
+export type Registrant = ArenaPerson & { registered_at: string; bring: string | null };
 
 
 export type SprintLink = Pick<SprintRow, "number" | "title" | "state" | "registration_opens_at" | "starts_at">;
@@ -211,6 +212,7 @@ async function loadRegistrants(db: SupabaseClient, sprintId: string): Promise<Re
     username: r.username,
     stage: r.stage,
     registered_at: r.registered_at,
+    bring: r.bring ?? null,
   }));
 }
 

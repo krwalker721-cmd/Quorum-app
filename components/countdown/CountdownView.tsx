@@ -33,7 +33,7 @@ export function resolveCountdown(c: PublicCountdown, now: number, link = false):
     return { show: true, title: c.label, sub: c.subtext, target: null, message: c.zero_message, cta };
   }
 
-  const title = c.headline || `Sprint #${c.number} · ${c.title}`;
+  const title = c.headline || `Buildathon #${c.number}`;
   const cta = link ? { label: "Open", href: `/hackathon/${c.number}` } : null;
   if (c.status_override === "paused") {
     return { show: true, title, sub: null, target: null, message: "Paused. Times will be updated when it resumes.", cta };
@@ -59,7 +59,7 @@ export default function CountdownView({
 }) {
   const r = now === null ? null : resolveCountdown(countdown, now, variant === "app");
   if (r && !r.show) return null;
-  const title = r?.show ? r.title : countdown.kind === "site" ? countdown.label : countdown.headline || `Sprint #${countdown.number} · ${countdown.title}`;
+  const title = r?.show ? r.title : countdown.kind === "site" ? countdown.label : countdown.headline || `Buildathon #${countdown.number}`;
   const target = r?.show && r.target !== null && now !== null ? r.target : null;
 
   if (variant === "landing") {

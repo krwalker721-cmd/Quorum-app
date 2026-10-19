@@ -112,7 +112,7 @@ export function projectCard(sprint: PublicSprint, project: PublicProject) {
   return new ImageResponse(
     (
       <Frame
-        right={`Sprint #${sprint.number}`}
+        right={`Buildathon #${sprint.number}`}
         footer={
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -137,7 +137,7 @@ export function projectCard(sprint: PublicSprint, project: PublicProject) {
                 {names && <span style={{ fontSize: 22, color: "#8b949e" }}>{clip(names, 48)}</span>}
               </div>
             </div>
-            <span style={{ fontSize: 26, color: AMBER }}>Built in 48h at Quorum Sprint #{sprint.number}</span>
+            <span style={{ fontSize: 26, color: AMBER }}>Built in 48h at Quorum Buildathon #{sprint.number}</span>
           </div>
         }
       >
@@ -185,7 +185,7 @@ export function recapCard(sprint: PublicSprint, winners: { award: string; projec
   return new ImageResponse(
     (
       <Frame
-        right={`Sprint #${sprint.number} recap`}
+        right={`Buildathon #${sprint.number} recap`}
         footer={
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 760 }}>
@@ -201,7 +201,7 @@ export function recapCard(sprint: PublicSprint, winners: { award: string; projec
         }
       >
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{ fontSize: 76, lineHeight: 1.04, letterSpacing: "-0.035em", fontWeight: 700 }}>{clip(sprint.title, 36)}</span>
+          <span style={{ fontSize: 76, lineHeight: 1.04, letterSpacing: "-0.035em", fontWeight: 700 }}>{`Buildathon #${sprint.number}`}</span>
           <div style={{ display: "flex", gap: 48, marginTop: 30 }}>
             {stats.map((s) => (
               <div key={s.l} style={{ display: "flex", flexDirection: "column" }}>
@@ -217,14 +217,14 @@ export function recapCard(sprint: PublicSprint, winners: { award: string; projec
   );
 }
 
-/** Before the reveal, or for a page that doesn't exist: the plain Quorum Sprints card. */
+/** Before the reveal, or for a page that doesn't exist: the plain Quorum Buildathon card. */
 export function fallbackCard() {
   return new ImageResponse(
     (
-      <Frame right="Sprints" footer={<span style={{ fontSize: 26, color: AMBER }}>quorumhq.co</span>}>
+      <Frame right="Buildathons" footer={<span style={{ fontSize: 26, color: AMBER }}>quorumhq.co</span>}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{ fontSize: 80, lineHeight: 1.04, letterSpacing: "-0.035em", fontWeight: 700 }}>48-hour Sprints</span>
-          <span style={{ fontSize: 34, color: "#8b949e", marginTop: 18 }}>Founders team up across cohorts and ship something new.</span>
+          <span style={{ fontSize: 80, lineHeight: 1.04, letterSpacing: "-0.035em", fontWeight: 700 }}>Quorum Buildathon</span>
+          <span style={{ fontSize: 34, color: "#8b949e", marginTop: 18 }}>48 hours to turn a business idea into something real, with founders from across the network.</span>
         </div>
       </Frame>
     ),

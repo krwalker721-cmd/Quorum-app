@@ -109,7 +109,7 @@ export function pickRelay(data: RelayData, now: number, waitlistOn: boolean): Re
   if (next) {
     return {
       id: `sprint-${next.number}-next`,
-      title: next.headline || `Sprint #${next.number} kicks off in`,
+      title: next.headline || `Buildathon #${next.number} kicks off in`,
       sub:
         phase.get(next.number) === "registration"
           ? `${SPRINT_LINE} Registration is open.`
@@ -129,7 +129,7 @@ export function pickRelay(data: RelayData, now: number, waitlistOn: boolean): Re
   if (live) {
     return {
       id: `sprint-${live.number}-live`,
-      title: live.headline || `Sprint #${live.number} is LIVE`,
+      title: live.headline || `Buildathon #${live.number} is LIVE`,
       sub: `${plural(live.teams, "team", "teams")} building right now.`,
       countLabel: "Ends in",
       target: Date.parse(live.ends_at),
@@ -142,7 +142,7 @@ export function pickRelay(data: RelayData, now: number, waitlistOn: boolean): Re
   if (judging) {
     return {
       id: `sprint-${judging.number}-judging`,
-      title: `Sprint #${judging.number} wrapped: ${plural(judging.teams, "team", "teams")}, ${plural(judging.builders, "builder", "builders")}.`,
+      title: `Buildathon #${judging.number} wrapped: ${plural(judging.teams, "team", "teams")}, ${plural(judging.builders, "builder", "builders")}.`,
       sub: null,
       countLabel: "Results revealed in",
       target: Date.parse(judging.reveal_at),
@@ -155,7 +155,7 @@ export function pickRelay(data: RelayData, now: number, waitlistOn: boolean): Re
   if (paused) {
     return {
       id: `sprint-${paused.number}-paused`,
-      title: `Sprint #${paused.number} is paused`,
+      title: `Buildathon #${paused.number} is paused`,
       sub: null,
       countLabel: null,
       target: null,
@@ -174,7 +174,7 @@ export function pickRelay(data: RelayData, now: number, waitlistOn: boolean): Re
     if (!announced) {
       return {
         id: `sprint-${revealed.number}-recap`,
-        title: `See what founders built at Sprint #${revealed.number}`,
+        title: `See what founders built at Buildathon #${revealed.number}`,
         sub: revealed.tagline ? `${revealed.title}: ${revealed.tagline}` : revealed.title,
         countLabel: null,
         target: null,

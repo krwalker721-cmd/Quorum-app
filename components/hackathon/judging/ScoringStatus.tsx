@@ -43,8 +43,8 @@ export default function ScoringStatus({
       title = "Checking the time…";
       break;
     case "frozen":
-      title = sprint.state === "cancelled" ? "This Sprint was cancelled" : "Judging is paused";
-      body = sprint.state === "cancelled" ? "There's nothing to judge." : "Scores are frozen until the Sprint resumes.";
+      title = sprint.state === "cancelled" ? "This Buildathon was cancelled" : "Judging is paused";
+      body = sprint.state === "cancelled" ? "There's nothing to judge." : "Scores are frozen until the Buildathon resumes.";
       break;
     case "not_yet":
       title = <>Scoring opens in {countdown(sprint.ends_at)}</>;

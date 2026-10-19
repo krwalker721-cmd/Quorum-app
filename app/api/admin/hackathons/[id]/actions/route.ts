@@ -21,7 +21,7 @@ export async function POST(req: Request, ctx: Ctx) {
   const action = String(body.action ?? "");
 
   const { data: sprint } = await createAdminClient().from("hackathons").select("*").eq("id", id).maybeSingle();
-  if (!sprint) return NextResponse.json({ error: "No such Sprint." }, { status: 404 });
+  if (!sprint) return NextResponse.json({ error: "No such Buildathon." }, { status: 404 });
 
   const run = async (note: string, f: (db: ReturnType<typeof adminDb>) => PromiseLike<{ error: unknown; data?: unknown }>) => {
     const { error, data } = await f(adminDb(g.admin, note));
@@ -35,28 +35,28 @@ export async function POST(req: Request, ctx: Ctx) {
       if (missing.length) {
         return NextResponse.json({ error: `Set every date before publishing. Missing: ${missing.join(", ")}.` }, { status: 400 });
       }
-      return run("Published the Sprint", (db) => db.from("hackathons").update({ is_published: true }).eq("id", id));
+      return run("Published the Buildathon", (db) => db.from("hackathons").update({ is_published: true }).eq("id", id));
     }
     case "unpublish":
-      return run("Unpublished the Sprint", (db) => db.from("hackathons").update({ is_published: false }).eq("id", id));
+      return run("Unpublished the Buildathon", (db) => db.from("hackathons").update({ is_published: false }).eq("id", id));
 
     case "pause":
-      if (sprint.status_override) return NextResponse.json({ error: `The Sprint is already ${sprint.status_override}.` }, { status: 400 });
-      return run("Paused the Sprint", (db) => db.from("hackathons").update({ status_override: "paused" }).eq("id", id));
+      if (sprint.status_override) return NextResponse.json({ error: `The Buildathon is already ${sprint.status_override}.` }, { status: 400 });
+      return run("Paused the Buildathon", (db) => db.from("hackathons").update({ status_override: "paused" }).eq("id", id));
 
     case "resume": {
       const extend = Boolean(body.extend);
-      return run(extend ? "Resumed the Sprint and gave back the paused time" : "Resumed the Sprint", (db) =>
+      return run(extend ? "Resumed the Buildathon and gave back the paused time" : "Resumed the Buildathon", (db) =>
         db.rpc("hackathon_resume", { p_hackathon_id: id, p_extend: extend }),
       );
     }
 
     case "cancel":
-      if (sprint.status_override === "cancelled") return NextResponse.json({ error: "The Sprint is already cancelled." }, { status: 400 });
-      return run("Cancelled the Sprint", (db) => db.from("hackathons").update({ status_override: "cancelled" }).eq("id", id));
+      if (sprint.status_override === "cancelled") return NextResponse.json({ error: "The Buildathon is already cancelled." }, { status: 400 });
+      return run("Cancelled the Buildathon", (db) => db.from("hackathons").update({ status_override: "cancelled" }).eq("id", id));
 
     case "uncancel":
-      if (sprint.status_override !== "cancelled") return NextResponse.json({ error: "The Sprint isn't cancelled." }, { status: 400 });
+      if (sprint.status_override !== "cancelled") return NextResponse.json({ error: "The Buildathon isn't cancelled." }, { status: 400 });
       return run("Reversed the cancellation", (db) => db.from("hackathons").update({ status_override: null }).eq("id", id));
 
     // Extend the deadline, or push any milestone (and everything after it)
@@ -74,11 +74,11 @@ export async function POST(req: Request, ctx: Ctx) {
     }
 
     case "duplicate":
-      return run(`Duplicated Sprint #${sprint.number}`, (db) => db.rpc("hackathon_admin_duplicate", { p_hackathon_id: id }));
+      return run(`Duplicated Buildathon #${sprint.number}`, (db) => db.rpc("hackathon_admin_duplicate", { p_hackathon_id: id }));
 
     // Once only (migration 026): a second run returns the first run's report.
     case "run_matcher":
-      return run(`Ran the team matcher for Sprint #${sprint.number}`, (db) =>
+      return run(`Ran the team matcher for Buildathon #${sprint.number}`, (db) =>
         db.rpc("hackathon_run_matcher", { p_hackathon_id: id }),
       );
 

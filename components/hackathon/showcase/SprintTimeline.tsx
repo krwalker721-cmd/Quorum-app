@@ -41,7 +41,7 @@ export default function SprintTimeline({
 
   const facts: { label: string; value: string }[] = [
     { label: "Shipped", value: `${projects.length} of ${teamCount} team${teamCount === 1 ? "" : "s"}` },
-    ...(first ? [{ label: "First in", value: `${first.p.fields.project_name || first.p.team.name}, ${span(t1 - first.at)} before the deadline` }] : []),
+    ...(first ? [{ label: "First in", value: `${first.p.fields.project_name || first.p.team.name}, ${t1 - first.at > 0 ? `${span(t1 - first.at)} before the deadline` : "at the deadline"}` }] : []),
     ...(last && last !== first ? [{ label: "Last in", value: `${last.p.fields.project_name || last.p.team.name}, with ${span(Math.max(0, t1 - last.at))} to spare` }] : []),
   ];
 

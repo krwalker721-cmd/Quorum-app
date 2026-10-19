@@ -56,7 +56,7 @@ export function RoomTitle({
   return (
     <div style={{ marginBottom: 20 }}>
       <Link href={`/hackathon/${sprint.number}`} className={ui.tileLink}>
-        ← Sprint #{sprint.number}
+        ← Buildathon #{sprint.number}
       </Link>
       <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
         <TeamBadge name={team.name} emblem={team.emblem} color={team.color} size={34} />

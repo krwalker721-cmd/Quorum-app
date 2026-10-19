@@ -20,7 +20,7 @@ export default function SprintsSection() {
   const [view, setView] = useState<View>({ kind: "list" });
 
   return (
-    <SectionShell title="sprints">
+    <SectionShell title="buildathons">
       {view.kind === "list" && <SprintList onOpen={(id) => setView({ kind: "sprint", id })} onNew={() => setView({ kind: "new" })} />}
       {view.kind === "new" && (
         <>
@@ -41,7 +41,7 @@ export default function SprintsSection() {
 function BackLink({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="font-mono lowercase text-[0.7rem] text-text-faint hover:text-text-primary mb-4">
-      ← all sprints
+      ← all buildathons
     </button>
   );
 }
@@ -54,7 +54,7 @@ function SprintList({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: ()
     (async () => {
       const res = await adminFetch("/api/admin/hackathons");
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) setError(json.error ?? "Couldn't load Sprints.");
+      if (!res.ok) setError(json.error ?? "Couldn't load Buildathons.");
       setRows(json.sprints ?? []);
     })();
   }, []);
@@ -62,23 +62,23 @@ function SprintList({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: ()
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="font-mono text-[0.7rem] text-text-faint">every sprint, drafts included. state is worked out live from its times.</p>
+        <p className="font-mono text-[0.7rem] text-text-faint">every buildathon, drafts included. state is worked out live from its times.</p>
         <Btn variant="primary" onClick={onNew}>
-          new sprint
+          new buildathon
         </Btn>
       </div>
       <ErrorLine>{error}</ErrorLine>
       {rows === null ? (
         <p className="font-mono text-xs text-text-faint">loading…</p>
       ) : rows.length === 0 ? (
-        <p className="font-mono text-xs text-text-faint">no sprint scheduled yet. press new sprint to create sprint #1.</p>
+        <p className="font-mono text-xs text-text-faint">no buildathon scheduled yet. press new buildathon to create buildathon #1.</p>
       ) : (
         <div className="overflow-x-auto border" style={{ borderColor: "var(--border)" }}>
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="font-mono lowercase text-[0.6rem] text-text-faint text-left">
                 <th className="px-3 py-2">#</th>
-                <th className="px-3 py-2">title</th>
+                <th className="px-3 py-2">tagline</th>
                 <th className="px-3 py-2">state</th>
                 <th className="px-3 py-2">kickoff (new york)</th>
                 <th className="px-3 py-2 text-right">participants</th>
@@ -95,7 +95,7 @@ function SprintList({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: ()
                   style={{ borderColor: "var(--border)" }}
                 >
                   <td className="px-3 py-2 font-mono text-text-muted">{s.number}</td>
-                  <td className="px-3 py-2 text-text-primary">{s.title}</td>
+                  <td className="px-3 py-2 text-text-secondary">{s.tagline || "—"}</td>
                   <td className="px-3 py-2">
                     <StateChip state={s.state} />
                   </td>
@@ -134,7 +134,7 @@ function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }
     const json = await res.json().catch(() => ({}));
     if (mine !== latest.current) return;
     if (!res.ok) {
-      setError(json.error ?? "Couldn't load this Sprint.");
+      setError(json.error ?? "Couldn't load this Buildathon.");
       return;
     }
     setError(null);
@@ -159,8 +159,7 @@ function SprintPage({ id, onOpen }: { id: string; onOpen: (id: string) => void }
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg text-text-primary">
-          <span className="font-mono text-text-faint mr-2">#{s.number}</span>
-          {s.title}
+          Buildathon <span className="font-mono">#{s.number}</span>
         </h2>
         <StateChip state={s.state} />
         {s.state === "paused" && <span className="font-mono text-[0.6rem] text-text-faint">clock stopped at: {s.phase.replace("_", " ")}</span>}

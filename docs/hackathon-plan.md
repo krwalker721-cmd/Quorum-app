@@ -1570,6 +1570,48 @@ teams **without names**, and a **short review window** (2 hours by default, not 
 
 ---
 
+## 5s. What a Buildathon is, said everywhere; admin defaults; connections (migration 037) (2026-10-18)
+
+Owner: the last pass on the Buildathon. The admin should come pre-filled with what's been decided; every
+event has the same title; stop saying "build something new" (too broad): it's a **business idea**, taken
+to a **viable MVP, or an idea with something real to show for it**; and the whole point is **creating with
+others and building connections**. "Do what you will… if you don't think it needs changing, don't."
+Owner picked "Buildathon #N" for names and all three connection extras.
+
+- **Naming:** each event is **"Buildathon #N"** everywhere members, the public pages, link previews and
+  the admin look; "Sprint" is gone from the copy (addresses, tables and code names unchanged). The title
+  column defaults to "Buildathon" (037) and the form no longer has a title field. The database's own
+  messages (errors, pause and kickoff lines) still say "Sprint"; `sayBuildathon()` rewords them where
+  they're shown (the action hook, room errors, the review round, system lines in the chat).
+- **Admin defaults** (`lib/hackathons/defaults.ts`, the one source): a new Buildathon starts with the
+  tagline, the full rules (what to build, teams, submitting, reviews and awards, working together), the
+  lobby welcome (introduce yourself), teams of 2 to 4 and six reviews each. Only the theme and times
+  are left; the theme's hint explains it. "Put back the standard rules" restores them on any Buildathon.
+  The demo scripts read the same text from that file.
+- **Copy:** the home (lede, spec strip with Build "A business idea" and Outcome "An MVP or a proven
+  idea", a new **What it's for** section: a real business idea / people you haven't built with /
+  connections that outlast it, and the phases), the Buildathon page's opener and live explainer, the join
+  card, the team room's checklist, the public pages' footer, the link-preview card and the top bar.
+  Rules render with plain sentence-case subheads.
+- **Connections:**
+  - **What you bring** (037): an optional line (80 characters) when registered, editable until teams
+    lock, shown beside each name in "Registered so far" ("Looking for teammates? Here's what people
+    bring."). `hackathon_registrants` returns it to the same audience as the names.
+  - **What's next** in the team room after the reveal: post the project on the Collab board (a link;
+    Collab untouched) and the teammates with Message buttons.
+  - **People you met** on the finished Buildathon page for anyone who took part: their team, and the
+    builders of the projects they reviewed, with profile links and Message.
+- Also: the home banner's kicker by state (Coming up / Happening now / The latest Buildathon), and "How it
+  went" says "at the deadline" instead of a negative time.
+- 12 new tests (708 locally); three welcome tests expect the new default.
+- **Checked on staging:** the home, the signup page (opener, dates, join card, full rules), the chat's new
+  welcome, the public recap signed out, People you met and What's next on a revealed demo. 037 applied
+  by the owner, 708 tests pass there; the test admin joined demo #2's pool, wrote what they bring (saved,
+  changed, shown beside the name), then withdrew; the demo was reseeded. The pre-filled admin form is for
+  the owner to open (admin code).
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1675,13 +1717,19 @@ teams **without names**, and a **short review window** (2 hours by default, not 
 | 99 | Four automatic awards: Community pick, Most shipped, Most likely to become real, Crowd favourite; a project needs 2 reviews to win. | Owner liked the four. Two reviews keeps one opinion from deciding. |
 | 100 | Teams see their feedback without reviewer names; admins see names and can hide a review. | Owner: anonymous. Admins need a way to deal with abuse. |
 | 101 | The review window is short: 2 hours after the deadline by default, the reveal when it closes. | Owner: "the review do not need two days". |
+| 102 | Every event is "Buildathon #N"; the title is always "Buildathon"; "Sprint" leaves the copy (not the code). | Owner: "all the titles should be the same because its a buildathon"; picked Buildathon #N. |
+| 103 | A new Buildathon starts filled in: tagline, full rules, welcome, teams of 2–4, six reviews; only the theme and times change. | Owner: "for most of the things they should already be filled with things we've decided on". |
+| 104 | What to build: a business idea, taken to a working MVP or proven with something real (prototype, sign-ups, customer conversations). | Owner: "stop saying build something new… innovate for a BUSINESS idea, a viable mvp or just an idea with something real to show for it". |
+| 105 | The copy leads with why it exists: building with founders you haven't built with, and the connections after. | Owner: "the whole objective… was to promote creation with others and building connections". |
+| 106 | Database messages keep "Sprint"; the app rewords them on display. | Rewriting ~50 functions for a word isn't worth the risk; one display helper covers them. |
+| 107 | Three connection features: what you bring (037), What's next in the room, People you met on the recap. | Owner picked all three. |
 
 ---
 
 ## 7. Open items and later prompts
 
 **To do before deploying anything:**
-- [ ] Paste migrations **018 → 036** into the production SQL editor, in order, before the deploy
+- [ ] Paste migrations **018 → 037** into the production SQL editor, in order, before the deploy
       that needs them. The landing page and in-app bar tolerate their absence; the admin sections
       and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
       027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
@@ -1690,8 +1738,8 @@ teams **without names**, and a **short review window** (2 hours by default, not 
       judging tab fails and revealed Sprints show no awards (the page reads `awards_finalized_at`),
       and without 032 the recap and project pages are 404s and the revealed Sprint page has no
       gallery (the sitemap just lists the static pages); without 033 the relay shows only standalone
-      countdowns (its Sprint data reads as empty). 034–036 are needed by the Sprint chat, the deck and
-      the review round.
+      countdowns (its Sprint data reads as empty). 034–037 are needed by the Sprint chat, the deck,
+      the review round and "what you bring".
 - [ ] After the first deploy with a revealed Sprint: paste a project and a recap link into X,
       LinkedIn (Post Inspector) and iMessage to confirm the previews.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
@@ -1815,4 +1863,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `4c857cc`, `9a73a42` | The live page: Sprint chat, stage, migration 034 (5o) |
 | `d535a93` | The team room like a Collab project room; checklist and deck (035, 5p) |
 | `3c8b183` | The finished Sprint: recap around the chat, demo day, how it went (5q) |
-| (next) | Peer reviews instead of judges, with a short review window (036, 5r) |
+| `b79b009` | Peer reviews instead of judges, with a short review window (036, 5r) |
+| (next) | Buildathon #N, admin defaults, business-idea copy, connections (037, 5s) |

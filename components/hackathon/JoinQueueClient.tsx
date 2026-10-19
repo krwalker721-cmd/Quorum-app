@@ -4,10 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import ui from "@/components/ui/sleek.module.css";
 import PersonAvatar from "@/components/ui/PersonAvatar";
-import { register, rpc, setMode, useSprintAction, withdraw } from "@/lib/hackathons/actions";
+import { register, rpc, setMode, sprintDb, useSprintAction, withdraw } from "@/lib/hackathons/actions";
 import type { ArenaTeam, QueueData, Viewer } from "@/lib/hackathons/page";
 import LocalTime from "./LocalTime";
 import { COLORS, EMBLEMS, StylePicker, TeamBadge } from "./TeamStyle";
+import { LABEL_RESET } from "@/lib/hackathons/submission";
 
 // The join queue (Prompt 4): join the Sprint in one of three ways, switch
 // between them, or withdraw, all while registration is open. The database
@@ -22,11 +23,13 @@ export default function JoinQueueClient({
   viewer,
   teams,
   queue,
+  myBring = null,
 }: {
   sprint: SprintInfo;
   viewer: Viewer;
   teams: ArenaTeam[];
   queue: QueueData;
+  myBring?: string | null;
 }) {
   const { busy, error, run } = useSprintAction();
   const [step, setStep] = useState<Step>(null);
@@ -94,16 +97,16 @@ export default function JoinQueueClient({
   if (viewer.role === "outsider") {
     body = (
       <p className={ui.emptyTitle}>
-        Joining a Sprint needs an active membership.{" "}
+        Joining a Buildathon needs an active membership.{" "}
         <Link href="/pricing" style={{ color: "#f8c56a" }}>
           See plans
         </Link>
       </p>
     );
   } else if (viewer.role === "judge" || viewer.role === "invited_judge") {
-    body = <p className={ui.emptyTitle}>You're judging this Sprint, so you can't compete in it.</p>;
+    body = <p className={ui.emptyTitle}>You're judging this Buildathon, so you can't compete in it.</p>;
   } else if (!sprint.open) {
-    body = <p className={ui.emptyTitle}>Registration is paused. It picks up where it left off when the Sprint resumes.</p>;
+    body = <p className={ui.emptyTitle}>Registration is paused. It picks up where it left off when the Buildathon resumes.</p>;
   } else if (registered && onTeam) {
     body = (
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -184,10 +187,10 @@ export default function JoinQueueClient({
     ) : (
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className={ui.emptyTitle}>
-          {viewer.withdrawn ? "You withdrew from this Sprint. You can come back until teams lock." : "48 hours, a new team, something new. Want in?"}
+          {viewer.withdrawn ? "You withdrew from this Buildathon. You can come back until teams lock." : "48 hours, founders you haven't built with yet, and a business idea made real. Want in?"}
         </p>
         <button type="button" className={ui.primaryBtn} disabled={busy} onClick={() => setStep("choose")}>
-          {viewer.withdrawn ? `Rejoin Sprint #${sprint.number}` : `Join Sprint #${sprint.number}`}
+          {viewer.withdrawn ? `Rejoin Buildathon #${sprint.number}` : `Join Buildathon #${sprint.number}`}
         </button>
       </div>
     );
@@ -198,6 +201,7 @@ export default function JoinQueueClient({
       {counts}
       {invitations}
       {body}
+      {registered && sprint.open && <BringLine sprintId={sprint.id} uid={uid} initial={myBring} run={run} busy={busy} />}
       {error && (
         <p role="alert" style={{ fontSize: 12.5, color: "#fca5a5" }}>
           {error}
@@ -209,6 +213,42 @@ export default function JoinQueueClient({
 
 type Run = ReturnType<typeof useSprintAction>["run"];
 
+/**
+ * One line about what you bring (037), shown beside your name in "Registered
+ * so far", so people looking for teammates can find you. Optional, and yours
+ * to change until teams lock.
+ */
+function BringLine({ sprintId, uid, initial, run, busy }: { sprintId: string; uid: string; initial: string | null; run: Run; busy: boolean }) {
+  const [value, setValue] = useState(initial ?? "");
+  const [saved, setSaved] = useState(initial ?? "");
+  const dirty = value.trim() !== saved;
+  return (
+    <form
+      className="flex items-end gap-2 flex-wrap"
+      style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: 12 }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!dirty) return;
+        const next = value.trim();
+        run(
+          () => sprintDb().from("hackathon_registrations").update({ bring: next || null }).eq("hackathon_id", sprintId).eq("user_id", uid),
+          () => setSaved(next),
+        );
+      }}
+    >
+      <label style={{ ...LABEL_RESET, flex: "1 1 260px", minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 5 }}>
+          What you bring <span style={{ color: "var(--text-muted)" }}>(optional, shown next to your name)</span>
+        </span>
+        <input value={value} maxLength={80} onChange={(e) => setValue(e.target.value)} placeholder="e.g. design and growth, or backend and AI" />
+      </label>
+      <button type="submit" className={ui.ghostBtn} disabled={busy || !dirty}>
+        {saved && !dirty ? "Saved" : "Save"}
+      </button>
+    </form>
+  );
+}
+
 function WithdrawButton({ sprintId, uid, run, busy }: { sprintId: string; uid: string; run: Run; busy: boolean }) {
   return (
     <button
@@ -216,7 +256,7 @@ function WithdrawButton({ sprintId, uid, run, busy }: { sprintId: string; uid: s
       className={ui.textBtn}
       disabled={busy}
       onClick={() => {
-        if (window.confirm("Withdraw from this Sprint? You'll leave your team, if you're on one. You can come back until teams lock.")) {
+        if (window.confirm("Withdraw from this Buildathon? You'll leave your team, if you're on one. You can come back until teams lock.")) {
           run(() => withdraw(sprintId, uid));
         }
       }}

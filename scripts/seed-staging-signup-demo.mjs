@@ -99,14 +99,22 @@ const outsiders = meIn ? [] : [me];
   if (data) outsiders.push(data.id);
 }
 
+// The standard tagline, rules and welcome, read from lib/hackathons/defaults.ts
+// so the demo says exactly what a new Buildathon starts with.
+const defaultsSrc = readFileSync(resolve(root, "lib/hackathons/defaults.ts"), "utf8");
+const standard = (name) => {
+  const m = new RegExp(`export const ${name} =\\s*(?:\`([\\s\\S]*?)\`|"((?:[^"\\\\]|\\\\.)*)");`).exec(defaultsSrc);
+  if (!m) throw new Error(`${name} not found in lib/hackathons/defaults.ts`);
+  return m[1] ?? JSON.parse(`"${m[2]}"`);
+};
+
 // The Sprint.
 const row = {
   slug: "signup-demo",
-  title: "Signup demo",
-  tagline: "48 hours to build a tool founders actually use",
+  title: "Buildathon",
+  tagline: standard("DEFAULT_TAGLINE"),
   theme_hidden: "Tools for founders who build at night",
-  rules:
-    "- Build something **new** during the 48 hours.\n- Teams of 2 to 4, or join the random pool and we'll match you.\n- Submit before the deadline: the form locks on the dot.",
+  rules: standard("DEFAULT_RULES"),
   ...(mode === "judging"
     ? {
         registration_opens_at: at(-6 * DAY),
@@ -140,7 +148,7 @@ const row = {
   show_countdown_in_app: true,
   show_countdown_on_landing: false,
   countdown_headline_override: null,
-  lobby_welcome: "Welcome! Say hi, post what you'd like to build, and find a team before the lock.",
+  lobby_welcome: standard("DEFAULT_LOBBY_WELCOME"),
 };
 const { data: existing } = await db.from("hackathons").select("id, status_override").eq("slug", row.slug).maybeSingle();
 let sprint;

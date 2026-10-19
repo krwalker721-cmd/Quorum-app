@@ -57,7 +57,7 @@ export default function Judges({ sprintId, judges, onChanged }: { sprintId: stri
     const accepted = pick === "accepted";
     const r = await run({ op: "judge_add_member", user_id: m.id, accepted });
     if (!r.ok && r.hint === "participant_cannot_judge") {
-      if (await askConfirm(`${name} is registered for this Sprint, so they can't judge it.\n\nWithdraw their registration and make them a judge?`, { ok: "withdraw + make judge" })) {
+      if (await askConfirm(`${name} is registered for this Buildathon, so they can't judge it.\n\nWithdraw their registration and make them a judge?`, { ok: "withdraw + make judge" })) {
         const w = await run({ op: "withdraw", user_id: m.id });
         if (w.ok) await run({ op: "judge_add_member", user_id: m.id, accepted });
       }
@@ -125,7 +125,7 @@ export default function Judges({ sprintId, judges, onChanged }: { sprintId: stri
             invite
           </Btn>
         </div>
-        <p className="font-mono text-[0.6rem] text-text-faint mt-2">Stored for now. Judges from outside Quorum get accounts in a later release (planned for Sprint #2); until then, judges must be existing members.</p>
+        <p className="font-mono text-[0.6rem] text-text-faint mt-2">Stored for now. Judges from outside Quorum get accounts in a later release (planned for Buildathon #2); until then, judges must be existing members.</p>
       </Card>
       <ErrorLine>{error}</ErrorLine>
     </div>

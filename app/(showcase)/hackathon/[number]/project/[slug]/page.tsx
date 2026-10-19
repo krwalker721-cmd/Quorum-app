@@ -57,10 +57,10 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { sprint, project } = data;
   const name = project.fields.project_name || "A project";
   const award = project.awards[0];
-  const title = `${name} · Quorum Sprint #${sprint.number}`;
+  const title = `${name} · Quorum Buildathon #${sprint.number}`;
   const description =
     (award ? `${awardName(award)}. ` : "") +
-    (project.fields.tagline || `Built in 48 hours by team ${project.team.name} at Quorum Sprint #${sprint.number}.`);
+    (project.fields.tagline || `Built in 48 hours by team ${project.team.name} at Quorum Buildathon #${sprint.number}.`);
   const url = `${LEGAL.site}${projectHref(sprint.number, project.team.slug)}`;
   return {
     title,
@@ -89,10 +89,10 @@ export default async function PublicProjectPage(props: Props) {
   const others = projects.filter((p) => p.submission_id !== project.submission_id).slice(0, 3);
 
   return (
-    <PublicShell signedIn={Boolean(user)} back={{ href: `/hackathon/${sprint.number}`, label: `← Sprint #${sprint.number}` }}>
+    <PublicShell signedIn={Boolean(user)} back={{ href: `/hackathon/${sprint.number}`, label: `← Buildathon #${sprint.number}` }}>
       <div style={{ maxWidth: 880, margin: "0 auto" }}>
         <Link href={recapHref(sprint.number)} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
-          Quorum Sprint #{sprint.number} · {sprint.title} · built in 48 hours
+          Quorum Buildathon #{sprint.number} · built in 48 hours
         </Link>
 
         {project.awards.length > 0 && (
@@ -122,14 +122,14 @@ export default async function PublicProjectPage(props: Props) {
           <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted)", marginBottom: 10 }}>Share {name}</p>
           <ShareButtons
             url={url}
-            text={`${name}, built in 48 hours by ${project.team.name} at Quorum Sprint #${sprint.number}`}
+            text={`${name}, built in 48 hours by ${project.team.name} at Quorum Buildathon #${sprint.number}`}
           />
         </section>
 
         {others.length > 0 && (
           <section style={{ marginTop: 40 }}>
             <div className="flex items-baseline justify-between gap-3" style={{ marginBottom: 12 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>More from Sprint #{sprint.number}</h2>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>More from Buildathon #{sprint.number}</h2>
               <Link href={recapHref(sprint.number)} style={{ fontSize: 12.5, color: "#f8c56a", textDecoration: "none" }}>
                 See every project →
               </Link>

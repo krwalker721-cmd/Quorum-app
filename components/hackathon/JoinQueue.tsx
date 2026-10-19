@@ -12,11 +12,14 @@ export default function JoinQueue({
   viewer,
   teams,
   queue,
+  myBring = null,
 }: {
   sprint: SprintRow;
   viewer: Viewer;
   teams: ArenaTeam[];
   queue: QueueData | null;
+  /** What the viewer said they bring (037). */
+  myBring?: string | null;
 }) {
   return (
     <div id="join" style={{ scrollMarginTop: 80 }}>
@@ -27,6 +30,7 @@ export default function JoinQueue({
             viewer={viewer}
             teams={teams}
             queue={queue}
+            myBring={myBring}
           />
         ) : null}
       </Tile>

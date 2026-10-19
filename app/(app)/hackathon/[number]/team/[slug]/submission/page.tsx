@@ -76,9 +76,9 @@ export default async function SubmissionPage(props: { params: Promise<{ number: 
   const closedReason = !isMember
     ? "You're viewing this as an admin. Only the team can edit its submission."
     : sprint.state === "paused"
-      ? "The Sprint is paused, so the submission is frozen until it resumes."
+      ? "The Buildathon is paused, so the submission is frozen until it resumes."
       : sprint.state === "cancelled"
-        ? "This Sprint was cancelled."
+        ? "This Buildathon was cancelled."
         : ["registration", "teams_locked"].includes(sprint.state)
           ? "The submission opens at kickoff."
           : "The deadline has passed, so the submission is locked. Here's what was submitted.";

@@ -26,7 +26,7 @@ export async function POST(req: Request, ctx: Ctx) {
     case "withdraw": {
       const who = await personName(b.user_id);
       return ok(
-        await adminDb(g.admin, `Withdrew ${who} from the Sprint`)
+        await adminDb(g.admin, `Withdrew ${who} from the Buildathon`)
           .from("hackathon_registrations")
           .update({ withdrawn_at: new Date().toISOString() })
           .eq("hackathon_id", id)

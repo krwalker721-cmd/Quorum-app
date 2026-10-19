@@ -59,7 +59,7 @@ export default function SprintAuditSection() {
   return (
     <SectionShell title="sprint_audit">
       <p className="font-mono text-[0.7rem] text-text-faint mb-5 max-w-2xl">
-        every admin edit to a sprint submission or score made after its deadline. written by the
+        every admin edit to a buildathon submission or score made after its deadline. written by the
         database, append-only.
       </p>
 

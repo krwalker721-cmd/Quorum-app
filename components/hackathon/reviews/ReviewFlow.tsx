@@ -8,6 +8,7 @@ import ui from "@/components/ui/sleek.module.css";
 import { sprintDb } from "@/lib/hackathons/actions";
 import { LABEL_RESET } from "@/lib/hackathons/submission";
 import { REVIEW_COLUMNS, REVIEW_QUESTIONS, type MyReview } from "@/lib/hackathons/reviewShared";
+import { sayBuildathon } from "@/lib/hackathons/defaults";
 import s from "./reviews.module.css";
 
 // The peer review round (036), for someone who competed: from the deadline
@@ -96,7 +97,7 @@ export default function ReviewFlow({
     setError(null);
     const { error: e } = await sprintDb().rpc("hackathon_pick_favourite", { p_review_id: id });
     setSaving(false);
-    if (e) return setError(e.message);
+    if (e) return setError(sayBuildathon(e.message));
     setReviews((list) => list.map((x) => ({ ...x, is_favourite: x.id === id })));
     setStep(n + 1);
   }

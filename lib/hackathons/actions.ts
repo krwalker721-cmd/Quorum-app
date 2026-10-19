@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { sayBuildathon } from "./defaults";
 
 // The join queue's writes, straight to Supabase as the signed-in member (the
 // same pattern as the Collab Board). The database enforces every rule; its
@@ -76,7 +77,7 @@ export function useSprintAction() {
     try {
       const { error: e } = await f();
       if (e) {
-        setError(e.message);
+        setError(sayBuildathon(e.message));
         return false;
       }
       after?.();

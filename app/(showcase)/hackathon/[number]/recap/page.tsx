@@ -14,6 +14,7 @@ import ui from "@/components/ui/sleek.module.css";
 import s from "@/components/hackathon/showcase/showcase.module.css";
 import { LEGAL } from "@/lib/legal";
 import { awardsWithProjects, loadPublicProjects, loadPublicSprint, recapHref } from "@/lib/hackathons/showcase";
+import { buildathonName } from "@/lib/hackathons/defaults";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const data = await loadRecap((await props.params).number);
   if (!data) return { title: "Not found", robots: { index: false } };
   const { sprint } = data;
-  const title = `Quorum Sprint #${sprint.number}: ${sprint.title}`;
+  const title = `Quorum Buildathon #${sprint.number}: the recap`;
   const description = `${sprint.shipped} ${sprint.shipped === 1 ? "project" : "projects"} built in 48 hours by ${sprint.builders} founders on ${sprint.teams} teams.`;
   const url = `${LEGAL.site}${recapHref(sprint.number)}`;
   return {
@@ -70,14 +71,14 @@ export default async function RecapPage(props: Props) {
   const hasAwards = awardsWithProjects(projects).length > 0;
 
   return (
-    <PublicShell signedIn={Boolean(user)} back={{ href: `/hackathon/${sprint.number}`, label: `← Sprint #${sprint.number}` }}>
+    <PublicShell signedIn={Boolean(user)} back={{ href: `/hackathon/${sprint.number}`, label: `← Buildathon #${sprint.number}` }}>
       <header style={{ textAlign: "center", maxWidth: 760, margin: "0 auto" }}>
-        <p style={{ fontSize: 13, color: "#f8c56a", fontWeight: 600 }}>Quorum Sprint #{sprint.number} · the recap</p>
+        <p style={{ fontSize: 13, color: "#f8c56a", fontWeight: 600 }}>Quorum · the recap</p>
         <h1
           className={`${ui.titleGradient} ${ui.balance}`}
           style={{ fontSize: "clamp(34px, 6vw, 56px)", fontWeight: 650, letterSpacing: "-0.035em", lineHeight: 1.04, marginTop: 10 }}
         >
-          {sprint.title}
+          {buildathonName(sprint.number)}
         </h1>
         {sprint.tagline && (
           <p className={ui.balance} style={{ fontSize: 17, color: "var(--text-secondary)", marginTop: 12, lineHeight: 1.5 }}>
@@ -123,7 +124,7 @@ export default async function RecapPage(props: Props) {
           Everything that shipped
         </h2>
         {projects.length === 0 ? (
-          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>The projects from this Sprint will appear here.</p>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>The projects from this Buildathon will appear here.</p>
         ) : (
           <Gallery projects={projects} sprintNumber={sprint.number} presentable />
         )}
@@ -137,7 +138,7 @@ export default async function RecapPage(props: Props) {
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted)", marginBottom: 10 }}>Share this recap</p>
         <ShareButtons
           url={`${LEGAL.site}${recapHref(sprint.number)}`}
-          text={`${sprint.shipped} projects built in 48 hours at Quorum Sprint #${sprint.number}`}
+          text={`${sprint.shipped} projects built in 48 hours at Quorum Buildathon #${sprint.number}`}
         />
       </section>
 
