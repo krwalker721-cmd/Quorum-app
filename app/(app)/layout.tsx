@@ -9,6 +9,9 @@ import Sidebar from "@/components/Sidebar";
 import { PresenceProvider } from "@/components/PresenceProvider";
 import NotificationsProvider from "@/components/NotificationsProvider";
 import TrialBanner from "@/components/TrialBanner";
+import CountdownStrip from "@/components/countdown/CountdownStrip";
+import { getPublicCountdowns, type PublicCountdown } from "@/lib/countdowns";
+import { getHackathonNav, type HackathonNav } from "@/lib/hackathons/nav";
 import { TierProvider } from "@/contexts/TierContext";
 import { TourProvider } from "@/contexts/TourContext";
 import { trackLoginEvent } from "@/lib/referral-helpers";
@@ -154,6 +157,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
   }
 
+  // Countdowns switched on for the app (admin → countdowns). Best-effort.
+  let countdowns: PublicCountdown[] = [];
+  try {
+    countdowns = await getPublicCountdowns("app");
+  } catch (e) {
+    console.error("countdowns failed:", e);
+  }
+
+  // The Hackathon tab: who sees it, and when it says LIVE. Best-effort: if
+  // this fails the tab is left out for this page load, nothing else.
+  let hackathonNav: HackathonNav = { show: false, windows: [] };
+  try {
+    hackathonNav = await getHackathonNav(supabase, user.id, entitlement?.hasFullAccess ?? false);
+  } catch (e) {
+    console.error("hackathon nav failed:", e);
+  }
+
   return (
     <PresenceProvider currentUserId={user.id}>
       <NotificationsProvider currentUserId={user.id} cohortId={cohortIdForDots}>
@@ -166,6 +186,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               stage: profile?.stage ?? null,
               username: (profile as { username?: string | null } | null)?.username ?? null,
             }}
+            hackathon={hackathonNav}
           />
           <div
             className="app-content"
@@ -180,6 +201,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               status={entitlement?.status ?? "trialing"}
               lapse={lapse}
             />
+            <CountdownStrip initial={countdowns} where="app" />
             {children}
           </div>
         </div>

@@ -8,6 +8,8 @@ import Avatar from "@/components/Avatar";
 import SidebarTierBadge from "@/components/SidebarTierBadge";
 import { useNavDots, type NavKey } from "@/components/NotificationsProvider";
 import { useTier } from "@/contexts/TierContext";
+import { isLiveAt, type HackathonNav } from "@/lib/hackathons/nav";
+import { approxServerNow } from "@/lib/useServerNow";
 import ui from "@/components/ui/sleek.module.css";
 
 const VIEWED_KEY = "last_summary_viewed_week";
@@ -52,6 +54,10 @@ const NAV: NavItem[] = [
   { href: "/referrals", label: "Referrals", glyph: "⇄", dotKey: "referrals" },
 ];
 
+// Shown to active members, and to anyone taking part in a Sprint (see
+// lib/hackathons/nav.ts). Slotted in after the Collab board.
+const HACKATHON: NavItem = { href: "/buildathon", label: "Buildathon", glyph: "◈" };
+
 const EXPANDED_W = 208;
 const COLLAPSED_W = 48;
 
@@ -62,8 +68,10 @@ const RAIL_MIN_W = 1024;
 
 export default function Sidebar({
   currentUser,
+  hackathon,
 }: {
   currentUser?: { full_name: string | null; stage: string | null; username: string | null };
+  hackathon?: HackathonNav;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -154,6 +162,31 @@ export default function Sidebar({
     };
   }, [pathname]);
 
+  // LIVE on the Hackathon tab while a Sprint is between kickoff and deadline,
+  // on the server's clock. Rechecked every 30 seconds; the phone menu button
+  // carries the same dot (html[data-sprint-live] in globals.css), since the
+  // rail is hidden there.
+  const [sprintLive, setSprintLive] = useState(false);
+  const windows = hackathon?.show ? hackathon.windows : null;
+  useEffect(() => {
+    if (!windows || windows.length === 0) {
+      setSprintLive(false);
+      return;
+    }
+    const check = () => setSprintLive(isLiveAt(windows, approxServerNow()));
+    check();
+    const t = setInterval(check, 30_000);
+    return () => clearInterval(t);
+  }, [windows]);
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-sprint-live", sprintLive);
+    return () => document.documentElement.removeAttribute("data-sprint-live");
+  }, [sprintLive]);
+
+  const nav = hackathon?.show
+    ? [...NAV.slice(0, NAV.findIndex((i) => i.href === "/collab") + 1), HACKATHON, ...NAV.slice(NAV.findIndex((i) => i.href === "/collab") + 1)]
+    : NAV;
+
   function toggle() {
     setCollapsedPref((v) => {
       const next = !v;
@@ -241,9 +274,10 @@ export default function Sidebar({
         className="pt-3 flex-1 overflow-y-auto scroll-thin relative"
         style={{ paddingLeft: collapsed ? 0 : 10, paddingRight: collapsed ? 0 : 10 }}
       >
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const active =
             pathname === item.href || (item.href !== "/home" && pathname.startsWith(item.href));
+          const live = item === HACKATHON && sprintLive;
           const hasUnseen =
             (item.href === "/home" && showHomeDot) ||
             (!!item.dotKey && dots[item.dotKey] && !active);
@@ -267,6 +301,13 @@ export default function Sidebar({
                     aria-hidden
                   >
                     {item.glyph}
+                    {live && (
+                      <span
+                        className={ui.liveDot}
+                        style={{ position: "absolute", top: -3, right: -9 }}
+                        aria-label="a Buildathon is live"
+                      />
+                    )}
                     {hasUnseen && (
                       <span
                         className="nav-unseen-dot"
@@ -278,6 +319,12 @@ export default function Sidebar({
                 ) : (
                   <>
                     <span>{item.label}</span>
+                    {live && (
+                      <span className="nav-live-pill" aria-label="a Buildathon is live">
+                        <span className={ui.liveDot} aria-hidden />
+                        LIVE
+                      </span>
+                    )}
                     {hasUnseen && (
                       <span className="nav-unseen-dot" aria-label={`new in ${item.label}`} />
                     )}

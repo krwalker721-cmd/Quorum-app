@@ -1,0 +1,430 @@
+/* The arena as a stadium (ArenaMap.tsx). Static, except a team's one-off
+   ripple when it does something (as in the card view). */
+
+.frame {
+  position: relative;
+}
+
+.viewport {
+  position: relative;
+  height: clamp(420px, 62vh, 660px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  background:
+    radial-gradient(70% 60% at 50% 50%, rgba(245, 158, 11, 0.06), transparent 70%),
+    var(--bg-surface);
+  cursor: grab;
+  /* A vertical swipe still scrolls the page on a phone; the rest is ours. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.viewport:active {
+  cursor: grabbing;
+}
+
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.stadium {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.stand {
+  fill: rgba(255, 255, 255, 0.012);
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
+}
+.track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 9;
+}
+.field {
+  stroke: rgba(245, 158, 11, 0.32);
+  stroke-width: 1.5;
+}
+.fieldLine {
+  fill: none;
+  stroke: rgba(245, 158, 11, 0.14);
+  stroke-width: 1;
+}
+
+/* The field: the clock and where things stand. */
+.center {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+.centerLabel {
+  font-size: 15px;
+  color: #f8c56a;
+}
+.centerClock {
+  margin-top: 6px;
+  font-size: 30px;
+}
+.centerMeta {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+.centerTheme {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  padding: 0 24px;
+}
+
+/* A team: a compact version of the arena's team card (arena.module.css), in
+   the same finish. */
+.pod {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 13px 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--team) 9%, transparent), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 50%),
+    var(--bg-surface);
+  overflow: hidden;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.pod::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--team), transparent);
+  opacity: 0.5;
+}
+.pod:hover,
+.pod:focus-visible {
+  border-color: color-mix(in srgb, var(--team) 45%, transparent);
+  outline: none;
+}
+.podTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.podEmblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--team);
+  background: color-mix(in srgb, var(--team) 12%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--team) 35%, transparent);
+}
+.podName {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.podBars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.podBar {
+  width: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.podBarOn {
+  background: var(--team);
+}
+.podDone {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #22c55e;
+}
+.podPeople {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.podFaces {
+  display: flex;
+  flex-shrink: 0;
+}
+.podFace {
+  display: inline-flex;
+  margin-left: -6px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--bg-surface);
+}
+.podFace:first-child {
+  margin-left: 0;
+}
+.podNames {
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.podFoot {
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.podActivity {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.podYou {
+  color: #f8c56a;
+}
+
+/* Activity: the border, not a glow. */
+.heat_hot {
+  border-color: color-mix(in srgb, var(--team) 45%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--team) 18%, transparent);
+}
+.heat_warm {
+  border-color: color-mix(in srgb, var(--team) 25%, transparent);
+}
+.heat_idle {
+  opacity: 0.72;
+}
+.done {
+  border-color: rgba(34, 197, 94, 0.32);
+}
+.mine {
+  border-color: rgba(245, 158, 11, 0.6);
+}
+.picked {
+  border-color: var(--team);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--team) 30%, transparent);
+}
+.ripple {
+  animation: ripple 1.4s ease-out 1;
+}
+@keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--team) 35%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+
+/* Zoomed out: the faces and status line go and the name gets larger (mid);
+   then just a plate with the emblem (far), so a crowd still reads. */
+.mid .podPeople,
+.mid .podFoot,
+.far .podPeople,
+.far .podFoot,
+.far .podName,
+.far .podBars,
+.far .podDone {
+  display: none;
+}
+.mid .pod,
+.far .pod {
+  justify-content: center;
+}
+.mid .podTop {
+  gap: 12px;
+}
+.mid .podName {
+  font-size: 21px;
+  line-height: 1.15;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mid .podEmblem {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 17px;
+}
+.mid .podBar {
+  width: 5px;
+}
+.mid .podDone {
+  font-size: 18px;
+}
+.far .podTop {
+  justify-content: center;
+}
+.far .podEmblem {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 22px;
+}
+/* Zoomed out, the field keeps just its clock (the stats above say the rest). */
+.mid .centerLabel,
+.mid .centerMeta,
+.mid .centerTheme,
+.far .centerLabel,
+.far .centerMeta,
+.far .centerTheme {
+  display: none;
+}
+
+/* Zoom buttons and the hint. */
+.controls {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.controls button {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(13, 17, 23, 0.8);
+  color: var(--text-primary);
+  font-size: 17px;
+  cursor: pointer;
+}
+.controls button:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+}
+.controls .fitBtn {
+  font-size: 11px;
+}
+.hint {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* The team you tapped. */
+.card {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: min(300px, calc(100% - 70px));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(13, 17, 23, 0.94);
+  backdrop-filter: blur(8px);
+  padding: 14px;
+  cursor: default;
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cardEmblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--team);
+  background: color-mix(in srgb, var(--team) 12%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--team) 35%, transparent);
+}
+.cardName {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cardSub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.cardClose {
+  margin-left: auto;
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+.cardPeople {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.cardPeople li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+.cardCohort {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.cardSealed {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+.cardLink {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #f8c56a;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .viewport {
+    height: 460px;
+  }
+  .hint {
+    right: 56px;
+  }
+}
+
+/* Zoomed out (ArenaMap sets data-compact), the field drops its theme line. */
+.center[data-compact="true"] .centerTheme {
+  display: none;
+}

@@ -1,0 +1,122 @@
+/* The shared countdown (Countdown.tsx). Three sizes: inline text, standard
+   digit blocks, and the hero for a live Sprint. Phones get one compact line
+   instead of the blocks. Static finish: only the digits change. */
+
+.inline {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  color: #f8c56a;
+}
+
+.blocks {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 58px;
+  padding: 10px 8px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  background:
+    linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.02) 70%),
+    var(--bg-surface);
+}
+.digits {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #f8c56a;
+}
+.unitLabel {
+  margin-top: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.sep {
+  align-self: center;
+  margin-top: -14px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 22px;
+  color: rgba(245, 158, 11, 0.45);
+}
+
+/* The live Sprint's centerpiece: big glowing digits. */
+.hero .unit {
+  min-width: 104px;
+  padding: 18px 12px 12px;
+  border-radius: 16px;
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 24px 60px -34px rgba(245, 158, 11, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.hero .digits {
+  font-size: 64px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #fff3d6 0%, #f8c56a 45%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 6px 22px rgba(245, 158, 11, 0.35));
+}
+.hero .unitLabel {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.hero .sep {
+  font-size: 44px;
+  margin-top: -22px;
+}
+
+/* The final hour: hotter digits and a brighter edge. */
+.urgent .unit {
+  border-color: rgba(251, 146, 60, 0.55);
+}
+.urgent .digits {
+  background: linear-gradient(180deg, #ffe4c7 0%, #fb923c 55%, #ef4444 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Phones: one compact line in place of the blocks. */
+.compact {
+  display: none;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #f8c56a;
+  font-size: 24px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.hero .compact {
+  font-size: clamp(28px, 10vw, 40px);
+  white-space: nowrap;
+  font-weight: 700;
+  background: linear-gradient(180deg, #fff3d6 0%, #f8c56a 45%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero.urgent .compact {
+  background: linear-gradient(180deg, #ffe4c7 0%, #fb923c 55%, #ef4444 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@media (max-width: 639px) {
+  .blocks {
+    display: none;
+  }
+  .compact {
+    display: inline-block;
+  }
+}

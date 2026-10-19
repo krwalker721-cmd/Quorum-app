@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -11,6 +11,10 @@ import ui from "@/components/ui/sleek.module.css";
 import { parseDbTime, timeAgo } from "@/lib/stage";
 import JoinRequestsWidget, { type JoinRequest } from "./JoinRequestsWidget";
 import { TabPill, TabPillRow } from "@/components/ui/TabPill";
+import RoomThread from "@/components/rooms/RoomThread";
+import RoomItemCard from "@/components/rooms/RoomItemCard";
+import RoomVotes from "@/components/rooms/RoomVotes";
+import { META, PANEL, getDomain, isValidUrl, sentence, type DecisionOption } from "@/components/rooms/kit";
 
 type Member = {
   id: string;
@@ -39,8 +43,6 @@ type Doc = {
   created_at: string;
 };
 
-type DecisionOption = string | { label: string };
-
 type Decision = {
   id: string;
   created_by: string | null;
@@ -66,24 +68,6 @@ const TAB_LABEL: Record<Tab, string> = {
   docs: "Docs",
   decisions: "Decisions",
 };
-
-const META: React.CSSProperties = { fontSize: 11.5, color: "var(--text-muted)" };
-
-// A hairline panel that doesn't light up on hover (the thread, the forms):
-// large surfaces you work inside, not cards you pick.
-const PANEL: React.CSSProperties = {
-  background: "var(--bg-surface)",
-  border: "1px solid rgba(255, 255, 255, 0.07)",
-  borderRadius: 12,
-};
-
-function optLabel(o: DecisionOption) {
-  return typeof o === "string" ? o : o.label;
-}
-
-function sentence(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 export default function ProjectRoomClient({
   currentUserId,
@@ -474,207 +458,29 @@ function ThreadTab({
   messages: Message[];
   memberMap: Map<string, Member>;
 }) {
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages.length]);
-
-  async function send() {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    setBusy(true);
+  async function send(trimmed: string) {
     const supabase = createClient();
     const { error } = await supabase.from("project_messages").insert({
       project_id: projectId,
       sender_id: currentUserId,
       content: trimmed,
     });
-    setBusy(false);
-    if (!error) setText("");
+    return !error;
   }
-
-  const canSend = !busy && !!text.trim();
 
   return (
-    <div
-      className="flex flex-col"
-      style={{
-        ...PANEL,
-        // Fill the space left under the header/tabs so the composer stays in
-        // view without the page scrolling; scrolls internally when long.
-        height: "calc(100dvh - 330px)",
-        minHeight: 340,
-        maxHeight: 640,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        ref={scrollRef}
-        className="scroll-thin"
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
-      >
-        {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <p className={ui.emptyTitle}>No messages yet.</p>
-            <p className={ui.emptySub}>Start the conversation.</p>
-          </div>
-        ) : (
-          messages.map((m) => {
-            if (m.is_system) {
-              return (
-                <p
-                  key={m.id}
-                  className="text-center"
-                  style={{ ...META, alignSelf: "center", maxWidth: "80%" }}
-                >
-                  {m.content} · {timeAgo(m.created_at)} ago
-                </p>
-              );
-            }
-            const mine = m.sender_id === currentUserId;
-            const sender = memberMap.get(m.sender_id);
-            return (
-              <div
-                key={m.id}
-                style={{
-                  maxWidth: "75%",
-                  alignSelf: mine ? "flex-end" : "flex-start",
-                  padding: "10px 14px",
-                  ...(mine
-                    ? {
-                        border: "1px solid rgba(245, 158, 11, 0.3)",
-                        borderRadius: "16px 16px 6px 16px",
-                        background: "linear-gradient(150deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.07) 70%)",
-                        boxShadow: "0 10px 30px -20px rgba(245, 158, 11, 0.6)",
-                      }
-                    : {
-                        border: "1px solid rgba(255, 255, 255, 0.07)",
-                        borderRadius: "16px 16px 16px 6px",
-                        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 60%), var(--card)",
-                      }),
-                }}
-              >
-                {!mine && (
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
-                    {sender?.full_name ?? "—"}
-                  </p>
-                )}
-                <p style={{ color: "var(--text-primary)", fontSize: 13, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-                  {m.content}
-                </p>
-                <p style={{ fontSize: 10.5, color: mine ? "rgba(248, 197, 106, 0.75)" : "var(--text-muted)", marginTop: 4 }}>
-                  {timeAgo(m.created_at)} ago
-                </p>
-              </div>
-            );
-          })
-        )}
-      </div>
-      <div
-        className="flex items-center gap-2.5"
-        style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", padding: "12px 14px" }}
-      >
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          placeholder="Message the team…"
-          aria-label="Message the team"
-          className={`${ui.search} flex-1 min-w-0`}
-          style={{ colorScheme: "dark" }}
-        />
-        <button
-          type="button"
-          onClick={send}
-          disabled={!canSend}
-          aria-label="Send message"
-          className={ui.primaryBtn}
-          style={{
-            width: 38,
-            height: 38,
-            padding: 0,
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-            <path
-              d="M13 1L1 7L6 8M13 1L7 13L6 8M13 1L6 8"
-              stroke="#1a1204"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function getDomain(url: string): string {
-  try {
-    const u = new URL(url);
-    return u.hostname.replace(/^www\./, "");
-  } catch {
-    return "";
-  }
-}
-
-function isValidUrl(value: string): boolean {
-  try {
-    const u = new URL(value);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function DocIcon({ link }: { link: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className="shrink-0 flex items-center justify-center"
-      style={{
-        width: 34,
-        height: 34,
-        borderRadius: 9,
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        background: "rgba(255, 255, 255, 0.03)",
-        color: link ? "#58a6ff" : "#f8c56a",
-      }}
-    >
-      {link ? (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-        </svg>
-      ) : (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6" />
-        </svg>
-      )}
-    </span>
+    <RoomThread
+      messages={messages.map((m) => ({
+        id: m.id,
+        authorId: m.sender_id,
+        body: m.content,
+        isSystem: !!m.is_system,
+        createdAt: m.created_at,
+      }))}
+      currentUserId={currentUserId}
+      nameOf={(id) => memberMap.get(id)?.full_name}
+      onSend={send}
+    />
   );
 }
 
@@ -783,36 +589,19 @@ function DocsTab({
         const isLink = d.doc_type === "link" && !!d.external_url;
         const domain = isLink && d.external_url ? getDomain(d.external_url) : "";
         return (
-          <div key={d.id} className={`${ui.tile} flex items-start gap-3`} style={{ padding: "14px 16px" }}>
-            <DocIcon link={isLink} />
-            <div className="min-w-0 flex-1">
-              {isLink && d.external_url ? (
-                <a
-                  href={d.external_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline"
-                  style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}
-                >
-                  {d.title}
-                </a>
-              ) : (
-                <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{d.title}</p>
-              )}
-              <p style={{ ...META, marginTop: 2 }}>
+          <RoomItemCard
+            key={d.id}
+            link={isLink}
+            title={d.title}
+            href={isLink && d.external_url ? d.external_url : null}
+            meta={
+              <>
                 {domain ? `${domain} · ` : ""}
                 {adder?.full_name ?? "Someone"} · {timeAgo(d.created_at)} ago
-              </p>
-              {d.description && (
-                <p
-                  className="whitespace-pre-wrap"
-                  style={{ fontSize: 12, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 8 }}
-                >
-                  {d.description}
-                </p>
-              )}
-            </div>
-          </div>
+              </>
+            }
+            description={d.description}
+          />
         );
       })}
 
@@ -898,43 +687,25 @@ function DecisionsTab({
   onAdded: (d: Decision) => void;
   onVoted: (v: Vote, decided?: { id: string; winning_option: string }) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [optionsText, setOptionsText] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const optionCount = optionsText.split("\n").filter((s) => s.trim()).length;
-
-  async function submit() {
-    if (!title.trim()) return;
-    const opts = optionsText
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (opts.length < 2) return;
-    setBusy(true);
+  async function submit(input: { title: string; description: string | null; options: string[] }) {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("decisions")
       .insert({
         project_id: projectId,
         created_by: currentUserId,
-        title: title.trim(),
-        description: description.trim() || null,
-        options: opts,
+        title: input.title,
+        description: input.description,
+        options: input.options,
         status: "open",
       })
       .select("id, created_by, title, description, options, status, winning_option, created_at")
       .single();
-    setBusy(false);
     if (!error && data) {
       onAdded(data as Decision);
-      setTitle("");
-      setDescription("");
-      setOptionsText("");
-      setOpen(false);
+      return true;
     }
+    return false;
   }
 
   async function vote(decision: Decision, option: string) {
@@ -985,134 +756,14 @@ function DecisionsTab({
   }
 
   return (
-    <div className="space-y-3">
-      {decisions.length === 0 && !open && (
-        <div style={{ ...PANEL, padding: "18px 20px" }}>
-          <div className={ui.empty}>
-            <p className={ui.emptyTitle}>No decisions yet.</p>
-            <p className={ui.emptySub}>
-              Put a choice to the team. It closes when everyone has voted.
-            </p>
-          </div>
-        </div>
-      )}
-      {decisions.map((d) => {
-        const decisionVotes = votes.filter((v) => v.decision_id === d.id);
-        const myVote = decisionVotes.find((v) => v.user_id === currentUserId)?.option_chosen ?? null;
-        const tally: Record<string, number> = {};
-        decisionVotes.forEach((v) => {
-          tally[v.option_chosen] = (tally[v.option_chosen] ?? 0) + 1;
-        });
-        const totalMembers = members.length;
-        const totalVoted = decisionVotes.length;
-        const decided = d.status === "decided";
-        return (
-          <div key={d.id} className={ui.tile} style={{ padding: "16px 18px" }}>
-            <div className="flex items-start justify-between gap-3">
-              <h4 style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: "var(--text-primary)" }}>
-                {d.title}
-              </h4>
-              <span
-                className={`${ui.chip} ${decided ? "" : ui.chipAmber} shrink-0`}
-                style={
-                  decided
-                    ? { color: "#4ade80", borderColor: "rgba(34, 197, 94, 0.35)", background: "rgba(34, 197, 94, 0.08)" }
-                    : undefined
-                }
-              >
-                {decided ? "Decided" : "Open"}
-              </span>
-            </div>
-            {d.description && (
-              <p
-                className="whitespace-pre-wrap"
-                style={{ fontSize: 12, lineHeight: 1.55, color: "var(--text-secondary)", marginTop: 6 }}
-              >
-                {d.description}
-              </p>
-            )}
-            {decided && d.winning_option ? (
-              <p style={{ fontSize: 13, marginTop: 12 }}>
-                <span style={{ color: "#4ade80" }}>✓ {d.winning_option}</span>
-                <span style={META}>
-                  {" "}
-                  · {totalVoted === totalMembers ? "Unanimous" : `${tally[d.winning_option] ?? 0} of ${totalMembers} votes`}
-                </span>
-              </p>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2" style={{ marginTop: 12 }}>
-                  {d.options.map((o) => {
-                    const label = optLabel(o);
-                    const active = myVote === label;
-                    return (
-                      <button
-                        type="button"
-                        key={label}
-                        onClick={() => vote(d, label)}
-                        aria-pressed={active}
-                        className={`${ui.pill}${active ? ` ${ui.pillActive}` : ""}`}
-                      >
-                        {label}
-                        {tally[label] ? ` · ${tally[label]}` : ""}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p style={{ ...META, marginTop: 10 }}>
-                  {totalVoted} of {totalMembers} voted
-                </p>
-              </>
-            )}
-          </div>
-        );
-      })}
-
-      {open ? (
-        <div className="space-y-3" style={{ ...PANEL, padding: 16 }}>
-          <input
-            placeholder="What needs deciding?"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            autoFocus
-            className={`${ui.search} w-full`}
-          />
-          <textarea
-            rows={2}
-            placeholder="Context (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={`${ui.search} w-full`}
-            style={{ resize: "vertical" }}
-          />
-          <textarea
-            rows={3}
-            placeholder={"Options, one per line (at least two)"}
-            value={optionsText}
-            onChange={(e) => setOptionsText(e.target.value)}
-            className={`${ui.search} w-full`}
-            style={{ resize: "vertical" }}
-          />
-          <div className="flex justify-end items-center gap-3">
-            <button type="button" onClick={() => setOpen(false)} className={ui.textBtn} style={{ fontSize: 12 }}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={submit}
-              disabled={busy || !title.trim() || optionCount < 2}
-              className={ui.primaryBtn}
-            >
-              Open decision
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button type="button" onClick={() => setOpen(true)} className={`${ui.ghostBtn} w-full`}>
-          Add a decision
-        </button>
-      )}
-    </div>
+    <RoomVotes
+      decisions={decisions}
+      votes={votes}
+      memberCount={members.length}
+      currentUserId={currentUserId}
+      onCreate={submit}
+      onVote={(d, option) => vote(d as Decision, option)}
+    />
   );
 }
 

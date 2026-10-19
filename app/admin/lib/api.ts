@@ -43,12 +43,24 @@ export async function adminFetch(path: string, init: RequestInit = {}): Promise<
   return fetch(path, { ...init, headers });
 }
 
-export async function verifyCode(code: string): Promise<"ok" | "wrong" | "locked"> {
+export type AdminGate = "ok" | "wrong_code" | "locked" | "sign_in" | "not_admin";
+
+/** Sign in to the console: needs an admin Quorum account AND the code. */
+export async function verifyCode(code: string): Promise<AdminGate> {
   const res = await fetch("/api/admin/verify", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ code }),
   });
   if (res.ok) return "ok";
-  return res.status === 429 ? "locked" : "wrong";
+  const json = await res.json().catch(() => ({}));
+  return (json.reason as AdminGate) ?? (res.status === 429 ? "locked" : "wrong_code");
+}
+
+/** Whether the saved session still passes both locks, and whose it is. */
+export async function whoAmI(): Promise<{ gate: AdminGate; name?: string }> {
+  const res = await adminFetch("/api/admin/verify");
+  const json = await res.json().catch(() => ({}));
+  if (res.ok) return { gate: "ok", name: json.name };
+  return { gate: (json.reason as AdminGate) ?? "wrong_code" };
 }

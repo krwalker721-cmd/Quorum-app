@@ -1,8 +1,10 @@
 node_modules
 .next
+.next-staging
 out
 .env
 .env.local
+.env*.local
 .DS_Store
 *.log
 .vercel

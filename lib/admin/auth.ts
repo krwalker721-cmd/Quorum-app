@@ -1,5 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 // Returns the currently configured admin code. Reads from platform_settings;
 // falls back to the ADMIN_CODE env var when the row hasn't been set.
@@ -113,9 +113,57 @@ export async function checkAdminCode(
   return "wrong";
 }
 
-// Verify an incoming admin request. Expects the x-admin-code header.
+/** The admin behind a request: their Quorum account, and where they came from. */
+export type AdminSession = { id: string; name: string; ip: string };
+
+export type AdminCheck =
+  | { ok: true; admin: AdminSession }
+  | { ok: false; status: 401 | 403 | 429; reason: "sign_in" | "not_admin" | "wrong_code" | "locked" };
+
+/**
+ * The admin check every admin route goes through. Two locks, both required:
+ *
+ *  1. A signed-in Quorum account marked is_admin. This is what makes "who did
+ *     it" a person rather than "whoever had the code", and it comes first, so
+ *     without an admin account there's nothing to guess the code against.
+ *  2. The admin code, rate-limited as before.
+ *
+ * `code` defaults to the x-admin-code header; the sign-in route passes the
+ * code it was posted.
+ */
+export async function requireAdmin(req: Request, code?: string | null): Promise<AdminCheck> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, status: 401, reason: "sign_in" };
+
+  const { data: profile } = await createAdminClient()
+    .from("profiles")
+    .select("full_name, username, is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile?.is_admin) return { ok: false, status: 403, reason: "not_admin" };
+
+  const result = await checkAdminCode(req, code === undefined ? req.headers.get("x-admin-code") : code);
+  if (result === "locked") return { ok: false, status: 429, reason: "locked" };
+  if (result === "wrong") return { ok: false, status: 401, reason: "wrong_code" };
+
+  return {
+    ok: true,
+    admin: {
+      id: user.id,
+      name: profile.full_name?.trim() || profile.username || "admin",
+      ip: clientIp(req),
+    },
+  };
+}
+
+// Verify an incoming admin request: an admin account signed in, and the
+// x-admin-code header. Every admin route calls this, so both locks cover the
+// whole admin board.
 export async function verifyAdminRequest(req: Request): Promise<boolean> {
-  return (await checkAdminCode(req, req.headers.get("x-admin-code"))) === "ok";
+  return (await requireAdmin(req)).ok;
 }
 
 // Helper to read a platform setting (no auth — caller decides).
