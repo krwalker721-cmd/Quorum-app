@@ -130,10 +130,10 @@ export default async function SprintPage(props: {
 
       <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 1120, margin: "0 auto", width: "100%" }}>
         <div className="flex items-center justify-between gap-3" style={{ marginBottom: 12 }}>
-          <Link href="/hackathon" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+          <Link href="/buildathon" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
             ← Buildathon
           </Link>
-          <Link href="/hackathon/archive" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+          <Link href="/buildathon/archive" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
             All Buildathons →
           </Link>
         </div>

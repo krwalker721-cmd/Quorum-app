@@ -154,4 +154,4 @@ export async function loadRoom(db: SupabaseClient, team: RoomTeam): Promise<Room
 export const TEAM_COLUMNS = "id, name, slug, emblem, color, is_random_matched";
 
 /** Where a team's room lives. */
-export const roomHref = (sprintNumber: number, slug: string) => `/hackathon/${sprintNumber}/team/${slug}`;
+export const roomHref = (sprintNumber: number, slug: string) => `/buildathon/${sprintNumber}/team/${slug}`;

@@ -15,7 +15,7 @@ export default function JoinByLink({ code, teamName, sprintNumber }: { code: str
         className={ui.primaryBtn}
         style={{ fontSize: 14, padding: "10px 18px" }}
         disabled={busy}
-        onClick={() => run(() => rpc("hackathon_join_with_code", { p_code: code }), () => router.push(`/hackathon/${sprintNumber}`))}
+        onClick={() => run(() => rpc("hackathon_join_with_code", { p_code: code }), () => router.push(`/buildathon/${sprintNumber}`))}
       >
         Join {teamName}
       </button>

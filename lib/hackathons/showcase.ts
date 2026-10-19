@@ -179,5 +179,5 @@ export function showcasePerson(p: PublicPerson, i: number) {
   };
 }
 
-export const projectHref = (n: number, slug: string) => `/hackathon/${n}/project/${slug}`;
-export const recapHref = (n: number) => `/hackathon/${n}/recap`;
+export const projectHref = (n: number, slug: string) => `/buildathon/${n}/project/${slug}`;
+export const recapHref = (n: number) => `/buildathon/${n}/recap`;

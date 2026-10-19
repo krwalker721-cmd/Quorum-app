@@ -4,5 +4,5 @@ import { redirect } from "next/navigation";
 // links and bookmarks land there.
 export default async function LobbyPage(props: { params: Promise<{ number: string }> }) {
   const { number } = await props.params;
-  redirect(`/hackathon/${encodeURIComponent(number)}#feed`);
+  redirect(`/buildathon/${encodeURIComponent(number)}#feed`);
 }

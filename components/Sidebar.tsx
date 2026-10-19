@@ -56,7 +56,7 @@ const NAV: NavItem[] = [
 
 // Shown to active members, and to anyone taking part in a Sprint (see
 // lib/hackathons/nav.ts). Slotted in after the Collab board.
-const HACKATHON: NavItem = { href: "/hackathon", label: "Buildathon", glyph: "◈" };
+const HACKATHON: NavItem = { href: "/buildathon", label: "Buildathon", glyph: "◈" };
 
 const EXPANDED_W = 208;
 const COLLAPSED_W = 48;

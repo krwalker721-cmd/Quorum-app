@@ -179,7 +179,7 @@ export function pickRelay(data: RelayData, now: number, waitlistOn: boolean): Re
         countLabel: null,
         target: null,
         message: null,
-        cta: { label: "See the projects", href: `/hackathon/${revealed.number}/recap`, primary: false },
+        cta: { label: "See the projects", href: `/buildathon/${revealed.number}/recap`, primary: false },
         live: false,
       };
     }

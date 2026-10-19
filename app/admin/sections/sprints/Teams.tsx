@@ -129,7 +129,7 @@ function TeamCard({
           </span>
           {/* Admins can read every room (read-only); the room logs nothing. */}
           <a
-            href={`/hackathon/${sprintNumber}/team/${team.slug}`}
+            href={`/buildathon/${sprintNumber}/team/${team.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="font-mono text-[0.6rem] text-text-muted hover:text-text-primary"

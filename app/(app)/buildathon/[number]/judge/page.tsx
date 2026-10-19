@@ -35,8 +35,8 @@ export default async function JudgePage(props: { params: Promise<{ number: strin
   const [standing, sprint] = await Promise.all([getMemberStanding(supabase, user.id), loadSprint(supabase, n)]);
   if (!sprint) notFound();
   const status = await judgeStatus(supabase, sprint.id, user.id);
-  if (status === "invited") redirect(`/hackathon/${n}?notice=judge-accept-first`);
-  if (status !== "judge") redirect(`/hackathon/${n}?notice=judging-private`);
+  if (status === "invited") redirect(`/buildathon/${n}?notice=judge-accept-first`);
+  if (status !== "judge") redirect(`/buildathon/${n}?notice=judging-private`);
 
   const opened = sprint.phase === "judging" || sprint.phase === "revealed";
   const { projects, scores } = opened ? await loadJudgeQueue(supabase, sprint.id, user.id) : { projects: [], scores: new Map() };
@@ -49,7 +49,7 @@ export default async function JudgePage(props: { params: Promise<{ number: strin
       <TopBar sleek title="buildathon" tier={standing.tier} userId={user.id} />
       <SprintAutoRefresh timing={toTiming(sprint)} state={sprint.state} />
       <div className="page-pad" style={{ padding: "16px 26px 48px", maxWidth: 1080, margin: "0 auto", width: "100%" }}>
-        <Link href={`/hackathon/${n}`} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href={`/buildathon/${n}`} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
           ← Buildathon #{n}
         </Link>
         <h1

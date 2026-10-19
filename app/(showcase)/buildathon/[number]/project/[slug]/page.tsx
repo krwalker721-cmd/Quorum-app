@@ -89,7 +89,7 @@ export default async function PublicProjectPage(props: Props) {
   const others = projects.filter((p) => p.submission_id !== project.submission_id).slice(0, 3);
 
   return (
-    <PublicShell signedIn={Boolean(user)} back={{ href: `/hackathon/${sprint.number}`, label: `← Buildathon #${sprint.number}` }}>
+    <PublicShell signedIn={Boolean(user)} back={{ href: `/buildathon/${sprint.number}`, label: `← Buildathon #${sprint.number}` }}>
       <div style={{ maxWidth: 880, margin: "0 auto" }}>
         <Link href={recapHref(sprint.number)} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
           Quorum Buildathon #{sprint.number} · built in 48 hours

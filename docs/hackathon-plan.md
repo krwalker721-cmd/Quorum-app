@@ -1612,6 +1612,21 @@ Owner picked "Buildathon #N" for names and all three connection extras.
 
 ---
 
+## 5t. The /buildathon address, one way in, no admin buttons (2026-10-18)
+
+- **Address:** the pages moved from `/hackathon/…` to `/buildathon/…` (folders renamed; every link,
+  redirect, the sitemap and link previews follow). `next.config.js` 308-redirects `/hackathon` and
+  `/hackathon/:path*` to the same path under `/buildathon`, query string kept, so shared links and
+  bookmarks still land. API routes (`/api/hackathons/…`), tables and code names are unchanged.
+- **One way in:** the signup page's opener no longer has its own Register button; the join card just
+  below it ("Join Buildathon #N") is the only one.
+- **No "Manage in admin"** on member pages (the opener and the role card); admins use the console.
+- Checked on staging after a dev-server restart: the redirects (with a query string), every page at its
+  new address, no links left to `/hackathon`, one join button, no admin button. A production build of
+  the branch passes.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1723,23 +1738,37 @@ Owner picked "Buildathon #N" for names and all three connection extras.
 | 105 | The copy leads with why it exists: building with founders you haven't built with, and the connections after. | Owner: "the whole objective… was to promote creation with others and building connections". |
 | 106 | Database messages keep "Sprint"; the app rewords them on display. | Rewriting ~50 functions for a word isn't worth the risk; one display helper covers them. |
 | 107 | Three connection features: what you bring (037), What's next in the room, People you met on the recap. | Owner picked all three. |
+| 108 | Pages live at `/buildathon`; `/hackathon` redirects permanently. | Owner, 2026-10-18 (decision 84 left the address open). |
+| 109 | The join card is the only way in on the signup page; member pages have no admin buttons. | Owner: the two Register buttons; "no view in admin button". |
 
 ---
 
 ## 7. Open items and later prompts
 
-**To do before deploying anything:**
-- [ ] Paste migrations **018 → 037** into the production SQL editor, in order, before the deploy
-      that needs them. The landing page and in-app bar tolerate their absence; the admin sections
-      and the Hackathon tab don't. Without 024 the "who's registered" list is just empty, without
-      027 the arena has no pulse or cohorts, without 028 the team room has no activity, quiet
-      notes or sleep, without 029 the lobby page fails to load (it reads `system_key`), without 030 the
-      submission page and team room fail (they read `is_complete`), without 031 the admin
-      judging tab fails and revealed Sprints show no awards (the page reads `awards_finalized_at`),
-      and without 032 the recap and project pages are 404s and the revealed Sprint page has no
-      gallery (the sitemap just lists the static pages); without 033 the relay shows only standalone
-      countdowns (its Sprint data reads as empty). 034–037 are needed by the Sprint chat, the deck,
-      the review round and "what you bring".
+**Production rollout** (written 2026-10-18; production's database is at 017, `main` is
+contained in `feat/hackathon-db`, the branch builds, 708 tests pass locally and on staging):
+
+1. **Commit and merge locally** (Claude, when the owner says): `feat/hackathon-db` into `main`.
+   Not pushed yet: the database goes first.
+2. **Check the starting point** (owner): Supabase → production project → SQL Editor → paste
+   `supabase/cutover/buildathon-migrations-check.sql` → Run. Every row should say `false`.
+3. **Paste migrations 018 → 037** (owner), one file at a time, in order, Run after each. Each paste
+   is all-or-nothing; if one errors, stop there and send Claude the message. They only create
+   Buildathon tables, functions, two private storage buckets (`hackathon-submissions`,
+   `hackathon-decks`) and realtime entries, plus the admin change log; nothing existing changes.
+4. **Check again** (owner): the same check file; every row should say `true`.
+5. **Push `main`** (Claude, on the owner's go): Vercel deploys from `main`. No new environment
+   variables and no new cron (Hobby: the matcher and reviews run on page load).
+6. **Smoke test** (Claude signed out with curl; owner signed in): `/hackathon` 308s to
+   `/buildathon`; `/buildathon` shows "No Buildathon scheduled yet"; the landing page loads; admin →
+   buildathons opens (the console now needs a signed-in account with `is_admin` as well as the code:
+   Keaton's is set; anyone else who runs it needs it too).
+7. **Buildathon #1** (owner): admin → buildathons → new buildathon (pre-filled), set the theme and
+   the quick schedule, check the countdown switches, publish when ready. Never run the seed or
+   demo scripts against production (they refuse it anyway).
+8. **Rollback, if needed:** revert the merge on `main` and push; the migrations are additive and can
+   stay.
+
 - [ ] After the first deploy with a revealed Sprint: paste a project and a recap link into X,
       LinkedIn (Post Inspector) and iMessage to confirm the previews.
 - [ ] If the owner moves to Vercel Pro: add the per-minute cron for `/api/cron/hackathon-matcher`
@@ -1864,4 +1893,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `d535a93` | The team room like a Collab project room; checklist and deck (035, 5p) |
 | `3c8b183` | The finished Sprint: recap around the chat, demo day, how it went (5q) |
 | `b79b009` | Peer reviews instead of judges, with a short review window (036, 5r) |
-| (next) | Buildathon #N, admin defaults, business-idea copy, connections (037, 5s) |
+| `429bf59` | Buildathon #N, admin defaults, business-idea copy, connections (037, 5s) |
+| (next) | The /buildathon address, one way in, no admin buttons; production rollout steps (5t, §7) |

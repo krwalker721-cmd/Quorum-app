@@ -52,7 +52,7 @@ export default function CountdownStrip({ initial, where }: { initial: PublicCoun
   }, [where]);
 
   // A Sprint's own page has the big countdown; the bar doesn't repeat it there.
-  const onSprint = /^\/hackathon\/(\d+)(\/|$)/.exec(pathname)?.[1];
+  const onSprint = /^\/buildathon\/(\d+)(\/|$)/.exec(pathname)?.[1];
   const here = items.filter((c) => !(c.kind === "sprint" && String(c.number) === onSprint));
   const visible = now === null ? here : here.filter((c) => resolveCountdown(c, now).show);
   if (visible.length === 0) return null;

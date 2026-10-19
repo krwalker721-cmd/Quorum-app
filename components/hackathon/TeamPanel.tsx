@@ -241,7 +241,7 @@ function InviteLink({
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
   useEffect(() => setOrigin(window.location.origin), []);
-  const url = code ? `${origin}/hackathon/${sprintNumber}/join/${code}` : null;
+  const url = code ? `${origin}/buildathon/${sprintNumber}/join/${code}` : null;
 
   if (!url) {
     return (

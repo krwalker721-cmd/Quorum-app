@@ -391,7 +391,7 @@ export default function ArenaMap({
             </ul>
             <p className={s.cardSealed}>The project is sealed until the reveal.</p>
             {chosen.id === myTeamId && (
-              <Link href={`/hackathon/${sprintNumber}/team/${chosen.slug}`} className={s.cardLink}>
+              <Link href={`/buildathon/${sprintNumber}/team/${chosen.slug}`} className={s.cardLink}>
                 Go to my team room →
               </Link>
             )}

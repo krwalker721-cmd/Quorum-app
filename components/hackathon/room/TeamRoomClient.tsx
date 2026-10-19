@@ -320,7 +320,7 @@ export default function TeamRoomClient({
           endsAt={sprint.timing.ends_at}
           live={sprint.state === "live"}
           complete={Boolean(submittedAt)}
-          href={`/hackathon/${sprint.number}/team/${room.team.slug}/submission`}
+          href={`/buildathon/${sprint.number}/team/${room.team.slug}/submission`}
         />
       )}
 

@@ -55,7 +55,7 @@ export function RoomTitle({
               : "Read-only";
   return (
     <div style={{ marginBottom: 20 }}>
-      <Link href={`/hackathon/${sprint.number}`} className={ui.tileLink}>
+      <Link href={`/buildathon/${sprint.number}`} className={ui.tileLink}>
         ← Buildathon #{sprint.number}
       </Link>
       <div className="flex items-center gap-3" style={{ marginTop: 12 }}>

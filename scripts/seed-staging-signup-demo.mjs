@@ -309,10 +309,10 @@ if (live) {
   );
   console.log(
     mode === "judging"
-      ? `  Reviews close ${new Date(t + 90 * MIN).toLocaleString()}. Review round: /hackathon/${view.number} · admin: Sprints → #${view.number} → reviews.`
-      : `  Deadline ${new Date(t + 46 * HOUR).toLocaleString()}. Open /hackathon/${view.number}.`,
+      ? `  Reviews close ${new Date(t + 90 * MIN).toLocaleString()}. Review round: /buildathon/${view.number} · admin: buildathons → #${view.number} → reviews.`
+      : `  Deadline ${new Date(t + 46 * HOUR).toLocaleString()}. Open /buildathon/${view.number}.`,
   );
 } else {
   console.log(`  #${view.number}  ${view.title}  ${view.state} · ${regs} signed up · 3 teams + 2 in the random pool`);
-  console.log(`  Teams lock ${new Date(t + 3 * DAY).toLocaleString()}. Open /hackathon/${view.number}.`);
+  console.log(`  Teams lock ${new Date(t + 3 * DAY).toLocaleString()}. Open /buildathon/${view.number}.`);
 }

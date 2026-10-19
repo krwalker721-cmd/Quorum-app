@@ -161,7 +161,7 @@ export async function judgeStatus(db: SupabaseClient, sprintId: string, userId: 
   return data.accepted_at ? "judge" : "invited";
 }
 
-export const judgeHref = (n: number, slug?: string) => (slug ? `/hackathon/${n}/judge/${slug}` : `/hackathon/${n}/judge`);
+export const judgeHref = (n: number, slug?: string) => (slug ? `/buildathon/${n}/judge/${slug}` : `/buildathon/${n}/judge`);
 
 /** The mean of some numbers to one decimal, or null for none. */
 export function mean(xs: number[]): number | null {

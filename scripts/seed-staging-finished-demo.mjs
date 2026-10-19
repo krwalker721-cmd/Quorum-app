@@ -229,7 +229,7 @@ const awarded = must(await db.rpc("hackathon_compute_awards", { p_hackathon_id: 
 
 const { data: view } = await db.from("hackathon_overview").select("number, title, state").eq("id", sprint).single();
 console.log(`  #${view.number}  ${view.title}  ${view.state} · 3 teams, 3 submissions, ${(given ?? []).length} reviews, ${awarded} awards worked out`);
-console.log(`  Members: /hackathon/${view.number} · public: /hackathon/${view.number}/recap and /hackathon/${view.number}/project/night-owls`);
+console.log(`  Members: /buildathon/${view.number} · public: /buildathon/${view.number}/recap and /buildathon/${view.number}/project/night-owls`);
 
 // ── Decks: a tiny PDF, one slide per page, in the team's folder.
 async function clearDecks(sprintId) {

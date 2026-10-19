@@ -49,7 +49,7 @@ async function describe(
   sprint: SprintRow,
   userId: string,
 ): Promise<CurrentSprint> {
-  const href = `/hackathon/${sprint.number}`;
+  const href = `/buildathon/${sprint.number}`;
   const [{ data: mine }, { data: people }] = await Promise.all([
     supabase.from("hackathon_registrations").select("withdrawn_at").eq("hackathon_id", sprint.id).eq("user_id", userId).maybeSingle(),
     sprint.state === "registration" ? supabase.rpc("hackathon_registrants", { p_hackathon_id: sprint.id }) : Promise.resolve({ data: null }),

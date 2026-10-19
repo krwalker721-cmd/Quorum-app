@@ -44,7 +44,7 @@ export default async function SubmissionPage(props: { params: Promise<{ number: 
   const { data: membership } = team
     ? await supabase.from("hackathon_team_members").select("role").eq("team_id", team.id).eq("user_id", user.id).maybeSingle()
     : { data: null };
-  if (!team || (!membership && !standing.isAdmin)) redirect(`/hackathon/${n}?notice=room-private`);
+  if (!team || (!membership && !standing.isAdmin)) redirect(`/buildathon/${n}?notice=room-private`);
 
   const [{ data: sub }, { data: memberRows }] = await Promise.all([
     supabase.from("hackathon_submissions").select(SUBMISSION_COLUMNS).eq("team_id", team.id).maybeSingle(),

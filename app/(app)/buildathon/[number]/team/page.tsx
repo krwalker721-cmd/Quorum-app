@@ -32,6 +32,6 @@ export default async function MyTeamRoomPage(props: { params: Promise<{ number: 
     ? await supabase.from("hackathon_teams").select("slug").eq("id", membership.team_id).maybeSingle()
     : { data: null };
   const slug = team?.slug as string | undefined;
-  if (!slug) redirect(`/hackathon/${n}?notice=no-team`);
+  if (!slug) redirect(`/buildathon/${n}?notice=no-team`);
   redirect(roomHref(n, slug));
 }

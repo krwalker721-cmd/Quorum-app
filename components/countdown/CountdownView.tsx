@@ -34,7 +34,7 @@ export function resolveCountdown(c: PublicCountdown, now: number, link = false):
   }
 
   const title = c.headline || `Buildathon #${c.number}`;
-  const cta = link ? { label: "Open", href: `/hackathon/${c.number}` } : null;
+  const cta = link ? { label: "Open", href: `/buildathon/${c.number}` } : null;
   if (c.status_override === "paused") {
     return { show: true, title, sub: null, target: null, message: "Paused. Times will be updated when it resumes.", cta };
   }

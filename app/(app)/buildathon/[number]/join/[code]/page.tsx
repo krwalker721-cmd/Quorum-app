@@ -100,7 +100,7 @@ export default async function JoinLinkPage(props: { params: Promise<{ number: st
           )}
           <p style={{ marginTop: 18 }}>
             {/* A link to a deleted Sprint goes back to the tab, not to a 404. */}
-            <Link href={sprint ? `/hackathon/${n}` : "/hackathon"} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+            <Link href={sprint ? `/buildathon/${n}` : "/buildathon"} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
               {sprint ? `See Buildathon #${n} →` : "Go to Buildathons →"}
             </Link>
           </p>

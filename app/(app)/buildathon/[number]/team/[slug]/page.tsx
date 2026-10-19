@@ -53,7 +53,7 @@ export default async function TeamRoomPage(props: {
   const isMember = Boolean(membership);
 
   if (!team || (!isMember && !standing.isAdmin)) {
-    redirect(`/hackathon/${n}?notice=room-private`);
+    redirect(`/buildathon/${n}?notice=room-private`);
   }
 
   const revealed = sprint.phase === "revealed" && sprint.state !== "cancelled";

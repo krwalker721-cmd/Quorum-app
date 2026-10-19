@@ -36,7 +36,7 @@ export default async function HackathonArchive() {
       <NoGrid />
       <TopBar sleek title="buildathon" tier={tier} userId={user.id} />
       <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 820, margin: "0 auto", width: "100%" }}>
-        <Link href="/hackathon" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href="/buildathon" style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
           ← Buildathon
         </Link>
         <h1
@@ -57,7 +57,7 @@ export default async function HackathonArchive() {
             {past.map((s) => (
               <li key={s.number}>
                 <Tile padding="14px 16px">
-                  <Link href={`/hackathon/${s.number}`} style={{ textDecoration: "none", display: "block" }}>
+                  <Link href={`/buildathon/${s.number}`} style={{ textDecoration: "none", display: "block" }}>
                     <div className="flex items-baseline justify-between gap-3 flex-wrap">
                       <span style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>Buildathon #{s.number}</span>
                       <span className={ui.chip} style={s.state === "cancelled" ? { color: "#fca5a5" } : undefined}>
@@ -71,7 +71,7 @@ export default async function HackathonArchive() {
                     </p>
                   </Link>
                   {s.state === "revealed" && (
-                    <Link href={`/hackathon/${s.number}/recap`} style={{ display: "inline-block", fontSize: 12.5, color: "#f8c56a", textDecoration: "none", marginTop: 8 }}>
+                    <Link href={`/buildathon/${s.number}/recap`} style={{ display: "inline-block", fontSize: 12.5, color: "#f8c56a", textDecoration: "none", marginTop: 8 }}>
                       Public recap ↗
                     </Link>
                   )}

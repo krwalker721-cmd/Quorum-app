@@ -302,7 +302,7 @@ function Results({
                           )}
                           {p.team && (
                             <a
-                              href={`/hackathon/${sprintNumber}/team/${p.team.slug}/submission`}
+                              href={`/buildathon/${sprintNumber}/team/${p.team.slug}/submission`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-mono text-[0.65rem] text-text-faint hover:text-text-primary inline-block mt-2"

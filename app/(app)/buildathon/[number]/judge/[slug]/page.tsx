@@ -33,8 +33,8 @@ export default async function JudgeProjectPage(props: { params: Promise<{ number
   const [standing, sprint] = await Promise.all([getMemberStanding(supabase, user.id), loadSprint(supabase, n)]);
   if (!sprint) notFound();
   const status = await judgeStatus(supabase, sprint.id, user.id);
-  if (status === "invited") redirect(`/hackathon/${n}?notice=judge-accept-first`);
-  if (status !== "judge") redirect(`/hackathon/${n}?notice=judging-private`);
+  if (status === "invited") redirect(`/buildathon/${n}?notice=judge-accept-first`);
+  if (status !== "judge") redirect(`/buildathon/${n}?notice=judging-private`);
 
   const { projects, scores } = await loadJudgeQueue(supabase, sprint.id, user.id);
   const index = projects.findIndex((p) => p.team.slug === slug);

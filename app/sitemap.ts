@@ -19,9 +19,9 @@ async function sprintPages(): Promise<MetadataRoute.Sitemap> {
     if (error || !data) return [];
     // A recap with nothing shipped isn't worth a search result.
     return (data as { number: number; reveal_at: string; team_slugs: string[] }[]).filter((s) => s.team_slugs.length > 0).flatMap((s) => [
-      { url: `${LEGAL.site}/hackathon/${s.number}/recap`, lastModified: new Date(s.reveal_at), changeFrequency: "monthly" as const, priority: 0.7 },
+      { url: `${LEGAL.site}/buildathon/${s.number}/recap`, lastModified: new Date(s.reveal_at), changeFrequency: "monthly" as const, priority: 0.7 },
       ...s.team_slugs.map((slug) => ({
-        url: `${LEGAL.site}/hackathon/${s.number}/project/${slug}`,
+        url: `${LEGAL.site}/buildathon/${s.number}/project/${slug}`,
         lastModified: new Date(s.reveal_at),
         changeFrequency: "monthly" as const,
         priority: 0.6,

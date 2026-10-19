@@ -8,7 +8,7 @@ import s from "./home.module.css";
 // the way in, then what the format is, shown as a place to do serious work: an
 // example of a live one, the format's spec, what it's for (a business idea made
 // real, with founders you haven't built with yet), how one runs and how
-// projects are judged. Each Buildathon keeps its own page (/hackathon/N).
+// projects are judged. Each Buildathon keeps its own page (/buildathon/N).
 
 export default function BuildathonHome({ hasPast, current }: { hasPast: boolean; current: CurrentSprint | null }) {
   return (
@@ -184,7 +184,7 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
                 How a Buildathon runs ↓
               </a>
               {hasPast && (
-                <Link href="/hackathon/archive" className={s.quietLink}>
+                <Link href="/buildathon/archive" className={s.quietLink}>
                   Past Buildathons →
                 </Link>
               )}

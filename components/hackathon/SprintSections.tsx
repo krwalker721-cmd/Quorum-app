@@ -98,14 +98,12 @@ export function SprintHero({ sprint }: { sprint: SprintRow }) {
 
 /**
  * What this Sprint is, before anyone has to decide: shown while it's announced
- * and while registration is open. Plain facts, the real dates, and (for a
- * member who hasn't joined) the one Register button, which leads to the join
- * queue (#join).
+ * and while registration is open. Plain facts and the real dates; the join
+ * card just below (#join) is the one way in.
  */
 export function SprintOpener({ data }: { data: SprintPageData }) {
   const { sprint, viewer } = data;
   const open = sprint.state === "registration";
-  const canJoin = open && viewer.role === "spectator";
   const dates: { label: string; iso: string | null }[] = [
     { label: open ? "Sign-ups close" : "Registration opens", iso: open ? sprint.team_lock_at : sprint.registration_opens_at },
     { label: "Kickoff", iso: sprint.starts_at },
@@ -152,24 +150,11 @@ export function SprintOpener({ data }: { data: SprintPageData }) {
           </div>
         ))}
       </div>
-      {(canJoin || viewer.isAdmin || (!open && viewer.role === "spectator")) && (
-        <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 18 }}>
-          {canJoin && (
-            <Link href="#join" className={ui.primaryBtn} style={{ textDecoration: "none" }}>
-              Register
-            </Link>
-          )}
-          {!open && viewer.role === "spectator" && sprint.registration_opens_at && (
-            <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
-              Registration opens <LocalTime iso={sprint.registration_opens_at} />.
-            </span>
-          )}
-          {viewer.isAdmin && (
-            <Link href="/admin" className={ui.ghostBtn} style={{ textDecoration: "none" }}>
-              Manage in admin
-            </Link>
-          )}
-        </div>
+      {/* The way in is the join card below it (#join), so the opener has no button of its own. */}
+      {!open && viewer.role === "spectator" && sprint.registration_opens_at && (
+        <p style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 16 }}>
+          Registration opens <LocalTime iso={sprint.registration_opens_at} />.
+        </p>
       )}
     </Tile>
   );
@@ -283,7 +268,7 @@ export function TeamProjectCards({
                       {done ? "Submitted ✓ · sealed until the reveal" : `Sealed · ${active ? `active ${timeAgo(active)} ago` : "no activity yet"}`}
                     </span>
                     {mine && (
-                      <Link href={`/hackathon/${sprintNumber}/team/${t.slug}`} className={ui.softBtn} style={{ textDecoration: "none" }}>
+                      <Link href={`/buildathon/${sprintNumber}/team/${t.slug}`} className={ui.softBtn} style={{ textDecoration: "none" }}>
                         Open team room →
                       </Link>
                     )}
@@ -389,7 +374,7 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
 
   // The feed is on this page now (034); the old lobby page redirects here.
   const lobby = { href: "#feed", label: "Feed" };
-  const room = viewer.teamId ? { href: `/hackathon/${n}/team`, label: "My team room" } : null;
+  const room = viewer.teamId ? { href: `/buildathon/${n}/team`, label: "My team room" } : null;
 
   let title: string;
   let body: React.ReactNode = null;
@@ -433,7 +418,7 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
               ? "Judging is done. Thank you." + progress
               : "Scoring opens at the submission deadline. The projects appear in your judging view then.";
       const judgeLink = {
-        href: `/hackathon/${n}/judge`,
+        href: `/buildathon/${n}/judge`,
         label: phase === "judging" && judging && judging.scored < judging.total ? (judging.scored === 0 ? "Start judging" : "Keep judging") : "Judging",
         primary: phase === "judging" && !over && sprint.state !== "paused",
       };
@@ -481,13 +466,12 @@ export function ViewerCallout({ data }: { data: SprintPageData }) {
             {nextSprint.state === "registration" ? "is open for registration now." : <>opens registration <LocalTime iso={nextSprint.registration_opens_at} />.</>}
           </>
         );
-        links = [{ href: `/hackathon/${nextSprint.number}`, label: `Buildathon #${nextSprint.number}`, primary: true }];
+        links = [{ href: `/buildathon/${nextSprint.number}`, label: `Buildathon #${nextSprint.number}`, primary: true }];
       } else {
         body = "You can still watch this one. The next Buildathon will be announced here.";
       }
   }
 
-  if (viewer.isAdmin) links = [...links, { href: "/admin", label: "Manage in admin" }];
 
   return (
     <Tile style={{ marginBottom: 16 }} padding="14px 16px">

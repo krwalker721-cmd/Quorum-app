@@ -30,7 +30,7 @@ export default function RoomPlaceholder({
       <NoGrid />
       <TopBar sleek title="buildathon" tier={tier} userId={userId} />
       <div className="page-pad" style={{ padding: "18px 26px 48px", maxWidth: 720, margin: "0 auto", width: "100%" }}>
-        <Link href={backHref ?? `/hackathon/${number}`} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href={backHref ?? `/buildathon/${number}`} style={{ fontSize: 12.5, color: "var(--text-muted)", textDecoration: "none" }}>
           {backLabel ?? `← Buildathon #${number}`}
         </Link>
         <h1 className={ui.titleGradient} style={{ fontSize: 26, fontWeight: 650, letterSpacing: "-0.03em", marginTop: 12, marginBottom: 16 }}>

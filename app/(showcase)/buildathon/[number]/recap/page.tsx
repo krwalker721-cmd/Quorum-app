@@ -71,7 +71,7 @@ export default async function RecapPage(props: Props) {
   const hasAwards = awardsWithProjects(projects).length > 0;
 
   return (
-    <PublicShell signedIn={Boolean(user)} back={{ href: `/hackathon/${sprint.number}`, label: `← Buildathon #${sprint.number}` }}>
+    <PublicShell signedIn={Boolean(user)} back={{ href: `/buildathon/${sprint.number}`, label: `← Buildathon #${sprint.number}` }}>
       <header style={{ textAlign: "center", maxWidth: 760, margin: "0 auto" }}>
         <p style={{ fontSize: 13, color: "#f8c56a", fontWeight: 600 }}>Quorum · the recap</p>
         <h1
