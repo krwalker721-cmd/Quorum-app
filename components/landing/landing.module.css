@@ -175,6 +175,71 @@
   to { stroke-dashoffset: -100; }
 }
 
+/* ── How a Buildathon runs: five steps on one line joined by a rail (a
+   column on phones). */
+.buildRun {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.buildRun::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.55), rgba(245, 158, 11, 0.15));
+}
+.buildStep {
+  position: relative;
+  min-width: 0;
+}
+.buildDot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: #0b0e13;
+  box-shadow: 0 0 0 4px #0b0e13, 0 0 24px -6px rgba(245, 158, 11, 0.6);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #f8c56a;
+}
+@media (max-width: 760px) {
+  .buildRun {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+  .buildRun::before {
+    top: 18px;
+    bottom: 18px;
+    left: 17px;
+    right: auto;
+    width: 1px;
+    height: auto;
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.55), rgba(245, 158, 11, 0.15));
+  }
+  .buildStep {
+    padding-left: 54px;
+  }
+  .buildDot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+  }
+}
+
 /* ── Scroll reveal (see Reveal.tsx: only armed below the fold, with JS). */
 .reveal {
   opacity: 0;

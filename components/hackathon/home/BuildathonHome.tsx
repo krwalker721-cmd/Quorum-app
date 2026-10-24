@@ -167,7 +167,7 @@ const PHASES: { when: string; title: string; text: string; pic: React.ReactNode 
 function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSprint | null }) {
   return (
     <>
-      <section className={s.stage}>
+      <section className={s.stage} data-tour-id="buildathon-hero">
         <div aria-hidden className={s.glow} />
         <div className={s.heroGrid}>
           <div>
@@ -221,7 +221,7 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
         <h2 className={s.secTitle}>How a Buildathon runs</h2>
         <span className={s.secNote}>Every time is set per Buildathon and shown in your time zone</span>
       </div>
-      <div className={s.timeline}>
+      <div className={s.timeline} data-tour-id="buildathon-runs">
         {PHASES.map((p) => (
           <div key={p.title} className={s.phase}>
             <p className={s.phaseWhen}>{p.when}</p>
@@ -238,7 +238,7 @@ function HowItWorks({ hasPast, current }: { hasPast: boolean; current: CurrentSp
         <h2 className={s.secTitle}>How projects are judged</h2>
         <span className={s.secNote}>By the builders themselves, 1 to 5, in a few minutes after the deadline</span>
       </div>
-      <div className={s.rubric}>
+      <div className={s.rubric} data-tour-id="buildathon-reviews">
         {REVIEW_QUESTIONS.map((r) => (
           <div key={r.key} className={s.criterion}>
             <div className={s.critTop}>

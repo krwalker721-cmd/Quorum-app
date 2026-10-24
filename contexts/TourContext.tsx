@@ -224,6 +224,38 @@ export const TOUR_STEPS: TourStep[] = [
     },
   },
 
+  // ── Buildathon ──────────────────────────────────────────────────────────
+  {
+    route: "/buildathon",
+    anchor: "buildathon-hero",
+    section: "buildathon",
+    title: "The Buildathon",
+    body: "Every Buildathon, the whole network builds at once: 48 hours to turn a business idea into something real, with founders you haven't built with yet. It's how you find the people worth building with.",
+  },
+  {
+    route: "/buildathon",
+    anchor: "buildathon-current",
+    // Only there while a Buildathon is announced or running.
+    optional: true,
+    section: "buildathon",
+    title: "The next one",
+    body: "When a Buildathon is announced it sits here with its countdown. Sign up from this banner, with your own team or into the random pool.",
+  },
+  {
+    route: "/buildathon",
+    anchor: "buildathon-runs",
+    section: "buildathon",
+    title: "How it runs",
+    body: "Sign up, and an hour before kickoff anyone without a team is matched into one across cohorts. Then 48 hours in a private room, with your work sealed until the reveal.",
+  },
+  {
+    route: "/buildathon",
+    anchor: "buildathon-reviews",
+    section: "buildathon",
+    title: "No judges",
+    body: "After the deadline, everyone who built reviews about six projects in a few minutes. The awards work themselves out, and every team gets honest feedback.",
+  },
+
   // ── Profile ─────────────────────────────────────────────────────────────
   {
     route: "/profile/me",

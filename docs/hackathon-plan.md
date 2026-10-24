@@ -1627,6 +1627,26 @@ Owner picked "Buildathon #N" for names and all three connection extras.
 
 ---
 
+## 5u. The Buildathon in the tour and on the landing page (2026-10-24)
+
+Owner: "add beats on the tour to show off what the buildathon is as well as add a part on the landing page
+for the buildathon with visual representations", straight to production.
+
+- **Tour** (`contexts/TourContext.tsx`): four beats after the Collab board, before the profile: the
+  Buildathon (the hero, `buildathon-hero`), the next one (the current-Buildathon banner, optional, so
+  it's skipped when none is announced), how it runs (the timeline), no judges (the review rubric). The
+  tour is now 23 steps; a member mid-tour past the Collab board resumes four steps earlier than before.
+- **Landing page** (`components/landing/Landing.tsx`): "// the buildathon" after "Build together":
+  the heading "48 hours. A business idea. People you haven't built with yet.", three points (a real
+  business idea, people you haven't built with, judged by the builders), `BuildathonArena` (eight team
+  pods around a live clock, some pulsing, two submitted; pure SVG, abstract like the cohort ring), a
+  five-step run (sign up, teams lock, build, review, awards) on one rail (a column on phones), the four
+  award chips, and "Included in every membership".
+- Checked: the landing section signed out at 280 px and desktop widths (no overflow), and the tour's
+  four beats on staging (the banner beat spotlit demo #2), then on to the profile step.
+
+---
+
 ## 6. Decisions log
 
 | # | Decision | Why |
@@ -1745,8 +1765,10 @@ Owner picked "Buildathon #N" for names and all three connection extras.
 
 ## 7. Open items and later prompts
 
-**Production rollout** (written 2026-10-18; production's database is at 017, `main` is
-contained in `feat/hackathon-db`, the branch builds, 708 tests pass locally and on staging):
+**Production rollout: DONE 2026-10-18.** Migrations 018 → 037 applied to production through the
+owner's Supabase connector (checked against staging: every function, policy, trigger, constraint,
+column, bucket, grant and realtime entry identical); `main` pushed (`53bd9ba`), live on quorumhq.co
+about 90 seconds later. The steps as planned:
 
 1. **Commit and merge locally** (Claude, when the owner says): `feat/hackathon-db` into `main`.
    Not pushed yet: the database goes first.
@@ -1894,4 +1916,5 @@ Admin: http://localhost:3100/login?next=/admin, signed in as the test admin (see
 | `3c8b183` | The finished Sprint: recap around the chat, demo day, how it went (5q) |
 | `b79b009` | Peer reviews instead of judges, with a short review window (036, 5r) |
 | `429bf59` | Buildathon #N, admin defaults, business-idea copy, connections (037, 5s) |
-| (next) | The /buildathon address, one way in, no admin buttons; production rollout steps (5t, §7) |
+| `6d2ca24` | The /buildathon address, one way in, no admin buttons; production rollout steps (5t, §7) |
+| (next) | The Buildathon in the tour and on the landing page (5u) |
