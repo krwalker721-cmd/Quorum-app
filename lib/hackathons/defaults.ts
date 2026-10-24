@@ -1,8 +1,8 @@
 // What a new Buildathon starts with in the admin (owner, 2026-10-18): every
 // event has the same title and is told apart by its number, and the rules,
 // tagline and lobby welcome say in full what this is: a business idea taken
-// to a working MVP, or proven with something real, built with founders you
-// haven't built with yet. Everything stays editable per Buildathon; only the
+// to a working MVP, or proven with something real, and the people you build
+// it with. Everything stays editable per Buildathon; only the
 // theme is meant to change each time.
 
 /** Every Buildathon's title. Pages call each one "Buildathon #N". */
@@ -22,7 +22,7 @@ export function sayBuildathon(text: string) {
   return text.replace(/\bSprints\b/g, "Buildathons").replace(/\bSprint\b/g, "Buildathon").replace(/\bsprint\b/g, "Buildathon");
 }
 
-export const DEFAULT_TAGLINE = "48 hours to turn a business idea into something real, with founders you haven't built with yet.";
+export const DEFAULT_TAGLINE = "48 hours to turn a business idea into something real, and the people you build it with.";
 
 export const DEFAULT_LOBBY_WELCOME =
   "Welcome! Introduce yourself: who you are, what you're good at, and the kind of business you'd want to build. The best teams start here, before teams lock.";

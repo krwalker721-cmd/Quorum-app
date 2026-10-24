@@ -81,16 +81,16 @@ const BUILD = [
 ];
 
 // The Buildathon, in the same words the app uses (lib/hackathons/defaults.ts):
-// a business idea made real in 48 hours, with founders you haven't built
-// with yet, judged by the builders themselves.
+// a business idea made real in 48 hours, and the people you build it with
+// (friends, a cofounder, founders you meet), judged by the builders themselves.
 const BUILDATHON = [
   {
     title: "A real business idea",
     desc: "Not a toy or a side project. Take an idea to a working MVP, or prove it with something real: a prototype, a landing page with sign-ups, conversations with customers.",
   },
   {
-    title: "People you haven't built with",
-    desc: "Come with a team, or join the pool and get matched across cohorts. Forty-eight hours of building together tells you more about someone than a year of coffees.",
+    title: "The people you build it with",
+    desc: "Bring your cofounder or your closest friends, or join the pool and get matched with founders from other cohorts. Forty-eight hours of building together tells you more about someone than a year of coffees.",
   },
   {
     title: "Judged by the builders",
@@ -377,7 +377,7 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
           <Reveal>
             <SectionHeading
               kicker="// the buildathon"
-              title="48 hours. A business idea. People you haven’t built with yet."
+              title="48 hours. A business idea. The people you build it with."
             />
           </Reveal>
           <div className="mt-12 grid gap-8 lg:gap-16 lg:grid-cols-[1.15fr_1fr] lg:items-center">
