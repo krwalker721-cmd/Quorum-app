@@ -25,7 +25,7 @@ export type CurrentSprint = {
 export default function CurrentSprintBanner({ sprint }: { sprint: CurrentSprint }) {
   const live = sprint.state === "live";
   return (
-    <section className={`${ui.tileHero} ${s.banner}`} aria-label={`Buildathon #${sprint.number}`}>
+    <section className={`${ui.tileHero} ${s.banner}`} aria-label={`Buildathon #${sprint.number}`} data-tour-id="buildathon-current">
       <div className={s.bannerMain}>
         <p className={s.bannerKicker}>
           {live || sprint.state === "judging" || sprint.state === "paused"

@@ -4,6 +4,7 @@ import LegalLinks from "@/components/LegalLinks";
 import GrowthStat from "@/components/landing/GrowthStat";
 import CohortRing from "@/components/landing/CohortRing";
 import CollabWeave from "@/components/landing/CollabWeave";
+import BuildathonArena from "@/components/landing/BuildathonArena";
 import BoardPreview from "@/components/landing/BoardPreview";
 import ProductGlyph, { type GlyphName } from "@/components/landing/ProductGlyph";
 import Reveal from "@/components/landing/Reveal";
@@ -78,6 +79,34 @@ const BUILD = [
     desc: "A private thread, the docs and links the work runs on, and decisions the team votes on — so what you build together has somewhere to live.",
   },
 ];
+
+// The Buildathon, in the same words the app uses (lib/hackathons/defaults.ts):
+// a business idea made real in 48 hours, with founders you haven't built
+// with yet, judged by the builders themselves.
+const BUILDATHON = [
+  {
+    title: "A real business idea",
+    desc: "Not a toy or a side project. Take an idea to a working MVP, or prove it with something real: a prototype, a landing page with sign-ups, conversations with customers.",
+  },
+  {
+    title: "People you haven't built with",
+    desc: "Come with a team, or join the pool and get matched across cohorts. Forty-eight hours of building together tells you more about someone than a year of coffees.",
+  },
+  {
+    title: "Judged by the builders",
+    desc: "No panel. After the deadline everyone reviews a few other projects, the awards work themselves out, and every team gets honest feedback.",
+  },
+];
+
+const BUILDATHON_STEPS = [
+  { when: "Up to a week before", title: "Sign up", desc: "With your own team, or into the random pool." },
+  { when: "An hour before kickoff", title: "Teams lock", desc: "Anyone in the pool is matched into a team of 2–4." },
+  { when: "48 hours", title: "Build", desc: "The theme drops. Every team works in a private room, sealed." },
+  { when: "2 hours", title: "Review", desc: "Everyone who built rates about six other projects." },
+  { when: "The reveal", title: "Awards", desc: "Every project unseals at once, each with a public page." },
+];
+
+const BUILDATHON_AWARDS = ["Community pick", "Most shipped", "Most likely to become real", "Crowd favourite"];
 
 // The mark for each block in "inside quorum". Keyed off the shared copy's
 // titles so lib/marketing-copy.ts (which /pricing also reads) stays untouched.
@@ -340,6 +369,77 @@ export default async function Landing({ waitlistOn }: { waitlistOn: boolean }) {
           </div>
           <Reveal className="mt-14 sm:mt-16 max-w-4xl mx-auto">
             <BoardPreview />
+          </Reveal>
+        </section>
+
+        {/* The Buildathon: the network's recurring 48-hour build. */}
+        <section>
+          <Reveal>
+            <SectionHeading
+              kicker="// the buildathon"
+              title="48 hours. A business idea. People you haven’t built with yet."
+            />
+          </Reveal>
+          <div className="mt-12 grid gap-8 lg:gap-16 lg:grid-cols-[1.15fr_1fr] lg:items-center">
+            <div className="order-2 lg:order-1">
+              <p className="text-lg text-text-secondary leading-relaxed max-w-xl">
+                At every Buildathon the whole network builds at once. Founders team up across cohorts, get
+                a theme at kickoff, and have 48 hours to turn a business idea into something real. The
+                project is the output; the people you build it with are the point.
+              </p>
+              <ul className="mt-9 space-y-6">
+                {BUILDATHON.map((b, i) => (
+                  <Reveal key={b.title} delay={i * 120}>
+                    <li className="flex gap-4">
+                      <span
+                        aria-hidden
+                        className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ background: "#f59e0b", boxShadow: "0 0 0 4px rgba(245,158,11,.12)" }}
+                      />
+                      <div>
+                        <h3 className="text-text-primary font-medium">{b.title}</h3>
+                        <p className="mt-1.5 text-sm text-text-secondary leading-relaxed max-w-xl">{b.desc}</p>
+                      </div>
+                    </li>
+                  </Reveal>
+                ))}
+              </ul>
+            </div>
+            <Reveal className="order-1 lg:order-2 flex justify-center">
+              <BuildathonArena />
+            </Reveal>
+          </div>
+
+          <Reveal className="mt-14 sm:mt-16">
+            <ol className={s.buildRun} aria-label="How a Buildathon runs">
+              {BUILDATHON_STEPS.map((st, i) => (
+                <li key={st.title} className={s.buildStep}>
+                  <span className={s.buildDot} aria-hidden>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-text-muted">{st.when}</p>
+                  <h3 className="mt-1.5 text-text-primary font-medium">{st.title}</h3>
+                  <p className="mt-1 text-sm text-text-secondary leading-relaxed">{st.desc}</p>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+
+          <Reveal className="mt-10 text-center">
+            <ul className="flex flex-wrap justify-center gap-2.5" aria-label="The awards">
+              {BUILDATHON_AWARDS.map((a) => (
+                <li
+                  key={a}
+                  className="rounded-full border px-4 py-1.5 text-sm"
+                  style={{ borderColor: "rgba(245,158,11,.32)", background: "rgba(245,158,11,.06)", color: "#f8c56a" }}
+                >
+                  ★ {a}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-sm text-text-muted">
+              Included in every membership. When the next one is announced, its countdown is at the top of this page.
+            </p>
           </Reveal>
         </section>
 
