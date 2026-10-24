@@ -230,7 +230,7 @@ export const TOUR_STEPS: TourStep[] = [
     anchor: "buildathon-hero",
     section: "buildathon",
     title: "The Buildathon",
-    body: "Every Buildathon, the whole network builds at once: 48 hours to turn a business idea into something real, with founders you haven't built with yet. It's how you find the people worth building with.",
+    body: "Every Buildathon, the whole network builds at once: 48 hours to turn a business idea into something real, with your friends, your cofounder, or founders you meet in the pool. What lasts is the people you build it with.",
   },
   {
     route: "/buildathon",

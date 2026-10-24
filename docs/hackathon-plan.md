@@ -1644,6 +1644,11 @@ for the buildathon with visual representations", straight to production.
   award chips, and "Included in every membership".
 - Checked: the landing section signed out at 280 px and desktop widths (no overflow), and the tour's
   four beats on staging (the banner beat spotlit demo #2), then on to the profile step.
+- **Catchphrase (owner, same day):** "People you haven't built with yet" left out close friends and
+  cofounders; it's now **"48 hours. A business idea. The people you build it with."** The same idea
+  replaces the old wording everywhere: the landing point and the home's "What it's for" card ("The
+  people you build it with": bring your cofounder or closest friends, or get matched in the pool), the
+  join card, the default tagline, and the tour's first Buildathon beat.
 
 ---
 
@@ -1760,6 +1765,7 @@ for the buildathon with visual representations", straight to production.
 | 107 | Three connection features: what you bring (037), What's next in the room, People you met on the recap. | Owner picked all three. |
 | 108 | Pages live at `/buildathon`; `/hackathon` redirects permanently. | Owner, 2026-10-18 (decision 84 left the address open). |
 | 109 | The join card is the only way in on the signup page; member pages have no admin buttons. | Owner: the two Register buttons; "no view in admin button". |
+| 110 | The catchphrase is about the people you build with, not only strangers: "48 hours. A business idea. The people you build it with." | Owner: it's "also close friends and founders", but should still be about the relationships. |
 
 ---
 

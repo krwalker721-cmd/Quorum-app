@@ -187,7 +187,7 @@ export default function JoinQueueClient({
     ) : (
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className={ui.emptyTitle}>
-          {viewer.withdrawn ? "You withdrew from this Buildathon. You can come back until teams lock." : "48 hours, founders you haven't built with yet, and a business idea made real. Want in?"}
+          {viewer.withdrawn ? "You withdrew from this Buildathon. You can come back until teams lock." : "48 hours, a business idea made real, and the people you build it with. Want in?"}
         </p>
         <button type="button" className={ui.primaryBtn} disabled={busy} onClick={() => setStep("choose")}>
           {viewer.withdrawn ? `Rejoin Buildathon #${sprint.number}` : `Join Buildathon #${sprint.number}`}

@@ -7,7 +7,7 @@ import s from "./home.module.css";
 // The Buildathon tab's home: the current Buildathon (if any) with its clock and
 // the way in, then what the format is, shown as a place to do serious work: an
 // example of a live one, the format's spec, what it's for (a business idea made
-// real, with founders you haven't built with yet), how one runs and how
+// real, and the people you build it with), how one runs and how
 // projects are judged. Each Buildathon keeps its own page (/buildathon/N).
 
 export default function BuildathonHome({ hasPast, current }: { hasPast: boolean; current: CurrentSprint | null }) {
@@ -107,8 +107,8 @@ const PURPOSE = [
     text: "Not a toy or a side project: a product or company that solves a problem people would pay for. You leave with a working MVP, or the idea proven with something real: a prototype, a landing page with sign-ups, conversations with customers.",
   },
   {
-    title: "People you haven't built with",
-    text: "Teams form across cohorts, and the random pool matches anyone who comes alone. 48 hours of building together tells you more about someone than a year of coffees.",
+    title: "The people you build it with",
+    text: "Bring your cofounder or your closest friends, or come alone and the random pool matches you with founders from other cohorts. 48 hours of building together tells you more about someone than a year of coffees.",
   },
   {
     title: "Connections that outlast it",
